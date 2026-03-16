@@ -1,0 +1,14 @@
+.avocado-icon-block(@size: 30px, @bg: ~"var(--control-bg)", @br: @border-radius) {
+  --size: @size;
+  width: var(--size);
+  height: var(--size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: @br;
+  box-shadow: @avocado-box-shadow;
+
+  & when (isstring(@bg)) {
+    background-color: @bg;
+  }
+}

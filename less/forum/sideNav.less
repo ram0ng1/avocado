@@ -1,0 +1,117 @@
+.sideNavOffset, .sideNav > ul {
+  margin-top: 0;
+}
+
+.AfruxWidgets-sideNavAlt {
+  padding-top: 0;
+}
+
+// Nav item styles apply on all viewports (phone drawer + desktop sidebar)
+.sideNav {
+  // Remove wrapper offsets that push items below the primary button
+  .item-nav > div {
+    margin: 0;
+    padding: 0;
+  }
+
+  .Dropdown--select .Dropdown-menu {
+    padding: 0;
+
+    > li {
+      margin: 1px 0;
+      width: 100%;
+
+      > a {
+        --icon-size: 28px;
+        padding: 5px 10px;
+        width: 100%;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        border-radius: 25px;
+        transition: background-color 0.15s, color 0.15s;
+        font-size: 13px;
+
+        .Button-icon:not(.TagIcon) {
+          flex: 0 0 var(--icon-size);
+          width: var(--icon-size);
+          height: var(--icon-size);
+          line-height: var(--icon-size);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--control-bg);
+          border-radius: 100%;
+          float: none;
+          margin: 0;
+          transition: background-color 0.15s;
+        }
+
+        // Tag items: show the tag color as the icon background
+        .TagIcon.Button-icon {
+          flex: 0 0 var(--icon-size);
+          width: var(--icon-size);
+          height: var(--icon-size);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--color, var(--control-bg));
+          border-radius: 100%;
+          float: none;
+          margin: 0;
+          transition: background-color 0.15s;
+        }
+
+        .Button-label {
+          flex: 1;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+
+      &.active {
+        > a {
+          background-color: color-mix(in srgb, var(--primary-color) 15%, transparent);
+          color: var(--primary-color);
+
+          .Button-icon:not(.TagIcon) {
+            background-color: var(--body-bg);
+          }
+        }
+      }
+
+      &:hover {
+        > a {
+          background-color: var(--control-bg);
+          color: var(--text-color);
+
+          .Button-icon:not(.TagIcon) {
+            background-color: var(--body-bg);
+          }
+        }
+      }
+    }
+
+    > li[class^="item-tag"]:not(.item-tags) a {
+      font-size: 13px;
+
+      .icon {
+        --size: 24px;
+      }
+    }
+
+    > .Dropdown-separator {
+      margin: 12px 0;
+    }
+  }
+}
+
+@media @desktop-up {
+  .sideNavContainer {
+    margin-top: 30px;
+  }
+}
+

@@ -1,0 +1,19 @@
+.avocado-border-radius(@elem) {
+  &:nth-child(2n) {
+    @{elem} {
+      border-radius: @avocado-border-radius-a;
+    }
+  }
+
+  &:nth-child(2n+1) {
+    @{elem} {
+      border-radius: @avocado-border-radius-b;
+    }
+  }
+
+  &:nth-child(3n) {
+    @{elem} {
+      border-radius: @avocado-border-radius-c;
+    }
+  }
+}

@@ -1,0 +1,74 @@
+{
+    "name": "ramon/avocado",
+    "description": "The weird Flarum theme made with potatoes as fuel, by Afrux.",
+    "keywords": [
+        "flarum",
+        "theme"
+    ],
+    "type": "flarum-extension",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Sami Mazouz",
+            "email": "ilyasmazouz@gmail.com",
+            "homepage": "https://www.buymeacoffee.com/sycho",
+            "role": "Developer"
+        },
+        {
+            "name": "Ramon Guilherme",
+            "email": "ramon@ramonguilherme.com.br",
+            "homepage": "https://ramonguilherme.com.br",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/ram0ng1/avocado/issues",
+        "source": "https://github.com/ram0ng1/avocado",
+        "forum": "https://discuss.flarum.org/d/35041-colored-an-extension-to-color-elements-based-on-tag-colors/37"
+    },
+    "funding": [
+        {
+            "type": "website",
+            "url": "https://donate.stripe.com/fZe5o66nebkf39S28a"
+        }
+    ],
+    "require": {
+        "flarum/core": "^2.0.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Ramon\\Avocado\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Ramon\\Avocado\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.1.x-dev"
+        },
+        "flarum-extension": {
+            "title": "Avocado",
+            "category": "theme",
+            "icon": {
+                "image": "icon.svg"
+            }
+        },
+        "flarum-cli": {
+            "modules": {
+                "admin": true,
+                "forum": true,
+                "js": true,
+                "jsCommon": false,
+                "css": true,
+                "gitConf": true,
+                "prettier": true,
+                "typescript": true,
+                "backendTesting": false,
+                "editorConfig": true
+            }
+        }
+    }
+}

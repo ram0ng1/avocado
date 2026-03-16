@@ -1,0 +1,21 @@
+// Override core defaults
+@border-radius:                   14px;
+@screen-desktop-hd:               1200px;
+
+// Extension-specific static LESS variables
+@avocado-border-radius-a:         ~"43% 57% 68% 32% / 33% 50% 50% 67%";
+@avocado-border-radius-b:         ~"42% 58% 33% 67% / 57% 49% 51% 43%";
+@avocado-border-radius-c:         ~"58% 42% 68% 32% / 48% 73% 27% 52%";
+
+@avocado-box-shadow:              rgba(0, 0, 0, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;
+
+// Extension-specific theme-sensitive CSS variables
+:root {
+  --avocado-primary-bg:           lighten(@primary-color, 40%);
+  --avocado-unapproved-bg:        #fdddc2;
+}
+
+[data-theme^=dark] {
+  --avocado-primary-bg:           mix(@body-bg-dark, @primary-color, 90%);
+  --avocado-unapproved-bg:        #1f1914;
+}

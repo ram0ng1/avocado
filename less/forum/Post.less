@@ -1,0 +1,109 @@
+.Post {
+  margin: 0 0 15px 0;
+  background: var(--control-bg);
+  border-radius: 8px;
+}
+
+// V1-style layout for CommentPost: avatar absolutely positioned, content padded left
+@media @tablet-up {
+  .CommentPost {
+    padding-left: 105px;
+
+    .Post-container {
+      display: block;
+    }
+
+    .Post-side {
+      position: absolute;
+      left: var(--post-padding);
+      top: var(--post-padding);
+      width: 64px;
+      display: flex;
+      justify-content: center;
+    }
+  }
+
+  // ReplyPlaceholder keeps V2 grid so avatar sits inside the dashed border on the left
+  .ReplyPlaceholder {
+    .Post-container {
+      display: grid;
+      grid-template-columns: var(--avatar-column-width) 1fr;
+      align-items: center;
+    }
+
+    .Post-side {
+      position: static;
+      display: flex;
+      justify-content: center;
+    }
+
+    .Post-main {
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  // EventPost still uses grid — keep icon column tight
+  .EventPost .Post-container {
+    display: grid;
+    grid-template-columns: var(--avatar-column-width) 1fr;
+  }
+}
+
+// Align icon + name inside tags (EventPost and elsewhere)
+.TagLabel-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.PostStream-item {
+  &:not(:last-child) {
+    border-bottom: none;
+  }
+}
+
+.ReplyPlaceholder {
+  margin-top: 30px;
+  min-height: 104px;
+  background-color: var(--control-bg);
+  border: 2px dashed transparent;
+  transition: border-color 0.2s;
+
+  &:hover {
+    border-color: var(--body-bg);
+  }
+}
+
+.EventPost {
+  background-color: transparent;
+
+  .Post-footer {
+    display: none;
+  }
+
+  // Align icon column and content row vertically
+  .Post-container {
+    align-items: center;
+  }
+
+  .Post-main {
+    display: flex;
+    align-items: center;
+    min-height: 0;
+  }
+
+  // Move controls to the right without floating/negative-margin hacks
+  .Post-actions {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    float: none;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+}
+
+.Post--hidden:not(.revealContent) .Post-actions {
+  margin-top: -27px;
+}
+

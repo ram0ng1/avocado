@@ -1,0 +1,28 @@
+.Button {
+  border: 1px solid transparent;
+  transition: background-color 0.15s;
+}
+
+.Button--dashed {
+  border: 1px dashed;
+  --control-bg: transparent;
+}
+
+// Dropdown toggle: hide ellipsis icon only on non-flat toggles (flat = header icons like bell, flag)
+// Button--flat toggles (flags, notifications) keep their icons
+.Dropdown-toggle:not(.Button--flat) {
+  .Button-icon {
+    display: none !important;
+  }
+}
+
+// Icon-only toggle: center the caret
+.Dropdown-toggle.Button--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  .Button-caret {
+    margin: 0;
+  }
+}

@@ -1,0 +1,7 @@
+// Allow dropdowns to escape the App container only on desktop-up.
+// On tablet (800px range) overflow-x: visible causes a horizontal scrollbar.
+@media @desktop-up {
+  .App {
+    overflow-x: visible;
+  }
+}
