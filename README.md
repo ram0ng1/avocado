@@ -1,38 +1,78 @@
-<p align=center>
-<img src="https://lh3.googleusercontent.com/-CDid7LgrH-M/YNn460wKUMI/AAAAAAAAFdY/ttAl_XT055QzWO9bEWKPbzWBPzhPUg1UwCLcBGAsYHQ/s16000/asirem.png" alt="asirem_logo">
-<h1 align=center>Asirem</h1>
-<p align=center>
-<img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square"> <a href="https://packagist.org/packages/afrux/asirem"><img alt="Latest Stable Version" src="https://img.shields.io/packagist/v/afrux/asirem.svg?style=flat-square"></a> <a href="https://packagist.org/packages/afrux/asirem"><img alt="Total Downloads" src="https://img.shields.io/packagist/dt/afrux/asirem.svg?style=flat-square"></a> <a href="https://www.buymeacoffee.com/sycho"><img alt="donate" src="https://img.shields.io/badge/donate-buy%20me%20a%20coffee-%23ffde39?style=flat-square"></a>
-</p><p align=center>
-The weird <a href="http://flarum.org">Flarum</a> theme made with potatoes as fuel, by <a href="https://github.com/afrux">Afrux</a>.
-</p><p align=center>
-<img width="50%" src="https://lh3.googleusercontent.com/-N4b-Oqq18To/YNno5ZmnmGI/AAAAAAAAFdA/49F0UzmZFecHv7baBQTtM6a_JO5n7s_dwCLcBGAsYHQ/s16000/Dark_Dashboard_Front.png" alt="asirem_theme_dashboard_screenshot_1"><img width="50%" src="https://lh3.googleusercontent.com/-edU2_P66Vlo/YNnpaU1yjVI/AAAAAAAAFdI/LzAB9qdLbGMGWFzyyovTow770r8b8Fw7wCLcBGAsYHQ/s16000/Light_Dashboard_Front.png" alt="asirem_theme_dashboard_screenshot_1">
-<img src="https://lh3.googleusercontent.com/-qhKeJv4373Y/YNnqrVK6MlI/AAAAAAAAFdQ/pcRH7ZobQdMJYiIQ2HTyjJnZpXqUHMg6QCLcBGAsYHQ/s16000/Screenshot%2Bfrom%2B2021-06-27%2B22-57-32.png" alt="asirem_theme_forum_screenshot_1">
+<p align="center">
+  <img src="icon.svg" width="80" alt="Avocado">
+  <h1 align="center">Avocado</h1>
 </p>
 
-### Installation
+<p align="center">
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square">
+  <a href="https://packagist.org/packages/ramon/avocado"><img alt="Latest Stable Version" src="https://img.shields.io/packagist/v/ramon/avocado.svg?style=flat-square"></a>
+  <a href="https://packagist.org/packages/ramon/avocado"><img alt="Total Downloads" src="https://img.shields.io/packagist/dt/ramon/avocado.svg?style=flat-square"></a>
+  <a href="https://donate.stripe.com/fZe5o66nebkf39S28a"><img alt="Donate" src="https://img.shields.io/badge/donate-stripe-%236772E5?style=flat-square"></a>
+</p>
 
-Install with composer:
+<p align="center">
+  A custom <a href="https://flarum.org">Flarum</a> theme with hero banners, tag colors, share buttons, and more. Forked from <a href="https://github.com/afrux/asirem">Asirem</a> by <a href="https://github.com/afrux">Afrux</a>.
+</p>
+
+---
+
+## Features
+
+- **Hero Banner** — Upload and position a custom banner image at the top of your forum (auto-scaled to 1400px, converted to WebP)
+- **Tag Colors** — Discussion list items styled with tag colors and unread indicators
+- **Share Button** — Native Web Share API on mobile; clipboard fallback on desktop
+- **Action Icons** — Optional Font Awesome icons on Like and Reply buttons
+- **Tags Page** — Custom tile and cloud view for the tags page
+- **V1 Search Bar** — Toggle between the classic dropdown search and the default modal
+
+## Requirements
+
+- Flarum `^2.0.0`
+
+## Installation
 
 ```sh
-composer require afrux/asirem
+composer require ramon/avocado
 ```
 
-The following are nice to install with the theme as well:
+## Updating
 
 ```sh
-composer require sycho/flarum-advanced-extension-categories
-```
-
-### Updating
-
-```sh
-composer update afrux/asirem --with-dependencies
+composer update ramon/avocado --with-dependencies
 php flarum cache:clear
 ```
 
-### Links
+## Configuration
 
-- [Packagist](https://packagist.org/packages/afrux/asirem)
-- [GitHub](https://github.com/afrux/asirem)
-- [Discuss](https://discuss.flarum.org/d/27939-asirem-theme)
+All settings are available in the admin panel under the Avocado extension:
+
+| Setting | Description | Default |
+|---|---|---|
+| Hero Image | Upload a banner image for the forum header | — |
+| Hero Image Position | CSS `background-position` value | `center top` |
+| V1 Search Bar | Use classic dropdown search instead of modal | `true` |
+| Show Share Button | Display share button on posts | `true` |
+| Show Action Icons | Show icons on Like and Reply buttons | `true` |
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/avocado/banner` | Upload hero banner image |
+| `DELETE` | `/api/avocado/banner` | Remove hero banner image |
+
+## Links
+
+- [GitHub](https://github.com/ram0ng1/avocado)
+- [Issues](https://github.com/ram0ng1/avocado/issues)
+- [Discuss](https://discuss.flarum.org/d/35041-colored-an-extension-to-color-elements-based-on-tag-colors/37)
+- [Donate](https://donate.stripe.com/fZe5o66nebkf39S28a)
+
+## Authors
+
+- [Ramon Guilherme](https://ramonguilherme.com.br)
+- [Sami Mazouz](https://www.buymeacoffee.com/sycho) — original Asirem theme
+
+## License
+
+[MIT](LICENSE.md)
