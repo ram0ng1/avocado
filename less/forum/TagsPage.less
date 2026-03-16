@@ -18,13 +18,14 @@
   .avocado-border-radius(~".Avocado-TagTile-icon .icon");
   display: flex;
 
-  &.colored {
+  &.colored--dark-bg {
     --tag-color: var(--text-on-dark);
     --tag-color-muted: var(--text-on-dark-muted);
   }
 
-  &:not(.colored) &-icon .icon {
-    color: var(--tag-color);
+  &.colored--light-bg {
+    --tag-color: var(--text-on-light);
+    --tag-color-muted: var(--text-on-light-muted);
   }
 
   &-content {
@@ -59,8 +60,16 @@
       .avocado-icon-block(50px);
       font-size: 28px;
       background-color: var(--body-bg);
-      color: var(--tag-bg);
+      color: var(--tag-color);
     }
+  }
+
+  &.colored--dark-bg &-icon .icon {
+    background-color: rgba(0, 0, 0, 0.25);
+  }
+
+  &.colored--light-bg &-icon .icon {
+    background-color: rgba(255, 255, 255, 0.30);
   }
 
   &-lastPostedDiscussion {
