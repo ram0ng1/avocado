@@ -14,11 +14,13 @@
 .Avocado-TagTile {
   --tag-bg: var(--control-bg);
   --tag-color: var(--control-color);
+  --tag-color-muted: var(--muted-color);
   .avocado-border-radius(~".Avocado-TagTile-icon .icon");
   display: flex;
 
   &.colored {
-    --tag-color: var(--body-bg);
+    --tag-color: var(--text-on-dark);
+    --tag-color-muted: var(--text-on-dark-muted);
   }
 
   &:not(.colored) &-icon .icon {
@@ -64,8 +66,7 @@
   &-lastPostedDiscussion {
     margin-top: auto;
     font-weight: bold;
-    color: var(--tag-color);
-    opacity: 0.6;
+    color: var(--tag-color-muted);
     display: grid;
     grid-template-columns: auto auto;
 
