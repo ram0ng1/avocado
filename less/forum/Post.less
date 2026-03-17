@@ -4,8 +4,14 @@
   border-radius: 8px;
 }
 
+@media @phone, @tablet {
+  .Post {
+    padding-left: var(--post-padding);
+  }
+}
+
 // V1-style layout for CommentPost: avatar absolutely positioned, content padded left
-@media @tablet-up {
+@media @desktop-up {
   .CommentPost {
     padding-left: 105px;
 
@@ -105,5 +111,81 @@
 
 .Post--hidden:not(.revealContent) .Post-actions {
   margin-top: -27px;
+}
+
+@media @phone, @tablet {
+  // Keep event lines readable and avoid icon glued to the left edge.
+  .EventPost {
+    padding-left: var(--post-padding);
+  }
+
+  .EventPost .Post-body {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .EventPost-icon {
+    float: none;
+    margin: 0;
+    font-size: 16px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .EventPost-info {
+    line-height: 1.4;
+    display: block;
+    min-width: 0;
+
+    .TagLabel {
+      white-space: nowrap;
+    }
+  }
+
+  .CommentPost .Post-header {
+    .Avatar {
+      margin-right: 10px;
+    }
+
+    .PostUser .UserOnline {
+      margin-left: 4px;
+      margin-right: 7px;
+    }
+  }
+
+}
+
+@media @phone {
+
+  // Prevent oversized user popover on mobile discussion view.
+  .Post-header .UserCard.UserCard--popover {
+    width: calc(~"100vw - 30px");
+    max-width: 360px;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .UserCard--popover {
+    .container {
+      padding: 14px !important;
+    }
+
+    .UserCard-profile {
+      gap: 14px;
+      text-align: center;
+      grid-template-columns: 1fr;
+      padding-right: 0;
+    }
+
+    .UserCard-avatar {
+      margin-bottom: 8px;
+    }
+
+    .UserCard-identity {
+      font-size: 20px;
+      margin-top: 4px;
+    }
+  }
 }
 

@@ -144,6 +144,27 @@
 
 @media @phone {
   .IndexPage-nav.sideNav {
+    .item-nav > .App-titleControl {
+      width: 200px;
+      left: 50%;
+      margin-left: -100px;
+      text-align: center;
+
+      > .Dropdown-toggle.Button {
+        width: 100%;
+
+        > .Button-label {
+          display: block;
+          text-align: center;
+        }
+      }
+
+      .Dropdown-menu .Button-label {
+        display: inline;
+        text-align: left;
+      }
+    }
+
     > ul > li {
       margin: 0;
     }
@@ -170,6 +191,18 @@
       > button .Button-icon {
         margin-left: -24px;
         font-size: 14px;
+      }
+
+      &.active > a .Button-icon,
+      &.active > button .Button-icon {
+        color: var(--primary-color) !important;
+      }
+
+      &:hover > a .Button-icon,
+      &:hover > button .Button-icon,
+      &:focus-within > a .Button-icon,
+      &:focus-within > button .Button-icon {
+        color: var(--text-color) !important;
       }
     }
   }
