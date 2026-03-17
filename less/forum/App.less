@@ -146,6 +146,21 @@
   }
 }
 
+// Core Flarum collapses header search to 1px on tablet when input isn't focused.
+// Keep V1 search visible in this breakpoint as well.
+@media @tablet {
+  .Header-secondary .Search {
+    input:not(:focus) {
+      width: 100%;
+      background: var(--control-bg);
+    }
+
+    &:not(.active) input {
+      padding-right: 36px;
+    }
+  }
+}
+
 @media @tablet-up {
   .App {
     display: flex;

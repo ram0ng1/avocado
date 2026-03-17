@@ -19,12 +19,10 @@
 
     > li {
       margin: 1px 0;
-      width: 100%;
 
       > a {
         --icon-size: 28px;
         padding: 5px 10px;
-        width: 100%;
         box-sizing: border-box;
         display: flex;
         flex-direction: row;
@@ -110,8 +108,70 @@
 }
 
 @media @desktop-up {
+  .sideNav .Dropdown--select .Dropdown-menu > li {
+    width: 100%;
+  }
+
+  .sideNav .Dropdown--select .Dropdown-menu > li > a {
+    width: 100%;
+  }
+
   .sideNavContainer {
     margin-top: 30px;
+  }
+}
+
+// Compact side navigation controls on smaller screens.
+@media @tablet {
+  .IndexPage-nav.sideNav {
+    padding: 8px 0;
+
+    &:after {
+      margin-top: 8px;
+    }
+
+    > ul > li,
+    .Dropdown-menu > li {
+      margin-right: 10px;
+      width: auto;
+    }
+
+    .Dropdown--select .Dropdown-menu > li > a {
+      width: auto;
+    }
+  }
+}
+
+@media @phone {
+  .IndexPage-nav.sideNav {
+    > ul > li {
+      margin: 0;
+    }
+
+    .item-newDiscussion .Button {
+      margin-bottom: 8px;
+    }
+
+    .Dropdown--select .Dropdown-menu > li {
+      > a,
+      > button,
+      > span {
+        padding: 10px 14px;
+        font-size: 14px;
+        line-height: 1.35;
+      }
+
+      > a.hasIcon,
+      > button.hasIcon {
+        padding-left: 42px;
+      }
+
+      > a .Button-icon,
+      > button .Button-icon {
+        margin-left: -24px;
+        font-size: 14px;
+      }
+    }
   }
 }
 
