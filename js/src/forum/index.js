@@ -16,6 +16,52 @@ const settingEnabled = (key) => {
   return v !== false && v !== '0' && v !== 0 && v !== '' && v !== null;
 };
 
+const syncFixedAvatarBadges = (component) => {
+  const root = component.element;
+  if (!root) return;
+
+  const postUser = root.querySelector('.Post-header .PostUser') || root.querySelector('.PostUser');
+  const side = root.querySelector('.Post-side');
+  const badges = root.querySelector('.PostUser-badges');
+  if (!postUser || !side || !badges) return;
+
+  const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+  const shouldInlineInHeader = settingEnabled('avocadoFixedAvatarEffect') && root.classList?.contains('CommentPost--fixedAvatar') && isDesktop;
+
+  if (!shouldInlineInHeader) {
+    if (badges.parentElement !== side) {
+      side.appendChild(badges);
+    }
+    badges.classList.remove('PostUser-badges--inPostHeader');
+
+    badges.querySelectorAll('.Badge').forEach((badge) => {
+      badge.removeAttribute('data-placement');
+    });
+    return;
+  }
+
+  if (badges.parentElement !== postUser) {
+    postUser.appendChild(badges);
+  }
+  badges.classList.add('PostUser-badges--inPostHeader');
+
+  // Keep tooltip visible under the fixed header when badge is near top edge.
+  badges.querySelectorAll('.Badge').forEach((badge) => {
+    const nearTop = badge.getBoundingClientRect().top < 92;
+    if (nearTop) {
+      badge.setAttribute('data-placement', 'bottom');
+    } else {
+      badge.removeAttribute('data-placement');
+    }
+  });
+};
+
+const queueSyncFixedAvatarBadges = (component) => {
+  syncFixedAvatarBadges(component);
+  requestAnimationFrame(() => syncFixedAvatarBadges(component));
+  setTimeout(() => syncFixedAvatarBadges(component), 120);
+};
+
 app.initializers.add(
   'ramon-avocado',
   () => {
@@ -167,6 +213,19 @@ app.initializers.add(
       if (this.attrs.discussion.isUnread()) {
         attrs.className += ' DiscussionListItem--unread';
       }
+    });
+
+    extend(CommentPost.prototype, 'elementAttrs', function (attrs) {
+      if (!settingEnabled('avocadoFixedAvatarEffect')) return;
+      attrs.className = `${attrs.className || ''} CommentPost--fixedAvatar`;
+    });
+
+    extend(CommentPost.prototype, 'oncreate', function () {
+      queueSyncFixedAvatarBadges(this);
+    });
+
+    extend(CommentPost.prototype, 'onupdate', function () {
+      queueSyncFixedAvatarBadges(this);
     });
 
     // ── Share button — always registered, checked on each render ──────────────

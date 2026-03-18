@@ -53,6 +53,7 @@ All settings are available in the admin panel under the Avocado extension:
 | V1 Search Bar | Use classic dropdown search instead of modal | `true` |
 | Show Share Button | Display share button on posts | `true` |
 | Show Action Icons | Show icons on Like and Reply buttons | `true` |
+| Fixed Avatar Effect | Keep comment avatars sticky while reading posts on desktop | `true` |
 
 ## API Endpoints
 

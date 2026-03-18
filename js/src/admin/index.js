@@ -45,6 +45,12 @@ app.initializers.add(
         type: 'boolean',
         label: 'Show icons on Like and Reply buttons',
         help: 'Display Font Awesome icons on the Like and Reply action buttons.',
+      }, 30)
+      .registerSetting({
+        setting: 'avocado.fixed_avatar_effect',
+        type: 'boolean',
+        label: 'Enable fixed avatar effect in discussion posts',
+        help: 'Keep the post avatar sticky while reading long comments on desktop.',
       }, 30);
   },
   -999999

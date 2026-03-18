@@ -35,8 +35,10 @@ return [
         ->serializeToForum('avocadoSearchV1', 'avocado.search_v1', 'boolval')
         ->serializeToForum('avocadoShowShare', 'avocado.show_share', 'boolval')
         ->serializeToForum('avocadoShowActionIcons', 'avocado.show_action_icons', 'boolval')
+        ->serializeToForum('avocadoFixedAvatarEffect', 'avocado.fixed_avatar_effect', 'boolval')
         ->default('avocado.hero_image_position', 'center top')
         ->default('avocado.search_v1', true)
         ->default('avocado.show_share', true)
-        ->default('avocado.show_action_icons', true),
+        ->default('avocado.show_action_icons', true)
+        ->default('avocado.fixed_avatar_effect', true),
 ];

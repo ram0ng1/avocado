@@ -29,6 +29,60 @@
     }
   }
 
+  .CommentPost.CommentPost--fixedAvatar {
+    --avocado-avatar-sticky-top: 76px;
+
+    padding-left: var(--post-padding);
+
+    .Post-container {
+      display: grid;
+      grid-template-columns: var(--avatar-column-width) 1fr;
+      align-items: start;
+    }
+
+    .Post-side {
+      position: sticky;
+      top: var(--avocado-avatar-sticky-top);
+      left: auto;
+      width: 64px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      overflow: visible;
+      z-index: 2;
+    }
+
+    &.Post--by-start-user {
+      --avocado-avatar-sticky-top: 84px;
+    }
+
+    .Post-main {
+      min-width: 0;
+    }
+
+    .Post-header .PostUser > .PostUser-badges.PostUser-badges--inPostHeader {
+      position: static;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      width: auto;
+      margin: 0;
+      margin-left: 6px;
+      margin-right: 2px;
+      float: none;
+      text-align: left;
+      pointer-events: auto;
+      white-space: nowrap;
+      z-index: 4;
+      vertical-align: middle;
+      transform: translateY(-1px);
+    }
+
+    .Post-header .PostUser > .PostUser-badges.PostUser-badges--inPostHeader > li {
+      margin: 0;
+    }
+  }
+
   // ReplyPlaceholder keeps V2 grid so avatar sits inside the dashed border on the left
   .ReplyPlaceholder {
     .Post-container {
