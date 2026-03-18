@@ -2,6 +2,7 @@ import { extend, override } from 'flarum/common/extend';
 import DiscussionListItem from 'flarum/forum/components/DiscussionListItem';
 import GlobalSearch from 'flarum/forum/components/GlobalSearch';
 import Search from 'flarum/forum/components/Search';
+import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import CommentPost from 'flarum/forum/components/CommentPost';
 import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
 import WelcomeHero from 'flarum/forum/components/WelcomeHero';
@@ -18,6 +19,25 @@ const settingEnabled = (key) => {
 app.initializers.add(
   'ramon-avocado',
   () => {
+    // ── Sidebar nav preload (avoid temporary "Loading..." item) ─────────────
+    if (app.tagList?.load) {
+      app.tagList.load(['children', 'parent']).catch(() => {});
+    }
+
+    extend(IndexSidebar.prototype, 'items', function (items) {
+      const nav = items.get('nav');
+      if (nav?.attrs) {
+        nav.attrs.defaultLabel = app.translator.trans('core.forum.index.all_discussions_link');
+        nav.attrs.lazyDraw = false;
+      }
+    });
+
+    extend(IndexSidebar.prototype, 'navItems', function (items) {
+      if (items.has('loading')) {
+        items.remove('loading');
+      }
+    });
+
     // ── WelcomeHero banner override ───────────────────────────────────────────
     // Checked at render time so it always sees the current setting value.
     //
