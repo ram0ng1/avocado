@@ -7,7 +7,15 @@ import sortTags from 'ext:flarum/tags/common/utils/sortTags';
 
 // Returns true when the hex color is perceptually dark (YIQ < 128).
 function colorIsDark(hex) {
-  const c = hex.replace('#', '');
+  if (!hex || typeof hex !== 'string') return false;
+
+  let c = hex.replace('#', '').trim();
+  if (c.length === 3) {
+    c = c.split('').map((ch) => ch + ch).join('');
+  }
+
+  if (!/^[0-9a-fA-F]{6}$/.test(c)) return false;
+
   const r = parseInt(c.substring(0, 2), 16);
   const g = parseInt(c.substring(2, 4), 16);
   const b = parseInt(c.substring(4, 6), 16);
@@ -25,7 +33,7 @@ export default class AvocadoTagsPage {
     const children = sortTags(tag.children() || []);
     const tagIconNode = tagIcon(tag, {}, { useColor: false });
 
-    if (tagIconNode.attrs && tagIconNode.attrs.style && tagIconNode.attrs.style.backgroundColor) {
+    if (tagIconNode?.attrs?.style?.backgroundColor) {
       delete tagIconNode.attrs.style.backgroundColor;
     }
 
@@ -43,7 +51,7 @@ export default class AvocadoTagsPage {
             {children && children.length ? (
               <div className="Avocado-TagTile-children">
                 {children.map((child) => [
-                  <Link href={app.route.tag(child)} className="TagLabel">{child.name()}</Link>,
+                  <Link key={`tag-child-${child.id()}`} href={app.route.tag(child)} className="TagLabel">{child.name()}</Link>,
                   ' ',
                 ])}
               </div>
@@ -69,6 +77,6 @@ export default class AvocadoTagsPage {
 
   // Called via override(): first arg is original function, second is cloud tags array
   cloudView(_, cloud) {
-    return <div className="Avocado-TagCloud">{cloud.map((tag) => [tagLabel(tag, { link: true }), ' '])}</div>;
+    return <div className="Avocado-TagCloud">{cloud.map((tag) => [tagLabel(tag, { link: true, key: `tag-cloud-${tag.id()}` }), ' '])}</div>;
   }
 }

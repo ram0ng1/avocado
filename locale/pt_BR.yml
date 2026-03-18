@@ -1,0 +1,18 @@
+ramon-avocado:
+  admin:
+    settings:
+      banner_image_label: Imagem do banner
+      banner_image_help: Envie a imagem do banner hero exibida no topo do forum.
+      hero_image_position_label: Posicao da imagem do hero
+      hero_image_position_help: "CSS background-position, ex.: 'center top' ou 'center 20%'."
+      search_v1_label: Ativar estilo da busca V1
+      search_v1_help: Mostrar o dropdown inline de busca em vez do modal V2.
+      show_share_label: Mostrar botao Compartilhar nos posts
+      show_share_help: Adicionar um botao de compartilhamento em cada post.
+      show_action_icons_label: Mostrar icones nos botoes Curtir e Responder
+      show_action_icons_help: Exibir icones do Font Awesome nas acoes de Curtir e Responder.
+      fixed_avatar_effect_label: Ativar efeito de avatar fixo nos posts da discussao
+      fixed_avatar_effect_help: Manter o avatar do post fixo ao ler comentarios longos no desktop.
+  forum:
+    actions:
+      share: Compartilhar

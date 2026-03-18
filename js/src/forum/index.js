@@ -10,10 +10,71 @@ import TagsPage from 'ext:flarum/tags/forum/components/TagsPage';
 import AvocadoTagsPage from './components/TagsPage';
 import { truncate } from 'flarum/common/utils/string';
 
-// Checked at render time — not at boot time
-const settingEnabled = (key) => {
-  const v = app.forum?.attribute(key);
-  return v !== false && v !== '0' && v !== 0 && v !== '' && v !== null;
+const parseBoolean = (value, defaultValue = true) => {
+  if (value === null || value === undefined || value === '') return defaultValue;
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value !== 0;
+
+  const normalized = String(value).trim().toLowerCase();
+
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+
+  return Boolean(value);
+};
+
+// Checked at render time — not at boot time.
+const settingEnabled = (key, defaultValue = true) => {
+  return parseBoolean(app.forum?.attribute(key), defaultValue);
+};
+
+const trans = (key, fallback) => {
+  const out = app.translator?.trans(key);
+  return out && out !== key ? out : fallback;
+};
+
+const resolveAssetUrl = (assetPath) => {
+  if (!assetPath) return null;
+  if (/^https?:\/\//i.test(assetPath)) return assetPath;
+
+  const assetsBaseUrl = app.forum?.attribute('assetsBaseUrl');
+  if (assetsBaseUrl) {
+    return assetsBaseUrl.replace(/\/+$/, '') + '/' + String(assetPath).replace(/^\/+/, '');
+  }
+
+  const forumBaseUrl = app.forum?.attribute('baseUrl');
+  if (forumBaseUrl) {
+    return forumBaseUrl.replace(/\/+$/, '') + '/assets/' + String(assetPath).replace(/^\/+/, '');
+  }
+
+  return String(assetPath);
+};
+
+const getPostPermalink = (post) => {
+  const discussion = post?.discussion?.();
+  if (!discussion) return window.location.href;
+
+  const near = typeof post.number === 'function' ? post.number() : undefined;
+  const relative = app.route.discussion(discussion, near);
+  return new URL(relative, window.location.origin).toString();
+};
+
+const copyTextToClipboard = async (text) => {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const input = document.createElement('input');
+  input.value = text;
+  input.setAttribute('readonly', 'readonly');
+  input.style.position = 'fixed';
+  input.style.opacity = '0';
+  input.style.pointerEvents = 'none';
+  document.body.appendChild(input);
+  input.select();
+  document.execCommand('copy');
+  document.body.removeChild(input);
 };
 
 const syncFixedAvatarBadges = (component) => {
@@ -103,10 +164,8 @@ app.initializers.add(
 
       if (!heroImage) return original(vnode);
 
-      // Build the full URL — support both uploaded filename and manual full URL
-      const heroUrl = /^https?:\/\//.test(heroImage)
-        ? heroImage
-        : app.forum.attribute('assetsBaseUrl') + '/' + heroImage;
+      // Build the full URL — support both uploaded filename and manual full URL.
+      const heroUrl = resolveAssetUrl(heroImage);
 
       const pos = app.forum?.attribute('avocadoHeroImagePosition') || 'center top';
 
@@ -211,7 +270,7 @@ app.initializers.add(
         attrs.style = { '--tag-color': this.attrs.discussion.tags()[0].color(), ...(attrs.style || {}) };
       }
       if (this.attrs.discussion.isUnread()) {
-        attrs.className += ' DiscussionListItem--unread';
+        attrs.className = `${attrs.className || ''} DiscussionListItem--unread`;
       }
     });
 
@@ -237,22 +296,24 @@ app.initializers.add(
         <button
           className="Button Button--link avocado-action-btn avocado-share-btn"
           onclick={(e) => {
-            const url = window.location.href;
+            const url = getPostPermalink(post);
             const el = e.currentTarget;
             if (navigator.share) {
-              navigator.share({ title: post.discussion().title(), url });
+              navigator.share({ title: post.discussion()?.title?.() || document.title, url }).catch(() => {});
             } else {
-              navigator.clipboard?.writeText(url).then(() => {
-                el.classList.add('avocado-share-done');
-                setTimeout(() => el.classList.remove('avocado-share-done'), 2000);
-              });
+              copyTextToClipboard(url)
+                .then(() => {
+                  el.classList.add('avocado-share-done');
+                  setTimeout(() => el.classList.remove('avocado-share-done'), 2000);
+                })
+                .catch(() => {});
             }
           }}
         >
           <span className="avocado-action-face">
             <i className="avocado-action-icon icon fas fa-share" aria-hidden="true" />
           </span>
-          <span className="avocado-action-label">Share</span>
+          <span className="avocado-action-label">{trans('ramon-avocado.forum.actions.share', 'Share')}</span>
         </button>,
         -5
       );

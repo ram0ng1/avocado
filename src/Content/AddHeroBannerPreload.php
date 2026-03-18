@@ -16,7 +16,7 @@ class AddHeroBannerPreload
 
     public function __invoke(Document $document, ServerRequestInterface $request): void
     {
-        $heroImage = $this->settings->get('avocado.hero_image');
+        $heroImage = trim((string) $this->settings->get('avocado.hero_image'));
 
         if (!$heroImage) return;
 
@@ -24,6 +24,8 @@ class AddHeroBannerPreload
             ? $heroImage
             : rtrim((string) $this->config->url(), '/') . '/assets/' . $heroImage;
 
-        $document->head[] = '<link rel="preload" as="image" href="' . e($heroUrl) . '" fetchpriority="high">';
+        $escapedUrl = htmlspecialchars($heroUrl, ENT_QUOTES, 'UTF-8');
+
+        $document->head[] = '<link rel="preload" as="image" href="' . $escapedUrl . '" fetchpriority="high">';
     }
 }

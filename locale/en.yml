@@ -1,0 +1,18 @@
+ramon-avocado:
+  admin:
+    settings:
+      banner_image_label: Banner Image
+      banner_image_help: Upload the hero banner image displayed at the top of the forum.
+      hero_image_position_label: Hero Image Position
+      hero_image_position_help: "CSS background-position, e.g. 'center top' or 'center 20%'."
+      search_v1_label: Enable V1 search bar style
+      search_v1_help: Show the inline search dropdown instead of the V2 modal.
+      show_share_label: Show Share button on posts
+      show_share_help: Add a Share action button to each post.
+      show_action_icons_label: Show icons on Like and Reply buttons
+      show_action_icons_help: Display Font Awesome icons on the Like and Reply action buttons.
+      fixed_avatar_effect_label: Enable fixed avatar effect in discussion posts
+      fixed_avatar_effect_help: Keep the post avatar sticky while reading long comments on desktop.
+  forum:
+    actions:
+      share: Share
