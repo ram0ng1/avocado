@@ -87,7 +87,11 @@ const syncFixedAvatarBadges = (component) => {
   if (!postUser || !side || !badges) return;
 
   const isDesktop = window.matchMedia('(min-width: 768px)').matches;
-  const shouldInlineInHeader = settingEnabled('avocadoFixedAvatarEffect') && root.classList?.contains('CommentPost--fixedAvatar') && isDesktop;
+  const hasBadges = badges.querySelector('li') !== null;
+  const shouldInlineInHeader = settingEnabled('avocadoFixedAvatarEffect')
+    && root.classList?.contains('CommentPost--fixedAvatar')
+    && isDesktop
+    && hasBadges;
 
   if (!shouldInlineInHeader) {
     if (badges.parentElement !== side) {

@@ -146,6 +146,15 @@
   }
 }
 
+// Hide the skip-to-content link in mobile/tablet UI so it does not appear in the drawer/header list.
+@media @phone, @tablet {
+  a.sr-only.sr-only-focusable-custom[href="#content"],
+  .App-drawer .App-skipNav,
+  .App-drawer .App-skipLink {
+    display: none !important;
+  }
+}
+
 // Core Flarum collapses header search to 1px on tablet when input isn't focused.
 // Keep V1 search visible in this breakpoint as well.
 @media @tablet {

@@ -54,6 +54,11 @@
 
     &.Post--by-start-user {
       --avocado-avatar-sticky-top: 84px;
+
+      .PostUser-name .username {
+        position: relative;
+        top: -1px;
+      }
     }
 
     .Post-main {
@@ -64,22 +69,50 @@
       position: static;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 2px;
       width: auto;
       margin: 0;
-      margin-left: 6px;
-      margin-right: 2px;
+      margin-left: 4px;
+      margin-right: 0;
       float: none;
       text-align: left;
       pointer-events: auto;
       white-space: nowrap;
       z-index: 4;
       vertical-align: middle;
-      transform: translateY(-1px);
+      transform: none;
     }
 
     .Post-header .PostUser > .PostUser-badges.PostUser-badges--inPostHeader > li {
       margin: 0;
+      line-height: 1;
+      position: relative;
+      left: 4px;
+      top: -3px;
+    }
+
+    .Post-header .PostUser > .PostUser-badges.PostUser-badges--inPostHeader > li .Badge {
+      --size: 18px;
+      width: var(--size);
+      height: var(--size);
+      min-width: var(--size);
+      padding: 0;
+      box-sizing: border-box;
+      line-height: var(--size);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+    }
+
+    .Post-header .PostUser > .PostUser-badges.PostUser-badges--inPostHeader > li .Badge-icon,
+    .Post-header .PostUser > .PostUser-badges.PostUser-badges--inPostHeader > li .Badge .icon {
+      font-size: 10px;
+      line-height: 1;
+      margin: 0;
+      width: 1em;
+      text-align: center;
+      display: inline-block;
     }
   }
 
