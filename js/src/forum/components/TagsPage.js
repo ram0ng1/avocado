@@ -51,7 +51,7 @@ export default class AvocadoTagsPage {
             {children && children.length ? (
               <div className="Avocado-TagTile-children">
                 {children.map((child) => [
-                  <Link key={`tag-child-${child.id()}`} href={app.route.tag(child)} className="TagLabel">{child.name()}</Link>,
+                  <Link href={app.route.tag(child)} className="TagLabel">{child.name()}</Link>,
                   ' ',
                 ])}
               </div>
@@ -77,6 +77,6 @@ export default class AvocadoTagsPage {
 
   // Called via override(): first arg is original function, second is cloud tags array
   cloudView(_, cloud) {
-    return <div className="Avocado-TagCloud">{cloud.map((tag) => [tagLabel(tag, { link: true, key: `tag-cloud-${tag.id()}` }), ' '])}</div>;
+    return <div className="Avocado-TagCloud">{cloud.map((tag) => [tagLabel(tag, { link: true }), ' '])}</div>;
   }
 }
