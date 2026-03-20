@@ -491,6 +491,7 @@ app.initializers.add(
 
     // ── 13. WelcomeHero isHidden + view overrides ──────────────────────────────
     override(WelcomeHero.prototype, 'isHidden', function (original) {
+      if (customHomeEnabled()) return true;  // V2 home has its own banner
       if (app.forum?.attribute('avocadoHeroImage')) return false;
       return original();
     });

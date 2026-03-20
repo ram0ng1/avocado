@@ -338,18 +338,28 @@ export default class HomePage extends Component {
 
   renderReplyCard(discussion) {
     const lastPoster = discussion.lastPostedUser?.();
-    const lastPostedAt = discussion.lastPostedAt?.();
-    if (!lastPoster && !lastPostedAt) return null;
+    const lastPost = discussion.lastPost?.();
+    const replies = this.replyCount(discussion);
+    if (!lastPoster && !lastPost) return null;
+
+    const rawText = lastPost?.contentPlain?.() || '';
+    const preview = rawText ? rawText.slice(0, 100) + (rawText.length > 100 ? '…' : '') : '';
+    const otherCount = replies - 1;
 
     return (
       <div className="AvocadoHome-replyCard">
-        <div className="AvocadoHome-replyCard-avatar">
-          {this.renderAvatar(lastPoster)}
-        </div>
-        <div className="AvocadoHome-replyCard-info">
+        <div className="AvocadoHome-replyCard-line">
+          <div className="AvocadoHome-replyCard-avatar">
+            {this.renderAvatar(lastPoster)}
+          </div>
           <span className="AvocadoHome-replyCard-name">{displayName(lastPoster)}</span>
-          <span className="AvocadoHome-replyCard-time">{formatTimeLabel(lastPostedAt)}</span>
+          {preview && <span className="AvocadoHome-replyCard-text">{preview}</span>}
         </div>
+        {otherCount > 0 && (
+          <span className="AvocadoHome-replyCard-seeMore">
+            {trans('ramon-avocado.forum.home.see_other_replies', 'See other {count} replies', { count: otherCount })}
+          </span>
+        )}
       </div>
     );
   }
@@ -692,12 +702,11 @@ export default class HomePage extends Component {
                   oninput={(e) => { this.composerTitle = e.target.value; }}
                 />
               </div>
-              <textarea
+              <TextEditor
                 className="AvocadoHome-composerBody"
-                placeholder={trans('ramon-avocado.forum.home.composer_body_placeholder', 'Share your thoughts…')}
-                rows="4"
                 value={this.composerBody}
-                oninput={(e) => { this.composerBody = e.target.value; }}
+                placeholder={trans('ramon-avocado.forum.home.composer_body_placeholder', 'Share your thoughts…')}
+                oninput={(value) => { this.composerBody = value; m.redraw(); }}
               />
               <div className="AvocadoHome-composer-footer">
                 {this.renderTagPicker()}
@@ -763,9 +772,11 @@ export default class HomePage extends Component {
                       <span className="AvocadoHome-categoryCard-icon">
                         <i className={catIcon} aria-hidden="true" />
                       </span>
-                      <span className="AvocadoHome-categoryCard-name">{cat.name?.()}</span>
-                      <span className="AvocadoHome-categoryCard-count">
-                        {formatThreadCount(count)} {trans('ramon-avocado.forum.home.threads', 'threads')}
+                      <span className="AvocadoHome-categoryCard-text">
+                        <span className="AvocadoHome-categoryCard-name">{cat.name?.()}</span>
+                        <span className="AvocadoHome-categoryCard-count">
+                          {formatThreadCount(count)} {trans('ramon-avocado.forum.home.threads', 'threads')}
+                        </span>
                       </span>
                     </a>
                   );
@@ -779,8 +790,10 @@ export default class HomePage extends Component {
                     <span className="AvocadoHome-categoryCard-icon">
                       <i className="fas fa-ellipsis-h" aria-hidden="true" />
                     </span>
-                    <span className="AvocadoHome-categoryCard-name">
-                      +{extraCategories} {trans('ramon-avocado.forum.home.more', 'more')}
+                    <span className="AvocadoHome-categoryCard-text">
+                      <span className="AvocadoHome-categoryCard-name">
+                        +{extraCategories} {trans('ramon-avocado.forum.home.more', 'more')}
+                      </span>
                     </span>
                   </a>
                 )}
