@@ -1,18 +1,93 @@
 ramon-avocado:
   admin:
     settings:
+      section_homepage: Homepage
+      section_auth: Login & Registration
+      auth_image_label: Auth Modal Image
+      auth_image_help: Background image shown in the right panel of the login, sign up, and forgot password modals.
+      section_search: Search
+      section_posts: Posts
       banner_image_label: Banner Image
       banner_image_help: Upload the hero banner image displayed at the top of the forum.
+      home_enabled_label: Enable Avocado V2 homepage
+      home_enabled_help: Replace the default discussion list on the home page with the Avocado V2 feed layout (cards, categories, composer).
+      show_auth_buttons_label: Show Login / Sign Up buttons in header for guests
+      show_auth_buttons_help: Display Log In and Sign Up pill buttons in the header secondary nav for guests.
       hero_image_position_label: Hero Image Position
-      hero_image_position_help: "CSS background-position, e.g. 'center top' or 'center 20%'."
+      hero_image_position_help: "CSS background-position value, e.g. 'center top' or '50% 20%'."
       search_v1_label: Enable V1 search bar style
       search_v1_help: Show the inline search dropdown instead of the V2 modal.
       show_share_label: Show Share button on posts
       show_share_help: Add a Share action button to each post.
       show_action_icons_label: Show icons on Like and Reply buttons
       show_action_icons_help: Display Font Awesome icons on the Like and Reply action buttons.
-      fixed_avatar_effect_label: Enable fixed avatar effect in discussion posts
+      fixed_avatar_effect_label: Enable fixed avatar effect
       fixed_avatar_effect_help: Keep the post avatar sticky while reading long comments on desktop.
   forum:
     actions:
       share: Share
+    header:
+      log_in: Log In
+      sign_up: Sign Up
+    user:
+      discussions: Discussions
+      comments: Comments
+    tag:
+      thread_count: "{count} discussions"
+      discussion_singular: discussion
+      discussion_plural: discussions
+    discussion:
+      badge_sticky: Sticky
+      badge_locked: Locked
+      badge_following: Following
+    home:
+      all_categories: All categories
+      day_time: "{day}, {time}"
+      deleted_user: Deleted User
+      just_now: Just now
+      likes: likes
+      more_count: "{count} more"
+      new_thread: New discussion
+      no_threads: No discussions yet.
+      categories_title: Categories
+      popular_title: Popular discussions
+      action_image: Image
+      action_write: Write
+      post_placeholder: Tell everyone what are you working on...
+      all_title: All discussions
+      back_home: Home
+      see_all: See all
+      replies: replies
+      untitled: Untitled
+      reply: Reply
+      reply_label: Reply
+      like: Like
+      badge_sticky: Pinned
+      log_in: Log In
+      sign_up: Sign Up
+      start_discussion: "What's on your mind?"
+      composer_title_placeholder: "Discussion title…"
+      composer_body_placeholder: "Share your thoughts…"
+      composer_cancel: Cancel
+      composer_post: Post Discussion
+      composer_submitting: "Posting…"
+      no_tags: No tags available
+      categories_heading: Categories
+      threads: threads
+      more: more
+      popular_heading: Popular discussions
+      all_heading: All discussions
+      guest_cta_text: Want to join the conversation?
+      guest_cta_or: "or"
+      guest_hero_line1: Want to join the
+      guest_hero_line2: conversation?
+      guest_hero_free: Free to join
+      badge_pinned: Pinned
+      badge_following: Following
+      choose_tags: Choose tags
+      search_placeholder: Chats, messages and more
+      see_other_replies: See other {count} replies
+      threads_count: "{count} discussions"
+      today_time: "Today, {time}"
+      yesterday_label: Yesterday
+      yesterday_time: "Yesterday, {time}"

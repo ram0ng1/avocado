@@ -1,0 +1,570 @@
+// ── Avocado Discussion Page (/d/) ─────────────────────────────────────────────
+// Design goal: feels like still being on the homepage.
+// Hero = colored banner with back button, tag pills, large title, participant avatars.
+// Posts = chat bubbles (grey bg, top-left sharp corner matching avatar side).
+
+// ── Keyframe animations ────────────────────────────────────────────────────────
+@keyframes avocado-shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+@keyframes avocado-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
+}
+
+// ── Design tokens ─────────────────────────────────────────────────────────────
+.Page.DiscussionPage {
+  --disc-border:  #eaeaf0;
+  --disc-title:   #1f2025;
+  --disc-muted:   #a2a3ac;
+  --disc-text:    #43454e;
+  --disc-shadow:  0 10px 24px rgba(22, 22, 33, 0.05);
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  background: #fff;
+}
+
+// ── DiscussionHero ─────────────────────────────────────────────────────────────
+// Colored banner using --discussion-color from JS (first tag color).
+.DiscussionHero {
+  background: var(--discussion-color, var(--primary-color));
+
+  .container {
+    max-width: 1060px;
+    padding: 40px 12px 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+}
+
+// Nav row: back button + tag pills
+.DiscussionHero-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.DiscussionHero-back {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  border: none;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-right: 2px;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.28);
+  }
+
+  i { font-size: 14px; }
+}
+
+// Tag pills on hero — translucent white
+.DiscussionHero-tagPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+
+  i { font-size: 9px; opacity: 0.9; }
+}
+
+// Title — large, bold, white
+.DiscussionHero-title {
+  color: #fff !important;
+  font-size: clamp(22px, 4vw, 44px) !important;
+  font-weight: 900 !important;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif !important;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin: 0 !important;
+  max-width: 760px;
+}
+
+// Meta row: participant avatars + post count
+.DiscussionHero-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+}
+
+.DiscussionHero-participants {
+  display: flex;
+  align-items: center;
+}
+
+.DiscussionHero-participantAvatar,
+.DiscussionHero-participantFallback {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  margin-left: -8px;
+  object-fit: cover;
+  display: block;
+
+  &:first-child { margin-left: 0; }
+}
+
+.DiscussionHero-participantFallback {
+  background: rgba(255, 255, 255, 0.28);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.DiscussionHero-metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  i { font-size: 13px; }
+}
+
+// ── Page layout ────────────────────────────────────────────────────────────────
+.Page.DiscussionPage .Page-container.container {
+  max-width: 1060px;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+// ── CommentPost: bubble style ─────────────────────────────────────────────────
+// No card border — the visual "card" is the grey bubble inside each post.
+.Page.DiscussionPage .CommentPost {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 0 36px !important;
+  box-shadow: none !important;
+
+  &:hover {
+    box-shadow: none !important;
+  }
+}
+
+// Desktop: flex row — avatar (left) + content (right)
+@media @desktop-up {
+  .Page.DiscussionPage {
+    .CommentPost {
+      padding-left: 0 !important;
+    }
+
+    .CommentPost .Post-container {
+      display: flex !important;
+      flex-direction: row !important;
+      gap: 14px !important;
+      align-items: flex-start;
+      padding: 0;
+    }
+
+    .CommentPost .Post-side {
+      position: static !important;
+      width: 48px !important;
+      flex-shrink: 0;
+      top: auto !important;
+      left: auto !important;
+    }
+
+    .CommentPost .Post-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .CommentPost.CommentPost--fixedAvatar {
+      padding: 0 !important;
+      --avocado-avatar-sticky-top: 76px;
+
+      .Post-container {
+        display: grid !important;
+        grid-template-columns: 48px 1fr !important;
+        gap: 14px !important;
+        align-items: start;
+      }
+    }
+  }
+}
+
+// Mobile
+@media @phone, @tablet {
+  .Page.DiscussionPage .CommentPost {
+    padding: 0 !important;
+  }
+}
+
+// Avatar — 48px circle with shadow
+.Page.DiscussionPage .CommentPost .Post-side .Avatar,
+.Page.DiscussionPage .CommentPost .Post-side a .Avatar {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 999px !important;
+  font-size: 17px !important;
+  line-height: 48px !important;
+  flex-shrink: 0;
+  display: block;
+  border: 2px solid #fff !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.10) !important;
+}
+
+// ── Post header: author + time ────────────────────────────────────────────────
+.Page.DiscussionPage .Post-header {
+  padding: 0 !important;
+  margin-bottom: 6px;
+  border-bottom: none !important;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px 7px;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+}
+
+.Page.DiscussionPage .PostUser {
+  display: contents !important;
+}
+
+.Page.DiscussionPage .PostUser > li {
+  padding: 0 !important;
+  margin: 0 !important;
+  list-style: none !important;
+}
+
+.Page.DiscussionPage .PostUser .UserOnline {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #4ec46a;
+  flex-shrink: 0;
+}
+
+.Page.DiscussionPage .PostUser-name .username {
+  font-weight: 800 !important;
+  font-size: 14px !important;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif !important;
+  color: #1f2025 !important;
+  text-decoration: none !important;
+
+  &:hover { text-decoration: underline !important; }
+}
+
+.Page.DiscussionPage .PostUser .PostUser-badges {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 2px;
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+
+  li { margin: 0 !important; }
+
+  .Badge {
+    --size: 18px !important;
+    width: var(--size) !important;
+    height: var(--size) !important;
+    line-height: var(--size) !important;
+    font-size: 9px !important;
+  }
+}
+
+.Page.DiscussionPage .PostMeta {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif !important;
+  color: #a2a3ac !important;
+  list-style: none !important;
+  padding: 0 !important;
+
+  li { padding: 0 !important; margin: 0 !important; list-style: none !important; }
+  a { color: inherit !important; text-decoration: none !important; }
+  a:hover { color: var(--primary-color) !important; }
+}
+
+// ── Post body — the chat BUBBLE ────────────────────────────────────────────────
+// Grey background, top-left corner is sharp (adjacent to avatar side).
+.Page.DiscussionPage .Post-body {
+  background: #f5f5f7 !important;
+  border: 1px solid #eaeaf0 !important;
+  border-radius: 21px !important;
+  border-top-left-radius: 0 !important; // chat bubble effect
+  padding: 18px 20px !important;
+  font-size: 15px;
+  line-height: 1.65;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  color: #3a3c45;
+
+  p { margin: 0 0 12px; }
+  p:last-child { margin-bottom: 0; }
+
+  h1, h2, h3, h4 {
+    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #1f2025;
+  }
+
+  code, pre {
+    font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+    font-size: 13px;
+  }
+
+  pre {
+    background: #18181b;
+    color: #fff;
+    padding: 14px 16px;
+    border-radius: 10px;
+    overflow-x: auto;
+    margin: 10px 0;
+  }
+
+  blockquote {
+    border-left: 3px solid #dfe0e8;
+    padding-left: 12px;
+    color: #a2a3ac;
+    font-style: italic;
+    margin: 8px 0;
+  }
+
+  a {
+    color: var(--primary-color);
+    text-decoration: none;
+    &:hover { text-decoration: underline; }
+  }
+}
+
+// ── Post footer: minimal action buttons ──────────────────────────────────────
+.Page.DiscussionPage .Post-footer {
+  margin-top: 8px !important;
+  padding-top: 0 !important;
+  border-top: none !important;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.Page.DiscussionPage .Post-footer .Button.Button--link,
+.Page.DiscussionPage .Post-footer .avocado-action-btn {
+  background: transparent !important;
+  border-radius: 8px !important;
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif !important;
+  color: #8d8f98 !important;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s ease, color 0.15s ease !important;
+  text-decoration: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  cursor: pointer;
+
+  &:hover, &:focus {
+    background: #f0f1f5 !important;
+    color: #50525e !important;
+  }
+
+  &:active {
+    background: #e8eaf0 !important;
+  }
+
+  .Button-icon, i { font-size: 13px; line-height: 1; }
+
+  .Button-label, .avocado-action-label {
+    font-family: "DM Sans Variable", "DM Sans", sans-serif !important;
+    font-weight: 800 !important;
+  }
+}
+
+.Page.DiscussionPage .Post-footer .Button--liked,
+.Page.DiscussionPage .Post-footer .avocado-share-done {
+  color: var(--primary-color) !important;
+}
+
+// ── EventPost: transparent / muted ───────────────────────────────────────────
+.Page.DiscussionPage .EventPost {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 2px 0 !important;
+  margin: -6px 0 !important;
+
+  .Post-body {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 4px 0 !important;
+    font-size: 13px;
+    color: #a2a3ac;
+  }
+}
+
+// ── ReplyPlaceholder ─────────────────────────────────────────────────────────
+.Page.DiscussionPage .ReplyPlaceholder {
+  background: #f8f8fa !important;
+  border: 1px solid #efeff4 !important;
+  border-radius: 18px !important;
+  margin: 8px 0 !important;
+  cursor: pointer;
+
+  &:hover {
+    background: #f4f4f8 !important;
+    border-color: #dfe0e8 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06) !important;
+  }
+
+  .Post-body {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 14px 16px !important;
+    color: #a0a0a8 !important;
+    font-size: 14px;
+    font-weight: 600;
+  }
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+.Page.DiscussionPage .Page-sidebar {
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+
+  .Button--primary {
+    border-radius: 100px !important;
+    font-family: "DM Sans Variable", "DM Sans", sans-serif !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.01em;
+  }
+
+  .SplitDropdown .Button--primary + .Button {
+    border-radius: 0 100px 100px 0 !important;
+  }
+
+  .SplitDropdown .Button--primary:first-child {
+    border-radius: 100px 0 0 100px !important;
+  }
+
+  .Scrubber-index, .Scrubber-description {
+    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    font-weight: 700;
+  }
+
+  .Scrubber-first, .Scrubber-last {
+    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    font-size: 12px;
+    opacity: 0.65;
+  }
+
+  p, span, a {
+    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  }
+}
+
+// ── Skeleton loading (neutral grey) ──────────────────────────────────────────
+.DiscussionPage--skeleton {
+  .Page-main { display: block; }
+
+  .AvocadoSkeleton-discussionHero {
+    background: linear-gradient(90deg, #f0f0f5 25%, #e8e8f0 50%, #f0f0f5 75%);
+    background-size: 400% 100%;
+    animation: avocado-shimmer 1.8s ease infinite;
+    border-bottom: 1px solid #eaeaf0;
+
+    .container {
+      max-width: 1060px;
+      padding: 40px 12px 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+  }
+
+  .AvocadoSkeleton-tag {
+    height: 22px;
+    width: 72px;
+    border-radius: 100px;
+    background: rgba(0, 0, 0, 0.07);
+  }
+
+  .AvocadoSkeleton-title {
+    height: 40px;
+    width: 55%;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  .AvocadoSkeleton-stream {
+    max-width: 1060px;
+    margin: 0 auto;
+    padding: 22px 12px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+  }
+
+  .AvocadoSkeleton-post {
+    display: flex;
+    gap: 14px;
+    animation: avocado-pulse 1.5s ease-in-out infinite;
+
+    &:nth-child(2) { animation-delay: 0.18s; }
+    &:nth-child(3) { animation-delay: 0.36s; }
+  }
+
+  .AvocadoSkeleton-postAvatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    flex-shrink: 0;
+    background: #ebebf0;
+  }
+
+  .AvocadoSkeleton-postBody {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 2px;
+  }
+
+  .AvocadoSkeleton-line {
+    border-radius: 6px;
+    background: #ebebf0;
+
+    &--sm  { height: 12px; width: 36%; }
+    &--md  { height: 12px; width: 65%; }
+    &--lg  { height: 60px; width: 100%; border-radius: 21px; border-top-left-radius: 0; }
+  }
+}

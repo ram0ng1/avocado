@@ -1,35 +1,64 @@
 import { extend, override } from 'flarum/common/extend';
 import DiscussionListItem from 'flarum/forum/components/DiscussionListItem';
+import DiscussionListState from 'flarum/forum/states/DiscussionListState';
 import GlobalSearch from 'flarum/forum/components/GlobalSearch';
 import Search from 'flarum/forum/components/Search';
+import HeaderSecondary from 'flarum/forum/components/HeaderSecondary';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
+import IndexPage from 'flarum/forum/components/IndexPage';
 import CommentPost from 'flarum/forum/components/CommentPost';
 import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
 import WelcomeHero from 'flarum/forum/components/WelcomeHero';
 import TagsPage from 'ext:flarum/tags/forum/components/TagsPage';
+import UserCard from 'flarum/forum/components/UserCard';
+import UserPage from 'flarum/forum/components/UserPage';
+import DiscussionHero from 'flarum/forum/components/DiscussionHero';
+import DiscussionPage from 'flarum/forum/components/DiscussionPage';
+import Tooltip from 'flarum/common/components/Tooltip';
 import AvocadoTagsPage from './components/TagsPage';
+import HomePage from './components/HomePage';
 import { truncate } from 'flarum/common/utils/string';
 
-const parseBoolean = (value, defaultValue = true) => {
-  if (value === null || value === undefined || value === '') return defaultValue;
-  if (typeof value === 'boolean') return value;
-  if (typeof value === 'number') return value !== 0;
-
-  const normalized = String(value).trim().toLowerCase();
-
-  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
-  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
-
-  return Boolean(value);
-};
-
-// Checked at render time — not at boot time.
+// PHP side uses boolval in serializeToForum, so values arrive as true/false/null.
 const settingEnabled = (key, defaultValue = true) => {
-  return parseBoolean(app.forum?.attribute(key), defaultValue);
+  const val = app.forum?.attribute(key);
+  if (val === null || val === undefined) return defaultValue;
+  return !!val;
 };
 
-const trans = (key, fallback) => {
-  const out = app.translator?.trans(key);
+const hasIndexFilters = () => {
+  // 'sort' is intentionally excluded so /?sort=latest still shows the custom home.
+  return ['q', 'tags', 'page'].some((name) => {
+    const value = m.route.param(name);
+    return value !== null && value !== undefined && String(value).length > 0;
+  });
+};
+
+const customHomeEnabled = () => {
+  return settingEnabled('avocadoHomeEnabled', false) && !hasIndexFilters();
+};
+
+const setClassName = (vdom, className, enabled) => {
+  if (!vdom?.attrs) return;
+
+  const current = typeof vdom.attrs.className === 'string' ? vdom.attrs.className : '';
+  const classes = current.split(/\s+/).filter(Boolean);
+  const hasClass = classes.includes(className);
+
+  if (enabled && !hasClass) {
+    classes.push(className);
+  }
+
+  if (!enabled && hasClass) {
+    vdom.attrs.className = classes.filter((name) => name !== className).join(' ');
+    return;
+  }
+
+  vdom.attrs.className = classes.join(' ');
+};
+
+const trans = (key, fallback, params) => {
+  const out = app.translator?.trans(key, params);
   return out && out !== key ? out : fallback;
 };
 
@@ -48,6 +77,15 @@ const resolveAssetUrl = (assetPath) => {
   }
 
   return String(assetPath);
+};
+
+const hexToRgba = (hex, alpha = 1) => {
+  if (!hex) return `rgba(0,0,0,${alpha})`;
+  const h = hex.replace('#', '');
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
 };
 
 const getPostPermalink = (post) => {
@@ -127,10 +165,312 @@ const queueSyncFixedAvatarBadges = (component) => {
   setTimeout(() => syncFixedAvatarBadges(component), 120);
 };
 
+// Resolve the current tag from the route (e.g. /t/azul → tag "azul").
+const getCurrentTag = () => {
+  const tagSlug = m.route.param('tags');
+  if (!tagSlug) return null;
+  return app.store.getBy('tags', 'slug', tagSlug) || null;
+};
+
 app.initializers.add(
   'ramon-avocado',
   () => {
-    // ── Sidebar nav preload (avoid temporary "Loading..." item) ─────────────
+    // ── 1. Theme class on <html> ──────────────────────────────────────────────
+    if (settingEnabled('avocadoHomeEnabled', false)) {
+      document.documentElement.classList.add('avocado-theme');
+    }
+
+    // ── 2. UserCard stats row ─────────────────────────────────────────────────
+    extend(UserCard.prototype, 'contentItems', function (items) {
+      const user = this.attrs.user;
+      if (!user) return;
+      const discussions = user.discussionCount?.() ?? 0;
+      const comments = user.commentCount?.() ?? 0;
+      items.add(
+        'avocadoStats',
+        <div className="AvocadoUserCard-stats">
+          <div className="AvocadoUserCard-stat">
+            <strong>{discussions}</strong>
+            <span>{trans('ramon-avocado.forum.user.discussions', 'Discussions')}</span>
+          </div>
+          <div className="AvocadoUserCard-stat">
+            <strong>{comments}</strong>
+            <span>{trans('ramon-avocado.forum.user.comments', 'Comments')}</span>
+          </div>
+        </div>,
+        -10
+      );
+    });
+
+    // ── 3. UserPage loading class ─────────────────────────────────────────────
+    extend(UserPage.prototype, 'view', function (vdom) {
+      if (!this.user && vdom?.attrs) {
+        vdom.attrs.className = ((vdom.attrs.className || '') + ' UserPage--loading').trim();
+      }
+    });
+
+    // ── 4. DiscussionHero: custom hero with back button, tag pills, title, participants ──
+    override(DiscussionHero.prototype, 'view', function (original, vnode) {
+      const discussion = this.attrs.discussion;
+      if (!discussion) return original(vnode);
+
+      const tags = (discussion.tags?.() || []).filter(Boolean);
+      const firstTag = tags[0] || null;
+      const color = firstTag?.color?.() || 'var(--primary-color)';
+      const title = discussion.title?.() || '';
+      const replyCount = discussion.replyCount?.() || 0;
+      const postCount = replyCount + 1;
+
+      // Collect unique participants
+      const participantMap = new Map();
+      const author = discussion.user?.();
+      if (author) {
+        const id = author.id?.();
+        if (id) participantMap.set(id, author);
+      }
+      const lastPoster = discussion.lastPostedUser?.();
+      if (lastPoster) {
+        const id = lastPoster.id?.();
+        if (id && !participantMap.has(id)) participantMap.set(id, lastPoster);
+      }
+      try {
+        app.store.all('posts').forEach((post) => {
+          const disc = post.discussion?.();
+          if (disc && disc.id?.() === discussion.id?.()) {
+            const user = post.user?.();
+            if (user) {
+              const id = user.id?.();
+              if (id && !participantMap.has(id)) participantMap.set(id, user);
+            }
+          }
+        });
+      } catch (e) {}
+      const participants = Array.from(participantMap.values());
+
+      const renderParticipantAvatar = (user) => {
+        if (!user) return null;
+        const avatarUrl = user.avatarUrl?.();
+        const username = user.username?.();
+        const initials = username ? username.substring(0, 2).toUpperCase() : '??';
+        return avatarUrl
+          ? m('img.DiscussionHero-participantAvatar', {
+              key: user.id?.(),
+              src: avatarUrl,
+              alt: username,
+              title: username,
+            })
+          : m(
+              'div.DiscussionHero-participantFallback',
+              { key: user.id?.(), title: username },
+              initials
+            );
+      };
+
+      return (
+        <header className="DiscussionHero" style={{ '--discussion-color': color }}>
+          <div className="container">
+            <div className="DiscussionHero-nav">
+              <button
+                className="DiscussionHero-back"
+                onclick={() => {
+                  if (window.history.length > 1) window.history.back();
+                  else m.route.set(app.route('index'));
+                }}
+                aria-label="Back"
+              >
+                <i className="fas fa-arrow-left" aria-hidden="true" />
+              </button>
+              {tags.slice(0, 3).map((tag) => (
+                <span key={tag.id()} className="DiscussionHero-tagPill">
+                  {tag.icon() && <i className={tag.icon()} aria-hidden="true" />}
+                  {tag.name()}
+                </span>
+              ))}
+            </div>
+            <h1 className="DiscussionHero-title">{title}</h1>
+            <div className="DiscussionHero-meta">
+              {participants.length > 0 && (
+                <div className="DiscussionHero-participants">
+                  {participants.map(renderParticipantAvatar)}
+                </div>
+              )}
+              <span className="DiscussionHero-metaItem">
+                <i className="far fa-comment" aria-hidden="true" />
+                {postCount} {postCount === 1 ? 'post' : 'posts'}
+              </span>
+            </div>
+          </div>
+        </header>
+      );
+    });
+
+    // ── 5. DiscussionPage skeleton override ───────────────────────────────────
+    override(DiscussionPage.prototype, 'view', function (original, vnode) {
+      if (this.discussion) return original(vnode);
+
+      return (
+        <div className="Page DiscussionPage DiscussionPage--skeleton">
+          <div className="Page-main">
+            <div className="AvocadoSkeleton-discussionHero">
+              <div className="container">
+                <div className="AvocadoSkeleton-tag" />
+                <div className="AvocadoSkeleton-title" />
+              </div>
+            </div>
+            <div className="AvocadoSkeleton-stream container">
+              {[0, 1, 2].map((i) => (
+                <div key={String(i)} className="AvocadoSkeleton-post">
+                  <div className="AvocadoSkeleton-postAvatar" />
+                  <div className="AvocadoSkeleton-postBody">
+                    <div className="AvocadoSkeleton-line AvocadoSkeleton-line--sm" />
+                    <div className="AvocadoSkeleton-line AvocadoSkeleton-line--lg" />
+                    <div className="AvocadoSkeleton-line AvocadoSkeleton-line--md" />
+                    <div className="AvocadoSkeleton-line AvocadoSkeleton-line--sm" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    });
+
+    // ── 6. Auth modal panel injection via MutationObserver ────────────────────
+    const injectAuthModalPanels = (modalEl) => {
+      if (!modalEl) return;
+      if (modalEl.querySelector('.AvocadoAuth-panel')) return;
+
+      const authImage = app.forum?.attribute('avocadoAuthImage');
+      const heroImage = app.forum?.attribute('avocadoHeroImage');
+      const rawUrl = authImage || heroImage || null;
+      const heroUrl = rawUrl ? resolveAssetUrl(rawUrl) : null;
+      const forumTitle = app.forum?.attribute('title') || '';
+      const forumDesc = app.forum?.attribute('description') || '';
+
+      const panel = document.createElement('div');
+      panel.className = 'AvocadoAuth-panel';
+      if (heroUrl) {
+        panel.style.backgroundImage = `url(${heroUrl})`;
+        panel.style.backgroundSize = 'cover';
+        panel.style.backgroundPosition = 'center top';
+      }
+
+      const overlay = document.createElement('div');
+      overlay.className = 'AvocadoAuth-panelOverlay';
+
+      const content = document.createElement('div');
+      content.className = 'AvocadoAuth-panelContent';
+      content.innerHTML = `<strong class="AvocadoAuth-panelTitle">${forumTitle}</strong>${forumDesc ? `<p class="AvocadoAuth-panelDesc">${forumDesc}</p>` : ''}`;
+
+      panel.appendChild(overlay);
+      panel.appendChild(content);
+      modalEl.insertBefore(panel, modalEl.firstChild);
+    };
+
+    const authObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType !== 1) return;
+          const modal = node.querySelector?.('.Modal-content') || (node.classList?.contains('Modal-content') ? node : null);
+          if (modal) injectAuthModalPanels(modal);
+        });
+      });
+    });
+
+    authObserver.observe(document.body, { childList: true, subtree: true });
+
+    // ── 7. HeaderSecondary auth buttons for guest users ───────────────────────
+    extend(HeaderSecondary.prototype, 'items', function (items) {
+      if (app.session.user) return;
+      if (!settingEnabled('avocadoShowAuthButtons', false)) return;
+
+      items.add(
+        'avocado-login',
+        <button
+          className="Button Button--link AvocadoHeader-authBtn AvocadoHeader-authBtn--login"
+          onclick={() => app.modal.show(() => import('flarum/forum/components/LogInModal').then((m) => m.default))}
+        >
+          {trans('ramon-avocado.forum.header.log_in', 'Log In')}
+        </button>,
+        10
+      );
+
+      items.add(
+        'avocado-signup',
+        <button
+          className="Button Button--primary AvocadoHeader-authBtn AvocadoHeader-authBtn--signup"
+          onclick={() => app.modal.show(() => import('flarum/forum/components/SignUpModal').then((m) => m.default))}
+        >
+          {trans('ramon-avocado.forum.header.sign_up', 'Sign Up')}
+        </button>,
+        9
+      );
+    });
+
+    // ── 8. DiscussionListState requestParams (include first/last post) ─────────
+    extend(DiscussionListState.prototype, 'requestParams', function (params) {
+      params.include = params.include || [];
+      const include = Array.isArray(params.include) ? params.include : String(params.include).split(',');
+      const toAdd = ['firstPost', 'lastPostedUser', 'lastPost', 'lastPost.user'];
+      toAdd.forEach((rel) => {
+        if (!include.includes(rel)) include.push(rel);
+      });
+      params.include = include;
+    });
+
+    // ── 9. IndexPage contentItems: swap to HomePage when avocadoHomeEnabled ───
+    extend(IndexPage.prototype, 'contentItems', function (items) {
+      if (!customHomeEnabled()) return;
+      if (items.has('discussionList')) {
+        items.remove('discussionList');
+      }
+      items.add('avocadoHome', <HomePage />, 100);
+    });
+
+    // ── 10. IndexPage view: setClassName for avocadoHome and avocadoTag ────────
+    extend(IndexPage.prototype, 'view', function (vdom) {
+      if (!vdom) return;
+      setClassName(vdom, 'IndexPage--avocadoHome', customHomeEnabled());
+      const currentTag = getCurrentTag();
+      setClassName(vdom, 'IndexPage--avocadoTag', !!currentTag);
+    });
+
+    // ── 11. IndexPage hero override: custom tag hero on /t/slug ───────────────
+    override(IndexPage.prototype, 'hero', function (original) {
+      const currentTag = getCurrentTag();
+      if (!currentTag) return original();
+
+      const tagColor = currentTag.color?.() || 'var(--primary-color)';
+      const tagIcon = currentTag.icon?.();
+      const tagName = currentTag.name?.() || '';
+      const tagDesc = currentTag.description?.() || '';
+      const discussionCount = currentTag.discussionCount?.() ?? 0;
+
+      return (
+        <header className="AvocadoTagHero" style={{ '--tag-color': tagColor }}>
+          <div className="container">
+            <div className="AvocadoTagHero-inner">
+              {tagIcon && (
+                <span className="AvocadoTagHero-icon">
+                  <i className={tagIcon} aria-hidden="true" />
+                </span>
+              )}
+              <div className="AvocadoTagHero-text">
+                <h1 className="AvocadoTagHero-title">{tagName}</h1>
+                {tagDesc && <p className="AvocadoTagHero-desc">{tagDesc}</p>}
+              </div>
+              <span className="AvocadoTagHero-count">
+                {discussionCount} {discussionCount === 1
+                  ? trans('ramon-avocado.forum.tag.discussion_singular', 'discussion')
+                  : trans('ramon-avocado.forum.tag.discussion_plural', 'discussions')}
+              </span>
+            </div>
+          </div>
+        </header>
+      );
+    });
+
+    // ── 12. IndexSidebar preload + items + navItems ────────────────────────────
     if (app.tagList?.load) {
       app.tagList.load(['children', 'parent']).catch(() => {});
     }
@@ -149,15 +489,7 @@ app.initializers.add(
       }
     });
 
-    // ── WelcomeHero banner override ───────────────────────────────────────────
-    // Checked at render time so it always sees the current setting value.
-    //
-    // Problem 1: isHidden() returns true when welcomeTitle is empty, so the
-    //            hero element never mounts and the banner can never appear.
-    // Problem 2: relying on CSS variables set at boot time can miss re-renders.
-    // Solution:  override view() to apply backgroundImage as an inline style
-    //            directly on the element — no CSS variable needed.
-
+    // ── 13. WelcomeHero isHidden + view overrides ──────────────────────────────
     override(WelcomeHero.prototype, 'isHidden', function (original) {
       if (app.forum?.attribute('avocadoHeroImage')) return false;
       return original();
@@ -168,13 +500,9 @@ app.initializers.add(
 
       if (!heroImage) return original(vnode);
 
-      // Build the full URL — support both uploaded filename and manual full URL.
       const heroUrl = resolveAssetUrl(heroImage);
-
       const pos = app.forum?.attribute('avocadoHeroImagePosition') || 'center top';
 
-      // <img> instead of background-image: discoverable by preload scanner,
-      // fetchpriority="high" tells the browser this is the LCP element.
       const imgEl = (
         <img
           src={heroUrl}
@@ -199,26 +527,25 @@ app.initializers.add(
         return result;
       }
 
-      // Hero returned null (no welcomeTitle) — render bare hero for the banner
       return <header className="Hero WelcomeHero Hero--banner">{imgEl}</header>;
     });
 
-    // ── TagsPage ──────────────────────────────────────────────────────────────
+    // ── 14. TagsPage override ─────────────────────────────────────────────────
     override(TagsPage.prototype, 'tagTileListView', AvocadoTagsPage.prototype.tagTileListView);
     override(TagsPage.prototype, 'tagTileView', AvocadoTagsPage.prototype.tagTileView);
     override(TagsPage.prototype, 'cloudView', AvocadoTagsPage.prototype.cloudView);
 
-    // ── V1 Search — always registered, checked on each render ─────────────────
+    // ── 15. GlobalSearch view override (V1 search) ────────────────────────────
     override(GlobalSearch.prototype, 'view', function (original, ...args) {
       if (!settingEnabled('avocadoSearchV1')) return original.apply(this, args);
       return <Search state={this.searchState} />;
     });
 
+    // ── 16. Search view extend (V1 search icons + truncate) ───────────────────
     extend(Search.prototype, 'view', function (vnode) {
       if (!settingEnabled('avocadoSearchV1')) return;
       if (!vnode || !Array.isArray(vnode.children)) return;
 
-      // ── Search-input: inject prefix icon ──────────────────────────────────
       const searchInput = vnode.children.find(
         (c) => c && c.attrs && typeof c.attrs.className === 'string' && c.attrs.className.includes('Search-input')
       );
@@ -229,7 +556,6 @@ app.initializers.add(
         }
       }
 
-      // ── Excerpt: truncate to 200 chars ────────────────────────────────────
       const walkAndTruncate = (node) => {
         if (!node || typeof node !== 'object') return;
         if (Array.isArray(node)) { node.forEach(walkAndTruncate); return; }
@@ -268,7 +594,7 @@ app.initializers.add(
       walkAndTruncate(vnode);
     });
 
-    // ── DiscussionListItem ────────────────────────────────────────────────────
+    // ── 17. DiscussionListItem elementAttrs (tag color + unread class) ─────────
     extend(DiscussionListItem.prototype, 'elementAttrs', function (attrs) {
       if (this.attrs.discussion.tags()?.[0]?.color()) {
         attrs.style = { '--tag-color': this.attrs.discussion.tags()[0].color(), ...(attrs.style || {}) };
@@ -278,11 +604,13 @@ app.initializers.add(
       }
     });
 
+    // ── 18. CommentPost elementAttrs (fixedAvatar class) ──────────────────────
     extend(CommentPost.prototype, 'elementAttrs', function (attrs) {
       if (!settingEnabled('avocadoFixedAvatarEffect')) return;
       attrs.className = `${attrs.className || ''} CommentPost--fixedAvatar`;
     });
 
+    // ── 19. CommentPost oncreate/onupdate (queueSyncFixedAvatarBadges) ─────────
     extend(CommentPost.prototype, 'oncreate', function () {
       queueSyncFixedAvatarBadges(this);
     });
@@ -291,7 +619,7 @@ app.initializers.add(
       queueSyncFixedAvatarBadges(this);
     });
 
-    // ── Share button — always registered, checked on each render ──────────────
+    // ── 20. CommentPost actionItems (share button) ────────────────────────────
     extend(CommentPost.prototype, 'actionItems', function (items) {
       if (!settingEnabled('avocadoShowShare')) return;
       const post = this.attrs.post;
@@ -323,7 +651,7 @@ app.initializers.add(
       );
     });
 
-    // ── Reply icon override ───────────────────────────────────────────────────
+    // ── 21. DiscussionControls userControls (reply icon) ──────────────────────
     extend(DiscussionControls, 'userControls', function (items) {
       if (!items.has('reply')) return;
       const reply = items.get('reply');
@@ -332,12 +660,12 @@ app.initializers.add(
       }
     });
 
-    // ── Like/Reply action icons — always registered, checked on each render ───
+    // ── 22. CommentPost actionItems (like/reply icons) ────────────────────────
     extend(CommentPost.prototype, 'actionItems', function (items) {
       if (!settingEnabled('avocadoShowActionIcons')) return;
       if (items.has('like')) {
         const post = this.attrs.post;
-        const likes = post.likes();
+        const likes = post.likes?.();
         const isLiked = app.session.user && likes && likes.some((user) => user === app.session.user);
         const like = items.get('like');
         if (like && like.attrs) {
@@ -352,7 +680,7 @@ app.initializers.add(
       }
     });
 
-    // ── Excerpt in discussion list ─────────────────────────────────────────────
+    // ── 23. DiscussionListItem infoItems (excerpt) ────────────────────────────
     extend(DiscussionListItem.prototype, 'infoItems', function (items) {
       if (!items.has('excerpt')) {
         const firstPost = this.attrs.discussion.firstPost();

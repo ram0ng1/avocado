@@ -1,0 +1,875 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Avocado HomePage – custom feed UI
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Skeleton shimmer animation (neutral grey only – never primary color)
+@keyframes avocado-shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+
+// ─── Root wrapper ────────────────────────────────────────────────────────────
+
+.AvocadoHome {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 0 48px;
+}
+
+.AvocadoHome-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+// ─── Hero banner ─────────────────────────────────────────────────────────────
+
+.AvocadoHome-heroBanner {
+  width: 100%;
+  min-height: 220px;
+  display: flex;
+  align-items: stretch;
+  border-radius: @border-radius @border-radius 0 0;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.AvocadoHome-heroBannerOverlay {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.08) 0%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+  padding: 32px 20px 28px;
+
+  .container {
+    width: 100%;
+    padding: 0;
+  }
+}
+
+.AvocadoHome-heroBannerTitle {
+  margin: 0 0 6px;
+  font-size: clamp(24px, 5vw, 42px);
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.1;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+.AvocadoHome-heroBannerDesc {
+  margin: 0 0 16px;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+// ─── Guest CTA ───────────────────────────────────────────────────────────────
+
+.AvocadoHome-guestCTA {
+  background: var(--control-bg);
+  border-radius: @border-radius;
+  padding: 20px;
+  margin: 12px 0 16px;
+  text-align: center;
+
+  p {
+    margin: 0 0 12px;
+    font-size: 15px;
+    color: var(--muted-color);
+  }
+}
+
+.AvocadoHome-guestCTA-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.AvocadoHome-guestCTA-or {
+  font-size: 13px;
+  color: var(--muted-color);
+}
+
+.AvocadoHome-guestCTA-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+
+  &:hover { opacity: 0.85; }
+
+  i { font-size: 13px; }
+
+  &--login {
+    background: var(--control-bg);
+    color: var(--text-color);
+    border: 1px solid var(--control-bg-dark);
+  }
+
+  &--signup {
+    background: var(--primary-color);
+    color: #fff;
+  }
+}
+
+// ─── Post input (Facebook-style click-to-compose) ─────────────────────────────
+
+.AvocadoHome-postInput {
+  background: var(--body-bg);
+  border: 1px solid var(--control-bg-dark);
+  border-radius: @border-radius;
+  padding: 12px 14px;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb, 63, 136, 246), 0.1);
+  }
+}
+
+.AvocadoHome-postInput-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.AvocadoHome-avatar,
+.AvocadoHome-avatarFallback {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.AvocadoHome-avatarFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-color);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.AvocadoHome-postInput-placeholder {
+  flex: 1;
+  font-size: 14px;
+  color: var(--muted-color);
+}
+
+.AvocadoHome-postInput-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.AvocadoHome-postInput-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted-color);
+  background: var(--control-bg);
+
+  i { font-size: 11px; }
+
+  &--primary {
+    color: var(--primary-color);
+    background: var(--avocado-primary-bg);
+  }
+}
+
+// ─── Inline composer ─────────────────────────────────────────────────────────
+
+.AvocadoHome-composer {
+  background: var(--body-bg);
+  border: 1px solid var(--control-bg-dark);
+  border-radius: @border-radius;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.AvocadoHome-composer-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.AvocadoHome-composer-avatar {
+  flex-shrink: 0;
+
+  .AvocadoHome-avatar,
+  .AvocadoHome-avatarFallback {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+.AvocadoHome-composerTitle {
+  flex: 1;
+  background: var(--control-bg);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-color);
+  outline: none;
+  transition: border-color 0.15s ease;
+
+  &::placeholder { color: var(--muted-color); font-weight: 400; }
+  &:focus { border-color: var(--primary-color); }
+}
+
+.AvocadoHome-composerBody {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--control-bg);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--text-color);
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 80px;
+  outline: none;
+  transition: border-color 0.15s ease;
+
+  &::placeholder { color: var(--muted-color); }
+  &:focus { border-color: var(--primary-color); }
+}
+
+.AvocadoHome-composer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.AvocadoHome-composer-footerActions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+
+  .AvocadoHome-composer-cancel {
+    font-size: 13px;
+    padding: 6px 14px;
+    border-radius: 999px;
+  }
+
+  .AvocadoHome-composer-submit {
+    font-size: 13px;
+    padding: 6px 16px;
+    border-radius: 999px;
+
+    &.is-loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+  }
+}
+
+// ─── Tag picker ──────────────────────────────────────────────────────────────
+
+.AvocadoHome-tagPicker {
+  position: relative;
+}
+
+.AvocadoHome-tagPickerTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--control-bg);
+  border: 1px solid var(--control-bg-dark);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 13px;
+  color: var(--muted-color);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+  flex-wrap: wrap;
+  max-width: 300px;
+
+  > i:first-child { color: var(--primary-color); }
+
+  &.is-open {
+    border-color: var(--primary-color);
+  }
+}
+
+.AvocadoHome-tagPickerChevron {
+  margin-left: auto;
+  font-size: 11px !important;
+  opacity: 0.6;
+}
+
+.AvocadoHome-tagPickerPlaceholder {
+  color: var(--muted-color);
+}
+
+.AvocadoHome-tagChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(63, 136, 246, 0.1);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: var(--tag-color, var(--primary-color));
+
+  i { font-size: 10px; }
+}
+
+.AvocadoHome-tagChipRemove {
+  background: none;
+  border: none;
+  padding: 0 2px;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.6;
+  font-size: 10px;
+  line-height: 1;
+  &:hover { opacity: 1; }
+}
+
+.AvocadoHome-tagPickerDropdown {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  background: var(--body-bg);
+  border: 1px solid var(--control-bg-dark);
+  border-radius: @border-radius;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  min-width: 220px;
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 200;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.AvocadoHome-tagPickerEmpty {
+  display: block;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--muted-color);
+  text-align: center;
+}
+
+.AvocadoHome-tagPickerItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-color);
+  transition: background 0.12s ease;
+  text-align: left;
+
+  &:hover, &.is-selected {
+    background: var(--control-bg);
+  }
+
+  &-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: var(--tag-color, var(--primary-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    i {
+      font-size: 11px;
+      color: #fff;
+    }
+  }
+
+  &-name {
+    flex: 1;
+    font-weight: 500;
+  }
+
+  &-count {
+    font-size: 11px;
+    color: var(--muted-color);
+  }
+
+  &-check {
+    color: var(--primary-color);
+    font-size: 11px;
+    margin-left: 2px;
+  }
+}
+
+// ─── Section ─────────────────────────────────────────────────────────────────
+
+.AvocadoHome-section {
+  margin-bottom: 28px;
+}
+
+.AvocadoHome-sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+
+  h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-color);
+  }
+}
+
+.AvocadoHome-seeAll {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--primary-color);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  i { font-size: 11px; }
+  &:hover { text-decoration: underline; }
+}
+
+// ─── Category cards ──────────────────────────────────────────────────────────
+
+.AvocadoHome-categories {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+
+  @media @desktop-up {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.AvocadoHome-categoryCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 14px 14px 12px;
+  background: var(--body-bg);
+  border: 1px solid var(--control-bg-dark);
+  border-radius: @border-radius;
+  text-decoration: none !important;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    text-decoration: none !important;
+  }
+
+  &--more {
+    align-items: center;
+    justify-content: center;
+    opacity: 0.65;
+
+    .AvocadoHome-categoryCard-icon {
+      background: var(--control-bg);
+
+      i { color: var(--muted-color); }
+    }
+  }
+}
+
+.AvocadoHome-categoryCard-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--cat-color, var(--primary-color));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  i {
+    font-size: 15px;
+    color: #fff;
+  }
+}
+
+.AvocadoHome-categoryCard-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color);
+  line-height: 1.3;
+}
+
+.AvocadoHome-categoryCard-count {
+  font-size: 11px;
+  color: var(--muted-color);
+}
+
+// ─── Thread stack ─────────────────────────────────────────────────────────────
+
+.AvocadoHome-threadStack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+// ─── Thread card ─────────────────────────────────────────────────────────────
+
+.AvocadoHome-threadCard {
+  background: var(--body-bg);
+  border: 1px solid var(--control-bg-dark);
+  border-radius: @border-radius;
+  padding: 14px 14px 10px;
+  transition: box-shadow 0.14s ease;
+
+  &:hover {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+  }
+
+  &--unread {
+    border-left: 3px solid var(--primary-color);
+  }
+}
+
+// Card head: avatar + content + reply button
+.AvocadoHome-threadHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.AvocadoHome-avatarWrap {
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.AvocadoHome-threadMain {
+  flex: 1;
+  min-width: 0;
+}
+
+// Meta row: author, time, badges, tags
+.AvocadoHome-threadMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin-bottom: 4px;
+}
+
+.AvocadoHome-threadAuthor {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.AvocadoHome-threadTime {
+  font-size: 12px;
+  color: var(--muted-color);
+}
+
+.AvocadoHome-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+
+  i { font-size: 9px; }
+
+  &--sticky {
+    background: rgba(245, 166, 35, 0.15);
+    color: #f5a623;
+  }
+
+  &--following {
+    background: rgba(63, 136, 246, 0.12);
+    color: var(--primary-color);
+  }
+}
+
+.AvocadoHome-tagPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--tag-bg, rgba(63, 136, 246, 0.10));
+  color: var(--tag-color, var(--primary-color));
+  text-decoration: none !important;
+  line-height: 1.5;
+
+  i { font-size: 9px; }
+  &:hover { text-decoration: none !important; opacity: 0.85; }
+}
+
+.AvocadoHome-threadTitle {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-color);
+  text-decoration: none !important;
+  line-height: 1.35;
+  margin-bottom: 4px;
+
+  &:hover {
+    color: var(--primary-color);
+    text-decoration: none !important;
+  }
+}
+
+.AvocadoHome-threadExcerpt {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted-color);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// Reply button (top-right pill)
+.AvocadoHome-replyBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--control-bg-dark);
+  background: var(--control-bg);
+  color: var(--muted-color);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.13s ease, color 0.13s ease, border-color 0.13s ease;
+  white-space: nowrap;
+
+  i { font-size: 11px; }
+
+  &:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+  }
+}
+
+// ─── Reply card (last reply preview) ─────────────────────────────────────────
+
+.AvocadoHome-threadReplyGroup {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--control-bg-dark);
+}
+
+.AvocadoHome-replyCard {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &-avatar {
+    flex-shrink: 0;
+
+    .AvocadoHome-avatar,
+    .AvocadoHome-avatarFallback {
+      width: 26px;
+      height: 26px;
+      font-size: 11px;
+    }
+  }
+
+  &-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  &-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-color);
+  }
+
+  &-time {
+    font-size: 11px;
+    color: var(--muted-color);
+  }
+}
+
+// ─── Thread stats row ─────────────────────────────────────────────────────────
+
+.AvocadoHome-threadStats {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--control-bg-dark);
+}
+
+.AvocadoHome-statBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: none;
+  background: none;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted-color);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+
+  i { font-size: 13px; }
+
+  &:hover {
+    background: var(--control-bg);
+  }
+
+  &--likes {
+    .fas, .far {
+      color: var(--muted-color);
+    }
+
+    &.AvocadoHome-statBtn--liked,
+    &:hover {
+      color: #e84393;
+
+      .fas, .far {
+        color: #e84393;
+      }
+    }
+
+    &.AvocadoHome-statBtn--loading {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+  }
+
+  &--replies {
+    .fas, .far {
+      color: #6b7fc4;
+    }
+  }
+}
+
+// ─── Skeleton cards ──────────────────────────────────────────────────────────
+
+.AvocadoHome-skeletonCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--body-bg);
+  border: 1px solid var(--control-bg-dark);
+  border-radius: @border-radius;
+  padding: 14px;
+}
+
+.AvocadoHome-skeletonAvatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(
+    90deg,
+    #ebebf0 25%,
+    #f5f5f7 50%,
+    #ebebf0 75%
+  );
+  background-size: 800px 100%;
+  animation: avocado-shimmer 1.4s ease-in-out infinite;
+}
+
+.AvocadoHome-skeletonBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.AvocadoHome-skeletonLine {
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    #ebebf0 25%,
+    #f5f5f7 50%,
+    #ebebf0 75%
+  );
+  background-size: 800px 100%;
+  animation: avocado-shimmer 1.4s ease-in-out infinite;
+  height: 12px;
+
+  &--sm { width: 35%; height: 11px; }
+  &--lg { width: 85%; height: 14px; }
+  &--md { width: 65%; height: 11px; }
+}
+
+// ─── Mobile adjustments ───────────────────────────────────────────────────────
+
+@media @phone {
+  .AvocadoHome {
+    padding: 0 0 32px;
+  }
+
+  .AvocadoHome-threadCard {
+    border-radius: 12px;
+    padding: 12px 12px 8px;
+  }
+
+  .AvocadoHome-replyBtn {
+    padding: 4px 9px;
+    font-size: 11px;
+  }
+
+  .AvocadoHome-categories {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .AvocadoHome-threadTitle {
+    font-size: 14px;
+  }
+
+  .AvocadoHome-heroBanner {
+    min-height: 160px;
+  }
+
+  .AvocadoHome-heroBannerTitle {
+    font-size: 22px;
+  }
+}

@@ -1,18 +1,92 @@
 ramon-avocado:
   admin:
     settings:
+      section_homepage: Pagina Inicial
+      section_auth: Login e Registro
+      auth_image_label: Imagem do modal de autenticacao
+      auth_image_help: Imagem de fundo exibida no painel direito dos modais de login, registro e redefinicao de senha.
+      section_search: Busca
+      section_posts: Posts
       banner_image_label: Imagem do banner
       banner_image_help: Envie a imagem do banner hero exibida no topo do forum.
+      home_enabled_label: Ativar Avocado V2 (pagina inicial personalizada)
+      home_enabled_help: Substituir a lista de discussoes padrao na pagina inicial pelo layout de feed Avocado V2 (cards, categorias, compositor).
+      show_auth_buttons_label: Mostrar botoes Entrar / Cadastrar no header para visitantes
+      show_auth_buttons_help: Exibir botoes de Entrar e Cadastrar no menu secundario do header para usuarios nao logados.
       hero_image_position_label: Posicao da imagem do hero
-      hero_image_position_help: "CSS background-position, ex.: 'center top' ou 'center 20%'."
+      hero_image_position_help: "Valor CSS background-position, ex.: 'center top' ou '50% 20%'."
       search_v1_label: Ativar estilo da busca V1
       search_v1_help: Mostrar o dropdown inline de busca em vez do modal V2.
       show_share_label: Mostrar botao Compartilhar nos posts
       show_share_help: Adicionar um botao de compartilhamento em cada post.
       show_action_icons_label: Mostrar icones nos botoes Curtir e Responder
       show_action_icons_help: Exibir icones do Font Awesome nas acoes de Curtir e Responder.
-      fixed_avatar_effect_label: Ativar efeito de avatar fixo nos posts da discussao
+      fixed_avatar_effect_label: Ativar efeito de avatar fixo
       fixed_avatar_effect_help: Manter o avatar do post fixo ao ler comentarios longos no desktop.
   forum:
     actions:
       share: Compartilhar
+    header:
+      log_in: Entrar
+      sign_up: Cadastrar
+    user:
+      discussions: Discussoes
+      comments: Comentarios
+    tag:
+      thread_count: "{count} discussoes"
+      discussion_singular: discussao
+      discussion_plural: discussoes
+    discussion:
+      badge_sticky: Fixada
+      badge_locked: Bloqueada
+      badge_following: Seguindo
+    home:
+      all_categories: Todas as categorias
+      day_time: "{day}, {time}"
+      deleted_user: Usuario removido
+      just_now: Agora mesmo
+      likes: curtidas
+      more_count: "{count} a mais"
+      new_thread: Nova discussao
+      no_threads: Ainda nao ha discussoes.
+      categories_title: Categorias
+      popular_title: Discussoes populares
+      action_image: Imagem
+      action_write: Escrever
+      post_placeholder: Conte para todos no que voce esta trabalhando...
+      see_all: Ver tudo
+      replies: respostas
+      untitled: Sem titulo
+      reply: Responder
+      reply_label: Responder
+      like: Curtir
+      badge_sticky: Fixado
+      log_in: Entrar
+      sign_up: Cadastrar
+      start_discussion: "O que esta pensando?"
+      composer_title_placeholder: "Titulo da discussao..."
+      composer_body_placeholder: "Compartilhe seus pensamentos..."
+      composer_cancel: Cancelar
+      composer_post: Publicar discussao
+      composer_submitting: "Publicando..."
+      no_tags: Nenhuma tag disponivel
+      categories_heading: Categorias
+      threads: discussoes
+      more: mais
+      popular_heading: Discussoes populares
+      all_heading: Todas as discussoes
+      all_title: Todas as discussoes
+      guest_cta_text: "Quer participar da conversa?"
+      guest_cta_or: "ou"
+      guest_hero_line1: "Quer fazer parte"
+      guest_hero_line2: "da conversa?"
+      guest_hero_free: Gratuito para entrar
+      badge_pinned: Fixado
+      badge_following: Seguindo
+      choose_tags: Escolher tags
+      search_placeholder: Chats, mensagens e mais
+      see_other_replies: Ver outras {count} respostas
+      threads_count: "{count} discussoes"
+      today_time: "Hoje, {time}"
+      yesterday_label: Ontem
+      yesterday_time: "Ontem, {time}"
