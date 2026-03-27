@@ -1,0 +1,770 @@
+// ─── IndexPage layout when search is active (?q=) ────────────────────────────
+
+.IndexPage--avocadoSearch {
+  .Page-hero {
+    display: none;
+  }
+
+  @media @phone {
+    .Page-sidebar {
+      height: 0;
+      overflow: hidden;
+    }
+  }
+  @media @tablet-up {
+    .Page-sidebar {
+      display: none;
+    }
+  }
+
+  .Page-container.container {
+    max-width: var(--home-max-width);
+    padding: 0 12px;
+    margin: 0 auto;
+  }
+
+  .Page-content {
+    width: 100%;
+    float: none;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+// ─── App-level override for posts search page ─────────────────────────────────
+
+.App--avocadoSearch {
+  .App-content {
+    background: #fff;
+    border-top: 0;
+  }
+}
+
+// ─── Shared search container ──────────────────────────────────────────────────
+
+.AvocadoSearch {
+  max-width: var(--home-max-width);
+  margin: 0 auto;
+  padding: 28px 12px 56px;
+  font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--home-title);
+  background: #fff;
+}
+
+// ─── Header ──────────────────────────────────────────────────────────────────
+
+.AvocadoSearch-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.AvocadoSearch-title {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.4px;
+  color: #1a1b21;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.AvocadoSearch-query {
+  color: var(--primary-color);
+}
+
+// ─── Empty state ──────────────────────────────────────────────────────────────
+
+.AvocadoSearch-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  gap: 12px;
+  color: var(--home-muted);
+
+  > i {
+    font-size: 40px;
+    opacity: 0.45;
+  }
+
+  > p {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+  }
+}
+
+// ─── Discussion search results stack ─────────────────────────────────────────
+
+.AvocadoSearch-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+// ─── Discussion search card ───────────────────────────────────────────────────
+
+.AvocadoSearch-threadCard {
+  border: 1px solid var(--home-border);
+  border-radius: 18px;
+  padding: 16px;
+  background: #fff;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  text-decoration: none;
+
+  &:hover {
+    border-color: #dfdfe6;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(26, 26, 36, 0.06);
+  }
+
+  &--unread .AvocadoSearch-threadTitle {
+    font-weight: 900;
+    color: #0d0f14;
+  }
+}
+
+.AvocadoSearch-threadHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.AvocadoSearch-threadAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  overflow: hidden;
+
+  > .Avatar {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+.AvocadoSearch-threadMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.AvocadoSearch-threadMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.AvocadoSearch-threadAuthor {
+  font-size: 13px;
+  font-weight: 700;
+  color: #3a3b44;
+  text-decoration: none;
+
+  &:hover { color: var(--primary-color); text-decoration: none; }
+}
+
+.AvocadoSearch-threadTime {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--home-muted);
+}
+
+.AvocadoSearch-threadTitle {
+  font-size: 17px;
+  font-weight: 800;
+  color: #1a1b21;
+  letter-spacing: -0.2px;
+  text-decoration: none;
+  line-height: 1.3;
+  display: block;
+
+  &:hover {
+    color: var(--primary-color);
+    text-decoration: none;
+  }
+}
+
+.AvocadoSearch-threadExcerpt {
+  font-size: 14px;
+  font-weight: 400;
+  color: #43454e;
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.AvocadoSearch-threadFooter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+.AvocadoSearch-threadReplies {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--home-muted);
+
+  > i { font-size: 12px; }
+}
+
+// ─── Posts search results stack ───────────────────────────────────────────────
+
+.AvocadoSearch--posts {
+  .AvocadoSearch-header {
+    margin-bottom: 20px;
+  }
+}
+
+.AvocadoSearch-postStack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+// ─── Post card ────────────────────────────────────────────────────────────────
+
+.AvocadoSearch-postCard {
+  border: 1px solid var(--home-border);
+  border-radius: 18px;
+  padding: 16px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    border-color: #dfdfe6;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(26, 26, 36, 0.06);
+  }
+}
+
+.AvocadoSearch-postHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.AvocadoSearch-postAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  overflow: hidden;
+
+  > .Avatar {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+.AvocadoSearch-postMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.AvocadoSearch-postAuthor {
+  font-size: 13px;
+  font-weight: 700;
+  color: #3a3b44;
+  text-decoration: none;
+
+  &:hover { color: var(--primary-color); text-decoration: none; }
+}
+
+.AvocadoSearch-postTime {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--home-muted);
+}
+
+.AvocadoSearch-postDiscussion {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary-color);
+  text-decoration: none;
+  background: rgba(63, 136, 246, 0.07);
+  border-radius: 999px;
+  padding: 4px 12px;
+  align-self: flex-start;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(63, 136, 246, 0.13);
+    text-decoration: none;
+  }
+
+  > i {
+    font-size: 12px;
+    opacity: 0.8;
+  }
+}
+
+.AvocadoSearch-postExcerpt {
+  font-size: 14px;
+  font-weight: 400;
+  color: #43454e;
+  line-height: 1.55;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.AvocadoSearch-postFooter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+  border-top: 1px solid #f0f0f4;
+}
+
+.AvocadoSearch-postViewBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--home-muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+
+  > i {
+    font-size: 11px;
+    transition: transform 0.15s ease;
+  }
+
+  &:hover {
+    color: var(--primary-color);
+    text-decoration: none;
+
+    > i { transform: translateX(2px); }
+  }
+}
+
+// ─── Post card skeleton ───────────────────────────────────────────────────────
+
+.AvocadoSearch-postSkeleton {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--home-border);
+  border-radius: 18px;
+  background: #fff;
+}
+
+// ─── Highlight marks ──────────────────────────────────────────────────────────
+
+.AvocadoSearch-threadTitle mark,
+.AvocadoSearch-threadExcerpt mark,
+.AvocadoSearch-postExcerpt mark,
+.AvocadoSearch-postDiscussion mark,
+.AvocadoSearch-userName mark {
+  background: transparent;
+  font-weight: 800;
+  font-style: italic;
+  color: inherit;
+}
+
+// ─── Unified search page (/search) ────────────────────────────────────────────
+
+.App--search {
+  .App-content {
+    background: #fff;
+    border-top: 0;
+  }
+}
+
+.AvocadoSearch--unified {
+  padding-top: 36px;
+}
+
+// ─── Hero empty state ─────────────────────────────────────────────────────────
+
+.AvocadoSearch-hero {
+  padding: 56px 0 20px;
+  text-align: center;
+}
+
+.AvocadoSearch-heroTitle {
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  color: #1a1b21;
+  margin: 0 0 10px;
+  line-height: 1.15;
+}
+
+.AvocadoSearch-heroSub {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--home-muted);
+  margin: 0 0 32px;
+}
+
+.AvocadoSearch-heroTags {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 36px;
+  text-align: left;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ─── Search bar — bordered pill (hero variant: wider, centered) ───────────────
+
+.AvocadoSearch-barWrap {
+  &--hero {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+}
+
+.AvocadoSearch-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1.5px solid var(--home-border);
+  border-radius: 999px;
+  background: #fff;
+  padding: 0 6px 0 18px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 12%, transparent);
+  }
+}
+
+.AvocadoSearch-barIcon {
+  font-size: 14px;
+  color: #afafb8;
+  flex-shrink: 0;
+  margin-right: 10px;
+}
+
+.AvocadoSearch-barInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: #2a2b30;
+  padding: 13px 0;
+  line-height: 1.4;
+
+  &::placeholder { color: #b2b2bb; font-weight: 500; }
+  &::-webkit-search-cancel-button,
+  &::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
+}
+
+.AvocadoSearch-barClear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: #ebebef;
+  color: #6b6c78;
+  cursor: pointer;
+  border-radius: 50%;
+  flex-shrink: 0;
+  font-size: 11px;
+  margin-right: 6px;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  &:hover { background: #dcdce4; color: #1a1b21; }
+}
+
+.AvocadoSearch-barBtn {
+  height: 36px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: none;
+  background: var(--primary-color);
+  color: #fff;
+  font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin: 4px;
+  transition: opacity 0.15s ease, background 0.15s ease;
+
+  &:hover:not(:disabled) { opacity: 0.88; }
+
+  &:disabled {
+    background: #e0e0e8;
+    color: #adadb8;
+    cursor: default;
+    opacity: 1;
+  }
+}
+
+// ─── Toolbar: tabs left, sort right — below search bar when query active ──────
+
+.AvocadoSearch-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 16px;
+  margin-bottom: 20px;
+}
+
+// ─── Tabs — pill buttons ──────────────────────────────────────────────────────
+
+.AvocadoSearch-tabs {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.AvocadoSearch-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: none;
+  background: #f3f3f6;
+  font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #40424b;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  > i { font-size: 12px; }
+
+  &:hover {
+    background: #eaeaee;
+    color: var(--primary-color);
+  }
+
+  &.is-active {
+    background: var(--primary-color);
+    color: #fff;
+
+    &:hover { opacity: 0.88; color: #fff; }
+  }
+}
+
+
+// ─── User stack ───────────────────────────────────────────────────────────────
+
+.AvocadoSearch-userStack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+// ─── User card ────────────────────────────────────────────────────────────────
+
+.AvocadoSearch-userCard {
+  padding: 14px 18px;
+  border: 1px solid var(--home-border);
+  border-radius: 18px;
+  background: #fff;
+  font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    border-color: #dfdfe6;
+    box-shadow: 0 6px 18px rgba(26, 26, 36, 0.06);
+  }
+}
+
+.AvocadoSearch-userCard-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.AvocadoSearch-userCard-avatar {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  text-decoration: none;
+
+  .Avatar,
+  svg {
+    width: 44px !important;
+    height: 44px !important;
+    display: block;
+  }
+}
+
+.AvocadoSearch-userCard-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.AvocadoSearch-userCard-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: #1a1b21;
+  text-decoration: none !important;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  mark {
+    background: transparent;
+    font-weight: 800;
+    color: inherit;
+    padding: 0;
+  }
+
+  &:hover { color: var(--primary-color); }
+}
+
+.AvocadoSearch-userCard-handle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--home-muted, #8f9097);
+}
+
+.AvocadoSearch-userCard-viewBtn {
+  flex-shrink: 0;
+}
+
+.AvocadoSearch-userCard-bio {
+  font-size: 13px;
+  color: #55566a;
+  margin: 10px 0 0;
+  line-height: 1.5;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.AvocadoSearch-userCard-stats {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--home-border);
+}
+
+.AvocadoSearch-userCard-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--home-muted, #8f9097);
+
+  > i { font-size: 11px; }
+}
+
+// ─── User skeleton ────────────────────────────────────────────────────────────
+
+.AvocadoSearch-userSkeleton {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--home-border);
+  border-radius: 18px;
+  background: #fff;
+}
+
+.AvocadoSearch-userSkeletonAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, #f0f0f6 25%, #e8e8f0 50%, #f0f0f6 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.4s infinite;
+}
+
+// ─── Thread title hover: no colour change ─────────────────────────────────────
+
+.AvocadoSearch-threadTitle {
+  &:hover { color: inherit !important; text-decoration: none; }
+}
+
+// ─── Responsiveness ───────────────────────────────────────────────────────────
+
+@media (max-width: 640px) {
+  .AvocadoSearch {
+    padding: 16px 10px 40px;
+  }
+
+  .AvocadoSearch--unified {
+    padding-top: 16px;
+  }
+
+  .AvocadoSearch-hero {
+    padding-top: 28px;
+  }
+
+  .AvocadoSearch-heroTitle {
+    font-size: 26px;
+  }
+
+  .AvocadoSearch-barInput {
+    font-size: 14px;
+  }
+
+  .AvocadoSearch-tab {
+    height: 30px;
+    padding: 0 11px;
+    font-size: 12px;
+  }
+
+  .AvocadoSearch-toolbar {
+    gap: 8px;
+  }
+}
+
+

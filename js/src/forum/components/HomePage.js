@@ -2,53 +2,25 @@ import app from 'flarum/forum/app';
 import Component from 'flarum/common/Component';
 import TextEditor from 'flarum/common/components/TextEditor';
 import Tooltip from 'flarum/common/components/Tooltip';
+import Avatar from 'flarum/common/components/Avatar';
+// FIX: import shared utilities — removes all local duplicates
+import {
+  trans,
+  numberOr,
+  safeRoute,
+  discussionRoute,
+  tagRoute,
+  hexToRgba,
+  displayName,
+  formatTimeLabel,
+  postPreview,
+  resolveAssetUrl,
+  FALLBACK_COLORS,
+  FALLBACK_ICONS,
+} from '../utils';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
 
-const trans = (key, fallback, params = {}) => {
-  const out = app.translator?.trans(key, params);
-  return out && out !== key ? out : fallback;
-};
-
-const numberOr = (value, fallback = 0) => {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : fallback;
-};
-
-const safeRoute = (name, params = {}, fallback = '#') => {
-  try {
-    return app.route(name, params);
-  } catch (e) {
-    return fallback;
-  }
-};
-
-const discussionRoute = (discussion, near) => {
-  try {
-    return app.route.discussion(discussion, near);
-  } catch (e) {
-    return '#';
-  }
-};
-
-const tagRoute = (tag) => {
-  try {
-    return app.route('tag', { tags: tag.slug() });
-  } catch (e) {
-    return '#';
-  }
-};
-
-const avatarInitial = (user, fallback = '?') => {
-  const name = user?.username?.() || user?.displayName?.() || '';
-  return name ? name.charAt(0).toUpperCase() : fallback;
-};
-
-const displayName = (user) => {
-  return user?.displayName?.() || user?.username?.() || '';
-};
+// FIX: all local helpers removed — imported from ../utils above.
 
 const formatThreadCount = (count) => {
   const n = numberOr(count, 0);
@@ -56,76 +28,16 @@ const formatThreadCount = (count) => {
   return String(n);
 };
 
-const formatTimeLabel = (dateValue) => {
-  if (!dateValue) return '';
-  const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
-  if (isNaN(date.getTime())) return '';
-
-  const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfYesterday = new Date(startOfToday.getTime() - 86400000);
-
-  const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-
-  if (date >= startOfToday) {
-    return `Today, ${timeStr}`;
-  }
-  if (date >= startOfYesterday) {
-    return `Yesterday, ${timeStr}`;
-  }
-
-  const monthStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  return `${monthStr}, ${timeStr}`;
-};
-
-const postPreview = (discussion) => {
-  try {
-    const firstPost = discussion.firstPost?.();
-    if (firstPost) {
-      const plain = firstPost.contentPlain?.() || '';
-      if (plain) return plain.slice(0, 180);
-    }
-    // Fallback: try content attribute
-    const content = discussion.attribute?.('firstPostContent') || '';
-    return content.slice(0, 180);
-  } catch (e) {
-    return '';
-  }
-};
-
-const hexToRgba = (hex, alpha = 1) => {
-  if (!hex) return `rgba(63,136,246,${alpha})`;
-  const h = hex.replace('#', '');
-  if (h.length !== 6) return `rgba(63,136,246,${alpha})`;
-  const r = parseInt(h.substring(0, 2), 16);
-  const g = parseInt(h.substring(2, 4), 16);
-  const b = parseInt(h.substring(4, 6), 16);
-  return `rgba(${r},${g},${b},${alpha})`;
-};
-
-const resolveAssetUrl = (assetPath) => {
-  if (!assetPath) return null;
-  if (/^https?:\/\//i.test(assetPath)) return assetPath;
-  const assetsBaseUrl = app.forum?.attribute('assetsBaseUrl');
-  if (assetsBaseUrl) {
-    return assetsBaseUrl.replace(/\/+$/, '') + '/' + String(assetPath).replace(/^\/+/, '');
-  }
-  const forumBaseUrl = app.forum?.attribute('baseUrl');
-  if (forumBaseUrl) {
-    return forumBaseUrl.replace(/\/+$/, '') + '/assets/' + String(assetPath).replace(/^\/+/, '');
-  }
-  return String(assetPath);
-};
-
-const FALLBACK_COLORS = [
-  '#f0b213', '#3f88f6', '#4ec46a', '#e84393', '#9b59b6',
-  '#e67e22', '#1abc9c', '#e74c3c', '#2ecc71', '#3498db',
-];
-
-const FALLBACK_ICONS = [
-  'fas fa-tag', 'fas fa-folder', 'fas fa-comments', 'fas fa-star',
-  'fas fa-fire', 'fas fa-bolt', 'fas fa-globe', 'fas fa-heart',
-];
+// SVG person silhouette — colours driven by var(--primary-color) via CSS classes
+const defaultAvatarSvg = (
+  <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg"
+    className="Avatar AvocadoDefaultAvatar" aria-hidden="true">
+    <circle cx="64" cy="64" r="64" className="AvocadoDefaultAvatar-bg" />
+    <circle cx="64" cy="46" r="18" className="AvocadoDefaultAvatar-fg" />
+    <path d="M64 70C42 70 24 82 24 96V128H104V96C104 82 86 70 64 70Z"
+      className="AvocadoDefaultAvatar-fg" />
+  </svg>
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HomePage Component
@@ -141,13 +53,157 @@ export default class HomePage extends Component {
     this.composerTitle = '';
     this.composerBody = '';
     this.composerTags = [];
-    this.tagPickerOpen = false;
     this.composerSubmitting = false;
-    this.composerProxy = null;
+    this.composerProxy = {};
+    this.onlineUsers = [];
+    this.tagPickerOpen = false;
+    this.tagBypassReqs = false;
+    this.tagFilter = '';
+
+    // FIX: memoization cache — invalidated when store discussion count changes
+    this._cachedPopular    = null;
+    this._cachedLatest     = null;
+    this._cachedStoreSize  = -1;
+    this._sectionHasNew    = false;
+    this._wsHandler        = null;
+    this._likeHandler      = null;
+    this._unlikeHandler    = null;
+    this._deletedHandler   = null;
+    this._pinnedHandler    = null;
+    this._updatedLikeIds   = new Set();
+    this._selfActionIds    = new Set();
 
     // Preload tags
     if (app.tagList?.load) {
       app.tagList.load(['children', 'parent']).catch(() => {});
+    }
+
+    // Load online users
+    this.loadOnlineUsers();
+
+    // For logged-in users the discussion store is not pre-populated server-side,
+    // so we fetch explicitly. This ensures isSticky is available for the sort.
+    this.loadHomeDiscussions();
+  }
+
+  oncreate(vnode) {
+    super.oncreate(vnode);
+    this._tagPickerOutside = (e) => {
+      if (!this.tagPickerOpen) return;
+      if (!e.target.closest?.('.AvocadoHome-tagPicker')) {
+        this.tagPickerOpen = false;
+        this.tagFilter = '';
+        m.redraw();
+      }
+    };
+    document.addEventListener('click', this._tagPickerOutside);
+
+    if (app.pusher) {
+      this._wsHandler = (data) => {
+        const discId = String(data?.discussionId || '');
+        if (!discId) return;
+        app.store
+          .find('discussions', discId, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
+          .then(() => {
+            this._cachedPopular = null;
+            this._cachedLatest = null;
+            this._sectionHasNew = true;
+            m.redraw();
+            setTimeout(() => {
+              this._sectionHasNew = false;
+              m.redraw();
+            }, 5000);
+          })
+          .catch(() => { m.redraw(); });
+      };
+
+      const handleLikeEvent = (data) => {
+        console.log('[Avocado] Like event received:', data);
+        const discId = String(data?.discussionId || '');
+        if (!discId) return;
+        
+        const isSelf = this._selfActionIds.has(discId);
+        if (isSelf) this._selfActionIds.delete(discId);
+        
+        // Force invalidate cache to ensure fresh fetch
+        this._cachedPopular = null;
+        this._cachedLatest = null;
+        
+        // Fetch fresh data from server
+        app.store
+          .find('discussions', discId, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
+          .then(() => {
+            console.log('[Avocado] Like event sync completed for:', discId);
+            if (!isSelf) {
+              this._updatedLikeIds.add(discId);
+              setTimeout(() => { 
+                this._updatedLikeIds.delete(discId); 
+                m.redraw(); 
+              }, 500);
+            }
+            m.redraw();
+          })
+          .catch((error) => {
+            console.error('[Avocado] Like event handler error:', error);
+            m.redraw();
+          });
+      };
+      this._likeHandler = handleLikeEvent;
+      this._unlikeHandler = handleLikeEvent;
+
+      this._deletedHandler = (data) => {
+        const discId = String(data?.discussionId || '');
+        if (!discId) return;
+        app.store
+          .find('discussions', discId, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
+          .then(() => {
+            this._cachedPopular = null;
+            this._cachedLatest = null;
+            m.redraw();
+          })
+          .catch(() => {});
+      };
+
+      this._pinnedHandler = (data) => {
+        const discId = String(data?.discussionId || '');
+        if (!discId) return;
+        app.store
+          .find('discussions', discId, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
+          .then(() => {
+            this._cachedPopular = null;
+            this._cachedLatest = null;
+            m.redraw();
+          })
+          .catch(() => {});
+      };
+
+      if (typeof app.pusher?.then === 'function') {
+        app.pusher.then(({ channels }) => {
+          if (channels?.main) {
+            channels.main.bind('newPost',          this._wsHandler);
+            channels.main.bind('postLiked',        this._likeHandler);
+            channels.main.bind('postUnliked',      this._unlikeHandler);
+            channels.main.bind('postDeleted',      this._deletedHandler);
+            channels.main.bind('discussionPinned', this._pinnedHandler);
+          }
+        });
+      }
+    }
+  }
+
+  onremove(vnode) {
+    super.onremove(vnode);
+    document.removeEventListener('click', this._tagPickerOutside);
+    if (app.pusher && typeof app.pusher.then === 'function') {
+      app.pusher.then(({ channels }) => {
+        if (channels?.main) {
+          if (this._wsHandler)      channels.main.unbind('newPost',          this._wsHandler);
+          if (this._likeHandler)    channels.main.unbind('postLiked',        this._likeHandler);
+          if (this._unlikeHandler)  channels.main.unbind('postUnliked',      this._unlikeHandler);
+          if (this._deletedHandler) channels.main.unbind('postDeleted',      this._deletedHandler);
+          if (this._pinnedHandler)  channels.main.unbind('discussionPinned', this._pinnedHandler);
+        }
+      });
     }
   }
 
@@ -185,30 +241,56 @@ export default class HomePage extends Component {
     return replyCount * 2 + likeCount * 3 + views * 0.1 + agePenalty * 20;
   }
 
+  // FIX: invalidate memoization cache when store discussion count changes
+  _invalidateIfStoreChanged() {
+    const current = app.store.all('discussions').length;
+    if (current !== this._cachedStoreSize) {
+      this._cachedPopular   = null;
+      this._cachedLatest    = null;
+      this._cachedStoreSize = current;
+    }
+  }
+
   popularDiscussions(limit = 5) {
-    return [...this.allDiscussions()]
-      .sort((a, b) => this.discussionScore(b) - this.discussionScore(a))
+    this._invalidateIfStoreChanged();
+    // NOTE: do NOT cache empty results — discussions may not yet be loaded from
+    // app.discussions.getPages(). An empty [] is truthy and would stick forever.
+    if (this._cachedPopular?.length > 0) return this._cachedPopular;
+    const result = [...this.allDiscussions()]
+      .sort((a, b) => {
+        const aSticky = a.isSticky?.() ? 1 : 0;
+        const bSticky = b.isSticky?.() ? 1 : 0;
+        if (bSticky !== aSticky) return bSticky - aSticky;
+        return this.discussionScore(b) - this.discussionScore(a);
+      })
       .slice(0, limit);
+    if (result.length > 0) this._cachedPopular = result;
+    return result;
   }
 
   latestDiscussions() {
-    return [...this.allDiscussions()]
+    this._invalidateIfStoreChanged();
+    if (this._cachedLatest?.length > 0) return this._cachedLatest;
+    const result = [...this.allDiscussions()]
       .sort((a, b) => {
         const aDate = a.lastPostedAt?.() ? new Date(a.lastPostedAt()) : new Date(0);
         const bDate = b.lastPostedAt?.() ? new Date(b.lastPostedAt()) : new Date(0);
         return bDate - aDate;
       })
       .slice(0, 10);
+    if (result.length > 0) this._cachedLatest = result;
+    return result;
   }
 
   topCategories(limit = 7) {
     try {
-      const tags = app.store.all('tags').filter((t) => {
-        // primary tags only (no parent)
-        return t && !t.parent?.();
-      });
+      const tags = app.store.all('tags').filter((t) => t && !t.parent?.());
       return tags
-        .sort((a, b) => numberOr(b.discussionCount?.(), 0) - numberOr(a.discussionCount?.(), 0))
+        .sort((a, b) => {
+          const aPos = a.position?.() ?? 9999;
+          const bPos = b.position?.() ?? 9999;
+          return aPos - bPos;
+        })
         .slice(0, limit);
     } catch (e) {
       return [];
@@ -230,13 +312,18 @@ export default class HomePage extends Component {
     const isLiked = app.session.user && likes.some((u) => u === app.session.user);
 
     this.likingIds.add(id);
+    this._selfActionIds.add(id);
     m.redraw();
 
     firstPost.save({ isLiked: !isLiked }).then(() => {
       this.likingIds.delete(id);
+      // Always redraw to update the UI immediately.
+      // If WebSocket is available, it will sync the server state afterwards.
+      // If not, the like state is still persisted on the server and the UI reflects this.
       m.redraw();
     }).catch(() => {
       this.likingIds.delete(id);
+      this._selfActionIds.delete(id);
       m.redraw();
     });
   }
@@ -252,6 +339,9 @@ export default class HomePage extends Component {
     this.composerBody = '';
     this.composerTags = [];
     this.tagPickerOpen = false;
+    this.tagBypassReqs = false;
+    this.tagFilter = '';
+    this.composerProxy = {}; // Fresh editor driver target each open
     m.redraw();
     setTimeout(() => {
       const el = document.querySelector('.AvocadoHome-composerTitle');
@@ -259,11 +349,46 @@ export default class HomePage extends Component {
     }, 50);
   }
 
+  isComposerValid() {
+    // Check if title and body are filled
+    const title = this.composerTitle.trim();
+    const body = this.composerBody.trim();
+    if (!title || !body) return false;
+
+    // Check tag requirements (same logic as flarum/tags addTagComposer.js)
+    if (!this.tagBypassReqs) {
+      const minP = parseInt(app.forum.attribute('minPrimaryTags')) || 0;
+      const minS = parseInt(app.forum.attribute('minSecondaryTags')) || 0;
+      const chosenPrimary = this.composerTags.filter((t) => t.position?.() !== null && !t.isChild?.()).length;
+      const chosenSecond  = this.composerTags.filter((t) => t.position?.() === null).length;
+      const selectableTags = app.store.all('tags').filter(Boolean);
+      if (selectableTags.length && (chosenPrimary < minP || chosenSecond < minS)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   submitInlineComposer() {
     if (this.composerSubmitting) return;
     const title = this.composerTitle.trim();
     const body = this.composerBody.trim();
     if (!title || !body) return;
+
+    // Validate tag requirements (same logic as flarum/tags addTagComposer.js)
+    if (!this.tagBypassReqs) {
+      const minP = parseInt(app.forum.attribute('minPrimaryTags')) || 0;
+      const minS = parseInt(app.forum.attribute('minSecondaryTags')) || 0;
+      const chosenPrimary = this.composerTags.filter((t) => t.position?.() !== null && !t.isChild?.()).length;
+      const chosenSecond  = this.composerTags.filter((t) => t.position?.() === null).length;
+      const selectableTags = app.store.all('tags').filter(Boolean);
+      if (selectableTags.length && (chosenPrimary < minP || chosenSecond < minS)) {
+        this.tagPickerOpen = true;
+        m.redraw();
+        return;
+      }
+    }
 
     this.composerSubmitting = true;
     m.redraw();
@@ -275,7 +400,7 @@ export default class HomePage extends Component {
 
     if (this.composerTags.length > 0) {
       data.relationships = {
-        tags: this.composerTags.map((tag) => ({ type: 'tags', id: tag.id() })),
+        tags: this.composerTags, // pass model instances; store serializes them
       };
     }
 
@@ -310,30 +435,7 @@ export default class HomePage extends Component {
 
   renderAvatar(user, className = '') {
     if (!user) return null;
-    const avatarUrl = user.avatarUrl?.();
-    const username = displayName(user);
-    const initial = avatarInitial(user);
-
-    if (avatarUrl) {
-      return (
-        <img
-          className={`AvocadoHome-avatar${className ? ' ' + className : ''}`}
-          src={avatarUrl}
-          alt={username}
-          title={username}
-        />
-      );
-    }
-
-    return (
-      <span
-        className={`AvocadoHome-avatarFallback${className ? ' ' + className : ''}`}
-        title={username}
-        aria-hidden="true"
-      >
-        {initial}
-      </span>
-    );
+    return <Avatar user={user} className={className || undefined} title={displayName(user)} />;
   }
 
   renderReplyCard(discussion) {
@@ -345,20 +447,38 @@ export default class HomePage extends Component {
     const rawText = lastPost?.contentPlain?.() || '';
     const preview = rawText ? rawText.slice(0, 100) + (rawText.length > 100 ? '…' : '') : '';
     const otherCount = replies - 1;
+    const href = discussionRoute(discussion);
+    const lastPostHref = (() => {
+      try {
+        const num = discussion.lastPostNumber?.();
+        return num ? app.route.discussion(discussion, num) : href;
+      } catch (e) { return href; }
+    })();
+    const secondPostHref = (() => {
+      try { return app.route.discussion(discussion, 2); } catch (e) { return href; }
+    })();
 
     return (
       <div className="AvocadoHome-replyCard">
-        <div className="AvocadoHome-replyCard-line">
+        <a
+          className="AvocadoHome-replyCard-line"
+          href={lastPostHref}
+          onclick={(e) => { e.stopPropagation(); this.navigate(e, lastPostHref); }}
+        >
           <div className="AvocadoHome-replyCard-avatar">
             {this.renderAvatar(lastPoster)}
           </div>
           <span className="AvocadoHome-replyCard-name">{displayName(lastPoster)}</span>
           {preview && <span className="AvocadoHome-replyCard-text">{preview}</span>}
-        </div>
+        </a>
         {otherCount > 0 && (
-          <span className="AvocadoHome-replyCard-seeMore">
-            {trans('ramon-avocado.forum.home.see_other_replies', 'See other {count} replies', { count: otherCount })}
-          </span>
+          <a
+            className="AvocadoHome-replyCard-seeMore"
+            href={secondPostHref}
+            onclick={(e) => { e.stopPropagation(); this.navigate(e, secondPostHref); }}
+          >
+            {otherCount === 1 ? trans('ramon-avocado.forum.home.see_other_reply_singular', 'See other {count} reply', { count: otherCount }) : trans('ramon-avocado.forum.home.see_other_replies', 'See other {count} replies', { count: otherCount })}
+          </a>
         )}
       </div>
     );
@@ -382,6 +502,10 @@ export default class HomePage extends Component {
     const excerpt = postPreview(discussion);
     const lastPostedAt = discussion.lastPostedAt?.();
     const timeLabel = formatTimeLabel(lastPostedAt);
+    const userProfileHref = (() => {
+      if (!user) return '#';
+      try { return app.route('user', { username: user.username?.() || '' }); } catch (e) { return '#'; }
+    })();
 
     return (
       <article
@@ -394,42 +518,48 @@ export default class HomePage extends Component {
           </div>
           <div className="AvocadoHome-threadMain">
             <div className="AvocadoHome-threadMeta">
-              <span className="AvocadoHome-threadAuthor">{displayName(user)}</span>
+              <a
+                className="AvocadoHome-threadAuthor"
+                href={userProfileHref}
+                onclick={(e) => { e.stopPropagation(); this.navigate(e, userProfileHref); }}
+              >{displayName(user)}</a>
               {timeLabel && (
                 <span className="AvocadoHome-threadTime">{timeLabel}</span>
               )}
               {isSticky && (
                 <Tooltip text={trans('ramon-avocado.forum.home.badge_sticky', 'Pinned')} position="top">
-                  <span className="AvocadoHome-badge AvocadoHome-badge--sticky">
+                  <span className="AvocadoHome-badge AvocadoHome-badge--sticky" role="img" aria-label={trans('ramon-avocado.forum.home.badge_sticky', 'Pinned')}>
                     <i className="fas fa-thumbtack" aria-hidden="true" />
                   </span>
                 </Tooltip>
               )}
               {isFollowing && (
                 <Tooltip text={trans('ramon-avocado.forum.home.badge_following', 'Following')} position="top">
-                  <span className="AvocadoHome-badge AvocadoHome-badge--following">
+                  <span className="AvocadoHome-badge AvocadoHome-badge--following" role="img" aria-label={trans('ramon-avocado.forum.home.badge_following', 'Following')}>
                     <i className="fas fa-star" aria-hidden="true" />
                   </span>
                 </Tooltip>
               )}
-              {tags.slice(0, 3).map((tag) => {
-                const tagColor = tag.color?.() || FALLBACK_COLORS[0];
+              {tags.slice(0, 4).map((tag, idx) => {
+                const tagColor = tag.color?.() || null;
+                const extraClass = idx >= 2 ? ' AvocadoHome-tagPill--extra' : '';
+                const tagStyle = tagColor ? { '--tag-bg': hexToRgba(tagColor, 0.1), '--tag-color': tagColor } : {};
                 return (
                   <a
                     key={tag.id?.()}
-                    className="AvocadoHome-tagPill"
+                    className={`AvocadoHome-tagPill${extraClass}`}
                     href={tagRoute(tag)}
                     onclick={(e) => { e.stopPropagation(); this.navigate(e, tagRoute(tag)); }}
-                    style={{
-                      '--tag-bg': hexToRgba(tagColor, 0.1),
-                      '--tag-color': tagColor,
-                    }}
+                    style={tagStyle}
                   >
                     {tag.icon?.() && <i className={tag.icon()} aria-hidden="true" />}
                     {tag.name?.()}
                   </a>
                 );
               })}
+              {tags.length > 2 && (
+                <span className="AvocadoHome-tagMore">+{tags.length - 2}</span>
+              )}
             </div>
             <a
               className="AvocadoHome-threadTitle"
@@ -438,32 +568,38 @@ export default class HomePage extends Component {
             >
               {title}
             </a>
-            {excerpt && (
-              <p className="AvocadoHome-threadExcerpt">{excerpt}</p>
-            )}
+            {excerpt && <p className="AvocadoHome-threadExcerpt">{excerpt}</p>}
           </div>
           <button
             className="AvocadoHome-replyBtn"
-            title={trans('ramon-avocado.forum.home.reply', 'Reply')}
+            aria-label={trans('ramon-avocado.forum.home.reply_label', 'Reply')}
             onclick={(e) => {
               e.stopPropagation();
-              m.route.set(href);
+              if (!app.session.user) {
+                app.modal.show(() => import('flarum/forum/components/LogInModal').then((m) => m.default));
+                return;
+              }
+              import('flarum/forum/components/ReplyComposer').then(({ default: ReplyComposer }) => {
+                if (app.composer) {
+                  app.composer.load(ReplyComposer, { user: app.session.user, discussion });
+                  app.composer.show();
+                }
+                m.route.set(href);
+              });
             }}
           >
             <i className="fas fa-reply" aria-hidden="true" />
             {trans('ramon-avocado.forum.home.reply_label', 'Reply')}
           </button>
         </div>
-
         {replies > 0 && (
           <div className="AvocadoHome-threadReplyGroup">
             {this.renderReplyCard(discussion)}
           </div>
         )}
-
         <div className="AvocadoHome-threadStats">
           <button
-            className={`AvocadoHome-statBtn AvocadoHome-statBtn--likes${isLiked ? ' AvocadoHome-statBtn--liked' : ''}${isLiking ? ' AvocadoHome-statBtn--loading' : ''}`}
+            className={`AvocadoHome-statBtn AvocadoHome-statBtn--likes${isLiked ? ' AvocadoHome-statBtn--liked' : ''}${isLiking ? ' AvocadoHome-statBtn--loading' : ''}${this._updatedLikeIds.has(id) ? ' AvocadoHome-statBtn--pop' : ''}`}
             onclick={(e) => {
               e.stopPropagation();
               if (!app.session.user) {
@@ -475,7 +611,7 @@ export default class HomePage extends Component {
             title={trans('ramon-avocado.forum.home.like', 'Like')}
           >
             <i className={isLiked ? 'fas fa-thumbs-up' : 'far fa-thumbs-up'} aria-hidden="true" />
-            <span>{likes}</span>
+            <span>{likes === 1 ? trans('ramon-avocado.forum.home.like_count_singular', '1 like') : trans('ramon-avocado.forum.home.like_count_plural', '{count} likes', { count: likes })}</span>
           </button>
           <button
             className="AvocadoHome-statBtn AvocadoHome-statBtn--replies"
@@ -483,10 +619,106 @@ export default class HomePage extends Component {
             title={trans('ramon-avocado.forum.home.replies', 'Replies')}
           >
             <i className="far fa-comment" aria-hidden="true" />
-            <span>{replies}</span>
+            <span>{replies === 1 ? trans('ramon-avocado.forum.home.reply_count_singular', '1 resposta') : trans('ramon-avocado.forum.home.reply_count_plural', '{count} respostas', { count: replies })}</span>
           </button>
         </div>
       </article>
+    );
+  }
+
+  loadHomeDiscussions() {
+    // If the store already has discussions loaded (e.g. server preload for guests),
+    // skip the fetch. For logged-in users there is no server preload, so we fetch.
+    const existing = app.store.all('discussions');
+    if (existing.length > 0) return;
+    this._fetchHomeDiscussions();
+  }
+
+  _fetchHomeDiscussions() {
+    this._cachedPopular = null;
+    this._cachedLatest = null;
+    app.store
+      .find('discussions', {
+        include: 'user,lastPostedUser,tags,firstPost',
+        'page[limit]': 20,
+      })
+      .then(() => m.redraw())
+      .catch(() => {});
+  }
+
+  loadOnlineUsers() {
+    // Prefer server-injected data (works for guests too; trust even if empty [])
+    const injected = app.forum?.attribute('avocadoOnlineUsers');
+    if (Array.isArray(injected)) {
+      this.onlineUsers = injected; // plain objects: { id, username, displayName, avatarUrl }
+      return;
+    }
+
+    // Fallback for logged-in users when PHP attribute is not present
+    if (!app.session.user) return;
+
+    app.store
+      .find('users', { page: { limit: 50 } })
+      .then((users) => {
+        this.onlineUsers = (Array.isArray(users) ? users : []).filter((u) => u.isOnline?.());
+        m.redraw();
+      })
+      .catch(() => {
+        this.onlineUsers = app.store.all('users').filter((u) => u.isOnline?.());
+        m.redraw();
+      });
+  }
+
+  renderOnlineAvatars() {
+    if (!app.forum?.attribute('avocadoShowOnlineUsers')) return null;
+    if (!this.onlineUsers.length) return null;
+    const MAX_SHOWN = 8;
+    const shown = this.onlineUsers.slice(0, MAX_SHOWN);
+    const extra = this.onlineUsers.length - shown.length;
+
+    // Determine if items are plain objects (server-injected) or User model instances
+    const isPlain = shown[0] && typeof shown[0].username === 'string';
+
+    return (
+      <div className="AvocadoHome-onlineAvatars">
+        {shown.map((user, i) => {
+          const key         = isPlain ? user.id : user.id?.();
+          // Prefer the live User model from store (has correct color & avatarUrl)
+          const userModel   = isPlain ? (key ? app.store.getById('users', String(key)) : null) : user;
+          const username    = userModel?.username?.() || (isPlain ? user.username : '');
+          const name        = userModel?.displayName?.() || userModel?.username?.() || (isPlain ? (user.displayName || user.username) : displayName(user));
+          const avatarUrl   = userModel?.avatarUrl?.() || (isPlain ? (user.avatarUrl || null) : null);
+          const profileHref = safeRoute('user', { username });
+          const userColor   = userModel?.color?.() || (isPlain ? (user.color || null) : null);
+          const fallbackBg  = userColor || FALLBACK_COLORS[(parseInt(String(key), 10) || i) % FALLBACK_COLORS.length];
+          return (
+            <a
+              key={key}
+              className="AvocadoHome-onlineAvatars-item"
+              href={profileHref}
+              onclick={(e) => { e.stopPropagation(); this.navigate(e, profileHref); }}
+              title={name}
+              style={{ zIndex: MAX_SHOWN - i }}
+            >
+              {avatarUrl
+                ? <img src={avatarUrl} alt={name} className="Avatar" />
+                : (userModel
+                    ? Avatar.component({ user: userModel })
+                    : (app.forum?.attribute('avocadoCustomDefaultAvatar') !== false
+                        ? defaultAvatarSvg
+                        : <span className="Avatar" style={{ background: fallbackBg }}>{name.charAt(0).toUpperCase()}</span>
+                      )
+                  )
+              }
+            </a>
+          );
+        })}
+        {extra > 0 && (
+          <span className="AvocadoHome-onlineAvatars-more" title={`${extra} more online`}>
+            +{extra}
+          </span>
+        )}
+      </div>
     );
   }
 
@@ -504,11 +736,92 @@ export default class HomePage extends Component {
   }
 
   renderTagPicker() {
-    const allTags = app.store.all('tags').filter((t) => t && !t.parent?.());
-    const selectedIds = new Set(this.composerTags.map((t) => t.id?.()));
+    // Limits from forum settings (mirrors TagDiscussionModal / addTagComposer.js)
+    const rawMaxP = parseInt(app.forum.attribute('maxPrimaryTags'));
+    const rawMaxS = parseInt(app.forum.attribute('maxSecondaryTags'));
+    const maxPrimary = isNaN(rawMaxP) ? Infinity : rawMaxP;
+    const maxSecond  = isNaN(rawMaxS) ? Infinity : rawMaxS;
+    const minPrimary = parseInt(app.forum.attribute('minPrimaryTags'))  || 0;
+    const minSecond  = parseInt(app.forum.attribute('minSecondaryTags')) || 0;
+    const canBypass  = !!app.forum.attribute('canBypassTagCounts');
+
+    const selected     = this.composerTags;
+    const bypass       = this.tagBypassReqs;
+    const primaryCount = selected.filter((t) => t.position?.() !== null && !t.isChild?.()).length;
+    const secondCount  = selected.filter((t) => t.position?.() === null).length;
+
+    // Build grouped tag list: root tags first (by position), then their children
+    const allTags  = app.store.all('tags').filter(Boolean);
+    const rootTags = allTags
+      .filter((t) => !t.isChild?.())
+      .sort((a, b) => (a.position?.() ?? 9999) - (b.position?.() ?? 9999));
+
+    const tagItems = [];
+    for (const root of rootTags) {
+      tagItems.push({ tag: root, isChild: false });
+      allTags
+        .filter((t) => t.isChild?.() && t.parent?.()?.id?.() === root.id?.())
+        .sort((a, b) => (a.position?.() ?? 9999) - (b.position?.() ?? 9999))
+        .forEach((child) => tagItems.push({ tag: child, isChild: true }));
+    }
+
+    // Hide secondary/child tags when secondary tags are not allowed and bypass is off
+    const visibleItems = (maxSecond === 0 && !bypass)
+      ? tagItems.filter(({ isChild }) => !isChild)
+      : tagItems;
+
+    // Filter by search text
+    const filterText = (this.tagFilter || '').toLowerCase();
+    const filtered = filterText
+      ? visibleItems.filter(({ tag }) => tag.name?.().toLowerCase().includes(filterText))
+      : visibleItems;
+
+    // Whether a tag can be newly selected (limits check)
+    const canSelectTag = (tag) => {
+      if (bypass || selected.includes(tag)) return true;
+      const isPrimary = tag.position?.() !== null && !tag.isChild?.();
+      // Secondary tags require at least one primary to be selected first
+      if (!isPrimary && primaryCount === 0) return false;
+      if (isPrimary && primaryCount >= maxPrimary) return false;
+      if (!isPrimary && secondCount >= maxSecond) return false;
+      return true;
+    };
+
+    // Instruction text shown in trigger when requirements not yet met
+    let instruction = '';
+    if (!bypass) {
+      if (primaryCount < minPrimary) {
+        const n = minPrimary - primaryCount;
+        instruction = n === 1 ? 'Choose 1 primary tag' : `Choose ${n} primary tags`;
+      } else if (secondCount < minSecond) {
+        const n = minSecond - secondCount;
+        instruction = n === 1 ? 'Choose 1 secondary tag' : `Choose ${n} secondary tags`;
+      }
+    }
+
+    const addTag = (tag) => {
+      if (selected.includes(tag)) return;
+      const next = [...selected];
+      // Auto-add parent when selecting a child (requireParentTag logic)
+      const parent = tag.parent?.();
+      if (parent && parent !== false && !next.includes(parent)) next.push(parent);
+      next.push(tag);
+      this.composerTags = next;
+      this.tagFilter = '';
+      m.redraw();
+    };
+
+    const removeTag = (tag) => {
+      // Also remove children whose parent is being removed
+      this.composerTags = this.composerTags.filter(
+        (t) => t !== tag && t.parent?.()?.id?.() !== tag.id?.()
+      );
+      m.redraw();
+    };
 
     return (
       <div className="AvocadoHome-tagPicker">
+        {/* Trigger button */}
         <button
           className={`AvocadoHome-tagPickerTrigger${this.tagPickerOpen ? ' is-open' : ''}`}
           type="button"
@@ -516,86 +829,102 @@ export default class HomePage extends Component {
             e.preventDefault();
             e.stopPropagation();
             this.tagPickerOpen = !this.tagPickerOpen;
+            if (!this.tagPickerOpen) this.tagFilter = '';
             m.redraw();
           }}
         >
           <i className="fas fa-tag" aria-hidden="true" />
-          {this.composerTags.length === 0
-            ? <span className="AvocadoHome-tagPickerPlaceholder">
-                {trans('ramon-avocado.forum.home.choose_tags', 'Choose tags')}
+          {selected.length === 0 && (
+            <span className="AvocadoHome-tagPickerPlaceholder">
+              {instruction || trans('ramon-avocado.forum.home.choose_tags', 'Choose tags')}
+            </span>
+          )}
+          {selected.map((tag) => {
+            const tagColor = tag.color?.() || null;
+            return (
+              <span
+                key={tag.id?.()}
+                className="AvocadoHome-tagChip"
+                style={tagColor ? { '--tag-color': tagColor } : {}}
+                onclick={(e) => { e.preventDefault(); e.stopPropagation(); removeTag(tag); }}
+                title="Remove tag"
+              >
+                {tag.icon?.() && <i className={tag.icon()} aria-hidden="true" />}
+                {tag.name?.()}
+                <i className="fas fa-times AvocadoHome-tagChipRemoveIcon" aria-hidden="true" />
               </span>
-            : this.composerTags.map((tag) => {
-                const tagColor = tag.color?.() || FALLBACK_COLORS[0];
-                return (
-                  <span
-                    key={tag.id?.()}
-                    className="AvocadoHome-tagChip"
-                    style={{ '--tag-color': tagColor }}
-                  >
-                    {tag.icon?.() && <i className={tag.icon()} aria-hidden="true" />}
-                    {tag.name?.()}
-                    <button
-                      className="AvocadoHome-tagChipRemove"
-                      type="button"
-                      onclick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        this.composerTags = this.composerTags.filter((t) => t.id?.() !== tag.id?.());
-                        m.redraw();
-                      }}
-                      aria-label="Remove tag"
-                    >
-                      <i className="fas fa-times" aria-hidden="true" />
-                    </button>
-                  </span>
-                );
-              })
-          }
+            );
+          })}
           <i className={`fas fa-chevron-${this.tagPickerOpen ? 'up' : 'down'} AvocadoHome-tagPickerChevron`} aria-hidden="true" />
         </button>
 
+        {/* Dropdown */}
         {this.tagPickerOpen && (
           <div className="AvocadoHome-tagPickerDropdown">
-            {allTags.length === 0 && (
-              <span className="AvocadoHome-tagPickerEmpty">
-                {trans('ramon-avocado.forum.home.no_tags', 'No tags available')}
-              </span>
+            {/* Search */}
+            <div className="AvocadoHome-tagPickerSearch">
+              <i className="fas fa-search" aria-hidden="true" />
+              <input
+                type="text"
+                placeholder={trans('ramon-avocado.forum.home.filter_tags', 'Filter tags')}
+                value={this.tagFilter || ''}
+                oninput={(e) => { this.tagFilter = e.target.value; m.redraw(); }}
+                onclick={(e) => e.stopPropagation()}
+                oncreate={(vnode) => { setTimeout(() => vnode.dom.focus(), 0); }}
+              />
+            </div>
+            {/* Tag list */}
+            {filtered.length === 0
+              ? <span className="AvocadoHome-tagPickerEmpty">{trans('ramon-avocado.forum.home.no_tags_found', 'No tags found')}</span>
+              : <ul className="AvocadoHome-tagPickerList">
+                  {filtered.map(({ tag, isChild }) => {
+                    const tagId     = tag.id?.();
+                    const isSelected = selected.includes(tag);
+                    const tagColor  = tag.color?.() || FALLBACK_COLORS[0];
+                    const selectable = canSelectTag(tag);
+                    return (
+                      <li
+                        key={tagId}
+                        className={[
+                          'AvocadoHome-tagPickerItem',
+                          isChild   && 'is-child',
+                          isSelected && 'is-selected',
+                          !selectable && !isSelected && 'is-disabled',
+                        ].filter(Boolean).join(' ')}
+                        onclick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (!selectable && !isSelected) return;
+                          isSelected ? removeTag(tag) : addTag(tag);
+                        }}
+                      >
+                        <span className="AvocadoHome-tagPickerItem-icon" style={{ background: tagColor }}>
+                          {tag.icon?.()
+                            ? <i className={tag.icon()} aria-hidden="true" />
+                            : <i className="fas fa-tag" aria-hidden="true" />
+                          }
+                        </span>
+                        <span className="AvocadoHome-tagPickerItem-name">{tag.name?.()}</span>
+                        {tag.description?.() && (
+                          <span className="AvocadoHome-tagPickerItem-desc">{tag.description()}</span>
+                        )}
+                        {isSelected && <i className="fas fa-check AvocadoHome-tagPickerItem-check" aria-hidden="true" />}
+                      </li>
+                    );
+                  })}
+                </ul>
+            }
+            {/* Bypass toggle (admins only) */}
+            {canBypass && (
+              <label className="AvocadoHome-tagPickerBypass" onclick={(e) => e.stopPropagation()}>
+                <input
+                  type="checkbox"
+                  checked={this.tagBypassReqs}
+                  onchange={(e) => { this.tagBypassReqs = e.target.checked; m.redraw(); }}
+                />
+                {' Bypass tag requirements'}
+              </label>
             )}
-            {allTags.map((tag) => {
-              const tagId = tag.id?.();
-              const isSelected = selectedIds.has(tagId);
-              const tagColor = tag.color?.() || FALLBACK_COLORS[0];
-              const count = numberOr(tag.discussionCount?.(), 0);
-
-              return (
-                <button
-                  key={tagId}
-                  className={`AvocadoHome-tagPickerItem${isSelected ? ' is-selected' : ''}`}
-                  type="button"
-                  style={{ '--tag-color': tagColor }}
-                  onclick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (isSelected) {
-                      this.composerTags = this.composerTags.filter((t) => t.id?.() !== tagId);
-                    } else {
-                      this.composerTags = [...this.composerTags, tag];
-                    }
-                    m.redraw();
-                  }}
-                >
-                  <span className="AvocadoHome-tagPickerItem-icon">
-                    {tag.icon?.()
-                      ? <i className={tag.icon()} aria-hidden="true" />
-                      : <i className="fas fa-tag" aria-hidden="true" />
-                    }
-                  </span>
-                  <span className="AvocadoHome-tagPickerItem-name">{tag.name?.()}</span>
-                  <span className="AvocadoHome-tagPickerItem-count">{formatThreadCount(count)}</span>
-                  {isSelected && <i className="fas fa-check AvocadoHome-tagPickerItem-check" aria-hidden="true" />}
-                </button>
-              );
-            })}
           </div>
         )}
       </div>
@@ -607,17 +936,35 @@ export default class HomePage extends Component {
     const heroImage = app.forum?.attribute('avocadoHeroImage');
     const heroUrl = heroImage ? resolveAssetUrl(heroImage) : null;
     const heroImagePosition = app.forum?.attribute('avocadoHeroImagePosition') || 'center top';
-    const forumTitle = app.forum?.attribute('title') || '';
-    const forumDesc = app.forum?.attribute('description') || '';
+    // Use Flarum's configured Welcome Banner text (admin: Forum Configuration > Welcome Banner)
+    const forumTitle = app.forum?.attribute('welcomeTitle') || app.forum?.attribute('title') || '';
+    const forumDesc = app.forum?.attribute('welcomeMessage') || app.forum?.attribute('description') || '';
 
-    const popular = this.popularDiscussions(5);
-    const latest = this.latestDiscussions();
-    const categories = this.topCategories(7);
-    const extraCategories = Math.max(0, app.store.all('tags').filter((t) => !t.parent?.()).length - 4);
+    const isFollowingPage = app.current.get?.('routeName') === 'following';
+    const popular = isFollowingPage
+      ? this.allDiscussions().slice(0, 5)
+      : this.popularDiscussions(5);
+
+    const featuredIds = (() => {
+      try {
+        const raw = app.forum?.attribute('avocadoFeaturedTags');
+        return new Set((raw ? JSON.parse(raw) : []).map(String));
+      } catch (_) { return new Set(); }
+    })();
+
+    // Featured categories appear first, then the rest in position order
+    const categories = this.topCategories(7).sort((a, b) => {
+      const aF = featuredIds.has(String(a.id?.()));
+      const bF = featuredIds.has(String(b.id?.()));
+      if (aF === bF) return 0;
+      return aF ? -1 : 1;
+    });
+
+    const allTagsCount = app.store.all('tags').filter((t) => t && !t.parent?.()).length;
+    const extraCategories = Math.max(0, allTagsCount - categories.length);
 
     const guestCTA = (
       <div className="AvocadoHome-guestCTA">
-        <p>{trans('ramon-avocado.forum.home.guest_cta_text', 'Want to join the conversation?')}</p>
         <div className="AvocadoHome-guestCTA-actions">
           <button
             className="AvocadoHome-guestCTA-btn AvocadoHome-guestCTA-btn--login"
@@ -640,23 +987,27 @@ export default class HomePage extends Component {
 
     return (
       <div className="AvocadoHome">
-        <div className="AvocadoHome-main">
+        <div className="AvocadoHome-wrapper">
+          <div className="AvocadoHome-main">
 
-          {/* ── Hero banner ──────────────────────────────────────────────── */}
-          {heroUrl && (
+          {/* ── Hero banner (guests only) ─────────────────────────────── */}
+          {!user && (
             <div
-              className="AvocadoHome-heroBanner"
-              style={{
+              className={`AvocadoHome-heroBanner${heroUrl ? ' AvocadoHome-heroBanner--hasImage' : ''}`}
+              style={heroUrl ? {
                 backgroundImage: `url(${heroUrl})`,
                 backgroundSize: 'cover',
                 backgroundPosition: heroImagePosition,
-              }}
+              } : {}}
             >
               <div className="AvocadoHome-heroBannerOverlay">
-                <div className="container">
+                <div className="AvocadoHome-heroBannerContent">
+                  <div className="AvocadoHome-heroBannerIcon">
+                    <i className="fas fa-comments" aria-hidden="true" />
+                  </div>
                   <h1 className="AvocadoHome-heroBannerTitle">{forumTitle}</h1>
                   {forumDesc && <p className="AvocadoHome-heroBannerDesc">{forumDesc}</p>}
-                  {!user && guestCTA}
+                  {app.forum?.attribute('avocadoShowGuestCta') !== false && guestCTA}
                 </div>
               </div>
             </div>
@@ -671,18 +1022,16 @@ export default class HomePage extends Component {
               <div className="AvocadoHome-postInput-inner">
                 {this.renderAvatar(user, 'AvocadoHome-postInput-avatar')}
                 <span className="AvocadoHome-postInput-placeholder">
-                  {trans('ramon-avocado.forum.home.start_discussion', "What's on your mind?")}
+                  {trans('ramon-avocado.forum.home.start_discussion', 'Tell everyone what are you working on...')}
                 </span>
-                <div className="AvocadoHome-postInput-actions">
-                  <span className="AvocadoHome-postInput-action">
-                    <i className="fas fa-image" aria-hidden="true" />
-                    {trans('ramon-avocado.forum.home.action_image', 'Image')}
-                  </span>
-                  <span className="AvocadoHome-postInput-action AvocadoHome-postInput-action--primary">
-                    <i className="fas fa-pen" aria-hidden="true" />
-                    {trans('ramon-avocado.forum.home.action_write', 'Write')}
-                  </span>
-                </div>
+                <button
+                  className="AvocadoHome-postInput-newBtn"
+                  type="button"
+                  onclick={(e) => { e.stopPropagation(); this.openInlineComposer(); }}
+                >
+                  <i className="fas fa-plus" aria-hidden="true" />
+                  {trans('ramon-avocado.forum.home.new_discussion', 'New discussion')}
+                </button>
               </div>
             </div>
           )}
@@ -690,6 +1039,7 @@ export default class HomePage extends Component {
           {/* ── Inline composer ───────────────────────────────────────────── */}
           {this.composerOpen && (
             <div className="AvocadoHome-composer">
+              {/* Row 1: avatar + title */}
               <div className="AvocadoHome-composer-header">
                 <div className="AvocadoHome-composer-avatar">
                   {this.renderAvatar(user)}
@@ -702,15 +1052,21 @@ export default class HomePage extends Component {
                   oninput={(e) => { this.composerTitle = e.target.value; }}
                 />
               </div>
-              <TextEditor
-                className="AvocadoHome-composerBody"
-                value={this.composerBody}
-                placeholder={trans('ramon-avocado.forum.home.composer_body_placeholder', 'Share your thoughts…')}
-                oninput={(value) => { this.composerBody = value; m.redraw(); }}
-              />
-              <div className="AvocadoHome-composer-footer">
+              {/* Row 2: tag picker */}
+              <div className="AvocadoHome-composer-tags">
                 {this.renderTagPicker()}
-                <div className="AvocadoHome-composer-footerActions">
+              </div>
+              {/* Textarea + toolbar row + footer buttons (all in one positioning context) */}
+              <div className="AvocadoHome-composerBody">
+                <TextEditor
+                  composer={this.composerProxy}
+                  value={this.composerBody}
+                  placeholder={trans('ramon-avocado.forum.home.composer_body_placeholder', 'Tell everyone what are you working on...')}
+                  onchange={(value) => { this.composerBody = value; m.redraw(); }}
+                  onsubmit={() => this.submitInlineComposer()}
+                />
+                {/* Buttons sit inside composerBody so we can overlay them on the toolbar row */}
+                <div className="AvocadoHome-composer-footer">
                   <button
                     className="Button AvocadoHome-composer-cancel"
                     type="button"
@@ -720,15 +1076,17 @@ export default class HomePage extends Component {
                       this.composerBody = '';
                       this.composerTags = [];
                       this.tagPickerOpen = false;
+                      this.tagBypassReqs = false;
+                      this.tagFilter = '';
                       m.redraw();
                     }}
                   >
-                    {trans('ramon-avocado.forum.home.composer_cancel', 'Cancel')}
+                    {trans('ramon-avocado.forum.home.composer_close', 'Close')}
                   </button>
                   <button
-                    className={`Button Button--primary AvocadoHome-composer-submit${this.composerSubmitting ? ' is-loading' : ''}`}
+                    className={`Button Button--primary AvocadoHome-composer-submit${this.composerSubmitting ? ' is-loading' : ''}${!this.isComposerValid() ? ' is-disabled' : ''}`}
                     type="button"
-                    disabled={this.composerSubmitting || !this.composerTitle.trim() || !this.composerBody.trim()}
+                    disabled={this.composerSubmitting || !this.isComposerValid()}
                     onclick={this.submitInlineComposer.bind(this)}
                   >
                     {this.composerSubmitting
@@ -741,70 +1099,85 @@ export default class HomePage extends Component {
           )}
 
           {/* ── Categories section ────────────────────────────────────────── */}
-          {categories.length > 0 && (
-            <section className="AvocadoHome-section">
+          {categories.length > 0 && !isFollowingPage && (
+            <section className="AvocadoHome-section AvocadoHome-section--categories">
               <div className="AvocadoHome-sectionHead">
                 <h2>{trans('ramon-avocado.forum.home.categories_heading', 'Categories')}</h2>
+              </div>
+              <div className="AvocadoHome-categories">
+                {categories.map((cat, idx) => {
+                  const catColor   = cat.color?.() || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
+                  const catIcon    = cat.icon?.() || FALLBACK_ICONS[idx % FALLBACK_ICONS.length];
+                  const catRoute   = tagRoute(cat);
+                  const count      = numberOr(cat.discussionCount?.(), 0);
+                  const isFeatured = featuredIds.has(String(cat.id?.()));
+                  const fireUrl = isFeatured
+                    ? (() => {
+                        const base = app.forum?.attribute('assetsBaseUrl') || '';
+                        if (base) return base.replace(/\/+$/, '') + '/fire.webp';
+                        return (app.forum?.attribute('baseUrl') || '').replace(/\/+$/, '') + '/assets/fire.webp';
+                      })()
+                    : null;
+
+                  return (
+                    <a
+                      key={cat.id?.()}
+                      className={`AvocadoHome-categoryCard${isFeatured ? ' AvocadoHome-categoryCard--featured' : ''}`}
+                      href={catRoute}
+                      onclick={(e) => this.navigate(e, catRoute)}
+                      style={{ '--cat-color': catColor, '--cat-bg': hexToRgba(catColor, 0.12) }}
+                    >
+                      {isFeatured && fireUrl && (
+                        <Tooltip text={trans('ramon-avocado.forum.tags.featured', 'Featured')} position="top">
+                          <span className="AvocadoHome-featuredBadge">
+                            <img src={fireUrl} alt="" aria-hidden="true" />
+                          </span>
+                        </Tooltip>
+                      )}
+                      <span className="AvocadoHome-categoryIcon">
+                        <i className={catIcon} aria-hidden="true" />
+                      </span>
+                      <div className="AvocadoHome-categoryBody">
+                        <h3>{cat.name?.()}</h3>
+                        <p>{formatThreadCount(count)} {trans('ramon-avocado.forum.home.discussions', 'discussions')}</p>
+                      </div>
+                    </a>
+                  );
+                })}
                 <a
-                  className="AvocadoHome-seeAll"
+                  className="AvocadoHome-categoryCard AvocadoHome-categoryCard--all"
                   href={safeRoute('tags')}
                   onclick={(e) => this.navigate(e, safeRoute('tags'))}
+                >
+                  <div className="AvocadoHome-categoryBody">
+                    <h3>{trans('ramon-avocado.forum.home.all_categories', 'All categories')}</h3>
+                    <p>{extraCategories} {trans('ramon-avocado.forum.home.more', 'more')}</p>
+                  </div>
+                  <i className="fas fa-arrow-right" aria-hidden="true" />
+                </a>
+              </div>
+            </section>
+          )}
+
+          {/* ── Popular / Following discussions ───────────────────────────── */}
+          <section className="AvocadoHome-section">
+            <div className="AvocadoHome-sectionHead">
+              <h2>{isFollowingPage
+                ? trans('ramon-avocado.forum.home.following_heading', 'Following')
+                : trans('ramon-avocado.forum.home.popular_heading', 'Popular discussions')
+              }</h2>
+              <div className="AvocadoHome-sectionHead-right">
+                {this._sectionHasNew && <span className="AvocadoStatDot AvocadoHome-sectionDot" aria-hidden="true" />}
+                {this.renderOnlineAvatars()}
+                <a
+                  className="AvocadoHome-seeAll"
+                  href={safeRoute('avocado-discussions')}
+                  onclick={(e) => this.navigate(e, safeRoute('avocado-discussions'))}
                 >
                   {trans('ramon-avocado.forum.home.see_all', 'See all')}{' '}
                   <i className="fas fa-arrow-right" aria-hidden="true" />
                 </a>
               </div>
-              <div className="AvocadoHome-categories">
-                {categories.slice(0, 4).map((cat, idx) => {
-                  const catColor = cat.color?.() || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
-                  const catIcon = cat.icon?.() || FALLBACK_ICONS[idx % FALLBACK_ICONS.length];
-                  const catRoute = tagRoute(cat);
-                  const count = numberOr(cat.discussionCount?.(), 0);
-
-                  return (
-                    <a
-                      key={cat.id?.()}
-                      className="AvocadoHome-categoryCard"
-                      href={catRoute}
-                      onclick={(e) => this.navigate(e, catRoute)}
-                      style={{ '--cat-color': catColor }}
-                    >
-                      <span className="AvocadoHome-categoryCard-icon">
-                        <i className={catIcon} aria-hidden="true" />
-                      </span>
-                      <span className="AvocadoHome-categoryCard-text">
-                        <span className="AvocadoHome-categoryCard-name">{cat.name?.()}</span>
-                        <span className="AvocadoHome-categoryCard-count">
-                          {formatThreadCount(count)} {trans('ramon-avocado.forum.home.threads', 'threads')}
-                        </span>
-                      </span>
-                    </a>
-                  );
-                })}
-                {extraCategories > 0 && (
-                  <a
-                    className="AvocadoHome-categoryCard AvocadoHome-categoryCard--more"
-                    href={safeRoute('tags')}
-                    onclick={(e) => this.navigate(e, safeRoute('tags'))}
-                  >
-                    <span className="AvocadoHome-categoryCard-icon">
-                      <i className="fas fa-ellipsis-h" aria-hidden="true" />
-                    </span>
-                    <span className="AvocadoHome-categoryCard-text">
-                      <span className="AvocadoHome-categoryCard-name">
-                        +{extraCategories} {trans('ramon-avocado.forum.home.more', 'more')}
-                      </span>
-                    </span>
-                  </a>
-                )}
-              </div>
-            </section>
-          )}
-
-          {/* ── Popular discussions ───────────────────────────────────────── */}
-          <section className="AvocadoHome-section">
-            <div className="AvocadoHome-sectionHead">
-              <h2>{trans('ramon-avocado.forum.home.popular_heading', 'Popular discussions')}</h2>
             </div>
             <div className="AvocadoHome-threadStack">
               {popular.length === 0
@@ -814,28 +1187,7 @@ export default class HomePage extends Component {
             </div>
           </section>
 
-          {/* ── All discussions ───────────────────────────────────────────── */}
-          <section className="AvocadoHome-section">
-            <div className="AvocadoHome-sectionHead">
-              <h2>{trans('ramon-avocado.forum.home.all_heading', 'All discussions')}</h2>
-              <a
-                className="AvocadoHome-seeAll"
-                href={safeRoute('index')}
-                onclick={(e) => this.navigate(e, safeRoute('index'))}
-              >
-                {trans('ramon-avocado.forum.home.see_all', 'See all')}
-              </a>
-            </div>
-            <div className="AvocadoHome-threadStack">
-              {latest.length === 0
-                ? this.renderSkeleton()
-                : latest.map((d) => this.renderThreadCard(d))
-              }
-            </div>
-          </section>
-
-          {/* ── Guest CTA (bottom) ────────────────────────────────────────── */}
-          {!user && !heroUrl && guestCTA}
+        </div>
 
         </div>
       </div>

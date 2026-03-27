@@ -7,6 +7,84 @@
   display: block;
 }
 
+// ─── Featured Tags Selector ───────────────────────────────────────────────────
+
+.AvocadoAdmin-featuredTags-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.AvocadoAdmin-featuredTags-saving {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  animation: avocadoPulse 1s ease-in-out infinite;
+}
+
+@keyframes avocadoPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.35; transform: scale(0.75); }
+}
+
+.AvocadoAdmin-tagPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 6px 0 4px;
+}
+
+.AvocadoAdmin-tagPills-placeholder {
+  font-size: 13px;
+  color: var(--muted-color);
+  padding: 4px 0;
+}
+
+.AvocadoAdmin-tagPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1.5px solid var(--control-bg-dark, #e0e0e8);
+  background: var(--body-bg, #fff);
+  color: var(--text-muted-color);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.14s, color 0.14s, background 0.14s;
+
+  .AvocadoAdmin-tagPill-icon {
+    font-size: 11px;
+    color: var(--pill-color, #8f9097);
+  }
+
+  .AvocadoAdmin-tagPill-star {
+    font-size: 9px;
+    color: var(--control-bg-dark, #c0c0c8);
+    transition: color 0.14s, opacity 0.14s;
+  }
+
+  &:hover {
+    border-color: var(--pill-color, #8f9097);
+    color: var(--text-color);
+  }
+
+  &.is-active {
+    border-color: var(--pill-color, #8f9097);
+    background: transparent;
+    color: var(--pill-color, #8f9097);
+
+    .AvocadoAdmin-tagPill-icon { color: var(--pill-color, #8f9097); }
+    .AvocadoAdmin-tagPill-star { color: var(--pill-color, #8f9097); }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Section headings inside the extension settings page
 .AvocadoAdmin-section {
   padding: 16px 0 4px;

@@ -1,0 +1,103 @@
+ramon-avocado:
+  admin:
+    settings:
+      section_homepage: Página Inicial
+      featured_tags_label: Categorias em destaque
+      featured_tags_help: As categorias selecionadas aparecem com um emblema de estrela na página inicial e na página de categorias.
+      featured_tags_empty: Nenhuma tag encontrada.
+      section_auth: Login e Registro
+      auth_image_label: Imagem do modal de autenticação
+      auth_image_help: Imagem de fundo exibida no painel direito dos modais de login, registro e redefinição de senha.
+      section_search: Busca
+      section_posts: Posts
+      banner_image_label: Imagem do banner
+      banner_image_help: Envie a imagem do banner hero exibida no topo do fórum.
+      show_auth_buttons_label: Mostrar botões Entrar / Cadastrar no header para visitantes
+      show_auth_buttons_help: Exibir botões de Entrar e Cadastrar no menu secundário do header para usuários não logados.
+      hero_image_position_label: Posição da imagem do hero
+      hero_image_position_help: "Valor CSS background-position, ex.: 'center top' ou '50% 20%'."
+      search_v1_label: Ativar estilo da busca V1
+      search_v1_help: Mostrar o dropdown inline de busca em vez do modal V2.
+      show_share_label: Mostrar botão Compartilhar nos posts
+      show_share_help: Adicionar um botão de compartilhamento em cada post.
+      show_action_icons_label: Mostrar ícones nos botões Curtir e Responder
+      show_action_icons_help: Exibir ícones do Font Awesome nas ações de Curtir e Responder.
+      fixed_avatar_effect_label: Ativar efeito de avatar fixo
+      fixed_avatar_effect_help: Manter o avatar do post fixo ao ler comentários longos no desktop.
+      section_logo: Logotipo
+      logo_svg_label: Logotipo SVG
+      logo_svg_help: Envie um logotipo SVG personalizado para seu fórum.
+      logo_enabled_label: Ativar logotipo personalizado
+      logo_enabled_help: Exibir o logotipo personalizado no cabeçalho.
+      show_online_users_label: Mostrar usuários online
+      show_online_users_help: Exibir a quantidade de usuários atualmente online.
+      show_guest_cta_label: Mostrar call-to-action para visitantes
+      show_guest_cta_help: Exibir uma mensagem de call-to-action para usuários não logados.
+      custom_default_avatar_label: Avatar padrão personalizado
+      custom_default_avatar_help: Envie uma imagem de avatar padrão personalizada para usuários sem foto.
+    footer_settings:
+      footer_enabled: Ativar rodapé personalizado
+      footer_company: Informações da empresa
+      footer_company_name: Nome da empresa
+      footer_company_description: Descrição da empresa
+      footer_company_description_placeholder: "Breve descrição sobre sua empresa ou fórum..."
+      footer_company_logo_url: URL do logotipo da empresa
+      footer_links_config: Configuração de links do rodapé
+      footer_links_help_json: "Configure as colunas de links do rodapé em formato JSON. Cada coluna deve ter um título e uma lista de links com rótulo e URL."
+      footer_footer_bottom: Parte inferior do rodapé
+      footer_copyright_text: Texto de copyright
+      footer_social: Links sociais
+      footer_show_social: Mostrar links de mídias sociais
+      footer_social_help_json: "Configure links de mídias sociais em formato JSON. Use as chaves: facebook, twitter, linkedin, instagram, youtube."
+  forum:
+    actions:
+      share: Compartilhar
+    header:
+    user:
+    tag:
+    discussion:
+    home:
+      all_categories: Todas as categorias
+      all_title: Todas as discussões
+      back_home: Voltar
+      badge_following: Seguindo
+      badge_sticky: Fixada
+      categories_heading: Categorias
+      choose_tags: Escolher tags
+      composer_body_placeholder: "Compartilhe seus pensamentos..."
+      composer_close: Fechar
+      composer_post: Publicar discussão
+      composer_submitting: "Publicando..."
+      composer_title_placeholder: "Título da discussão..."
+      discussions: discussões
+      filter_tags: Filtrar tags
+      following_heading: Seguindo
+      like: Curtida
+      like_count_plural: "{count} curtidas"
+      like_count_singular: "1 curtida"
+      log_in: Entrar
+      more: mais
+      new_discussion: Nova Discussão
+      no_tags_found: Nenhuma tag encontrada
+      popular_heading: Discussões populares
+      replies: respostas
+      reply_count_plural: "{count} respostas"
+      reply_count_singular: "1 resposta"
+      reply_label: Responder
+      see_all: Ver tudo
+      see_other_replies: Ver outras {count} respostas
+      see_other_reply_singular: Ver outra {count} resposta
+      sign_up: Cadastrar
+      start_discussion: "O que está pensando?"
+      today_time: "Hoje, {time}"
+      untitled: Sem título
+      yesterday_time: "Ontem, {time}"
+    discussions:
+      title: Todas as discussões
+      home: Voltar para o Início
+    tags:
+      title: Categorias
+      discussion_singular: discussão
+      discussion_plural: discussões
+      other_tags_label: Outras tags
+      featured: Destaque

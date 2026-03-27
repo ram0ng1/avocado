@@ -1,0 +1,708 @@
+// ─── User Profile Pages (/u/{username}, /settings, /u/{username}/*) ──────────
+
+// ── Page wrapper ──────────────────────────────────────────────────────────────
+
+.AvocadoUserPage {
+  min-height: 100vh;
+  background: #fff;
+  font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--home-title, #202126);
+}
+
+// ── Hero — compact colored banner (same family as AvocadoTagPage-hero) ────────
+
+.AvocadoUserPage-hero {
+  position: relative;
+  background: var(--user-color, #5a6480);
+  // NO overflow:hidden — AvatarEditor dropdown must escape the banner
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0,0,0,0.26) 0%, rgba(0,0,0,0.04) 65%);
+    pointer-events: none;
+  }
+
+  &--skeleton {
+    background: #c4c4cc;
+    &::before { display: none; }
+  }
+}
+
+.AvocadoUserPage-hero-inner {
+  position: relative;
+  max-width: var(--home-max-width, 1036px);
+  margin: 0 auto;
+  padding: 22px 20px 24px;
+}
+
+.AvocadoUserPage-hero-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+// ── Avatar inside the banner ───────────────────────────────────────────────────
+
+.AvocadoUserPage-hero-avatarWrap {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: none;
+  outline: none;
+  position: relative;
+  background: rgba(0, 0, 0, 0.2);
+  box-shadow: none;
+
+  // Non-editable Avatar (<img> or <span>)
+  // Selector specificity 0,2,0 beats Flarum's .Avatar 0,1,0 — no !important needed
+  > .Avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+  }
+
+  // AvatarEditor: <div class="AvatarEditor Dropdown"> containing Avatar + toggle + menu
+  > .AvatarEditor {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    position: relative;
+    display: block;
+
+    // Avatar image/span inside editor — specificity 0,3,0
+    .Avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      object-fit: cover;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+    }
+
+    // Pencil overlay button — covers full circle, invisible until hover
+    // Specificity 0,3,0 beats Flarum's .AvatarEditor .Dropdown-toggle 0,2,0
+    .Dropdown-toggle {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0, 0, 0, 0);
+      color: rgba(255, 255, 255, 0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+      box-shadow: none;
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.45);
+        color: #fff;
+      }
+
+      i { position: relative; z-index: 1; }
+    }
+
+    // Dropdown menu — escapes the banner
+    // Specificity 0,3,0 — no !important needed
+    .Dropdown-menu {
+      position: absolute;
+      top: calc(100% + 10px);
+      left: 0;
+      min-width: 160px;
+      z-index: 500;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+      padding: 4px;
+
+      .Button {
+        border-radius: 8px;
+        font-size: 13px;
+        color: #40424b;
+        background: transparent;
+        border: none;
+        font-weight: 600;
+        width: 100%;
+        text-align: left;
+
+        &:hover { background: #f4f4f7; }
+      }
+    }
+
+    &.loading .Dropdown-toggle {
+      background: rgba(0, 0, 0, 0.35);
+      color: #fff;
+    }
+  }
+}
+
+.AvocadoUserPage-onlineDot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2.5px solid var(--user-color, #5a6480);
+  z-index: 2;
+}
+
+// ── Hero info (name, badges, stats) ───────────────────────────────────────────
+
+.AvocadoUserPage-hero-info {
+  flex: 1;
+  min-width: 0;
+  color: #fff;
+}
+
+.AvocadoUserPage-hero-name {
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.4px;
+  line-height: 1.1;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.24);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.AvocadoUserPage-hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+
+  li {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+// Glass-style stat pills inside banner
+.AvocadoUserPage-hero-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.AvocadoUserPage-hero-statPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(4px);
+
+  strong { font-weight: 900; color: #fff; }
+
+  &--online {
+    background: rgba(34, 197, 94, 0.18);
+    border-color: rgba(34, 197, 94, 0.35);
+    color: #a7f3c0;
+
+    .fa-circle { font-size: 7px; color: #22c55e; }
+  }
+}
+
+// ── Controls button ────────────────────────────────────────────────────────────
+
+.AvocadoUserPage-hero-controls {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.AvocadoUserPage-controlsBtn {
+  background: rgba(255, 255, 255, 0.16) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.36) !important;
+  color: #fff !important;
+  border-radius: 999px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(4px) !important;
+
+  &:hover { background: rgba(255, 255, 255, 0.26) !important; }
+}
+
+// ── Skeleton shimmer ──────────────────────────────────────────────────────────
+
+@keyframes AvocadoUserShimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+
+.AvocadoUserPage-shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.12) 25%, rgba(255,255,255,0.24) 50%, rgba(255,255,255,0.12) 75%);
+  background-size: 800px 100%;
+  animation: AvocadoUserShimmer 1.4s infinite;
+  border-radius: 8px;
+
+  &--avatar  { width: 72px; height: 72px; border-radius: 50%; flex-shrink: 0; }
+  &--name    { height: 24px; width: 180px; margin-bottom: 10px; display: block; }
+  &--meta    { height: 13px; width: 130px; display: block; }
+  &--navItem { height: 16px; width: 80px; border-radius: 8px; }
+}
+
+// Nav tab skeleton uses lighter shimmer (white bg)
+.AvocadoUserPage-nav .AvocadoUserPage-shimmer--navItem {
+  background: linear-gradient(90deg, #f0f0f5 25%, #e6e6ec 50%, #f0f0f5 75%);
+  background-size: 800px 100%;
+}
+
+// ── Sticky horizontal nav tabs ─────────────────────────────────────────────────
+
+.AvocadoUserPage-nav {
+  background: #fff;
+  border-bottom: 1px solid var(--home-border, #eaeaf0);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  width: 100%;
+}
+
+.AvocadoUserPage-navInner {
+  max-width: var(--home-max-width, 1036px);
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar { display: none; }
+}
+
+.AvocadoUserPage-navItem {
+  display: inline-flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 16px;
+  gap: 7px;
+  border-bottom: 2.5px solid transparent;
+  color: var(--home-muted, #8f8f95);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+
+  i { font-size: 13px; }
+
+  &:hover {
+    color: #2a2b30;
+    text-decoration: none;
+  }
+
+  &.is-active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    font-weight: 700;
+  }
+}
+
+.AvocadoUserPage-navCount {
+  font-size: 12px;
+  font-weight: 700;
+  background: #f0f0f5;
+  border-radius: 999px;
+  padding: 1px 7px;
+  color: #8f8f95;
+  transition: background 0.15s, color 0.15s;
+
+  .AvocadoUserPage-navItem.is-active & {
+    background: rgba(0, 0, 0, 0.06);
+  }
+}
+
+.AvocadoUserPage-navDivider {
+  width: 1px;
+  height: 20px;
+  background: var(--home-border, #eaeaf0);
+  margin: 0 8px;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+// ── Body / Content area ────────────────────────────────────────────────────────
+
+.AvocadoUserPage-body {
+  background: #fff;
+  min-height: 60vh;
+}
+
+.AvocadoUserPage-bodyInner {
+  max-width: var(--home-max-width, 1036px);
+  margin: 0 auto;
+  padding: 28px 20px 56px;
+}
+
+// ── Post card excerpt — styled to distinguish from discussion title ────────────
+
+.AvocadoUserPage-postExcerpt {
+  font-size: 15px;
+  color: #505158;
+  border-left: 2.5px solid var(--home-border, #eaeaf0);
+  padding-left: 10px;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+// ── Override native Flarum components within user pages ───────────────────────
+
+.AvocadoUserPage {
+
+  // Phone nav dropdown: reset Button overrides (button lives inside AvocadoUserPage in DOM
+  // but is visually positioned in the header — it should not look like a pill button)
+  .AvocadoNav-helper .Dropdown-toggle {
+    font-weight: 400 !important;
+    border-radius: 0 !important;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  // Buttons — pill-shaped
+  .Button {
+    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif !important;
+    border-radius: 999px !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+    letter-spacing: 0 !important;
+    transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease !important;
+    box-shadow: none !important;
+
+    &--primary {
+      background: var(--primary-color) !important;
+      border-color: var(--primary-color) !important;
+      color: #fff !important;
+      &:hover { opacity: 0.88 !important; }
+    }
+
+    &--default {
+      background: #f3f3f6 !important;
+      border-color: transparent !important;
+      color: #40424b !important;
+      &:hover { background: #eaeaee !important; color: var(--primary-color) !important; }
+    }
+
+    &--danger {
+      background: transparent !important;
+      border: 1.5px solid rgba(220, 50, 50, 0.4) !important;
+      color: #dc3232 !important;
+      &:hover { background: rgba(220, 50, 50, 0.06) !important; }
+    }
+
+    &-icon { margin-right: 5px; }
+  }
+
+  // Inputs — .AvocadoUserPage .FormControl has 0,2,0 specificity vs Flarum's 0,1,0
+  .FormControl {
+    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+    border-radius: 10px;
+    border: 1.5px solid var(--home-border, #eaeaf0);
+    background: #f4f4f7;
+    box-shadow: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: #2a2b30;
+    padding: 9px 14px;
+    transition: border-color 0.15s ease, background 0.15s ease;
+
+    &:focus {
+      background: #fff;
+      border-color: var(--primary-color);
+      box-shadow: none;
+      outline: none;
+    }
+
+    &::placeholder { color: #b2b2bb; font-weight: 500; }
+  }
+
+  // Switch toggle — .AvocadoUserPage .Switch has 0,2,0 specificity vs Flarum's 0,1,0
+  .Switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #43454e;
+
+    &-input { display: none; }
+
+    &-slider {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+      min-width: 40px;
+      background: #d8dae8;
+      border-radius: 999px;
+      transition: background 0.2s ease;
+
+      &::before {
+        content: '';
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #fff;
+        top: 3px;
+        left: 3px;
+        transition: transform 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+      }
+    }
+
+    &.on .Switch-slider {
+      background: var(--primary-color);
+      &::before { transform: translateX(18px); }
+    }
+  }
+
+  // Help text
+  .helpText {
+    font-size: 13px;
+    color: var(--home-muted, #8f8f95);
+    font-weight: 500;
+    line-height: 1.5;
+    margin-top: 6px;
+  }
+
+  // Alerts — .AvocadoUserPage .Alert has 0,2,0 vs Flarum's .Alert 0,1,0
+  .Alert {
+    border-radius: 10px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 11px 16px;
+
+    &--warning { background: rgba(249, 115, 22, 0.1); color: #c2590a; }
+    &--error   { background: rgba(220, 50, 50, 0.08); color: #b91c1c; }
+    &--success { background: rgba(34, 197, 94, 0.1);  color: #15803d; }
+  }
+
+  // Notification preference grid
+  .NotificationGrid {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+
+    thead th {
+      padding: 6px 12px 12px;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--home-muted, #8f8f95);
+      text-align: center;
+
+      &:first-child { text-align: left; }
+    }
+
+    tbody td {
+      padding: 10px 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #43454e;
+      border-top: 1px solid #f4f4f8;
+      text-align: center;
+      vertical-align: middle;
+
+      &:first-child { text-align: left; font-weight: 600; color: #2a2b30; }
+    }
+
+    tbody tr:last-child td { border-bottom: 1px solid #f4f4f8; }
+  }
+
+  // Access tokens list
+  .AccessTokensList {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .AccessToken {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f4f4f8;
+
+    &:last-child { border-bottom: 0; }
+
+    &-token {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      background: #f4f4f7;
+      border-radius: 6px;
+      padding: 3px 8px;
+      color: #60616c;
+      word-break: break-all;
+    }
+
+    &-created {
+      font-size: 12px;
+      color: var(--home-muted, #8f8f95);
+      white-space: nowrap;
+    }
+
+    &-actions {
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+  }
+
+  // FieldSet — used by Settings and Security pages (generic, any page)
+  .FieldSet {
+    background: #fff;
+    border: 1px solid var(--home-border, #eaeaf0);
+    border-radius: 18px;
+    margin: 0 0 16px;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+
+    &:hover {
+      border-color: #dfdfe6;
+      box-shadow: 0 8px 24px rgba(26, 26, 36, 0.06);
+    }
+
+    // Label row — icon bubble + uppercase label
+    // Flarum renders FieldSet as: <div.FieldSet> <label.FieldSet-label> <div.FieldSet-items>
+    &-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px 14px;
+      border-bottom: 1px solid #f4f4f8;
+      font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--home-muted, #8f8f95);
+
+      &::before {
+        font-family: 'Font Awesome 6 Free', 'FontAwesome';
+        font-weight: 900;
+        font-style: normal;
+        content: '\f013'; // fa-gear — default
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        border-radius: 10px;
+        background: rgba(143, 143, 149, 0.1);
+        color: var(--home-muted, #8f8f95);
+        font-size: 15px;
+        text-align: center;
+        line-height: 36px;
+        flex-shrink: 0;
+      }
+    }
+
+    // Flarum uses <div class="FieldSet-items"> (not <ul>)
+    &-items {
+      padding: 16px 20px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+  }
+}
+
+// Security page FieldSet: lock icon, blue tint
+// Specificity 0,3,1 beats .AvocadoUserPage .FieldSet-label::before 0,2,1 — no !important needed
+.AvocadoUserPage .UserSecurityPage .FieldSet-label::before {
+  content: '\f023';
+  background: rgba(63, 136, 246, 0.1);
+  color: #3f88f6;
+}
+
+// Settings/Security page: make the top-level list use card layout
+.AvocadoUserPage .SettingsPage > ul,
+.AvocadoUserPage .UserSecurityPage > ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+
+  > li { list-style: none; }
+}
+
+// ── Responsive: tablet ────────────────────────────────────────────────────────
+
+@media @tablet {
+  .AvocadoUserPage-hero-inner    { padding: 18px 16px 22px; }
+  .AvocadoUserPage-bodyInner     { padding: 22px 16px 48px; }
+}
+
+// ── Responsive: phone ─────────────────────────────────────────────────────────
+
+@media @phone {
+  // Hero row stacks: avatar becomes smaller, name wraps
+  .AvocadoUserPage-hero-inner    { padding: 14px 14px 18px; }
+  .AvocadoUserPage-hero-row      { gap: 12px; }
+  .AvocadoUserPage-hero-avatarWrap {
+    width: 56px;
+    height: 56px;
+  }
+  .AvocadoUserPage-hero-avatarWrap > .Avatar,
+  .AvocadoUserPage-hero-avatarWrap > .AvatarEditor {
+    width: 56px;
+    height: 56px;
+  }
+  .AvocadoUserPage-hero-avatarWrap > .AvatarEditor .Avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 20px;
+  }
+  .AvocadoUserPage-onlineDot     { width: 12px; height: 12px; }
+  .AvocadoUserPage-hero-name     { font-size: 18px; }
+  .AvocadoUserPage-shimmer--avatar { width: 56px; height: 56px; }
+
+  // Nav tabs: compact
+  .AvocadoUserPage-navItem       { padding: 0 12px; font-size: 13px; }
+
+  // Body
+  .AvocadoUserPage-bodyInner     { padding: 16px 12px 40px; }
+  .AvocadoUserPage .FieldSet     { border-radius: 14px; }
+}

@@ -2,6 +2,9 @@ ramon-avocado:
   admin:
     settings:
       section_homepage: Homepage
+      featured_tags_label: Featured Categories
+      featured_tags_help: Selected categories appear highlighted with a star badge on the homepage and categories page.
+      featured_tags_empty: No tags found.
       section_auth: Login & Registration
       auth_image_label: Auth Modal Image
       auth_image_help: Background image shown in the right panel of the login, sign up, and forgot password modals.
@@ -9,8 +12,6 @@ ramon-avocado:
       section_posts: Posts
       banner_image_label: Banner Image
       banner_image_help: Upload the hero banner image displayed at the top of the forum.
-      home_enabled_label: Enable Avocado V2 homepage
-      home_enabled_help: Replace the default discussion list on the home page with the Avocado V2 feed layout (cards, categories, composer).
       show_auth_buttons_label: Show Login / Sign Up buttons in header for guests
       show_auth_buttons_help: Display Log In and Sign Up pill buttons in the header secondary nav for guests.
       hero_image_position_label: Hero Image Position
@@ -23,71 +24,81 @@ ramon-avocado:
       show_action_icons_help: Display Font Awesome icons on the Like and Reply action buttons.
       fixed_avatar_effect_label: Enable fixed avatar effect
       fixed_avatar_effect_help: Keep the post avatar sticky while reading long comments on desktop.
+      section_logo: Logo
+      logo_svg_label: Logo SVG
+      logo_svg_help: Upload a custom SVG logo for your forum.
+      logo_enabled_label: Enable Custom Logo
+      logo_enabled_help: Display the custom logo in the header.
+      show_online_users_label: Show online users count
+      show_online_users_help: Display the number of currently online users.
+      show_guest_cta_label: Show guest call-to-action
+      show_guest_cta_help: Display a call-to-action message for guests.
+      custom_default_avatar_label: Custom Default Avatar
+      custom_default_avatar_help: Upload a custom default avatar image for users without an avatar.
+      section_footer: Footer
+    footer_settings:
+      footer_enabled: Enable Custom Footer
+      footer_company: Company Information
+      footer_company_name: Company Name
+      footer_company_description: Company Description
+      footer_company_description_placeholder: "Brief description about your company or forum..."
+      footer_company_logo_url: Company Logo URL
+      footer_links_config: Footer Links Configuration
+      footer_links_help_json: "Configure the footer link columns in JSON format. Each column should have a title and a list of links with label and url."
+      footer_footer_bottom: Footer Bottom
+      footer_copyright_text: Copyright Text
+      footer_social: Social Links
+      footer_show_social: Show Social Media Links
+      footer_social_help_json: "Configure social media links in JSON format. Use keys: facebook, twitter, linkedin, instagram, youtube."
   forum:
     actions:
       share: Share
     header:
-      log_in: Log In
-      sign_up: Sign Up
     user:
-      discussions: Discussions
-      comments: Comments
     tag:
-      thread_count: "{count} discussions"
-      discussion_singular: discussion
-      discussion_plural: discussions
     discussion:
-      badge_sticky: Sticky
-      badge_locked: Locked
-      badge_following: Following
     home:
       all_categories: All categories
-      day_time: "{day}, {time}"
-      deleted_user: Deleted User
-      just_now: Just now
-      likes: likes
-      more_count: "{count} more"
-      new_thread: New discussion
-      no_threads: No discussions yet.
-      categories_title: Categories
-      popular_title: Popular discussions
-      action_image: Image
-      action_write: Write
-      post_placeholder: Tell everyone what are you working on...
       all_title: All discussions
       back_home: Home
-      see_all: See all
-      replies: replies
-      untitled: Untitled
-      reply: Reply
-      reply_label: Reply
-      like: Like
+      badge_following: Following
       badge_sticky: Pinned
-      log_in: Log In
-      sign_up: Sign Up
-      start_discussion: "What's on your mind?"
-      composer_title_placeholder: "Discussion title…"
+      categories_heading: Categories
+      choose_tags: Choose tags
       composer_body_placeholder: "Share your thoughts…"
-      composer_cancel: Cancel
+      composer_close: Close
       composer_post: Post Discussion
       composer_submitting: "Posting…"
-      no_tags: No tags available
-      categories_heading: Categories
-      threads: threads
+      composer_title_placeholder: "Discussion title…"
+      discussions: discussions
+      filter_tags: Filter tags
+      following_heading: Following
+      like: Like
+      like_count_plural: "{count} likes"
+      like_count_singular: "1 like"
+      log_in: Log In
       more: more
+      new_discussion: New Discussion
+      no_tags_found: No tags found
       popular_heading: Popular discussions
-      all_heading: All discussions
-      guest_cta_text: Want to join the conversation?
-      guest_cta_or: "or"
-      guest_hero_line1: Want to join the
-      guest_hero_line2: conversation?
-      guest_hero_free: Free to join
-      badge_pinned: Pinned
-      badge_following: Following
-      choose_tags: Choose tags
-      search_placeholder: Chats, messages and more
+      replies: Replies
+      reply_count_plural: "{count} replies"
+      reply_count_singular: "1 reply"
+      reply_label: Reply
+      see_all: See all
       see_other_replies: See other {count} replies
-      threads_count: "{count} discussions"
+      see_other_reply_singular: See other {count} reply
+      sign_up: Sign Up
+      start_discussion: "Tell everyone what are you working on..."
       today_time: "Today, {time}"
-      yesterday_label: Yesterday
+      untitled: Untitled
       yesterday_time: "Yesterday, {time}"
+    discussions:
+      title: All discussions
+      home: Back to Home
+    tags:
+      title: Categories
+      discussion_singular: discussion
+      discussion_plural: discussions
+      other_tags_label: Other Tags
+      featured: Featured

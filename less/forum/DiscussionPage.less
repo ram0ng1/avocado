@@ -1,12 +1,10 @@
-// ── Avocado Discussion Page (/d/) ─────────────────────────────────────────────
-// Design goal: feels like still being on the homepage.
-// Hero = colored banner with back button, tag pills, large title, participant avatars.
-// Posts = chat bubbles (grey bg, top-left sharp corner matching avatar side).
+// ── Avocado Discussion Page (/d/) — Clean Feed Design ─────────────────────────
+// Light gray hero · clean feed rows (no bubble cards) · avatar column layout
 
-// ── Keyframe animations ────────────────────────────────────────────────────────
+// ── Keyframes ─────────────────────────────────────────────────────────────────
 @keyframes avocado-shimmer {
   0%   { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
+  100% { background-position:  400px 0; }
 }
 
 @keyframes avocado-pulse {
@@ -16,128 +14,183 @@
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 .Page.DiscussionPage {
-  --disc-border:  #eaeaf0;
-  --disc-title:   #1f2025;
-  --disc-muted:   #a2a3ac;
+  --disc-bg:      #ffffff;
+  --disc-border:  #f0f0f4;
   --disc-text:    #43454e;
-  --disc-shadow:  0 10px 24px rgba(22, 22, 33, 0.05);
+  --disc-title:   #202126;
+  --disc-muted:   #8f9097;
+  --disc-avatar:  48px;
+  --disc-gap:     24px;
   font-family: "DM Sans Variable", "DM Sans", sans-serif;
-  background: #fff;
+  background: var(--disc-bg);
 }
 
-// ── DiscussionHero ─────────────────────────────────────────────────────────────
-// Colored banner using --discussion-color from JS (first tag color).
+// ── DiscussionHero — solid tag color, adaptive text contrast ────────────────────
+// JS sets --discussion-color (tag hex) + --disc-hero-text (#fff|#202126 based on
+// WCAG luminance) + --disc-hero-surface (rgba white|dark for buttons/pills).
 .DiscussionHero {
+  position: relative;
   background: var(--discussion-color, var(--primary-color));
+  overflow: hidden;
 
-  .container {
-    max-width: 1060px;
-    padding: 40px 12px 36px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+  // Diagonal dark overlay for depth and readability (same as AvocadoTagPage)
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.04) 60%);
+    pointer-events: none;
   }
+
+  .container { padding: 0; max-width: 100%; }
 }
 
-// Nav row: back button + tag pills
+// Centered inner container — wider padding for breathing room
+.DiscussionHero-inner {
+  position: relative;
+  max-width: var(--home-max-width, 1036px);
+  margin: 0 auto;
+  padding: 48px 20px 52px;
+}
+
+// Nav row: back circle + pills on same line
 .DiscussionHero-nav {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 2px;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
 }
 
+// Back button — identical to .AvocadoTagPage-back
+// Uses --disc-hero-surface for bg so it adapts to light/dark tag colors
 .DiscussionHero-back {
-  width: 36px;
-  height: 36px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.18);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
   border: none;
-  color: #fff;
+  background: var(--disc-hero-surface, rgba(255,255,255,0.18));
+  color: var(--disc-hero-text, #fff);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  font-size: 13px;
   cursor: pointer;
   flex-shrink: 0;
-  margin-right: 2px;
-  transition: background 0.15s ease;
+  transition: background 0.15s;
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.28);
-  }
-
-  i { font-size: 14px; }
+  &:hover { opacity: 0.85; }
 }
 
-// Tag pills on hero — translucent white
-.DiscussionHero-tagPill {
-  display: inline-flex;
+// Pill group (badges + tag pills)
+.DiscussionHero-pills {
+  display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.22);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  color: #fff;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+// ── AvocadoHome-badge inside hero — icon-only circle, same logic as homepage badges ─
+// Dark/saturated backgrounds so badges stand out on any hero color. Tooltip handled in JS.
+// Specificity 0,2,0 wins over .AvocadoHome-badge 0,1,0.
+.DiscussionHero .AvocadoHome-badge {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 50%;
   font-size: 11px;
   font-weight: 700;
-  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  border: none;
+
+  &--sticky    { background: rgba(234,120, 0, 0.82); color: #fff5e0; }
+  &--locked    { background: rgba(210, 45, 45, 0.82); color: #fff0f0; }
+  &--hidden    { background: rgba(80, 82, 94, 0.72); color: rgba(255,255,255,0.80); }
+  &--following { background: rgba(202,152, 0, 0.82); color: #fffbe0; }
+  &--ignoring  { background: rgba(80, 82, 94, 0.55); color: rgba(255,255,255,0.65); }
+}
+
+// Tag pills inside hero — white background with the pill's own tag color.
+// Keeps each tag's identity visible regardless of hero background color.
+.DiscussionHero .AvocadoHome-tagPill {
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--tag-color, #b22244);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  white-space: nowrap;
+  font-size: 11px;
 
-  i { font-size: 9px; opacity: 0.9; }
+  &:hover { opacity: 0.88; }
 }
 
-// Title — large, bold, white
+// Discussion title — adaptive color, larger and more impactful
 .DiscussionHero-title {
-  color: #fff !important;
-  font-size: clamp(22px, 4vw, 44px) !important;
-  font-weight: 900 !important;
-  font-family: "DM Sans Variable", "DM Sans", sans-serif !important;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-  margin: 0 !important;
-  max-width: 760px;
+  color: var(--disc-hero-text, #fff);
+  font-size: clamp(22px, 3.5vw, 36px);
+  font-weight: 900;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  letter-spacing: -0.5px;
+  line-height: 1.12;
+  margin: 0 0 10px;
+  word-break: break-word;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.15);
 }
 
-// Meta row: participant avatars + post count
+// Meta row (participants + post count)
 .DiscussionHero-meta {
   display: flex;
   align-items: center;
-  gap: 16px;
-  color: rgba(255, 255, 255, 0.78);
+  gap: 14px;
+  flex-wrap: wrap;
+  color: var(--disc-hero-text-muted, rgba(255,255,255,0.78));
   font-size: 13px;
   font-weight: 600;
   font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  margin-top: 12px;
 }
 
-.DiscussionHero-participants {
-  display: flex;
-  align-items: center;
-}
+.DiscussionHero-participants { display: flex; align-items: center; }
 
-.DiscussionHero-participantAvatar,
-.DiscussionHero-participantFallback {
-  width: 26px;
-  height: 26px;
+// Stacked participant avatars
+.DiscussionHero-participantAvatar {
+  display: inline-flex;
+  flex-shrink: 0;
   border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.6);
+  border: 2px solid rgba(255,255,255,0.6);
   margin-left: -8px;
-  object-fit: cover;
-  display: block;
+  overflow: hidden;
+  box-sizing: content-box;
 
   &:first-child { margin-left: 0; }
+
+  .Avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: none;
+    box-shadow: none;
+    font-size: 10px;
+  }
 }
 
-.DiscussionHero-participantFallback {
-  background: rgba(255, 255, 255, 0.28);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 800;
+.DiscussionHero-participantsMore {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--disc-hero-surface, rgba(255,255,255,0.28));
+  border: 2px solid rgba(255,255,255,0.6);
+  color: var(--disc-hero-text, #fff);
+  font-size: 9px;
+  font-weight: 800;
+  margin-left: -8px;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .DiscussionHero-metaItem {
@@ -147,225 +200,484 @@
   i { font-size: 13px; }
 }
 
-// ── Page layout ────────────────────────────────────────────────────────────────
+
+// ── Page container ─────────────────────────────────────────────────────────────
 .Page.DiscussionPage .Page-container.container {
-  max-width: 1060px;
-  padding-left: 12px;
-  padding-right: 12px;
+  max-width: 1280px;
+  padding-left: 48px;
+  padding-right: 48px;
+  padding-top: 0;
+  padding-bottom: 64px;
 }
 
-// ── CommentPost: bubble style ─────────────────────────────────────────────────
-// No card border — the visual "card" is the grey bubble inside each post.
+// ── CommentPost: clean feed row — .Page.DiscussionPage .CommentPost has 0,3,0 vs Flarum's 0,1,0
 .Page.DiscussionPage .CommentPost {
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-  margin: 0 0 36px !important;
-  box-shadow: none !important;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--disc-border);
+  border-radius: 0;
+  padding: 32px 0;
+  margin: 0;
+  box-shadow: none;
 
-  &:hover {
-    box-shadow: none !important;
-  }
+  &:hover { box-shadow: none; }
 }
 
-// Desktop: flex row — avatar (left) + content (right)
-@media @desktop-up {
+// ── Tablet+: two-column layout (avatar column | content column) ───────────────
+@media @tablet-up {
   .Page.DiscussionPage {
     .CommentPost {
-      padding-left: 0 !important;
+      padding-left: 0;
     }
 
     .CommentPost .Post-container {
-      display: flex !important;
-      flex-direction: row !important;
-      gap: 14px !important;
+      display: flex;
+      flex-direction: row;
+      gap: var(--disc-gap);
       align-items: flex-start;
       padding: 0;
     }
 
     .CommentPost .Post-side {
-      position: static !important;
-      width: 48px !important;
+      position: relative;
+      width: var(--disc-avatar);
       flex-shrink: 0;
-      top: auto !important;
-      left: auto !important;
+      top: auto;
+      left: auto;
     }
 
     .CommentPost .Post-main {
       flex: 1;
       min-width: 0;
     }
+  }
+}
 
+// ── Desktop: sticky avatar variant ────────────────────────────────────────────
+@media @desktop-up {
+  .Page.DiscussionPage {
     .CommentPost.CommentPost--fixedAvatar {
-      padding: 0 !important;
       --avocado-avatar-sticky-top: 76px;
 
       .Post-container {
-        display: grid !important;
-        grid-template-columns: 48px 1fr !important;
-        gap: 14px !important;
+        display: grid;
+        grid-template-columns: var(--disc-avatar) 1fr;
+        gap: var(--disc-gap);
         align-items: start;
+      }
+
+      .Post-side {
+        position: sticky;
+        top: var(--avocado-avatar-sticky-top);
+        align-self: start;
       }
     }
   }
 }
 
-// Mobile
-@media @phone, @tablet {
+// ── Tablet: smaller tokens ─────────────────────────────────────────────────────
+@media @tablet {
+  .Page.DiscussionPage {
+    --disc-avatar: 40px;
+    --disc-gap:    18px;
+  }
   .Page.DiscussionPage .CommentPost {
-    padding: 0 !important;
+    padding: 24px 0;
+    margin: 0;
+  }
+  .Page.DiscussionPage .Page-container.container {
+    padding-left: 20px;
+    padding-right: 20px;
   }
 }
 
-// Avatar — 48px circle with shadow
-.Page.DiscussionPage .CommentPost .Post-side .Avatar,
-.Page.DiscussionPage .CommentPost .Post-side a .Avatar {
-  width: 48px !important;
-  height: 48px !important;
-  border-radius: 999px !important;
-  font-size: 17px !important;
-  line-height: 48px !important;
-  flex-shrink: 0;
-  display: block;
-  border: 2px solid #fff !important;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.10) !important;
+// ── Phone: compact layout ──────────────────────────────────────────────────────
+@media @phone {
+  .Page.DiscussionPage {
+    --disc-avatar: 34px;
+    --disc-gap:    12px;
+  }
+
+  // Keep avatar column on phone — just smaller tokens
+  .Page.DiscussionPage .CommentPost {
+    padding: 18px 0;
+    margin: 0;
+  }
+  .Page.DiscussionPage .CommentPost .Post-container {
+    display: flex;
+    flex-direction: row;
+    gap: var(--disc-gap);
+    align-items: flex-start;
+    padding: 0;
+  }
+  .Page.DiscussionPage .CommentPost .Post-side {
+    position: relative;
+    width: var(--disc-avatar);
+    flex-shrink: 0;
+    top: auto;
+    left: auto;
+  }
+  .Page.DiscussionPage .CommentPost .Post-main {
+    flex: 1;
+    min-width: 0;
+  }
+  .Page.DiscussionPage .Page-container.container {
+    padding-left: 14px;
+    padding-right: 14px;
+    padding-bottom: 40px;
+  }
+
+  // DiscussionHero on phone — centered, title as focal point
+  .DiscussionHero-inner {
+    padding: 32px 20px 36px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .DiscussionHero-nav {
+    gap: 8px;
+    margin-bottom: 18px;
+    justify-content: center;
+    width: 100%;
+  }
+  .DiscussionHero-title {
+    font-size: clamp(20px, 5.5vw, 28px);
+    text-align: center;
+    width: 100%;
+  }
+  .DiscussionHero-meta { justify-content: center; }
+
 }
 
-// ── Post header: author + time ────────────────────────────────────────────────
+// ── Avatar — specificity 0,4,0 to 0,5,0 beats Flarum's .Avatar 0,1,0 ──────────
+.Page.DiscussionPage .CommentPost .Post-side .Avatar,
+.Page.DiscussionPage .CommentPost .Post-side a .Avatar {
+  width: var(--disc-avatar);
+  height: var(--disc-avatar);
+  border-radius: 999px;
+  font-size: calc(var(--disc-avatar) * 0.35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.10);
+}
+
+.Page.DiscussionPage .CommentPost .Post-side a {
+  display: block;
+  text-decoration: none;
+}
+
+// ── Avatar inside PostUser-name link: hidden (real avatar lives in Post-side) ─
+// In Flarum 2.0 the avatar has class "Post-avatar" (not "PostUser-avatar") and
+// sits inside the <a> link in <h3.PostUser-name>. Belt-and-suspenders: CSS hides
+// it; JS (removePostUserAvatar) also removes it to prevent any flash.
+.Page.DiscussionPage .PostUser-name .Avatar,
+.Page.DiscussionPage .PostUser-name .Post-avatar,
+.Page.DiscussionPage .Post-header .PostUser-name .Avatar {
+  display: none !important;
+}
+
+// ── UserOnline: shown as green border on the avatar ──────────────────────────
+// Same specificity as base rule but comes later in file — cascade wins, no !important needed
+.Page.DiscussionPage .CommentPost .Post-side--online .Avatar,
+.Page.DiscussionPage .CommentPost .Post-side--online a .Avatar {
+  border: 2.5px solid #4ec46a;
+  box-shadow: 0 0 0 2px #fff;
+}
+
+// Keep the moved UserOnline element hidden (it exists only for the class trigger)
+.Page.DiscussionPage .CommentPost .Post-side > .UserOnline {
+  display: none !important;
+}
+
+// Hide UserOnline everywhere (it is detected by JS for the border, not shown as a dot)
+.Page.DiscussionPage .PostUser .UserOnline,
+.Page.DiscussionPage .Post-header .UserOnline,
+.Page.DiscussionPage .CommentPost .Post-side .PostUser-badges .UserOnline {
+  display: none !important;
+}
+
+// ── PostUser-badges — displayed in Post-side after JS moves them there ─────────
+// syncFixedAvatarBadges() appends .PostUser-badges as a child of .Post-side.
+// Override Flarum core's float + negative-margin defaults; render as centered
+// icon row beneath the avatar.
+.Page.DiscussionPage .CommentPost .Post-side .PostUser-badges {
+  float: none;
+  margin-left: 0;
+  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px;
+  padding: 0;
+  list-style: none;
+  width: var(--disc-avatar);
+
+  .Badge { --size: 18px; }
+}
+
+@media @phone {
+  .Page.DiscussionPage .CommentPost .Post-side .PostUser-badges {
+    .Badge { --size: 14px; }
+  }
+}
+
+// ── Post header — .Page.DiscussionPage .Post-header has 0,3,0 vs Flarum's 0,1,0
 .Page.DiscussionPage .Post-header {
-  padding: 0 !important;
-  margin-bottom: 6px;
-  border-bottom: none !important;
+  padding: 0;
+  margin-bottom: 10px;
+  border-bottom: none;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 5px 7px;
-  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  gap: 4px 8px;
+  position: relative;
+  overflow: visible;
 }
 
+// PostUser is a <div> in Flarum 2.0 — display:contents makes its children
+// (h3.PostUser-name and ul.PostUser-badges) flex items in Post-header.
 .Page.DiscussionPage .PostUser {
   display: contents !important;
 }
 
-.Page.DiscussionPage .PostUser > li {
-  padding: 0 !important;
-  margin: 0 !important;
-  list-style: none !important;
+// PostUser-name is an <h3> in Flarum 2.0.
+// Reset h3 defaults; display as inline-flex so it sits on the same line as PostMeta.
+// Specificity 0,3,0 beats Flarum's h3 0,0,1
+.Page.DiscussionPage .PostUser-name {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1;
 }
 
-.Page.DiscussionPage .PostUser .UserOnline {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: #4ec46a;
-  flex-shrink: 0;
+// The link wrapping avatar + UserOnline + username inside PostUser-name
+.Page.DiscussionPage .PostUser-name > a,
+.Page.DiscussionPage .PostUser-name .Link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  color: var(--disc-title);
 }
 
 .Page.DiscussionPage .PostUser-name .username {
-  font-weight: 800 !important;
-  font-size: 14px !important;
-  font-family: "DM Sans Variable", "DM Sans", sans-serif !important;
-  color: #1f2025 !important;
-  text-decoration: none !important;
-
-  &:hover { text-decoration: underline !important; }
-}
-
-.Page.DiscussionPage .PostUser .PostUser-badges {
-  display: inline-flex !important;
-  align-items: center;
-  gap: 2px;
-  list-style: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-
-  li { margin: 0 !important; }
-
-  .Badge {
-    --size: 18px !important;
-    width: var(--size) !important;
-    height: var(--size) !important;
-    line-height: var(--size) !important;
-    font-size: 9px !important;
-  }
-}
-
-.Page.DiscussionPage .PostMeta {
-  display: inline-flex !important;
-  align-items: center;
-  gap: 4px;
-  margin-left: auto !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  font-family: "DM Sans Variable", "DM Sans", sans-serif !important;
-  color: #a2a3ac !important;
-  list-style: none !important;
-  padding: 0 !important;
-
-  li { padding: 0 !important; margin: 0 !important; list-style: none !important; }
-  a { color: inherit !important; text-decoration: none !important; }
-  a:hover { color: var(--primary-color) !important; }
-}
-
-// ── Post body — the chat BUBBLE ────────────────────────────────────────────────
-// Grey background, top-left corner is sharp (adjacent to avatar side).
-.Page.DiscussionPage .Post-body {
-  background: #f5f5f7 !important;
-  border: 1px solid #eaeaf0 !important;
-  border-radius: 21px !important;
-  border-top-left-radius: 0 !important; // chat bubble effect
-  padding: 18px 20px !important;
-  font-size: 15px;
-  line-height: 1.65;
+  font-weight: 900;
+  font-size: 14px;
   font-family: "DM Sans Variable", "DM Sans", sans-serif;
-  color: #3a3c45;
+  color: var(--disc-title);
+  text-decoration: none;
+}
 
-  p { margin: 0 0 12px; }
-  p:last-child { margin-bottom: 0; }
+.Page.DiscussionPage .PostUser-name > a:hover,
+.Page.DiscussionPage .PostUser-name .Link:hover {
+  text-decoration: underline;
+}
 
-  h1, h2, h3, h4 {
+// Hide UserOnline inside the username link (we use border on Post-side avatar instead)
+.Page.DiscussionPage .PostUser-name .UserOnline {
+  display: none !important;
+}
+
+// Dot separator between name and timestamp
+.Page.DiscussionPage .PostUser-name + .PostMeta::before {
+  content: "·";
+  color: var(--disc-muted);
+  font-size: 13px;
+  margin-right: 2px;
+}
+
+// Badges while still inside PostUser (before JS moves them to Post-side):
+// Hide to avoid a flash of misplaced badges during initial render.
+.Page.DiscussionPage .PostUser .PostUser-badges {
+  display: none !important;
+}
+
+// .Page.DiscussionPage .PostMeta has specificity 0,3,0 vs Flarum's .PostMeta 0,1,0
+.Page.DiscussionPage .PostMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  color: var(--disc-muted);
+  list-style: none;
+  padding: 0;
+
+  li {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  a:hover { color: var(--primary-color); }
+}
+
+// ── Post body — specificity 0,3,0 vs Flarum's .Post-body 0,1,0
+.Page.DiscussionPage .Post-body {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  font-size: 15px;
+  line-height: 1.72;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  color: var(--disc-text);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+
+  p {
+    margin: 0 0 14px;
+    &:last-child { margin-bottom: 0; }
+  }
+
+  h1, h2, h3, h4, h5, h6 {
     font-family: "DM Sans Variable", "DM Sans", sans-serif;
     font-weight: 800;
     letter-spacing: -0.02em;
-    color: #1f2025;
+    color: var(--disc-title);
+    margin: 20px 0 8px;
+    &:first-child { margin-top: 0; }
   }
 
-  code, pre {
+  h1 { font-size: 22px; }
+  h2 { font-size: 19px; }
+  h3 { font-size: 16px; }
+
+  ul, ol {
+    padding-left: 22px;
+    margin: 8px 0 14px;
+    li { margin-bottom: 4px; }
+  }
+
+  code {
     font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
     font-size: 13px;
+    background: #f0f0f4;
+    border-radius: 4px;
+    padding: 2px 6px;
+    color: var(--disc-title);
   }
 
   pre {
     background: #18181b;
-    color: #fff;
-    padding: 14px 16px;
-    border-radius: 10px;
+    color: #e4e4e7;
+    padding: 14px 18px;
+    border-radius: 12px;
     overflow-x: auto;
-    margin: 10px 0;
+    margin: 14px 0;
+    font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+    font-size: 13px;
+    line-height: 1.6;
+
+    code {
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
+      color: inherit;
+    }
   }
 
   blockquote {
-    border-left: 3px solid #dfe0e8;
-    padding-left: 12px;
-    color: #a2a3ac;
+    border-left: 3px solid color-mix(in srgb, var(--primary-color) 40%, #e0e0e8);
+    padding: 8px 14px;
+    color: #7a7c88;
     font-style: italic;
-    margin: 8px 0;
+    margin: 12px 0;
+    background: rgba(0, 0, 0, 0.025);
+    border-radius: 0 8px 8px 0;
+
+    p { margin: 0; }
+    & > *:last-child { margin-bottom: 0; }
   }
 
   a {
+    color: var(--primary-color) !important;
+  }
+
+  img:not(.Avatar):not(.emoji):not([class*="avatar"]) {
+    max-width: 100%;
+    border-radius: 10px;
+    display: block;
+    margin: 12px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid var(--disc-border);
+    margin: 16px 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin: 12px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--disc-border);
+
+    th {
+      background: rgba(0, 0, 0, 0.03);
+      font-weight: 700;
+      text-align: left;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--disc-border);
+    }
+
+    td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--disc-border);
+    }
+
+    tr:last-child td { border-bottom: none; }
+  }
+
+  .UserMention, .mention-user {
+    display: inline-block;
+    background: color-mix(in srgb, var(--primary-color) 10%, transparent);
     color: var(--primary-color);
-    text-decoration: none;
-    &:hover { text-decoration: underline; }
+    border-radius: 4px;
+    padding: 0 4px;
+    font-weight: 700;
+    font-size: 0.9em;
+    text-decoration: none !important;
+
+    &:hover { background: color-mix(in srgb, var(--primary-color) 18%, transparent); }
+  }
+
+  .Spoiler {
+    background: #1f2025;
+    color: transparent;
+    border-radius: 4px;
+    padding: 0 4px;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s;
+
+    &.revealed,
+    &:hover { color: #e4e4e7; }
   }
 }
 
-// ── Post footer: minimal action buttons ──────────────────────────────────────
+// ── Post footer — specificity 0,3,0 vs Flarum's 0,1,0
 .Page.DiscussionPage .Post-footer {
-  margin-top: 8px !important;
-  padding-top: 0 !important;
-  border-top: none !important;
+  margin-top: 16px;
+  padding-top: 0;
+  border-top: none;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -374,168 +686,422 @@
 
 .Page.DiscussionPage .Post-footer .Button.Button--link,
 .Page.DiscussionPage .Post-footer .avocado-action-btn {
-  background: transparent !important;
-  border-radius: 8px !important;
-  padding: 4px 8px !important;
-  font-size: 12px !important;
-  font-weight: 800 !important;
-  font-family: "DM Sans Variable", "DM Sans", sans-serif !important;
-  color: #8d8f98 !important;
-  display: inline-flex !important;
+  background: transparent;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  color: var(--disc-muted);
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  transition: background 0.15s ease, color 0.15s ease !important;
-  text-decoration: none !important;
-  border: none !important;
-  box-shadow: none !important;
+  gap: 5px;
+  line-height: 1;
+  transition: background 0.15s ease, color 0.15s ease;
+  text-decoration: none;
+  border: none;
+  box-shadow: none;
   cursor: pointer;
 
   &:hover, &:focus {
-    background: #f0f1f5 !important;
-    color: #50525e !important;
+    background: #f0f0f4;
+    color: #4a4c58;
   }
 
-  &:active {
-    background: #e8eaf0 !important;
-  }
+  &:active { background: #e8e8ef; }
 
   .Button-icon, i { font-size: 13px; line-height: 1; }
 
   .Button-label, .avocado-action-label {
-    font-family: "DM Sans Variable", "DM Sans", sans-serif !important;
-    font-weight: 800 !important;
+    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    font-weight: 800;
   }
 }
 
-.Page.DiscussionPage .Post-footer .Button--liked,
-.Page.DiscussionPage .Post-footer .avocado-share-done {
-  color: var(--primary-color) !important;
+.Page.DiscussionPage .Post-footer .Button--liked {
+  color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 8%, transparent);
 }
 
-// ── EventPost: transparent / muted ───────────────────────────────────────────
+.Page.DiscussionPage .Post-footer .avocado-share-done {
+  color: var(--primary-color);
+}
+
+// ── EventPost — .Page.DiscussionPage .EventPost has 0,3,0 vs Flarum's 0,1,0 ────
 .Page.DiscussionPage .EventPost {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  padding: 2px 0 !important;
-  margin: -6px 0 !important;
+  background: transparent;
+  border: none;
+  border-bottom: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 6px 0;
+  margin: 0;
+
+  .Post-container {
+    display: grid;
+    grid-template-columns: var(--disc-avatar) 1fr;
+    gap: var(--disc-gap);
+    align-items: center;
+  }
+
+  // Icon circle in Post-side
+  .Post-side {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--disc-avatar);
+    flex-shrink: 0;
+  }
+
+  .EventPost-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(143, 143, 149, 0.10);
+    color: var(--disc-muted);
+    font-size: 13px;
+    font-style: normal;
+  }
+
+  // display:none !important kept — intentionally hiding Flarum's header/footer on event posts
+  .Post-header { display: none !important; }
+  .Post-footer { display: none !important; }
+  .Post-main   { padding-left: 0; }
 
   .Post-body {
-    background: transparent !important;
-    border: none !important;
-    border-radius: 0 !important;
-    padding: 4px 0 !important;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 2px 0;
     font-size: 13px;
-    color: #a2a3ac;
+    font-weight: 600;
+    color: var(--disc-muted);
+    line-height: 1.5;
+
+    p { margin: 0 0 2px; &:last-child { margin: 0; } }
+
+    a {
+      color: var(--disc-muted);
+      text-decoration: none;
+      font-weight: 700;
+      &:hover { color: var(--primary-color); }
+    }
+
+    .TagLabel {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+    }
   }
 }
 
-// ── ReplyPlaceholder ─────────────────────────────────────────────────────────
+// ── ReplyPlaceholder — specificity 0,3,0 vs Flarum's 0,1,0
+// DOM: <button.Post.ReplyPlaceholder> > .Post-container > .Post-side + .Post-main > .Post-header
 .Page.DiscussionPage .ReplyPlaceholder {
-  background: #f8f8fa !important;
-  border: 1px solid #efeff4 !important;
-  border-radius: 18px !important;
-  margin: 8px 0 !important;
+  background: #f4f4f7;
+  border: 2px dashed #dfdfe6;
+  border-radius: 20px;
+  margin: 24px 0 4px;
   cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
 
   &:hover {
-    background: #f4f4f8 !important;
-    border-color: #dfe0e8 !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06) !important;
+    background: #eeeef4;
+    border-color: var(--primary-color);
+    border-style: solid;
   }
 
-  .Post-body {
-    background: transparent !important;
-    border: none !important;
-    border-radius: 0 !important;
-    padding: 14px 16px !important;
-    color: #a0a0a8 !important;
-    font-size: 14px;
-    font-weight: 600;
+  // Override the tablet/desktop grid layout from .CommentPost — placeholder
+  // should always be a simple horizontal flex (avatar + text)
+  .Post-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+  }
+
+  // Keep Post-side narrow, no sticky positioning
+  .Post-side {
+    position: static;
+    width: auto;
+    flex-shrink: 0;
+    top: auto;
+    left: auto;
+  }
+
+  // Avatar in the placeholder
+  .Post-side .Avatar,
+  .Post-side .Post-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+    display: block;
+  }
+
+  // "Write a Reply..." label
+  .Post-main .Post-header {
+    font-size: 15px;
+    font-weight: 700;
+    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    color: #afafb8;
+    display: block;
+    border-bottom: none;
+    padding: 0;
+    margin: 0;
   }
 }
 
-// ── Sidebar ───────────────────────────────────────────────────────────────────
+// ── PostStream load-more button — specificity 0,4,0 vs Flarum's .Button 0,1,0
+.Page.DiscussionPage .PostStream-loadMore {
+  text-align: center;
+  padding: 24px 0 8px;
+
+  .Button {
+    border-radius: 100px;
+    font-weight: 700;
+    padding: 10px 24px;
+    font-size: 13px;
+    background: #f0f0f4;
+    color: #50525e;
+    border: none;
+    box-shadow: none;
+
+    &:hover { background: #e5e6ed; }
+  }
+}
+
+// ── Sidebar ────────────────────────────────────────────────────────────────────
 .Page.DiscussionPage .Page-sidebar {
   font-family: "DM Sans Variable", "DM Sans", sans-serif;
 
-  .Button--primary {
-    border-radius: 100px !important;
-    font-family: "DM Sans Variable", "DM Sans", sans-serif !important;
-    font-weight: 700 !important;
-    letter-spacing: -0.01em;
-  }
-
-  .SplitDropdown .Button--primary + .Button {
-    border-radius: 0 100px 100px 0 !important;
-  }
-
-  .SplitDropdown .Button--primary:first-child {
-    border-radius: 100px 0 0 100px !important;
-  }
-
-  .Scrubber-index, .Scrubber-description {
+  p, span, a, button, label {
     font-family: "DM Sans Variable", "DM Sans", sans-serif;
-    font-weight: 700;
+  }
+}
+
+.Page.DiscussionPage .Page-sidebar .SplitDropdown {
+  gap: 0;
+  // No overflow:hidden — it can clip the Dropdown-toggle on mobile.
+  // Each child carries its own border-radius instead.
+
+  .SplitDropdown-button {
+    border-radius: 16px 0 0 16px;
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+    border-top: none;
+    border-bottom: none;
+    border-left: none;
+  }
+
+  // .Dropdown wrapper div must participate in flex layout
+  > .Dropdown {
+    display: flex;
+    flex-shrink: 0;
+  }
+
+  .Dropdown-toggle.Button--primary {
+    border-radius: 0 16px 16px 0;
+    border: none;
+    flex-shrink: 0;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    // On phone, Flarum core intentionally sets:
+    //   App-primaryControl > .Button { background: transparent !important;
+    //                                  color: var(--header-control-color) !important; }
+    // — the button is transparent with the header control color as icon color.
+    // We must NOT override background/color here, or we fight that rule.
+    // Layout-only rules above are sufficient for desktop; phone is handled by Flarum.
+  }
+}
+
+// On phone: Flarum's .App-primaryControl > .Button { background: transparent !important;
+// color: var(--header-control-color) !important } makes the toggle invisible when the
+// DiscussionPage-nav has a white background (it does — no header-bg override here).
+// Additionally, body.colored--active mutates --header-control-color to the tag's contrast
+// color (white for dark tags), further hiding the white icon on white nav.
+// Fix: explicit primary-color background + white icon, which always contrasts.
+@media @phone {
+  .Page.DiscussionPage .DiscussionPage-nav .App-primaryControl .Dropdown-toggle {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-color) !important;
+    color: #fff !important;
+    opacity: 1 !important;
+  }
+  // Two Flarum rules suppress the icon/caret inside non-primary-control toggles:
+  //   .Dropdown-toggle:not(.Button--flat) .Button-icon { display: none !important; }  (spec 2)
+  //   .App-primaryControl.Dropdown .Button-caret    { display: none !important; }     (spec 2)
+  // Our selectors have spec 5 so they win.
+  .Page.DiscussionPage .DiscussionPage-nav .App-primaryControl .Dropdown-toggle .icon,
+  .Page.DiscussionPage .DiscussionPage-nav .App-primaryControl .Dropdown-toggle .Button-icon {
+    display: block !important;
+    color: #fff !important;
+  }
+  .Page.DiscussionPage .DiscussionPage-nav .App-primaryControl .Dropdown-toggle .Button-caret {
+    display: none !important;
+  }
+}
+
+.Page.DiscussionPage .Page-sidebar .Scrubber {
+  .Scrubber-index {
+    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    color: var(--disc-title);
+  }
+
+  .Scrubber-description {
+    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--disc-muted);
   }
 
   .Scrubber-first, .Scrubber-last {
     font-family: "DM Sans Variable", "DM Sans", sans-serif;
-    font-size: 12px;
-    opacity: 0.65;
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0.6;
   }
 
-  p, span, a {
-    font-family: "DM Sans Variable", "DM Sans", sans-serif;
-  }
+  .Scrubber-bar { border-radius: 4px; }
 }
 
-// ── Skeleton loading (neutral grey) ──────────────────────────────────────────
+// ── OP badge — appears in Post-header between username (priority 100) and
+//    timestamp (priority 0). Zinc-style chip matching mockup.
+//    .Page.DiscussionPage .AvocadoPost-opBadge has 0,2,0 — no !important needed.
+.Page.DiscussionPage .AvocadoPost-opBadge {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  vertical-align: middle;
+  background: rgba(0, 0, 0, 0.05);
+  color: #8f9097;
+  font-size: 9px;
+  font-weight: 900;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 5px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+// ── Sidebar stats card — hidden (kept in JS for data access, not shown in UI)
+.AvocadoSidebar-stats {
+  display: none;
+}
+
+
+
+// ── Skeleton loading state ─────────────────────────────────────────────────────
 .DiscussionPage--skeleton {
+  background: #fff;
+  --disc-avatar: 48px;
+  --disc-gap: 24px;
+
   .Page-main { display: block; }
 
   .AvocadoSkeleton-discussionHero {
-    background: linear-gradient(90deg, #f0f0f5 25%, #e8e8f0 50%, #f0f0f5 75%);
-    background-size: 400% 100%;
-    animation: avocado-shimmer 1.8s ease infinite;
+    background: #f4f4f7;
     border-bottom: 1px solid #eaeaf0;
 
     .container {
-      max-width: 1060px;
-      padding: 40px 12px 36px;
+      max-width: 1280px;
+      padding: 48px 48px 52px;
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
   }
 
+  // Nav row: back circle + tag pill placeholders
+  .AvocadoSkeleton-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .AvocadoSkeleton-backBtn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: rgba(0, 0, 0, 0.08);
+  }
+
   .AvocadoSkeleton-tag {
-    height: 22px;
+    height: 26px;
     width: 72px;
     border-radius: 100px;
     background: rgba(0, 0, 0, 0.07);
   }
 
   .AvocadoSkeleton-title {
-    height: 40px;
-    width: 55%;
+    height: 36px;
+    width: 64%;
     border-radius: 8px;
-    background: rgba(0, 0, 0, 0.08);
+    background: rgba(0, 0, 0, 0.09);
+  }
+
+  // Meta row: stacked avatars + text chips
+  .AvocadoSkeleton-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .AvocadoSkeleton-avatarStack {
+    display: flex;
+    .AvocadoSkeleton-stackItem {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.10);
+      border: 2px solid rgba(255,255,255,0.5);
+      margin-left: -8px;
+      &:first-child { margin-left: 0; }
+    }
+  }
+
+  .AvocadoSkeleton-metaChip {
+    height: 16px;
+    border-radius: 100px;
+    background: rgba(0, 0, 0, 0.07);
+
+    &--sm { width: 60px; }
+    &--md { width: 90px; }
   }
 
   .AvocadoSkeleton-stream {
-    max-width: 1060px;
+    max-width: 1280px;
     margin: 0 auto;
-    padding: 22px 12px 0;
+    padding: 0 48px;
     display: flex;
     flex-direction: column;
-    gap: 36px;
   }
 
   .AvocadoSkeleton-post {
     display: flex;
-    gap: 14px;
+    gap: var(--disc-gap);
+    padding: 32px 0;
+    border-bottom: 1px solid #f0f0f4;
     animation: avocado-pulse 1.5s ease-in-out infinite;
 
     &:nth-child(2) { animation-delay: 0.18s; }
@@ -543,11 +1109,11 @@
   }
 
   .AvocadoSkeleton-postAvatar {
-    width: 48px;
-    height: 48px;
+    width: var(--disc-avatar);
+    height: var(--disc-avatar);
     border-radius: 999px;
     flex-shrink: 0;
-    background: #ebebf0;
+    background: #e8e8f0;
   }
 
   .AvocadoSkeleton-postBody {
@@ -555,16 +1121,47 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     padding-top: 2px;
   }
 
   .AvocadoSkeleton-line {
     border-radius: 6px;
-    background: #ebebf0;
+    background: #e8e8f0;
 
     &--sm  { height: 12px; width: 36%; }
     &--md  { height: 12px; width: 65%; }
-    &--lg  { height: 60px; width: 100%; border-radius: 21px; border-top-left-radius: 0; }
+    &--lg  { height: 80px; width: 100%; border-radius: 8px; }
+  }
+}
+
+// Skeleton — tablet adjustments
+@media @tablet {
+  .DiscussionPage--skeleton {
+    --disc-avatar: 40px;
+    --disc-gap: 18px;
+
+    .AvocadoSkeleton-discussionHero .container { padding: 36px 20px 40px; }
+    .AvocadoSkeleton-stream { padding: 0 20px; }
+    .AvocadoSkeleton-post { padding: 24px 0; }
+  }
+}
+
+// Skeleton — phone adjustments
+@media @phone {
+  .DiscussionPage--skeleton {
+    --disc-avatar: 34px;
+    --disc-gap: 12px;
+
+    .AvocadoSkeleton-discussionHero .container {
+      padding: 32px 20px 36px;
+      align-items: center;
+    }
+    .AvocadoSkeleton-nav { justify-content: center; }
+    .AvocadoSkeleton-title { width: 85%; text-align: center; }
+    .AvocadoSkeleton-meta { justify-content: center; }
+    .AvocadoSkeleton-stream { padding: 0 14px; }
+    .AvocadoSkeleton-post { padding: 18px 0; }
+    .AvocadoSkeleton-line--lg { height: 56px; }
   }
 }

@@ -8,6 +8,71 @@
   }
 }
 
+// ─── Avocado Footer ───────────────────────────────────────────────────────────
+.AvocadoFooter {
+  border-top: 1px solid #eaeaf0;
+  background: #fff;
+  padding: 0;
+  font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.AvocadoFooter-inner {
+  max-width: 1036px;
+  margin: 0 auto;
+  padding: 18px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.AvocadoFooter-brand {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 900;
+  font-style: italic;
+  font-size: 14px;
+  letter-spacing: -0.5px;
+  color: #121317;
+}
+
+.AvocadoFooter-sep {
+  color: #d0d0d8;
+  font-size: 12px;
+  user-select: none;
+}
+
+.AvocadoFooter-copy {
+  font-size: 13px;
+  font-weight: 600;
+  color: #9d9ea8;
+}
+
+.AvocadoFooter-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #9d9ea8;
+  text-decoration: none !important;
+  transition: color 0.15s ease;
+
+  i { font-size: 11px; }
+
+  &:hover {
+    color: var(--primary-color);
+    text-decoration: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .AvocadoFooter-inner {
+    gap: 8px;
+    padding: 14px 10px;
+  }
+}
+
+
 // Smooth page loading transition (reduces jarring loading flash)
 .Page-main {
   transition: opacity 0.15s ease;
@@ -29,6 +94,13 @@
 
   &.focused {
     width: 400px;
+  }
+
+  // On tablet and small laptops: don't grow on focus — prevents header overflow
+  @media (max-width: 1100px) {
+    &.focused {
+      width: 200px;
+    }
   }
 
   &-input {
@@ -155,9 +227,18 @@
   }
 }
 
+// ─── Header title: push logo/name away from nav items ─────────────────────────
+.Header-title {
+  padding-left: 12px;
+}
+
 // Core Flarum collapses header search to 1px on tablet when input isn't focused.
 // Keep V1 search visible in this breakpoint as well.
 @media @tablet {
+  .Header-title {
+    padding-left: 20px;  // extra breathing room from the nav drawer button
+  }
+
   .Header-secondary .Search {
     input:not(:focus) {
       width: 100%;
@@ -187,3 +268,138 @@
     padding: 0;
   }
 }
+
+// ─── Header logo sizing ───────────────────────────────────────────────────────
+img.Header-logo,
+svg.Header-logo {
+  height: 70px !important;
+  width: auto !important;
+  max-width: none !important;
+  max-height: none !important;
+  display: block;
+  vertical-align: middle !important;
+  margin-top: -12px !important;
+  // svg-specific: let the viewBox drive aspect ratio
+  &:is(svg) {
+    overflow: visible;
+  }
+}
+
+// Keep header title flex-aligned so logo and title baseline nicely
+.App-header .Header-title {
+  display: flex !important;
+  align-items: center !important;
+}
+
+// ─── Hide IndexPage native sideNav ────────────────────────────────────────────
+// Scoped to .IndexPage so AllDiscussionsPage's <IndexSidebar> inside .AvocadoNav-helper
+// (which is outside .IndexPage) is NOT affected — it must render for the phone
+// header escape mechanism (height:0 + overflow:hidden collapses it visually while
+// absolutely-positioned App-primaryControl escapes to the phone header).
+// Phone exception: .IndexPage--avocadoHome uses the same escape trick, so restore
+// display:block there so the button can still reach the header.
+.IndexPage .IndexPage-nav.sideNav { display: none !important; }
+
+@media @phone {
+  .IndexPage--avocadoHome .IndexPage-nav.sideNav { display: block !important; }
+}
+
+// ─── Global: no underlines on links inside avocado theme pages ────────────────
+.AvocadoHome a,
+.AvocadoTagPage a,
+.AvocadoUserPage a,
+.AvocadoTagsPage a,
+.AllDiscussionsPage a,
+.AvocadoDiscussions a {
+  text-decoration: none !important;
+
+  &:hover {
+    text-decoration: none !important;
+  }
+}
+
+// ─── Online avatars "+N more" badge ───────────────────────────────────────────
+.AvocadoHome-onlineAvatars-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f0f0f4;
+  border: 2px solid #fff;
+  color: #6b6c78;
+  font-size: 10px;
+  font-weight: 800;
+  margin-left: -7px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+// ─── Header auth buttons (Log In / Sign Up) ───────────────────────────────────
+.AvocadoHeader-authBtn {
+  height: 34px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity 0.15s, background 0.15s;
+  cursor: pointer;
+
+  &--login {
+    border: 1.5px solid var(--primary-color) !important;
+    color: var(--primary-color) !important;
+    background: transparent !important;
+
+    &:hover {
+      background: color-mix(in srgb, var(--primary-color) 8%, transparent) !important;
+    }
+  }
+
+  &--signup {
+    background: var(--primary-color) !important;
+    color: #fff !important;
+    border: none !important;
+
+    &:hover {
+      opacity: 0.88 !important;
+      background: var(--primary-color) !important;
+    }
+  }
+}
+
+// ─── Default avatar SVG (person silhouette, primary-colour tinted) ───────────
+.AvocadoDefaultAvatar {
+  display: block !important;  // override inline-flex from .Avatar
+  border-radius: 50%;
+  overflow: hidden;
+
+  .AvocadoDefaultAvatar-bg {
+    fill: color-mix(in srgb, var(--primary-color) 15%, #fff);
+  }
+
+  .AvocadoDefaultAvatar-fg {
+    fill: color-mix(in srgb, var(--primary-color) 42%, #fff);
+  }
+}
+
+// ─── Notification panel: remove unread background highlight ──────────────────
+// Core applies background: var(--control-bg) to .HeaderListItem.unread —
+// remove it so unread notifications look the same as read ones.
+.HeaderListItem.unread {
+  background: transparent;
+}
+
+// ─── Header auth separator ("or" between Log In / Sign Up) ───────────────────
+.AvocadoHeader-authSep {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted-color);
+  opacity: 0.65;
+  align-self: center;
+  margin: 0 6px;
+}
+

@@ -8,27 +8,52 @@
 // brand) and the original form on the right.
 //
 
-// ─── Side-panel image ─────────────────────────────────────────────────────────
+// ─── Side-panel ───────────────────────────────────────────────────────────────
 
 .AvocadoAuth-panel {
   display: none; // hidden on mobile by default
   position: relative;
   flex-shrink: 0;
   width: 300px;
-  min-height: 400px;
-  border-radius: @border-radius 0 0 @border-radius;
+  min-height: 420px;
+  border-radius: 0 @border-radius @border-radius 0;
   overflow: hidden;
-  background: var(--primary-color);
+  // Default: rich gradient from primary color
+  background: linear-gradient(145deg, var(--primary-color) 0%, color-mix(in srgb, var(--primary-color) 65%, #000) 100%);
+
+  // Decorative circle blobs
+  &::before {
+    content: '';
+    position: absolute;
+    top: -70px;
+    right: -70px;
+    width: 210px;
+    height: 210px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.10);
+    pointer-events: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -50px;
+    left: -50px;
+    width: 170px;
+    height: 170px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.07);
+    pointer-events: none;
+  }
 }
 
 .AvocadoAuth-panelOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    160deg,
-    rgba(0, 0, 0, 0.08) 0%,
-    rgba(0, 0, 0, 0.60) 100%
-  );
+  // Primary-color tint over the image — mirrors heroBanner --hasImage overlay
+  background: var(--primary-color);
+  opacity: 0.62;
+  pointer-events: none;
 }
 
 .AvocadoAuth-panelContent {
@@ -43,55 +68,116 @@
 
 .AvocadoAuth-panelTitle {
   display: block;
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 900;
   color: #fff;
-  line-height: 1.2;
+  line-height: 1.15;
   margin-bottom: 8px;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: -0.4px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .AvocadoAuth-panelDesc {
   margin: 0;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.82);
-  line-height: 1.5;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  color: rgba(255, 255, 255, 0.80);
+  line-height: 1.55;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.20);
 }
 
 // ─── Modal layout when panel is present ──────────────────────────────────────
+// Panel uses position:absolute so Mithril's block-flow (header+content+footer)
+// remains vertical. The panel is pinned to the right; padding-right makes room for it.
 
-// When our panel has been injected, .Modal-content becomes a flex row
 .Modal-content:has(.AvocadoAuth-panel) {
-  display: flex;
-  flex-direction: row;
-  padding: 0;
+  position: relative;
   overflow: hidden;
   border-radius: @border-radius;
-
-  // The original form wrapper (everything after the panel)
-  > *:not(.AvocadoAuth-panel) {
-    flex: 1;
-    padding: 32px 28px;
-    min-width: 0;
-  }
+  padding: 108px 28px 32px; // top: room for form icon (32+48+28)
+  box-sizing: border-box;
+  background: var(--control-bg);
 }
 
-// ─── Show panel on tablet+ ───────────────────────────────────────────────────
+// ─── Panel pinned to the right on tablet+ ────────────────────────────────────
+
+.AvocadoAuth-panel {
+  display: none; // hidden on mobile
+}
 
 @media @tablet-up {
   .AvocadoAuth-panel {
-    display: flex;
-    flex-direction: column;
+    display: block;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 380px;
+    border-radius: 0 @border-radius @border-radius 0;
+    overflow: hidden;
+  }
+
+  // Make room for the panel on the right (380px panel + 28px inner margin)
+  .Modal-content:has(.AvocadoAuth-panel) {
+    padding-right: 408px;
   }
 }
 
-// ─── Wider modal to accommodate the panel ────────────────────────────────────
+// ─── Close button: frosted-glass circle over the panel ───────────────────────
+
+.Modal-content:has(.AvocadoAuth-panel) .Modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 10;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: var(--muted-color);
+  box-shadow: none;
+  transition: background 0.15s;
+
+  .Button-label { display: none; }
+  &:hover { background: rgba(0, 0, 0, 0.14); }
+}
+
+// ─── Form icon (lock / user-plus / envelope) ──────────────────────────────────
+
+.AvocadoAuth-formIcon {
+  position: absolute;
+  top: 32px;
+  left: 28px;
+  z-index: 2;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--primary-color);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 20px;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+// ─── Wider modal to accommodate panel + form ─────────────────────────────────
+// Flarum's .Modal--small caps .Modal-dialog at 375px. Override via :has().
 
 @media @tablet-up {
-  .Modal-content:has(.AvocadoAuth-panel) {
-    max-width: 680px;
-    width: 680px;
+  .LogInModal:has(.AvocadoAuth-panel) .Modal-dialog,
+  .SignUpModal:has(.AvocadoAuth-panel) .Modal-dialog,
+  .ForgotPasswordModal:has(.AvocadoAuth-panel) .Modal-dialog,
+  .LogInModal:has(.AvocadoAuth-panel),
+  .SignUpModal:has(.AvocadoAuth-panel),
+  .ForgotPasswordModal:has(.AvocadoAuth-panel) {
+    max-width: 860px !important;
+    width: 92vw !important;
   }
 }
 

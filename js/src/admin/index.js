@@ -1,4 +1,5 @@
 import UploadImageButton from 'flarum/common/components/UploadImageButton';
+import Component from 'flarum/common/Component';
 
 const trans = (key, fallback) => {
   const out = app.translator?.trans(key);
@@ -23,10 +24,144 @@ const resolveAssetUrl = (assetPath) => {
   return String(assetPath);
 };
 
+// ─── Featured Tags Selector ───────────────────────────────────────────────────
+
+class FeaturedTagsSelector extends Component {
+  oninit(vnode) {
+    super.oninit(vnode);
+    this.saving    = false;
+    this.tagsLoaded = false;
+    this.selected  = new Set();
+    this.tags      = [];
+    this._saveTimer = null;
+
+    try {
+      const raw = app.data.settings['avocado.featured_tags'];
+      if (raw) JSON.parse(raw).forEach((id) => this.selected.add(String(id)));
+    } catch (_) {}
+
+    app.store.find('tags').then((result) => {
+      this.tags = (Array.isArray(result) ? result : [])
+        .filter((t) => t && !t.parent?.())
+        .sort((a, b) => (a.position?.() ?? 9999) - (b.position?.() ?? 9999));
+      this.tagsLoaded = true;
+      m.redraw();
+    }).catch(() => {
+      this.tagsLoaded = true;
+      m.redraw();
+    });
+  }
+
+  toggle(id) {
+    if (this.selected.has(id)) this.selected.delete(id);
+    else this.selected.add(id);
+    m.redraw();
+    clearTimeout(this._saveTimer);
+    this._saveTimer = setTimeout(() => this.persist(), 350);
+  }
+
+  persist() {
+    this.saving = true;
+    m.redraw();
+    const value = JSON.stringify([...this.selected]);
+    const apiUrl = (app.forum.attribute('apiUrl') || '/api').replace(/\/+$/, '');
+    app.request({
+      method: 'POST',
+      url: `${apiUrl}/settings`,
+      body: { 'avocado.featured_tags': value },
+    }).then(() => {
+      app.data.settings['avocado.featured_tags'] = value;
+      this.saving = false;
+      m.redraw();
+    }).catch(() => {
+      this.saving = false;
+      m.redraw();
+    });
+  }
+
+  view() {
+    return (
+      <div className="Form-group AvocadoAdmin-featuredTags">
+        <label className="AvocadoAdmin-featuredTags-label">
+          {trans('ramon-avocado.admin.settings.featured_tags_label', 'Featured Categories')}
+          {this.saving && <span className="AvocadoAdmin-featuredTags-saving" aria-hidden="true" />}
+        </label>
+        <div className="AvocadoAdmin-tagPills">
+          {!this.tagsLoaded && (
+            <span className="AvocadoAdmin-tagPills-placeholder">Loading…</span>
+          )}
+          {this.tagsLoaded && this.tags.length === 0 && (
+            <span className="AvocadoAdmin-tagPills-placeholder">
+              {trans('ramon-avocado.admin.settings.featured_tags_empty', 'No tags found.')}
+            </span>
+          )}
+          {this.tags.map((tag) => {
+            const id = String(tag.id?.() || '');
+            if (!id) return null;
+            const active = this.selected.has(id);
+            const color  = tag.color?.() || '#8f9097';
+            const icon   = tag.icon?.();
+            return (
+              <button
+                key={id}
+                type="button"
+                className={`AvocadoAdmin-tagPill${active ? ' is-active' : ''}`}
+                style={{ '--pill-color': color }}
+                onclick={() => this.toggle(id)}
+              >
+                {icon && <i className={`${icon} AvocadoAdmin-tagPill-icon`} aria-hidden="true" />}
+                <span className="AvocadoAdmin-tagPill-name">{tag.name?.()}</span>
+                <i className={`fas fa-star AvocadoAdmin-tagPill-star${active ? ' is-active' : ''}`} aria-hidden="true" />
+              </button>
+            );
+          })}
+        </div>
+        <p className="helpText">
+          {trans('ramon-avocado.admin.settings.featured_tags_help', 'Selected categories appear highlighted with a star badge on the homepage and categories page.')}
+        </p>
+      </div>
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 app.initializers.add(
   'ramon-avocado',
   (app) => {
     app.registry.for('ramon-avocado')
+
+      // ── ─────────────────────────────────────────────────────────────────────
+      // Logo
+      // ─────────────────────────────────────────────────────────────────────────
+
+      .registerSetting(() => (
+        <div className="AvocadoAdmin-section">
+          <h3>{trans('ramon-avocado.admin.settings.section_logo', 'Logo')}</h3>
+        </div>
+      ), 135)
+
+      .registerSetting({
+        setting: 'avocado.logo_enabled',
+        type: 'boolean',
+        label: trans('ramon-avocado.admin.settings.logo_enabled_label', 'Enable custom SVG logo'),
+        help: trans('ramon-avocado.admin.settings.logo_enabled_help', 'Replace the default forum logo with the uploaded SVG file.'),
+      }, 130)
+
+      .registerSetting(() => (
+        <div className="Form-group">
+          <label>{trans('ramon-avocado.admin.settings.logo_svg_label', 'Custom Logo (SVG)')}</label>
+          <UploadImageButton
+            name="avocado-logo"
+            routePath="avocado/logo-svg"
+            value={app.data.settings['avocado.logo_svg']}
+            url={resolveAssetUrl(app.data.settings['avocado.logo_svg'])}
+          />
+          <p className="helpText">
+            {trans('ramon-avocado.admin.settings.logo_svg_help', 'Upload an SVG file to replace the forum logo in the header. Enable the toggle above to activate it.')}
+          </p>
+        </div>
+      ), 125)
 
       // ── ─────────────────────────────────────────────────────────────────────
       // Homepage
@@ -38,12 +173,28 @@ app.initializers.add(
         </div>
       ), 115)
 
+      .registerSetting(() => <FeaturedTagsSelector />, 112)
+
       .registerSetting({
-        setting: 'avocado.home_enabled',
+        setting: 'avocado.show_online_users',
         type: 'boolean',
-        label: trans('ramon-avocado.admin.settings.home_enabled_label', 'Enable Avocado V2 homepage'),
-        help: trans('ramon-avocado.admin.settings.home_enabled_help', 'Replace the default discussion list on the home page with the Avocado V2 feed layout (cards, categories, composer).'),
-      }, 110)
+        label: trans('ramon-avocado.admin.settings.show_online_users_label', 'Show Online Users section on homepage'),
+        help: trans('ramon-avocado.admin.settings.show_online_users_help', 'Display a list of currently online users between the Categories and Popular Discussions sections. Only shows users who have enabled "Allow others to see when I am online".'),
+      }, 108)
+
+      .registerSetting({
+        setting: 'avocado.show_guest_cta',
+        type: 'boolean',
+        label: trans('ramon-avocado.admin.settings.show_guest_cta_label', 'Show Login / Sign Up buttons in hero banner'),
+        help: trans('ramon-avocado.admin.settings.show_guest_cta_help', 'Display Log In and Sign Up call-to-action buttons inside the homepage hero banner for guests.'),
+      }, 107)
+
+      .registerSetting({
+        setting: 'avocado.custom_default_avatar',
+        type: 'boolean',
+        label: trans('ramon-avocado.admin.settings.custom_default_avatar_label', 'Use custom default avatar for users without a photo'),
+        help: trans('ramon-avocado.admin.settings.custom_default_avatar_help', 'Show a person silhouette icon (coloured with the primary colour) instead of the user\'s initial letter when no avatar is uploaded.'),
+      }, 106)
 
       .registerSetting({
         setting: 'avocado.show_auth_buttons',

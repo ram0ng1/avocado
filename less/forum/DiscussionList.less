@@ -184,3 +184,51 @@
     }
   }
 }
+
+// ─── WebSocket "new discussions" pill ─────────────────────────────────────────
+.AvocadoWsUpdate {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+
+  &-btn {
+    background: var(--body-bg, #fff);
+    color: var(--primary-color);
+    border: 1.5px solid var(--primary-color);
+    border-radius: 999px;
+    padding: 5px 16px 5px 12px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
+    animation: AvocadoWsUpdate-in 0.22s ease;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover {
+      background: var(--primary-color);
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+
+      .AvocadoWsUpdate-dot {
+        background: #fff;
+      }
+    }
+  }
+
+  &-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    flex-shrink: 0;
+    animation: AvocadoStatDot-pulse 1.5s ease infinite;
+  }
+}
+
+@keyframes AvocadoWsUpdate-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
