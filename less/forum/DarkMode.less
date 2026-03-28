@@ -503,11 +503,10 @@
     }
   }
 
-  .AvocadoTagsPage-tagCard-icon {
-    background: rgba(255, 255, 255, 0.08);
-  }
+  // .AvocadoTagsPage-tagCard-icon background intentionally omitted —
+  // JS sets --icon-bg via iconColors() which already handles dark mode.
 
-  .AvocadoTagsPage-tagCard-name { color: var(--heading-color, #e4e5f0); }
+.AvocadoTagsPage-tagCard-name { color: var(--heading-color, #e4e5f0); }
   .AvocadoTagsPage-tagCard-desc { color: var(--muted-color); }
 
   .AvocadoTagsPage-tagCard-children {

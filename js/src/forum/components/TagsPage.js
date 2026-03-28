@@ -85,7 +85,7 @@ function renderTagCard(tag, featured = false, fireUrl = '') {
                 className="AvocadoTagsPage-childPill"
                 href={childHref}
                 onclick={(e) => { e.stopPropagation(); navigate(e, childHref); }}
-                style={{ '--cp-bg': hexToRgba(childColor, 0.1), '--cp-color': childColor }}
+                style={(() => { const ic = iconColors(childColor, 0.1); return { '--cp-bg': ic.bg, '--cp-color': ic.color }; })()}
               >
                 {child.icon?.() && <i className={child.icon()} aria-hidden="true" />}
                 {child.name?.()}
@@ -202,7 +202,7 @@ export function tagPageView(original) {
                   className="AvocadoTagsPage-cloudPill"
                   href={href}
                   onclick={(e) => navigate(e, href)}
-                  style={{ '--cp-bg': hexToRgba(color, 0.1), '--cp-color': color }}
+                  style={(() => { const ic = iconColors(color, 0.1); return { '--cp-bg': ic.bg, '--cp-color': ic.color }; })()}
                 >
                   {tag.icon?.() && <i className={tag.icon()} aria-hidden="true" />}
                   {tag.name?.()}

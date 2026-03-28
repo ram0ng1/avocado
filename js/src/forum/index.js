@@ -1,4 +1,5 @@
 import { extend, override } from 'flarum/common/extend';
+import Button from 'flarum/common/components/Button';
 import Tooltip from 'flarum/common/components/Tooltip';
 import LinkButton from 'flarum/common/components/LinkButton';
 import Avatar from 'flarum/common/components/Avatar';
@@ -1227,6 +1228,7 @@ app.initializers.add(
           }
           const StreamClass = flarum.reg.get('flarum-messages', 'forum/components/MessageStream');
           applyMessageStreamOverride(StreamClass);
+
         } catch (_) {}
       };
 
@@ -1340,6 +1342,30 @@ app.initializers.add(
           </div>
         </div>
       );
+
+      // ── Compose button in toolbar actionItems ────────────────────────────────
+      extend(MsgPage.prototype, 'actionItems', function (items) {
+        if (!app.session.user?.canSendAnyMessage?.()) return;
+        items.add('newMessage',
+          <button
+            type="button"
+            className="Button Button--icon AvocadoMessages-composeBtn"
+            title={app.translator.trans('flarum-messages.forum.messages_page.send_message_button')}
+            onclick={() => {
+              const SidebarClass = flarum.reg.get('flarum-messages', 'forum/components/MessagesSidebar');
+              if (SidebarClass?.prototype?.newMessageAction) {
+                SidebarClass.prototype.newMessageAction.call({});
+                return;
+              }
+              document.querySelector('.MessagesPage-newMessage')?.click();
+            }}
+          >
+            <i className="icon fas fa-edit Button-icon" aria-hidden="true" />
+            <span className="Button-label" aria-hidden="true" />
+          </button>,
+          30
+        );
+      });
 
       override(MsgPage.prototype, 'view', function (original) {
         patchMessageClass();

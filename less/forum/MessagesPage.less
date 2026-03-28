@@ -68,7 +68,7 @@
   display: flex !important;
   flex-direction: column !important;
   height: calc(100vh - var(--header-height, 52px)) !important;
-  overflow: hidden !important;
+  overflow: visible !important;
 
   &.MessagesPage {
     .Page-hero, .Page-sidebar, .Page-container, .Page-content, .Page-main {
@@ -172,24 +172,31 @@
 
   // ── Toolbar ──────────────────────────────────────────────────────────────
   .IndexPage-toolbar {
-    padding: 18px 22px 14px !important;
+    padding: 14px 16px 12px !important;
     flex-shrink: 0 !important;
     background: var(--avmsg-sidebar-bg) !important;
     border-bottom: 1px solid var(--avmsg-border) !important;
     position: relative !important;
     z-index: 10 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
 
-    // "Mensagens" label
+    // "Messages" title — left-aligned flex item
     &::before {
       content: 'Messages';
       display: block !important;
       font-size: 16px !important;
       font-weight: 900 !important;
       color: var(--avmsg-text) !important;
-      letter-spacing: -0.2px !important;
-      margin-bottom: 14px !important;
+      letter-spacing: -0.3px !important;
       font-family: 'DM Sans', Inter, "Segoe UI", sans-serif !important;
+      flex: 1 !important;
+      margin: 0 !important;
     }
+
+    // Clear floats (no longer needed but keep for safety)
+    &::after { display: none !important; }
 
     .IndexPage-toolbar-view,
     .IndexPage-toolbar-action {
@@ -199,58 +206,85 @@
       list-style: none !important;
       margin: 0 !important;
       padding: 0 !important;
+      float: none !important;
     }
 
-    .IndexPage-toolbar-view  { float: left; }
-    .IndexPage-toolbar-action { float: right; }
-    &::after { content: ''; display: table; clear: both; }
-
+    // Sort / view dropdown — matches AvocadoDiscussions-sortTrigger
     .Dropdown > .Button,
     .Button.Dropdown-toggle {
-      border-radius: 999px !important;
-      height: 30px !important;
-      padding: 0 12px !important;
-      font-size: 11px !important;
-      font-weight: 700 !important;
-      background: var(--avmsg-search-bg) !important;
-      border: none !important;
-      box-shadow: none !important;
-      color: var(--avmsg-muted) !important;
       display: inline-flex !important;
       align-items: center !important;
-      gap: 5px !important;
+      gap: 6px !important;
+      padding: 6px 12px !important;
+      height: auto !important;
+      border-radius: 8px !important;
+      border: 1px solid var(--avmsg-border) !important;
+      background: var(--avmsg-sidebar-bg) !important;
+      box-shadow: none !important;
+      font-size: 13px !important;
+      font-weight: 700 !important;
+      color: var(--avmsg-text) !important;
       font-family: 'DM Sans', Inter, "Segoe UI", sans-serif !important;
-      text-transform: uppercase !important;
-      letter-spacing: 0.04em !important;
+      text-transform: none !important;
+      letter-spacing: 0 !important;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
 
-      .Button-caret { font-size: 9px; opacity: 0.5; }
+      .Button-caret { font-size: 10px !important; color: var(--avmsg-muted) !important; }
+      .Button-label { font-size: 13px !important; }
 
       &:hover {
+        border-color: #c4c5d0 !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07) !important;
         color: var(--avmsg-text) !important;
-        background: #e6e8f0 !important;
+        background: var(--avmsg-sidebar-bg) !important;
       }
     }
 
-    .Button.Button--icon {
+    // Small icon buttons (refresh, mark-all-read)
+    .Button.Button--icon:not(.AvocadoMessages-composeBtn) {
       width: 30px !important;
       height: 30px !important;
       padding: 0 !important;
-      border-radius: 50% !important;
+      border-radius: 8px !important;
       background: transparent !important;
-      border: none !important;
+      border: 1px solid transparent !important;
       box-shadow: none !important;
       color: var(--avmsg-muted) !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
 
-      .Button-icon  { margin: 0 !important; font-size: 14px !important; }
+      .Button-icon  { margin: 0 !important; font-size: 13px !important; }
       .Button-label { display: none !important; }
 
       &:hover {
         background: var(--avmsg-search-bg) !important;
+        border-color: var(--avmsg-border) !important;
         color: var(--avmsg-text) !important;
       }
+    }
+
+    // Compose button — matches AvocadoHome-newThread style
+    .AvocadoMessages-composeBtn {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 30px !important;
+      height: 30px !important;
+      padding: 0 !important;
+      border-radius: 8px !important;
+      background: #0d0d10 !important;
+      border: none !important;
+      box-shadow: none !important;
+      color: #fff !important;
+      cursor: pointer !important;
+      transition: background 0.16s ease !important;
+      flex-shrink: 0 !important;
+
+      .Button-icon { margin: 0 !important; font-size: 13px !important; color: #fff !important; }
+      .Button-label { display: none !important; }
+
+      &:hover { background: #23252b !important; }
     }
   }
 
@@ -698,6 +732,13 @@
         right: 0 !important;
         left: auto !important;
         top: calc(100% + 6px) !important;
+
+        @media @phone {
+          position: fixed !important;
+          right: 12px !important;
+          left: auto !important;
+          top: calc(var(--header-height, 56px) + 56px) !important;
+        }
         border-radius: 14px !important;
         border: 1px solid var(--avmsg-border) !important;
         box-shadow: 0 10px 28px rgba(0,0,0,0.12) !important;
@@ -705,6 +746,13 @@
         min-width: 168px !important;
         background: var(--avmsg-card-bg) !important;
         z-index: 200 !important;
+
+        // Flarum core sets li { display: inline-block } — override to stack vertically
+        > li {
+          display: block !important;
+          margin: 0 !important;
+          vertical-align: unset !important;
+        }
 
         li > a, li > button {
           border-radius: 8px !important;
@@ -952,10 +1000,8 @@
       &:hover { color: var(--primary-color) !important; }
     }
 
-    // PostUser-badges is absolutely positioned on the avatar (see rule below);
-    // don't affect inline header flow but also don't hide it here — the
-    // position:absolute in the global rule removes it from the header flow.
-    .PostUser-badges { height: 0 !important; overflow: visible !important; }
+    // Hide badges here — JS (syncFixedAvatarBadges) moves them to Post-side
+    .PostUser-badges { display: none !important; }
 
     .Post-meta time, time {
       color: var(--avmsg-muted) !important;
@@ -1035,7 +1081,7 @@
   // Hide sender name for own messages (unnecessary in 1:1 chat)
   .Post-header    { display: none !important; }
 
-  // Sent messages never show the badge (Post-header is hidden)
+  // Sent messages: Post-header is hidden so PostUser-badges never renders visibly
   .PostUser-badges { display: none !important; }
 
   .Post-body {
@@ -1064,40 +1110,9 @@
   }
 }
 
-// ── Badge overlay on avatar ────────────────────────────────────────────────────
-// Flarum's Discussion page approach: PostUser-badges is pulled back into the
-// avatar column via float + negative margin-left. We adapt this for our flex
-// layout: Post-container has position:relative (36px avatar, 10px gap).
-// Received (avatar LEFT):  badge bottom-right → left: 24px, top: 22px
-// Sent (Post-header hidden): PostUser-badges never renders, nothing to do.
-.AvocadoMessages-chatCol .MessageStream .Message .Post-header .PostUser-badges,
-.AvocadoMessages-chatCol .MessageStream .Post   .Post-header .PostUser-badges {
-  display: block !important;
-  position: absolute !important;
-  left: 24px !important;   // 36px avatar - 16px badge + 4px overlap
-  top: 22px !important;    // 36px avatar - 16px badge + 2px
-  float: none !important;
-  width: auto !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  z-index: 3 !important;
-  list-style: none !important;
-  height: auto !important;
-
-  li { display: inline-block !important; margin: 0 !important; }
-
-  .Badge {
-    --size: 16px !important;
-    width: 16px !important;
-    height: 16px !important;
-    font-size: 8px !important;
-    border-radius: 50% !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border: 2px solid var(--avmsg-bg) !important;
-    box-shadow: none !important;
-  }
+// ── Badges — hidden in chat (avatars convey identity; badges add visual clutter) ──
+.AvocadoMessages-chatCol .MessageStream .PostUser .PostUser-badges {
+  display: none !important;
 }
 
 // ── Hide duplicate PostUser avatar inside Post-header ────────────────────────
@@ -1272,7 +1287,12 @@
 .Modal--flat.DetailsModal {
   border-radius: 20px !important;
   overflow: hidden !important;
+  background: var(--body-bg, #fff) !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18) !important;
 
+  .Modal-header {
+    display: none !important;
+  }
   .Modal-body { padding: 22px 24px !important; }
 
   .DetailsModal-infoGroups { display: flex; flex-direction: column; gap: 18px; }

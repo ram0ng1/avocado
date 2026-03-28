@@ -454,7 +454,7 @@ export default class AvocadoSearchPage extends Page {
               {timeLabel && <span className="AvocadoHome-threadTime">{timeLabel}</span>}
               {tags.slice(0, 2).map((tag) => {
                 const tagColor = tag.color?.() || null;
-                const tagStyle = tagColor ? { '--tag-bg': hexToRgba(tagColor, 0.1), '--tag-color': tagColor } : {};
+                const tagStyle = tagPillStyle(tagColor);
                 return (
                   <a
                     className="AvocadoHome-tagPill"
