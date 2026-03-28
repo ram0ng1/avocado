@@ -1,0 +1,625 @@
+// ─── MessagesPage — Avocado Design System ─────────────────────────────────────
+
+// ── Page: hide Flarum chrome, reset layout ────────────────────────────────────
+.MessagesPage {
+  font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: transparent;
+
+  .Page-hero    { display: none !important; }
+  .Page-sidebar { display: none !important; }
+
+  .Page-container.container {
+    max-width: var(--home-max-width, 1036px);
+    padding: 0 12px;
+    margin: 0 auto;
+  }
+
+  .Page-content {
+    width: 100%;
+    float: none;
+    margin: 0;
+    padding: 0 0 40px;
+  }
+}
+
+// ── Outer wrapper ─────────────────────────────────────────────────────────────
+.AvocadoMessages {
+  font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  // Reset any Flarum Page layout that the MessagesPage class might inherit
+  &.MessagesPage {
+    .Page-hero, .Page-sidebar, .Page-container, .Page-content, .Page-main { all: unset; display: block; }
+  }
+}
+
+.AvocadoMessages-inner {
+  max-width: var(--home-max-width, 1036px);
+  margin: 0 auto;
+  padding: 0 12px 40px;
+
+  @media @phone {
+    padding: 0 8px 24px;
+  }
+}
+
+// ── Page header ───────────────────────────────────────────────────────────────
+.AvocadoMessages-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 0 14px;
+}
+
+.AvocadoMessages-title {
+  font-size: 26px;
+  font-weight: 900;
+  color: #1a1b21;
+  letter-spacing: -0.4px;
+  margin: 0;
+  line-height: 1.1;
+}
+
+// ── AvocadoHomeNav inside messages page ───────────────────────────────────────
+.AvocadoMessages-inner .AvocadoHomeNav {
+  margin-bottom: 18px;
+}
+
+// ── Two-column card ───────────────────────────────────────────────────────────
+.AvocadoMessages-card {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--home-border, #eaeaf0);
+  border-radius: 18px;
+  overflow: hidden;
+  background: #fff;
+  min-height: calc(100vh - 200px);
+
+  @media @phone {
+    flex-direction: column;
+    border-radius: 14px;
+    min-height: auto;
+  }
+}
+
+// ── Left column: conversation list ───────────────────────────────────────────
+.AvocadoMessages-listCol {
+  flex: 0 0 280px;
+  width: 280px;
+  border-right: 1px solid var(--home-border, #eaeaf0);
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  overflow: hidden;
+
+  @media @phone {
+    width: 100%;
+    flex: none;
+    border-right: none;
+    border-bottom: 1px solid var(--home-border, #eaeaf0);
+  }
+
+  // Flarum's MessagesPage-sidebar renders into this column
+  .MessagesPage-sidebar {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  // Toolbar: heading + sort/action buttons
+  .IndexPage-toolbar {
+    padding: 20px 18px 12px;
+    border-bottom: 1px solid var(--home-border, #eaeaf0);
+    flex-shrink: 0;
+
+    &::before {
+      content: 'Messages';
+      display: block;
+      font-size: 16px;
+      font-weight: 800;
+      color: #1a1b21;
+      letter-spacing: -0.2px;
+      margin-bottom: 10px;
+    }
+
+    .IndexPage-toolbar-view,
+    .IndexPage-toolbar-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .IndexPage-toolbar-view  { float: left; }
+    .IndexPage-toolbar-action { float: right; }
+    &::after { content: ''; display: table; clear: both; }
+
+    // Sort dropdown trigger
+    .Dropdown > .Button,
+    .Button.Dropdown-toggle {
+      border-radius: 8px !important;
+      height: 28px !important;
+      padding: 0 10px !important;
+      font-size: 12px !important;
+      font-weight: 700 !important;
+      background: #f3f3f6 !important;
+      border: none !important;
+      box-shadow: none !important;
+      color: #40424b !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 4px !important;
+
+      .Button-caret { font-size: 9px; opacity: 0.5; }
+      &:hover { background: #eaeaee !important; color: var(--primary-color) !important; }
+    }
+
+    // Icon-only buttons (refresh, mark all read)
+    .Button.Button--icon {
+      width: 28px !important;
+      height: 28px !important;
+      padding: 0 !important;
+      border-radius: 8px !important;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      color: #8f8f95 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+
+      .Button-icon  { margin: 0 !important; font-size: 13px !important; }
+      .Button-label { display: none !important; }
+      &:hover { background: #f3f3f6 !important; color: var(--primary-color) !important; }
+    }
+  }
+
+  // Toolbar dropdown menu
+  .IndexPage-toolbar .Dropdown-menu {
+    border-radius: 12px !important;
+    border: 1px solid var(--home-border, #eaeaf0) !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.09) !important;
+    padding: 5px !important;
+    min-width: 130px !important;
+
+    li > a, li > button {
+      border-radius: 7px !important;
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      padding: 7px 11px !important;
+      &:hover { background: #f4f4f8 !important; }
+    }
+  }
+
+  // DialogList
+  .DialogList {
+    flex: 1 1 auto;
+    overflow-y: auto;
+
+    &-list { list-style: none; margin: 0; padding: 6px 0; }
+
+    &-loadMore {
+      padding: 6px 14px 10px;
+      .Button {
+        width: 100%;
+        border-radius: 999px !important;
+        background: #f3f3f6 !important;
+        border: none !important;
+        box-shadow: none !important;
+        font-size: 12px; font-weight: 700;
+        color: #40424b !important; height: 32px;
+        &:hover { background: #eaeaee !important; color: var(--primary-color) !important; }
+      }
+    }
+  }
+
+  // DialogListItem
+  .DialogListItem {
+    &-button {
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important;
+      padding: 10px 18px !important;
+      width: 100%;
+      text-decoration: none !important;
+      cursor: pointer;
+      border-radius: 0 !important;
+      transition: background 0.1s ease;
+
+      &:hover, &:focus { background: #f7f7fa !important; text-decoration: none !important; }
+      &.active { background: color-mix(in srgb, var(--primary-color) 7%, transparent) !important; }
+    }
+
+    &-avatar {
+      position: relative;
+      flex-shrink: 0;
+
+      .Avatar {
+        width: 42px !important; height: 42px !important;
+        border-radius: 50% !important; display: block !important;
+        object-fit: cover;
+      }
+
+      .Bubble {
+        position: absolute; top: -2px; right: -2px;
+        min-width: 17px; height: 17px; padding: 0 4px;
+        border-radius: 999px; font-size: 9px; font-weight: 800;
+        display: inline-flex; align-items: center; justify-content: center;
+        box-sizing: border-box; border: 2px solid #fff;
+      }
+    }
+
+    &-content { flex: 1; min-width: 0; }
+
+    &-title {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 4px; font-size: 13px; font-weight: 700; color: #1a1b21;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 3px;
+
+      time { font-size: 10px; font-weight: 500; color: #a2a3ac; flex-shrink: 0; }
+
+      .DialogListItem-actions .Button {
+        opacity: 0; width: 20px; height: 20px;
+        padding: 0 !important; border-radius: 50% !important;
+        background: transparent !important; border: none !important;
+        box-shadow: none !important; display: inline-flex !important;
+        align-items: center !important; justify-content: center !important;
+        font-size: 10px; color: var(--muted-color) !important;
+        transition: opacity 0.1s ease;
+        &:hover { background: #f0f0f5 !important; }
+      }
+    }
+
+    &:hover &-title .DialogListItem-actions .Button { opacity: 1; }
+
+    &-lastMessage {
+      font-size: 12px; color: #8f8f95;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    &--unread &-title      { color: #0d0f14; }
+    &--unread &-lastMessage { font-weight: 600; color: #43454e; }
+  }
+}
+
+// ── Right column: chat view ───────────────────────────────────────────────────
+.AvocadoMessages-chatCol {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: #f8f8fb;
+  overflow: hidden;
+
+  @media @phone { min-height: 400px; }
+
+  // DialogSection fills the chat column
+  .DialogSection {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    overflow: hidden;
+    min-height: 0;
+
+    // ── Chat header ─────────────────────────────────────────────────────────
+    &-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--home-border, #eaeaf0);
+      background: #fff;
+      flex-shrink: 0;
+      z-index: 1;
+
+      .Avatar {
+        width: 38px !important; height: 38px !important;
+        border-radius: 50% !important; flex-shrink: 0;
+      }
+
+      &-info {
+        flex: 1; min-width: 0;
+
+        &-title {
+          font-size: 14px; font-weight: 800; margin: 0; color: #1a1b21;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+          a { color: inherit; text-decoration: none !important; &:hover { color: var(--primary-color); } }
+        }
+
+        &-helperText { font-size: 11px; color: var(--muted-color); margin-left: 5px; font-weight: 500; }
+      }
+
+      .badges { display: flex; gap: 2px; }
+
+      &-actions {
+        display: flex; align-items: center; gap: 2px;
+        margin-left: auto; flex-shrink: 0;
+      }
+    }
+
+    // Back button (mobile)
+    .DialogSection-back {
+      display: none;
+      @media @phone {
+        display: inline-flex !important;
+        width: 32px !important; height: 32px !important;
+        padding: 0 !important; border-radius: 8px !important;
+        background: transparent !important; border: none !important;
+        box-shadow: none !important; align-items: center !important;
+        justify-content: center !important; color: var(--muted-color) !important;
+        .Button-label { display: none !important; }
+        &:hover { background: #f3f3f6 !important; }
+      }
+    }
+
+    // Controls (ellipsis dropdown)
+    .DialogSection-controls {
+      position: relative;
+
+      .Dropdown-toggle.Button,
+      .Button.Button--icon {
+        width: 32px !important; height: 32px !important;
+        padding: 0 !important; border-radius: 8px !important;
+        background: transparent !important; border: none !important;
+        box-shadow: none !important; color: #8f8f95 !important;
+        display: inline-flex !important; align-items: center !important;
+        justify-content: center !important; cursor: pointer;
+
+        .Button-icon  { font-size: 15px !important; margin: 0 !important; }
+        .Button-label { display: none !important; }
+        .Button-caret { display: none !important; }
+
+        &:hover { background: #f3f3f6 !important; color: #1a1b21 !important; }
+      }
+
+      .Dropdown-menu {
+        border-radius: 12px; border: 1px solid var(--home-border, #eaeaf0);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.09); padding: 5px;
+        min-width: 150px; right: 0; left: auto;
+
+        li > a, li > button {
+          border-radius: 7px; font-size: 13px; font-weight: 600; padding: 7px 12px;
+          &:hover { background: #f4f4f8; }
+        }
+      }
+    }
+  }
+
+  // Placeholder / loading
+  .Placeholder {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 60px 20px; text-align: center;
+    color: var(--muted-color); background: #f8f8fb;
+
+    .Placeholder-icon    { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
+    .Placeholder-message { font-size: 14px; font-weight: 600; max-width: 260px; }
+  }
+
+  > .LoadingIndicator { margin: 60px auto; }
+}
+
+// ── MessageStream: scrollable chat area ──────────────────────────────────────
+.MessageStream {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 20px 20px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+
+  &-item { padding: 2px 0; }
+
+  &-loadNext,
+  &-loadPrev {
+    padding: 6px 0;
+    .Button {
+      width: 100%; border-radius: 999px !important;
+      background: rgba(255,255,255,0.7) !important;
+      border: 1px solid var(--home-border, #eaeaf0) !important;
+      box-shadow: none !important; font-size: 12px; font-weight: 700;
+      color: #40424b !important; height: 32px; backdrop-filter: blur(4px);
+      &:hover { background: #fff !important; }
+    }
+  }
+}
+
+// Date separator
+.MessageStream .PostStream-timeGap {
+  text-align: center;
+  padding: 14px 0 6px;
+
+  > span {
+    display: inline-block;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; color: #8f8f95;
+    background: rgba(255,255,255,0.8); border-radius: 999px;
+    padding: 4px 12px; border: 1px solid var(--home-border, #eaeaf0);
+  }
+}
+
+// ── Chat bubbles ──────────────────────────────────────────────────────────────
+.MessageStream-item .Post,
+.MessageStream-item .Message {
+  background: transparent !important;
+  border: none !important; box-shadow: none !important;
+  border-radius: 0 !important; padding: 4px 0 !important; margin: 0 !important;
+
+  .Post-container {
+    display: flex !important; align-items: flex-end !important;
+    gap: 8px !important; flex-direction: row !important;
+  }
+
+  .Post-side {
+    flex-shrink: 0 !important; width: 34px !important; margin: 0 !important;
+    .Avatar { width: 34px !important; height: 34px !important; border-radius: 50% !important; display: block !important; }
+  }
+
+  .Post-main {
+    flex: 1 !important; min-width: 0 !important;
+    display: flex !important; flex-direction: column !important;
+    align-items: flex-start !important; max-width: 72% !important;
+  }
+
+  .Post-header {
+    font-size: 11px !important; font-weight: 700 !important; color: #8f8f95 !important;
+    margin-bottom: 4px !important; display: flex !important;
+    align-items: baseline !important; gap: 6px !important;
+
+    .PostUser a { color: #43454e !important; text-decoration: none !important; font-weight: 700 !important; font-size: 12px !important; }
+    .Post-meta time, time { color: #a2a3ac !important; font-size: 10px !important; font-weight: 500 !important; }
+  }
+
+  .Post-body {
+    display: inline-block !important; max-width: 100% !important;
+    padding: 10px 14px !important; border-radius: 18px 18px 18px 4px !important;
+    background: #fff !important; border: 1px solid var(--home-border, #eaeaf0) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+    font-size: 14px !important; line-height: 1.5 !important;
+    color: #2a2b30 !important; word-break: break-word !important;
+
+    p { margin: 0 !important; }
+    p + p { margin-top: 4px !important; }
+  }
+
+  .Post-actions {
+    opacity: 0; margin-top: 4px !important; transition: opacity 0.1s ease;
+
+    .Button {
+      font-size: 11px !important; height: 22px !important; padding: 0 7px !important;
+      border-radius: 6px !important; background: transparent !important;
+      border: none !important; box-shadow: none !important; color: #8f8f95 !important;
+      &:hover { background: rgba(0,0,0,0.06) !important; color: #43454e !important; }
+    }
+  }
+
+  &:hover .Post-actions { opacity: 1; }
+}
+
+// Sent message: right-aligned colored bubble
+.MessageStream-item .Post.Post--byCurrentUser,
+.MessageStream-item .Message.Post--byCurrentUser {
+  .Post-container { flex-direction: row-reverse !important; }
+  .Post-main      { align-items: flex-end !important; }
+  .Post-header    { flex-direction: row-reverse !important; }
+
+  .Post-body {
+    background: var(--primary-color) !important;
+    border-color: transparent !important;
+    color: #fff !important;
+    border-radius: 18px 18px 4px 18px !important;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--primary-color) 30%, transparent) !important;
+
+    p    { color: #fff !important; }
+    a    { color: rgba(255,255,255,0.85) !important; }
+    code { background: rgba(255,255,255,0.2) !important; color: #fff !important; }
+  }
+
+  .Post-actions .Button {
+    color: rgba(255,255,255,0.7) !important;
+    &:hover { background: rgba(255,255,255,0.15) !important; color: #fff !important; }
+  }
+}
+
+// ── ReplyPlaceholder ─────────────────────────────────────────────────────────
+.MessageStream-item .ReplyPlaceholder,
+.MessageStream .ReplyPlaceholder,
+.Post.ReplyPlaceholder {
+  display: block !important; width: 100% !important;
+  background: transparent !important; border: none !important;
+  box-shadow: none !important; padding: 0 !important;
+  margin-top: 12px !important; cursor: text !important; border-radius: 0 !important;
+
+  .Post-container {
+    display: flex !important; align-items: center !important;
+    gap: 10px !important; padding: 10px 18px !important;
+    background: #fff !important; border-top: 1px solid var(--home-border, #eaeaf0) !important;
+    border-radius: 0 !important;
+  }
+
+  .Post-side {
+    flex-shrink: 0 !important; width: 32px !important; margin: 0 !important;
+    .Avatar { width: 32px !important; height: 32px !important; border-radius: 50% !important; display: block !important; }
+  }
+
+  .Post-main { flex: 1 !important; min-width: 0 !important; max-width: none !important; }
+
+  .Post-header {
+    display: block !important; font-size: 14px !important;
+    font-weight: 500 !important; color: #b0b1bb !important;
+    text-align: left !important; padding: 8px 14px !important;
+    background: #f4f4f7 !important; border-radius: 999px !important;
+    border: none !important; box-shadow: none !important;
+    width: 100% !important; cursor: text !important;
+    transition: box-shadow 0.15s ease !important;
+
+    &:hover { box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 20%, transparent) !important; }
+  }
+}
+
+// ── DialogSection controls button — broad selector to catch all nesting depths ─
+// The ellipsis "Dialog control actions" button inside DialogSection header.
+.MessagesPage .DialogSection-controls,
+.AvocadoMessages .DialogSection-controls {
+  .Dropdown-toggle,
+  .Button--icon {
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #8f8f95 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    .Button-icon  { font-size: 15px !important; margin: 0 !important; color: inherit !important; }
+    .Button-label { display: none !important; }
+    .Button-caret { display: none !important; }
+
+    &:hover {
+      background: #f3f3f6 !important;
+      color: #1a1b21 !important;
+    }
+  }
+}
+
+// ── "Send a message" button ───────────────────────────────────────────────────
+.MessagesPage-newMessage.Button {
+  border-radius: 999px !important; height: 32px !important;
+  padding: 0 16px !important; font-size: 12px !important;
+  font-weight: 700 !important;
+  font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
+// ── DetailsModal ──────────────────────────────────────────────────────────────
+.Modal--flat.DetailsModal {
+  border-radius: 18px;
+
+  .Modal-body { padding: 20px 22px; }
+
+  .DetailsModal-infoGroups { display: flex; flex-direction: column; gap: 16px; }
+
+  .DetailsModal-info-title {
+    font-size: 10px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted-color); margin-bottom: 8px;
+  }
+
+  .DetailsModal-recipients-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .DetailsModal-recipient {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 700;
+    .Avatar { width: 26px !important; height: 26px !important; border-radius: 50% !important; }
+    a { color: var(--text-color); text-decoration: none !important; &:hover { color: var(--primary-color); } }
+    .badges { display: flex; gap: 3px; }
+  }
+}

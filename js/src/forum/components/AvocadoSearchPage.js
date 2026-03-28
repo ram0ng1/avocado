@@ -8,6 +8,8 @@ import PostListState from 'flarum/forum/states/PostListState';
 import extractText from 'flarum/common/utils/extractText';
 import {
   hexToRgba,
+  iconColors,
+  tagPillStyle,
   discussionRoute,
   tagRoute,
   safeRoute,
@@ -322,7 +324,7 @@ export default class AvocadoSearchPage extends Page {
               {tags.slice(0, 4).map((tag, idx) => {
                 const tagColor   = tag.color?.() || null;
                 const extraClass = idx >= 2 ? ' AvocadoHome-tagPill--extra' : '';
-                const tagStyle   = tagColor ? { '--tag-bg': hexToRgba(tagColor, 0.1), '--tag-color': tagColor } : {};
+                const tagStyle   = tagPillStyle(tagColor);
                 return (
                   <a
                     className={`AvocadoHome-tagPill${extraClass}`}
@@ -714,7 +716,7 @@ export default class AvocadoSearchPage extends Page {
                   className={`AvocadoHome-categoryCard${isFeatured ? ' AvocadoHome-categoryCard--featured' : ''}`}
                   href={href}
                   onclick={(e) => this.navigate(e, href)}
-                  style={{ '--cat-color': color, '--cat-bg': hexToRgba(color, 0.12) }}
+                  style={(() => { const ic = iconColors(color, 0.12); return { '--cat-color': ic.color, '--cat-bg': ic.bg }; })()}
                 >
                   {isFeatured && (
                     <Tooltip text={trans('ramon-avocado.forum.tags.featured', 'Featured')} position="top">

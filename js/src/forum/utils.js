@@ -19,7 +19,7 @@ export const numberOr = (value, fallback = 0) => {
   return Number.isFinite(n) ? n : fallback;
 };
 
-// ─── Color helper ─────────────────────────────────────────────────────────────
+// ─── Color helpers ────────────────────────────────────────────────────────────
 
 export const hexToRgba = (hex, alpha = 1) => {
   if (!hex) return `rgba(63,136,246,${alpha})`;
@@ -29,6 +29,52 @@ export const hexToRgba = (hex, alpha = 1) => {
   const g = parseInt(h.substring(2, 4), 16);
   const b = parseInt(h.substring(4, 6), 16);
   return `rgba(${r},${g},${b},${alpha})`;
+};
+
+// Relative luminance (WCAG 2.1).
+const hexLuminance = (hex) => {
+  if (!hex) return 0;
+  const h = hex.replace('#', '');
+  if (h.length !== 6) return 0;
+  const toLinear = (c) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  const r = toLinear(parseInt(h.substring(0, 2), 16));
+  const g = toLinear(parseInt(h.substring(2, 4), 16));
+  const b = toLinear(parseInt(h.substring(4, 6), 16));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+
+// Returns { bg, color } for tag-icon / category-icon elements.
+// In dark mode, colors with luminance below the threshold are inverted so
+// they remain visible on dark backgrounds (e.g. a "Preto"/Black tag).
+export const iconColors = (hex, bgAlpha = 0.12) => {
+  const fallback = '#3f88f6';
+  const color = hex || fallback;
+  const isDark = typeof document !== 'undefined' &&
+    document.documentElement.dataset.theme?.startsWith('dark');
+
+  if (isDark && hexLuminance(color) < 0.08) {
+    // Invert the hex so very-dark colours flip to a light equivalent
+    const h = color.replace('#', '');
+    const ri = (255 - parseInt(h.substring(0, 2), 16)).toString(16).padStart(2, '0');
+    const gi = (255 - parseInt(h.substring(2, 4), 16)).toString(16).padStart(2, '0');
+    const bi = (255 - parseInt(h.substring(4, 6), 16)).toString(16).padStart(2, '0');
+    const inv = `#${ri}${gi}${bi}`;
+    return { bg: hexToRgba(inv, bgAlpha), color: inv };
+  }
+
+  return { bg: hexToRgba(color, bgAlpha), color };
+};
+
+// Convenience wrapper — returns the inline style object for tag pill elements.
+// Replaces the repetitive `tagColor ? { '--tag-bg': hexToRgba(...), '--tag-color': tagColor } : {}`
+// pattern across all components and automatically applies dark-mode inversion.
+export const tagPillStyle = (hex, alpha = 0.1) => {
+  if (!hex) return {};
+  const { bg, color } = iconColors(hex, alpha);
+  return { '--tag-bg': bg, '--tag-color': color };
 };
 
 // ─── User display name ────────────────────────────────────────────────────────

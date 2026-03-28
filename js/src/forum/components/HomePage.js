@@ -3,6 +3,7 @@ import Component from 'flarum/common/Component';
 import TextEditor from 'flarum/common/components/TextEditor';
 import Tooltip from 'flarum/common/components/Tooltip';
 import Avatar from 'flarum/common/components/Avatar';
+import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 // FIX: import shared utilities — removes all local duplicates
 import {
   trans,
@@ -11,6 +12,8 @@ import {
   discussionRoute,
   tagRoute,
   hexToRgba,
+  iconColors,
+  tagPillStyle,
   displayName,
   formatTimeLabel,
   postPreview,
@@ -543,7 +546,7 @@ export default class HomePage extends Component {
               {tags.slice(0, 4).map((tag, idx) => {
                 const tagColor = tag.color?.() || null;
                 const extraClass = idx >= 2 ? ' AvocadoHome-tagPill--extra' : '';
-                const tagStyle = tagColor ? { '--tag-bg': hexToRgba(tagColor, 0.1), '--tag-color': tagColor } : {};
+                const tagStyle = tagPillStyle(tagColor);
                 return (
                   <a
                     key={tag.id?.()}
@@ -845,7 +848,7 @@ export default class HomePage extends Component {
               <span
                 key={tag.id?.()}
                 className="AvocadoHome-tagChip"
-                style={tagColor ? { '--tag-color': tagColor } : {}}
+                style={tagColor ? { '--tag-color': iconColors(tagColor).color } : {}}
                 onclick={(e) => { e.preventDefault(); e.stopPropagation(); removeTag(tag); }}
                 title="Remove tag"
               >
@@ -928,6 +931,38 @@ export default class HomePage extends Component {
           </div>
         )}
       </div>
+    );
+  }
+
+  renderNavBar() {
+    let itemList;
+    try {
+      itemList = IndexSidebar.prototype.navItems.call({});
+    } catch (_) {
+      return null;
+    }
+    // Remove the generic Tags overview — categories section shows them below
+    // Remove Avocado's own nav items — these are shown by the home page itself
+    itemList.remove('tags');
+    itemList.remove('popularHome');
+    itemList.remove('allDiscussions');
+    const items = itemList.toArray().filter((item) => {
+      if (!item) return false;
+      // Drop separators (plain HTML elements like <li class="Dropdown-separator">)
+      if (typeof item.tag === 'string') return false;
+      // TagLinkButton (from flarum/tags) receives `attrs.model` (the Tag model).
+      // It computes href internally via initAttrs, so href is never in attrs.
+      if (item.attrs && 'model' in item.attrs) return false;
+      // Fallback: drop any href that explicitly matches the tag route pattern /t/slug
+      const href = item.attrs?.href || '';
+      if (/\/t\//.test(href)) return false;
+      return true;
+    });
+    if (!items.length) return null;
+    return (
+      <nav className="AvocadoHomeNav" aria-label="Navigation">
+        {items}
+      </nav>
     );
   }
 
@@ -1098,6 +1133,9 @@ export default class HomePage extends Component {
             </div>
           )}
 
+          {/* ── Extension nav bar ─────────────────────────────────────────── */}
+          {this.renderNavBar()}
+
           {/* ── Categories section ────────────────────────────────────────── */}
           {categories.length > 0 && !isFollowingPage && (
             <section className="AvocadoHome-section AvocadoHome-section--categories">
@@ -1125,7 +1163,7 @@ export default class HomePage extends Component {
                       className={`AvocadoHome-categoryCard${isFeatured ? ' AvocadoHome-categoryCard--featured' : ''}`}
                       href={catRoute}
                       onclick={(e) => this.navigate(e, catRoute)}
-                      style={{ '--cat-color': catColor, '--cat-bg': hexToRgba(catColor, 0.12) }}
+                      style={(() => { const ic = iconColors(catColor, 0.12); return { '--cat-color': ic.color, '--cat-bg': ic.bg }; })()}
                     >
                       {isFeatured && fireUrl && (
                         <Tooltip text={trans('ramon-avocado.forum.tags.featured', 'Featured')} position="top">

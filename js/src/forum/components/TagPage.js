@@ -2,6 +2,7 @@ import app from 'flarum/forum/app';
 import Page from 'flarum/common/components/Page';
 import Tooltip from 'flarum/common/components/Tooltip';
 import Avatar from 'flarum/common/components/Avatar';
+import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import {
   trans,
   numberOr,
@@ -10,6 +11,7 @@ import {
   formatTimeLabel,
   postPreview,
   hexToRgba,
+  tagPillStyle,
 } from '../utils';
 
 const SORT_OPTIONS = [
@@ -357,7 +359,7 @@ export default class AvocadoTagPage extends Page {
                 const tagColor = tag.color?.() || null;
                 const isCurrentTag = this.tag && tag.id?.() === this.tag.id?.();
                 const extraClass = idx >= 2 ? ' AvocadoHome-tagPill--extra' : '';
-                const tagStyle = tagColor ? { '--tag-bg': hexToRgba(tagColor, 0.1), '--tag-color': tagColor } : {};
+                const tagStyle = tagPillStyle(tagColor);
                 if (isCurrentTag) {
                   return (
                     <span
@@ -503,6 +505,11 @@ export default class AvocadoTagPage extends Page {
 
     return (
       <div className="AvocadoTagPage">
+
+        {/* ── IndexSidebar helper: provides App-titleControl (mobile nav center) ─ */}
+        {/* On @phone, App-titleControl escapes position:absolute to the header.   */}
+        {/* AvocadoNav-helper keeps the sidebar hidden but lets the control escape. */}
+        <div className="AvocadoNav-helper"><IndexSidebar /></div>
 
         {/* ── Hero ─────────────────────────────────────────────────────── */}
         <header className="AvocadoTagPage-hero" style={{ '--tag-color': color }}>

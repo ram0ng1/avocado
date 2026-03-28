@@ -14,6 +14,7 @@ import {
   safeRoute,
   displayName,
   hexToRgba,
+  tagPillStyle,
   FALLBACK_COLORS,
   discussionRoute,
   tagRoute,
@@ -125,7 +126,7 @@ function renderThreadCard(discussion, likingIds, toggleLike, navigate) {
                 <a key={tag.id?.()} className="AvocadoHome-tagPill"
                    href={href2}
                    onclick={(e) => { e.stopPropagation(); navigate(e, href2); }}
-                   style={{ '--tag-bg': hexToRgba(c, 0.1), '--tag-color': c }}>
+                   style={tagPillStyle(c)}>
                   {tag.icon?.() && <i className={tag.icon()} aria-hidden="true" />}
                   {tag.name?.()}
                 </a>
@@ -218,7 +219,7 @@ function renderPostCard(post, navigate) {
                 <a key={tag.id?.()} className="AvocadoHome-tagPill"
                    href={tagRoute(tag)}
                    onclick={(e) => { e.stopPropagation(); navigate(e, tagRoute(tag)); }}
-                   style={{ '--tag-bg': hexToRgba(c, 0.1), '--tag-color': c }}>
+                   style={tagPillStyle(c)}>
                   {tag.icon?.() && <i className={tag.icon()} aria-hidden="true" />}
                   {tag.name?.()}
                 </a>

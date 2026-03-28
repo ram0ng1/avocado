@@ -1,0 +1,883 @@
+// ─── Avocado V2 — Dark Mode ───────────────────────────────────────────────────
+//
+// Overrides every hardcoded light-mode colour in the Avocado custom components.
+// Flarum's own CSS variables (--body-bg, --text-color, --control-bg, etc.) switch
+// automatically via its [data-theme^=dark] hook in core.  We only need to fix the
+// values that are hardcoded in our LESS files.
+//
+// Activation:  html[data-theme^=dark]  (set by Flarum's Application.tsx)
+// User choice:  Settings → Appearance → Dark / Auto / Light
+// ─────────────────────────────────────────────────────────────────────────────
+
+[data-theme^=dark] {
+
+  // ── 1. Global Avocado CSS variables ──────────────────────────────────────────
+
+  --home-border:  rgba(255, 255, 255, 0.08);
+  --home-muted:   var(--muted-color);
+  --home-title:   var(--heading-color, #e8e9f2);
+  --home-shadow:  0 10px 24px rgba(0, 0, 0, 0.35);
+
+  // ── 2. IndexPage (home) background ───────────────────────────────────────────
+
+  .IndexPage--avocadoHome {
+    background: var(--body-bg);
+  }
+
+  // ── 3. AvocadoHome root ───────────────────────────────────────────────────────
+
+  .AvocadoHome {
+    background: var(--body-bg);
+    color: var(--text-color);
+  }
+
+  // ── 4. Topbar ─────────────────────────────────────────────────────────────────
+
+  .AvocadoHome-topbar {
+    background: color-mix(in srgb, var(--body-bg) 93%, transparent);
+    border-bottom-color: rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(6px);
+  }
+
+  .AvocadoHome-brand {
+    color: #e8e9f2;
+  }
+
+  // ── 5. Search bar (inside topbar) ─────────────────────────────────────────────
+
+  .AvocadoHome-search {
+    > i { color: #555668; }
+
+    > input {
+      background: var(--control-bg);
+      color: var(--text-color);
+
+      &::placeholder { color: var(--muted-color); }
+      &:focus { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.07); }
+    }
+  }
+
+  // ── 6. User chip (avatar in topbar) ──────────────────────────────────────────
+
+  .AvocadoHome-userChip {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  // ── 7. Online avatars ─────────────────────────────────────────────────────────
+
+  .AvocadoHome-onlineAvatars-item > .Avatar {
+    box-shadow: 0 0 0 2px var(--body-bg) !important;
+  }
+
+  .AvocadoHome-onlineAvatars-more {
+    background: var(--control-bg);
+    border-color: var(--body-bg);
+    color: var(--muted-color);
+  }
+
+  // ── 8. Post input (composer trigger row) ──────────────────────────────────────
+
+  .AvocadoHome-postInput {
+    background: var(--control-bg);
+    border-color: rgba(255, 255, 255, 0.07);
+
+    &:hover {
+      background: color-mix(in srgb, var(--control-bg) 85%, #fff);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+  }
+
+  .AvocadoHome-postInput-placeholder {
+    color: var(--muted-color);
+  }
+
+  // ── 9. Section headings ───────────────────────────────────────────────────────
+
+  .AvocadoHome-section > h2,
+  .AvocadoHome-sectionHead h2 {
+    color: var(--heading-color, #e8e9f2);
+  }
+
+  // ── 10. Category cards ────────────────────────────────────────────────────────
+
+  .AvocadoHome-categoryCard {
+    &:hover,
+    &:focus {
+      border-color: rgba(255, 255, 255, 0.14);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  .AvocadoHome-categoryBody > h3 {
+    color: var(--heading-color, #e4e5f0);
+  }
+
+  .AvocadoHome-categoryCard--all > i {
+    color: #555668;
+  }
+
+  // ── 11. Thread cards ──────────────────────────────────────────────────────────
+
+  .AvocadoHome-threadCard {
+    background: var(--control-bg);
+  }
+
+  .AvocadoHome-threadUser,
+  .AvocadoHome-threadAuthor {
+    color: var(--text-color);
+  }
+
+  .AvocadoHome-threadTime {
+    color: var(--muted-color);
+  }
+
+  .AvocadoHome-threadTitle {
+    color: var(--text-color);
+
+    &:hover {
+      color: var(--text-color);
+    }
+  }
+
+  .AvocadoHome-threadCard--unread .AvocadoHome-threadTitle {
+    color: var(--heading-color, #f0f1fa);
+  }
+
+  .AvocadoHome-threadExcerpt {
+    color: var(--muted-color);
+  }
+
+  // ── 12. Reply button ──────────────────────────────────────────────────────────
+
+  .AvocadoHome-replyBtn {
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--muted-color);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.13);
+      color: var(--primary-color);
+    }
+
+    &:active {
+      background: rgba(255, 255, 255, 0.04);
+      transform: scale(0.94);
+    }
+  }
+
+  // ── 13. Thread stats bar ──────────────────────────────────────────────────────
+
+  .AvocadoHome-statBtn {
+    &:hover { background: rgba(255, 255, 255, 0.07); }
+  }
+
+  // ── 14. Reply group (inline thread replies) ───────────────────────────────────
+
+  .AvocadoHome-threadReplyGroup {
+    border-left-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .AvocadoHome-replyCard-line:hover {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .AvocadoHome-replyCard-name {
+    color: var(--text-color);
+  }
+
+  .AvocadoHome-replyCard-text {
+    color: var(--muted-color);
+  }
+
+  .AvocadoHome-replyCard-seeMore {
+    color: var(--muted-color);
+
+    &:hover { color: var(--primary-color); }
+  }
+
+  // ── 15. "See replies" button ──────────────────────────────────────────────────
+
+  .AvocadoHome-seeReplies {
+    color: var(--muted-color);
+
+    &:hover { color: var(--text-color); }
+  }
+
+  // ── 16. Yesterday / date section label ───────────────────────────────────────
+
+  .AvocadoHome-section--yesterday > h2 {
+    color: var(--muted-color);
+  }
+
+  // ── 17. Empty state ───────────────────────────────────────────────────────────
+
+  .AvocadoHome-emptyState {
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--muted-color);
+  }
+
+  // ── 18. Skeleton loading ──────────────────────────────────────────────────────
+
+  .AvocadoHome-skeletonCard {
+    background: var(--control-bg);
+  }
+
+  .AvocadoHome-skeletonAvatar,
+  .AvocadoHome-skeletonLine {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.06) 25%,
+      rgba(255, 255, 255, 0.11) 50%,
+      rgba(255, 255, 255, 0.06) 75%
+    );
+    background-size: 800px 100%;
+  }
+
+  // ── 19. Inline composer ───────────────────────────────────────────────────────
+
+  .AvocadoHome-composer {
+    background: var(--control-bg);
+  }
+
+  .AvocadoHome-composer-header {
+    border-bottom-color: rgba(255, 255, 255, 0.07);
+  }
+
+  .AvocadoHome-composerTitle {
+    color: var(--text-color);
+
+    &::placeholder { color: var(--muted-color); }
+  }
+
+  .AvocadoHome-composer-tags {
+    border-bottom-color: rgba(255, 255, 255, 0.07);
+  }
+
+  ul.TextEditor-controls {
+    border-top-color: rgba(255, 255, 255, 0.07) !important;
+    background: color-mix(in srgb, var(--control-bg) 90%, #000) !important;
+  }
+
+  // ── 20. Tag picker ────────────────────────────────────────────────────────────
+
+  .AvocadoHome-tagPickerTrigger {
+    background: var(--control-bg);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+  }
+
+  .AvocadoHome-tagPickerPlaceholder,
+  .AvocadoHome-tagPickerChevron {
+    color: var(--muted-color);
+  }
+
+  .AvocadoHome-tagPickerDropdown {
+    background: var(--body-bg);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .AvocadoHome-tagPickerSearch {
+    background: var(--control-bg);
+
+    > i { color: #555668; }
+
+    > input {
+      color: var(--text-color);
+      &::placeholder { color: var(--muted-color); }
+    }
+  }
+
+  .AvocadoHome-tagPickerItem {
+    color: var(--text-color);
+    &:hover { background: rgba(255, 255, 255, 0.07); }
+  }
+
+  .AvocadoHome-tagPickerItem-desc { color: var(--muted-color); }
+  .AvocadoHome-tagPickerEmpty     { color: var(--muted-color); }
+
+  .AvocadoHome-tagPickerBypass {
+    border-top-color: rgba(255, 255, 255, 0.07);
+    color: var(--muted-color);
+  }
+
+  // ── 21. Home nav bar ──────────────────────────────────────────────────────────
+
+  .AvocadoHomeNav {
+    > .Button,
+    > .LinkButton {
+      background: rgba(255, 255, 255, 0.07) !important;
+      color: var(--muted-color) !important;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.12) !important;
+        color: var(--primary-color) !important;
+      }
+
+      &[active="true"] {
+        background: color-mix(in srgb, var(--primary-color) 14%, transparent) !important;
+        color: var(--primary-color) !important;
+      }
+    }
+  }
+
+  // ── 22. All Discussions page ──────────────────────────────────────────────────
+
+  .AvocadoDiscussions-title {
+    color: var(--heading-color, #e8e9f2);
+  }
+
+  // Sort trigger button
+  .AvocadoDiscussions-sortTrigger {
+    background: var(--control-bg);
+    color: var(--text-color);
+
+    i { color: var(--muted-color); }
+
+    &:hover,
+    &.is-open {
+      border-color: rgba(255, 255, 255, 0.18);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  // Sort dropdown
+  .AvocadoDiscussions-sortDropdown {
+    background: var(--body-bg);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  }
+
+  .AvocadoDiscussions-sortOption {
+    color: var(--text-color);
+    &:hover { background: rgba(255, 255, 255, 0.07); }
+    &.is-active { color: var(--heading-color, #e8e9f2); }
+  }
+
+  // Load-more button
+  .AvocadoDiscussions-loadMoreBtn {
+    background: var(--control-bg);
+    color: var(--text-color);
+
+    &:hover {
+      background: color-mix(in srgb, var(--control-bg) 80%, #fff);
+      border-color: rgba(255, 255, 255, 0.18);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  // ── 23. Search pages (/search, AvocadoSearch) ────────────────────────────────
+
+  .App--avocadoSearch .App-content,
+  .App--search .App-content {
+    background: var(--body-bg);
+  }
+
+  .AvocadoSearch {
+    background: var(--body-bg);
+    color: var(--text-color);
+  }
+
+  .AvocadoSearch-title,
+  .AvocadoSearch-heroTitle {
+    color: var(--heading-color, #e8e9f2);
+  }
+
+  // Thread cards
+  .AvocadoSearch-threadCard {
+    background: var(--control-bg);
+
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.14);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    &--unread .AvocadoSearch-threadTitle {
+      color: var(--heading-color, #f0f1fa);
+    }
+  }
+
+  .AvocadoSearch-threadAuthor { color: var(--text-color); }
+  .AvocadoSearch-threadTitle  { color: var(--text-color); }
+  .AvocadoSearch-threadExcerpt { color: var(--muted-color); }
+
+  // Post cards
+  .AvocadoSearch-postCard {
+    background: var(--control-bg);
+
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.14);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  .AvocadoSearch-postAuthor  { color: var(--text-color); }
+  .AvocadoSearch-postExcerpt { color: var(--muted-color); }
+
+  .AvocadoSearch-postFooter {
+    border-top-color: rgba(255, 255, 255, 0.07);
+  }
+
+  // Skeletons
+  .AvocadoSearch-postSkeleton,
+  .AvocadoSearch-userSkeleton {
+    background: var(--control-bg);
+  }
+
+  .AvocadoSearch-userSkeletonAvatar {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.06) 25%,
+      rgba(255, 255, 255, 0.11) 50%,
+      rgba(255, 255, 255, 0.06) 75%
+    );
+    background-size: 200% 100%;
+  }
+
+  // Search bar
+  .AvocadoSearch-bar {
+    background: var(--control-bg);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .AvocadoSearch-barIcon { color: #555668; }
+
+  .AvocadoSearch-barInput {
+    color: var(--text-color);
+    &::placeholder { color: var(--muted-color); }
+  }
+
+  .AvocadoSearch-barClear {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--muted-color);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.17);
+      color: var(--text-color);
+    }
+  }
+
+  .AvocadoSearch-barBtn:disabled {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--muted-color);
+  }
+
+  // Tabs
+  .AvocadoSearch-tab {
+    background: var(--control-bg);
+    color: var(--text-color);
+
+    &:hover { background: rgba(255, 255, 255, 0.12); }
+    &.is-active { background: var(--primary-color); color: #fff; }
+    &.is-active:hover { opacity: 0.88; color: #fff; }
+  }
+
+  // User cards
+  .AvocadoSearch-userCard {
+    background: var(--control-bg);
+
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.14);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  .AvocadoSearch-userCard-name { color: var(--text-color); }
+  .AvocadoSearch-userCard-bio  { color: var(--muted-color); }
+
+  .AvocadoSearch-userCard-stats {
+    border-top-color: rgba(255, 255, 255, 0.07);
+  }
+
+  // ── 24. Tags page (/tags) ─────────────────────────────────────────────────────
+
+  .AvocadoTagsPage-title {
+    color: var(--heading-color, #e8e9f2);
+  }
+
+  .AvocadoTagsPage-tagCard {
+    background: var(--control-bg);
+
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.14);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  .AvocadoTagsPage-tagCard-icon {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .AvocadoTagsPage-tagCard-name { color: var(--heading-color, #e4e5f0); }
+  .AvocadoTagsPage-tagCard-desc { color: var(--muted-color); }
+
+  .AvocadoTagsPage-tagCard-children {
+    border-top-color: rgba(255, 255, 255, 0.07);
+  }
+
+  .AvocadoTagsPage-tagCard-last {
+    border-top-color: rgba(255, 255, 255, 0.07);
+
+    i { color: #555668; }
+
+    &:hover { background: rgba(255, 255, 255, 0.04); }
+  }
+
+  .AvocadoTagsPage-tagCard-last-title { color: var(--muted-color); }
+
+  .AvocadoTagsPage-shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.06) 25%,
+      rgba(255, 255, 255, 0.11) 50%,
+      rgba(255, 255, 255, 0.06) 75%
+    );
+    background-size: 800px 100%;
+  }
+
+  .AvocadoTagsPage-cloud-label { color: var(--muted-color); }
+
+  // ── 25. User profile page (/u/…) ─────────────────────────────────────────────
+
+  .AvocadoUserPage {
+    background: var(--body-bg);
+  }
+
+  // Avatar editor dropdown (escapes the hero banner)
+  .AvocadoUserPage-hero-avatarWrap > .AvatarEditor .Dropdown-menu {
+    background: var(--control-bg);
+    border-color: rgba(255, 255, 255, 0.1);
+
+    .Button {
+      color: var(--text-color);
+      &:hover { background: rgba(255, 255, 255, 0.08); }
+    }
+  }
+
+  // Sticky nav bar
+  .AvocadoUserPage-nav {
+    background: var(--body-bg);
+    border-bottom-color: rgba(255, 255, 255, 0.07);
+  }
+
+  .AvocadoUserPage-navItem {
+    &:hover { color: var(--text-color); }
+  }
+
+  .AvocadoUserPage-navCount {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--muted-color);
+
+    .AvocadoUserPage-navItem.is-active & {
+      background: rgba(255, 255, 255, 0.13);
+    }
+  }
+
+  .AvocadoUserPage-navDivider {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  // Nav shimmer
+  .AvocadoUserPage-nav .AvocadoUserPage-shimmer--navItem {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.06) 25%,
+      rgba(255, 255, 255, 0.11) 50%,
+      rgba(255, 255, 255, 0.06) 75%
+    );
+    background-size: 800px 100%;
+  }
+
+  // Body / content area
+  .AvocadoUserPage-body {
+    background: var(--body-bg);
+  }
+
+  .AvocadoUserPage-postExcerpt {
+    color: var(--muted-color);
+    border-left-color: rgba(255, 255, 255, 0.1);
+  }
+
+  // Buttons inside user pages
+  .AvocadoUserPage .Button {
+    &--default {
+      background: var(--control-bg) !important;
+      border-color: transparent !important;
+      color: var(--text-color) !important;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.12) !important;
+        color: var(--primary-color) !important;
+      }
+    }
+  }
+
+  // Form controls
+  .AvocadoUserPage .FormControl {
+    background: var(--control-bg);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+
+    &:focus {
+      background: color-mix(in srgb, var(--control-bg) 85%, #fff);
+      border-color: var(--primary-color);
+    }
+
+    &::placeholder { color: var(--muted-color); }
+  }
+
+  // Switch toggle
+  .AvocadoUserPage .Switch {
+    color: var(--text-color);
+
+    &-slider { background: rgba(255, 255, 255, 0.15); }
+  }
+
+  // Notification grid
+  .AvocadoUserPage .NotificationGrid {
+    tbody td {
+      color: var(--text-color);
+      border-top-color: rgba(255, 255, 255, 0.06);
+
+      &:first-child { color: var(--text-color); }
+    }
+
+    tbody tr:last-child td {
+      border-bottom-color: rgba(255, 255, 255, 0.06);
+    }
+  }
+
+  // Access tokens
+  .AvocadoUserPage .AccessToken {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+
+    &-token {
+      background: var(--control-bg);
+      color: var(--muted-color);
+    }
+  }
+
+  // FieldSet cards (settings / security pages)
+  .AvocadoUserPage .FieldSet {
+    background: var(--control-bg);
+    border-color: rgba(255, 255, 255, 0.08);
+
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.14);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    &-label {
+      border-bottom-color: rgba(255, 255, 255, 0.06);
+
+      &::before {
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--muted-color);
+      }
+    }
+  }
+
+  // Security page FieldSet icon tint — keep blue tint but dimmed
+  .AvocadoUserPage .UserSecurityPage .FieldSet-label::before {
+    background: rgba(63, 136, 246, 0.15);
+    color: #6fa3f8;
+  }
+
+  // ── 26. Discussion page (/d/…) ────────────────────────────────────────────────
+
+  .Page.DiscussionPage {
+    --disc-bg:     var(--body-bg);
+    --disc-border: rgba(255, 255, 255, 0.07);
+    --disc-text:   var(--text-color);
+    --disc-title:  var(--heading-color, #e8e9f2);
+    --disc-muted:  var(--muted-color);
+  }
+
+  // Auth modal close button: darken slightly on dark bg instead of light shadow
+  .Modal-content:has(.AvocadoAuth-panel) .Modal-close {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+
+    &:hover { background: rgba(255, 255, 255, 0.12); }
+  }
+
+  // ── 27. Discussion page avatar border ─────────────────────────────────────────
+
+  .Page.DiscussionPage .CommentPost .Post-side .Avatar,
+  .Page.DiscussionPage .CommentPost .Post-side a .Avatar {
+    border-color: var(--body-bg);
+  }
+
+  .Page.DiscussionPage .CommentPost .Post-side--online .Avatar,
+  .Page.DiscussionPage .CommentPost .Post-side--online a .Avatar {
+    box-shadow: 0 0 0 2px var(--body-bg);
+  }
+
+  // ── 28. ReplyPlaceholder ("Write a Reply..." button) ─────────────────────────
+
+  .Page.DiscussionPage .ReplyPlaceholder {
+    background: var(--control-bg);
+    border-color: rgba(255, 255, 255, 0.1);
+
+    &:hover {
+      background: color-mix(in srgb, var(--control-bg) 85%, #fff);
+      border-color: var(--primary-color);
+      border-style: solid;
+    }
+
+    .Post-side .Avatar,
+    .Post-side .Post-avatar {
+      border-color: var(--body-bg);
+    }
+
+    .Post-main .Post-header {
+      color: var(--muted-color);
+    }
+  }
+
+  // ── 29. Discussion page skeleton (preloader) ──────────────────────────────────
+
+  .DiscussionPage--skeleton {
+    background: var(--body-bg);
+
+    .AvocadoSkeleton-discussionHero {
+      background: var(--control-bg);
+      border-bottom-color: rgba(255, 255, 255, 0.07);
+    }
+
+    .AvocadoSkeleton-backBtn {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .AvocadoSkeleton-tag {
+      background: rgba(255, 255, 255, 0.10);
+    }
+
+    .AvocadoSkeleton-title {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .AvocadoSkeleton-stackItem {
+      background: rgba(255, 255, 255, 0.13);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .AvocadoSkeleton-metaChip {
+      background: rgba(255, 255, 255, 0.10);
+    }
+
+    .AvocadoSkeleton-post {
+      border-bottom-color: rgba(255, 255, 255, 0.07);
+    }
+
+    .AvocadoSkeleton-postAvatar {
+      background: rgba(255, 255, 255, 0.10);
+    }
+
+    .AvocadoSkeleton-line {
+      background: rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  // ── MessagesPage ──────────────────────────────────────────────────────────────
+
+  .MessagesPage { background: var(--body-bg); }
+
+  .AvocadoMessages-title { color: var(--heading-color, #e8e9f2); }
+
+  .AvocadoMessages-card {
+    background: var(--body-bg);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .AvocadoMessages-inner .AvocadoHomeNav {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .AvocadoMessages-listCol {
+    background: var(--body-bg);
+    border-right-color: rgba(255, 255, 255, 0.08);
+
+    .IndexPage-toolbar {
+      border-bottom-color: rgba(255, 255, 255, 0.08);
+      &::before { color: var(--heading-color, #e8e9f2); }
+
+      .Dropdown > .Button,
+      .Button.Dropdown-toggle {
+        background: rgba(255, 255, 255, 0.07) !important;
+        color: var(--muted-color) !important;
+      }
+    }
+
+    .Dropdown-menu {
+      background: var(--body-bg) !important;
+      border-color: rgba(255, 255, 255, 0.08) !important;
+      li > a:hover, li > button:hover { background: rgba(255, 255, 255, 0.06) !important; }
+    }
+  }
+
+  .DialogListItem {
+    &-button:hover, &-button:focus { background: rgba(255, 255, 255, 0.05) !important; }
+    &-button.active { background: color-mix(in srgb, var(--primary-color) 12%, transparent) !important; }
+    &-title { color: var(--heading-color, #e8e9f2); }
+    &-lastMessage { color: var(--muted-color); }
+    &--unread &-title { color: #fff; }
+    &-avatar .Bubble { border-color: var(--body-bg); }
+  }
+
+  .AvocadoMessages-chatCol {
+    .DialogSection {
+      background: color-mix(in srgb, var(--body-bg) 85%, #000);
+
+      &-header {
+        background: var(--body-bg);
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+        &-info-title { color: var(--heading-color, #e8e9f2); }
+      }
+
+      .DialogSection-controls {
+        .Dropdown-toggle.Button,
+        .Button.Button--icon {
+          color: var(--muted-color) !important;
+          &:hover { background: rgba(255, 255, 255, 0.08) !important; color: var(--heading-color, #e8e9f2) !important; }
+        }
+
+        .Dropdown-menu {
+          background: var(--body-bg) !important;
+          border-color: rgba(255, 255, 255, 0.08) !important;
+          li > a:hover, li > button:hover { background: rgba(255, 255, 255, 0.06) !important; }
+        }
+      }
+    }
+  }
+
+  .MessageStream .PostStream-timeGap > span {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.06);
+  }
+
+  .MessageStream-item .Post .Post-body,
+  .MessageStream-item .Message .Post-body {
+    background: color-mix(in srgb, var(--body-bg) 60%, #fff) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: var(--text-color) !important;
+  }
+
+  .MessageStream-item .Post.Post--byCurrentUser .Post-body,
+  .MessageStream-item .Message.Post--byCurrentUser .Post-body {
+    background: var(--primary-color) !important;
+    border-color: transparent !important;
+    color: #fff !important;
+  }
+
+  .Post.ReplyPlaceholder .Post-container,
+  .ReplyPlaceholder .Post-container {
+    background: var(--body-bg) !important;
+    border-top-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .Post.ReplyPlaceholder .Post-header,
+  .ReplyPlaceholder .Post-header {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: var(--muted-color) !important;
+  }
+}

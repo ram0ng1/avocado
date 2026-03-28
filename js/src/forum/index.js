@@ -35,10 +35,13 @@ import {
 } from './components/UserProfilePage';
 import AvocadoDiscussionStats from './components/AvocadoDiscussionStats';
 import Footer from 'flarum/forum/components/Footer';
+import MessagesPage from 'ext:flarum/messages/forum/components/MessagesPage';
 // FIX: utils centralises helpers that were duplicated in every component file
 import {
   trans,
   hexToRgba,
+  iconColors,
+  tagPillStyle,
   resolveAssetUrl,
   copyTextToClipboard,
 } from './utils';
@@ -434,7 +437,7 @@ app.initializers.add(
                   )}
                   {tags.slice(0, 3).map((tag) => {
                     const tagColor = tag.color?.() || null;
-                    const tagStyle = tagColor ? { '--tag-bg': hexToRgba(tagColor, 0.12), '--tag-color': tagColor } : {};
+                    const tagStyle = tagPillStyle(tagColor, 0.12);
                     return (
                       <a
                         key={tag.id()}
@@ -848,7 +851,7 @@ app.initializers.add(
       // FIX: call tags() once, not twice (was called once for the guard, once for the value)
       const firstTag = this.attrs.discussion.tags?.()?.[0];
       const color    = firstTag?.color?.();
-      if (color) attrs.style = { '--tag-color': color, ...(attrs.style || {}) };
+      if (color) attrs.style = { '--tag-color': iconColors(color).color, ...(attrs.style || {}) };
       if (this.attrs.discussion.isUnread?.()) {
         attrs.className = `${attrs.className || ''} DiscussionListItem--unread`;
       }
@@ -1064,28 +1067,56 @@ app.initializers.add(
 
     // ── 25. Footer ────────────────────────────────────────────────────────────
     override(Footer.prototype, 'view', function () {
-      if (!v2Enabled) return null;
-      const year  = new Date().getFullYear();
-      const title = app.forum?.attribute('title') || '';
-      return (
-        <footer className="AvocadoFooter" aria-label="Site footer">
-          <div className="AvocadoFooter-inner">
-            {title && (
-              <span className="AvocadoFooter-brand">{title}</span>
-            )}
-            <span className="AvocadoFooter-sep" aria-hidden="true">·</span>
-            <span className="AvocadoFooter-copy">© {year}</span>
-            <span className="AvocadoFooter-sep" aria-hidden="true">·</span>
-            <a className="AvocadoFooter-link" href={app.route('index')}>
-              <i className="fas fa-home" aria-hidden="true" /> Home
-            </a>
-            <a className="AvocadoFooter-link" href={app.route('avocado-discussions')}>
-              <i className="far fa-comments" aria-hidden="true" /> Discussions
-            </a>
-          </div>
-        </footer>
-      );
+      return null;
     });
+
+    // ── 26. MessagesPage: Avocado design integration ──────────────────────────
+    if (MessagesPage) {
+      override(MessagesPage.prototype, 'view', function () {
+        if (!v2Enabled) return this.__originalView ? this.__originalView() : <div />;
+
+        // Build nav — same filter logic as renderNavBar() in HomePage
+        let navEl = null;
+        try {
+          const itemList = IndexSidebar.prototype.navItems.call({});
+          itemList.remove('tags');
+          itemList.remove('popularHome');
+          itemList.remove('allDiscussions');
+          const navItems = itemList.toArray().filter((item) => {
+            if (!item || typeof item.tag === 'string') return false;
+            if (item.attrs && 'model' in item.attrs) return false;
+            const href = item.attrs?.href || '';
+            if (/\/t\//.test(href)) return false;
+            return true;
+          });
+          if (navItems.length) {
+            navEl = <nav className="AvocadoHomeNav" aria-label="Navigation">{navItems}</nav>;
+          }
+        } catch (_) {}
+
+        // Pull the extension's own rendered pieces from contentItems()
+        const items = this.contentItems();
+        const sidebarVnode = items.get('sidebar');
+        const dialogVnode  = items.get('dialog');
+
+        return (
+          <div className="AvocadoMessages MessagesPage">
+            {/* IndexSidebar helper: App-titleControl escapes position:absolute to mobile header */}
+            <div className="AvocadoNav-helper"><IndexSidebar /></div>
+            <div className="AvocadoMessages-inner">
+              <div className="AvocadoMessages-head">
+                <h1 className="AvocadoMessages-title">{app.translator.trans('flarum-messages.forum.list.nav_link')}</h1>
+              </div>
+              {navEl}
+              <div className="AvocadoMessages-card">
+                <div className="AvocadoMessages-listCol">{sidebarVnode}</div>
+                <div className="AvocadoMessages-chatCol">{dialogVnode}</div>
+              </div>
+            </div>
+          </div>
+        );
+      });
+    }
 
     // ── 24. DiscussionListItem infoItems (excerpt) ────────────────────────────
     extend(DiscussionListItem.prototype, 'infoItems', function (items) {

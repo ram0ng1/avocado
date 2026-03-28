@@ -12,6 +12,7 @@ import {
   formatTimeLabel,
   postPreview,
   hexToRgba,
+  tagPillStyle,
 } from '../utils';
 
 const SORT_OPTIONS = [
@@ -318,7 +319,7 @@ export default class AllDiscussionsPage extends Page {
               {tags.slice(0, 4).map((tag, idx) => {
                 const tagColor = tag.color?.() || null;
                 const extraClass = idx >= 2 ? ' AvocadoHome-tagPill--extra' : '';
-                const tagStyle = tagColor ? { '--tag-bg': hexToRgba(tagColor, 0.1), '--tag-color': tagColor } : {};
+                const tagStyle = tagPillStyle(tagColor);
                 return (
                   <a
                     key={tag.id?.()}

@@ -4,6 +4,7 @@ import Avatar from 'flarum/common/components/Avatar';
 import Tooltip from 'flarum/common/components/Tooltip';
 import {
   hexToRgba,
+  tagPillStyle,
   discussionRoute,
   tagRoute,
   displayName,
@@ -130,7 +131,7 @@ export default class AvocadoDiscussionsSearchPage extends Component {
               {tags.slice(0, 4).map((tag, idx) => {
                 const tagColor   = tag.color?.() || null;
                 const extraClass = idx >= 2 ? ' AvocadoHome-tagPill--extra' : '';
-                const tagStyle   = tagColor ? { '--tag-bg': hexToRgba(tagColor, 0.1), '--tag-color': tagColor } : {};
+                const tagStyle   = tagPillStyle(tagColor);
                 return (
                   <a
                     key={tag.id?.()}

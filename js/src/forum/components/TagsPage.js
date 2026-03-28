@@ -7,6 +7,7 @@ import {
   trans,
   numberOr,
   hexToRgba,
+  iconColors,
   displayName,
   formatTimeLabel,
   postPreview,
@@ -28,7 +29,7 @@ const tagHref = (tag) => {
 
 function renderTagCard(tag, featured = false, fireUrl = '') {
   const color   = tag.color?.() || '#3f88f6';
-  const iconBg  = hexToRgba(color, 0.12);
+  const { bg: iconBg, color: iconColor } = iconColors(color, 0.12);
   const href    = tagHref(tag);
   const lastDisc = tag.lastPostedDiscussion?.();
   const children = sortTags((tag.children?.() || []).filter(Boolean));
@@ -56,7 +57,7 @@ function renderTagCard(tag, featured = false, fireUrl = '') {
         <div className="AvocadoTagsPage-tagCard-top">
           <span
             className="AvocadoTagsPage-tagCard-icon"
-            style={{ '--icon-bg': iconBg, '--icon-color': color }}
+            style={{ '--icon-bg': iconBg, '--icon-color': iconColor }}
           >
             <i className={tag.icon?.() || 'fas fa-tag'} aria-hidden="true" />
           </span>

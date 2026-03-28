@@ -8,69 +8,6 @@
   }
 }
 
-// ─── Avocado Footer ───────────────────────────────────────────────────────────
-.AvocadoFooter {
-  border-top: 1px solid #eaeaf0;
-  background: #fff;
-  padding: 0;
-  font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.AvocadoFooter-inner {
-  max-width: 1036px;
-  margin: 0 auto;
-  padding: 18px 12px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.AvocadoFooter-brand {
-  font-family: Georgia, "Times New Roman", serif;
-  font-weight: 900;
-  font-style: italic;
-  font-size: 14px;
-  letter-spacing: -0.5px;
-  color: #121317;
-}
-
-.AvocadoFooter-sep {
-  color: #d0d0d8;
-  font-size: 12px;
-  user-select: none;
-}
-
-.AvocadoFooter-copy {
-  font-size: 13px;
-  font-weight: 600;
-  color: #9d9ea8;
-}
-
-.AvocadoFooter-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #9d9ea8;
-  text-decoration: none !important;
-  transition: color 0.15s ease;
-
-  i { font-size: 11px; }
-
-  &:hover {
-    color: var(--primary-color);
-    text-decoration: none !important;
-  }
-}
-
-@media (max-width: 640px) {
-  .AvocadoFooter-inner {
-    gap: 8px;
-    padding: 14px 10px;
-  }
-}
 
 
 // Smooth page loading transition (reduces jarring loading flash)
@@ -292,17 +229,20 @@ svg.Header-logo {
 }
 
 // ─── Hide IndexPage native sideNav ────────────────────────────────────────────
-// Scoped to .IndexPage so AllDiscussionsPage's <IndexSidebar> inside .AvocadoNav-helper
-// (which is outside .IndexPage) is NOT affected — it must render for the phone
-// header escape mechanism (height:0 + overflow:hidden collapses it visually while
-// absolutely-positioned App-primaryControl escapes to the phone header).
-// Phone exception: .IndexPage--avocadoHome uses the same escape trick, so restore
-// display:block there so the button can still reach the header.
-.IndexPage .IndexPage-nav.sideNav { display: none !important; }
+// Target only the .Page-sidebar placement so the AvocadoNav-helper (which lives
+// inside Page-content / page components) is NOT affected — it provides the
+// phone App-primaryControl escape trick via position:absolute children.
+.Page-sidebar .IndexPage-nav.sideNav { display: none !important; }
 
+// Phone: restore the home-page sidebar nav so App-primaryControl escapes to header.
 @media @phone {
-  .IndexPage--avocadoHome .IndexPage-nav.sideNav { display: block !important; }
+  .IndexPage--avocadoHome .Page-sidebar .IndexPage-nav.sideNav { display: block !important; }
 }
+
+// ─── Hide standard Flarum hero banners on extension pages ─────────────────────
+// Avocado's WelcomeHero renders with .WelcomeHero so it is preserved.
+// Extension heroes (MessagesPageHero, etc.) only have .Hero — hidden here.
+.Hero:not(.WelcomeHero) { display: none !important; }
 
 // ─── Global: no underlines on links inside avocado theme pages ────────────────
 .AvocadoHome a,
@@ -310,7 +250,10 @@ svg.Header-logo {
 .AvocadoUserPage a,
 .AvocadoTagsPage a,
 .AllDiscussionsPage a,
-.AvocadoDiscussions a {
+.AvocadoDiscussions a,
+.AvocadoSearch a,
+.AvocadoHome-replyBtn,
+.AvocadoSearch-userCard-viewBtn {
   text-decoration: none !important;
 
   &:hover {
