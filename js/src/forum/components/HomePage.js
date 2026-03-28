@@ -956,6 +956,10 @@ export default class HomePage extends Component {
       // Fallback: drop any href that explicitly matches the tag route pattern /t/slug
       const href = item.attrs?.href || '';
       if (/\/t\//.test(href)) return false;
+      // Drop the "More..." link (href=/tags or label text contains "More")
+      if (/\/tags$/.test(href)) return false;
+      const label = item.children?.[0]?.children?.[0]?.children || '';
+      if (typeof label === 'string' && label.toLowerCase().includes('more')) return false;
       return true;
     });
     if (!items.length) return null;

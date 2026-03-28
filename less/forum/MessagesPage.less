@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Avocado V2 — Messages Page
-// Design: two-column chat shell, homepage tokens, Signal-style bubbles.
+// Design: two-column chat shell, glassmorphism sidebar, Signal-style bubbles.
 // Dark tokens → DarkMode.less
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -8,23 +8,32 @@
 .AvocadoMessages,
 .AvocadoMessages-card,
 .MessagesPage {
-  --avmsg-bg:            #f4f5f9;
-  --avmsg-sidebar-bg:    #ecedf3;
+  --avmsg-bg:            #f0f2f7;
+  --avmsg-sidebar-bg:    #ffffff;
   --avmsg-card-bg:       #ffffff;
-  --avmsg-header-bg:     rgba(255,255,255,0.95);
-  --avmsg-border:        #e2e3eb;
+  --avmsg-header-bg:     rgba(255,255,255,0.80);
+  --avmsg-border:        #eaedf5;
   --avmsg-text:          #1a1b21;
   --avmsg-muted:         #8f90a0;
-  --avmsg-item-hover:    rgba(0,0,0,0.05);
-  --avmsg-item-active:   rgba(0,0,0,0.08);
+  --avmsg-item-hover:    #f5f6fb;
+  --avmsg-item-active-bg: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  --avmsg-item-active-ring: color-mix(in srgb, var(--primary-color) 20%, transparent);
   --avmsg-bubble-in:     #ffffff;
   --avmsg-bubble-text:   #2a2b30;
   --avmsg-input-bg:      #ffffff;
-  --avmsg-search-bg:     rgba(0,0,0,0.06);
+  --avmsg-search-bg:     #f0f2f7;
   --avmsg-send-btn:      var(--primary-color);
   --avmsg-send-icon:     #ffffff;
   --avmsg-unread-bg:     var(--primary-color);
+  --avmsg-online:        #22c55e;
+  --avmsg-avatar-ring:   #ffffff;
+  // Skeleton shimmer colors (overridden in dark mode)
+  --avmsg-sk-base:       #e8eaf0;
+  --avmsg-sk-shine:      #f4f5f9;
 }
+
+// ── AvocadoMessages-inner hidden (no longer rendered in view) ─────────────────
+.AvocadoMessages-inner { display: none !important; }
 
 // ── Strip Flarum page chrome ───────────────────────────────────────────────────
 .MessagesPage {
@@ -47,7 +56,6 @@
     padding: 0 0 40px !important;
   }
 
-  // Kill extension's own layout
   .MessagesPage-content {
     display: block !important;
     gap: 0 !important;
@@ -57,7 +65,6 @@
 // ── Outer wrapper ──────────────────────────────────────────────────────────────
 .AvocadoMessages {
   font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  // Fill exactly the viewport below the fixed header, no more
   display: flex !important;
   flex-direction: column !important;
   height: calc(100vh - var(--header-height, 52px)) !important;
@@ -75,7 +82,7 @@
   max-width: var(--home-max-width, 1036px);
   margin: 0 auto;
   padding: 0 12px;
-  flex-shrink: 0; // do not grow — just the title + nav, compact
+  flex-shrink: 0;
 
   @media @phone { padding: 0 12px; }
 }
@@ -85,13 +92,13 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 28px 0 16px;
+  padding: 24px 0 14px;
 
-  @media @phone { padding: 20px 12px 14px; }
+  @media @phone { padding: 16px 12px 12px; }
 }
 
 .AvocadoMessages-title {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 900;
   color: var(--avmsg-text);
   letter-spacing: -0.4px;
@@ -100,30 +107,36 @@
 }
 
 .AvocadoMessages-inner .AvocadoHomeNav {
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 
   @media @phone { margin-left: 12px; margin-right: 12px; }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Two-column card shell — full page width, fills remaining page height exactly
-// IMPORTANT: NO overflow:hidden here — dropdowns must escape.
+// Two-column card shell — fills 100% of the page height
 // ─────────────────────────────────────────────────────────────────────────────
 .AvocadoMessages-card {
   display: flex !important;
   align-items: stretch !important;
-  border-top: 1px solid var(--avmsg-border) !important;
-  border-bottom: none !important;
-  border-left: none !important;
-  border-right: none !important;
   border-radius: 0 !important;
   background: var(--avmsg-bg) !important;
-  flex: 1 1 auto !important;  // fill all remaining height
-  min-height: 0 !important;   // allow flex children to shrink
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
   position: relative !important;
 
   @media @phone {
     flex-direction: column !important;
+
+    // Default: show list, hide chat
+    .AvocadoMessages-chatCol { display: none !important; }
+
+    // Dialog open: hide list, show chat
+    &--onDialog .AvocadoMessages-listCol { display: none !important; }
+    &--onDialog .AvocadoMessages-chatCol {
+      display: flex !important;
+      height: 100% !important;
+      flex: 1 1 auto !important;
+    }
   }
 }
 
@@ -138,18 +151,14 @@
   flex-direction: column !important;
   background: var(--avmsg-sidebar-bg) !important;
   border-radius: 0 !important;
-  // NO overflow:hidden — let dropdowns escape
+  height: 100% !important;
 
   @media @phone {
     width: 100% !important;
     flex: none !important;
     border-right: none !important;
     border-bottom: 1px solid var(--avmsg-border) !important;
-    border-radius: 0 !important;
   }
-
-  // Column itself must also be a flex column so inner pieces can scroll
-  height: 100% !important;
 
   .MessagesPage-sidebar {
     display: flex !important;
@@ -161,23 +170,24 @@
     background: transparent !important;
   }
 
-  // ── Toolbar ────────────────────────────────────────────────────────────────
+  // ── Toolbar ──────────────────────────────────────────────────────────────
   .IndexPage-toolbar {
-    padding: 20px 16px 12px !important;
+    padding: 18px 22px 14px !important;
     flex-shrink: 0 !important;
-    background: transparent !important;
+    background: var(--avmsg-sidebar-bg) !important;
     border-bottom: 1px solid var(--avmsg-border) !important;
     position: relative !important;
     z-index: 10 !important;
 
+    // "Mensagens" label
     &::before {
-      content: 'Mensagens';
+      content: 'Messages';
       display: block !important;
-      font-size: 17px !important;
+      font-size: 16px !important;
       font-weight: 900 !important;
       color: var(--avmsg-text) !important;
-      letter-spacing: -0.25px !important;
-      margin-bottom: 12px !important;
+      letter-spacing: -0.2px !important;
+      margin-bottom: 14px !important;
       font-family: 'DM Sans', Inter, "Segoe UI", sans-serif !important;
     }
 
@@ -195,13 +205,12 @@
     .IndexPage-toolbar-action { float: right; }
     &::after { content: ''; display: table; clear: both; }
 
-    // Dropdown toggle buttons in toolbar
     .Dropdown > .Button,
     .Button.Dropdown-toggle {
-      border-radius: 10px !important;
-      height: 32px !important;
+      border-radius: 999px !important;
+      height: 30px !important;
       padding: 0 12px !important;
-      font-size: 12px !important;
+      font-size: 11px !important;
       font-weight: 700 !important;
       background: var(--avmsg-search-bg) !important;
       border: none !important;
@@ -211,21 +220,22 @@
       align-items: center !important;
       gap: 5px !important;
       font-family: 'DM Sans', Inter, "Segoe UI", sans-serif !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.04em !important;
 
       .Button-caret { font-size: 9px; opacity: 0.5; }
 
       &:hover {
         color: var(--avmsg-text) !important;
-        background: rgba(0,0,0,0.09) !important;
+        background: #e6e8f0 !important;
       }
     }
 
-    // Icon-only buttons in toolbar
     .Button.Button--icon {
-      width: 32px !important;
-      height: 32px !important;
+      width: 30px !important;
+      height: 30px !important;
       padding: 0 !important;
-      border-radius: 10px !important;
+      border-radius: 50% !important;
       background: transparent !important;
       border: none !important;
       box-shadow: none !important;
@@ -264,31 +274,58 @@
     }
   }
 
-  // ── DialogList ─────────────────────────────────────────────────────────────
+  // ── New message button ────────────────────────────────────────────────────
+  .MessagesPage-newMessage.Button {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    width: calc(100% - 32px) !important;
+    margin: 14px 16px 4px !important;
+    border-radius: 999px !important;
+    height: 40px !important;
+    background: var(--primary-color) !important;
+    color: #fff !important;
+    border: none !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif !important;
+    box-shadow: 0 6px 20px color-mix(in srgb, var(--primary-color) 30%, transparent) !important;
+    transition: opacity 0.15s ease, transform 0.12s ease !important;
+
+    .Button-icon { font-size: 14px !important; color: #fff !important; }
+
+    &:hover {
+      opacity: 0.9 !important;
+      transform: scale(1.015) !important;
+    }
+  }
+
+  // ── DialogList ──────────────────────────────────────────────────────────
   .DialogList {
     flex: 1 1 auto !important;
     overflow-y: auto !important;
     background: transparent !important;
 
     &::-webkit-scrollbar { width: 3px; }
-    &::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
+    &::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.10); border-radius: 3px; }
 
     &-list {
       list-style: none !important;
       margin: 0 !important;
-      padding: 8px 8px 12px !important;
+      padding: 10px 10px 16px !important;
       background: transparent !important;
       display: flex !important;
       flex-direction: column !important;
-      gap: 0 !important;
+      gap: 2px !important;
     }
 
     &-loadMore {
-      padding: 4px 8px 14px !important;
+      padding: 4px 10px 14px !important;
 
       .Button {
         width: 100% !important;
-        border-radius: 12px !important;
+        border-radius: 999px !important;
         background: var(--avmsg-search-bg) !important;
         border: none !important;
         box-shadow: none !important;
@@ -302,23 +339,23 @@
     }
   }
 
-  // ── DialogListItem ─────────────────────────────────────────────────────────
+  // ── DialogListItem ────────────────────────────────────────────────────────
   .DialogListItem {
     border-radius: 16px !important;
-    margin-bottom: 2px !important;
     background: transparent !important;
     position: relative !important;
+    transition: background 0.12s ease !important;
 
     &-button {
       display: flex !important;
       align-items: center !important;
-      gap: 13px !important;
-      padding: 11px !important;
+      gap: 12px !important;
+      padding: 10px 12px !important;
       width: 100% !important;
       text-decoration: none !important;
       cursor: pointer !important;
       border-radius: 16px !important;
-      transition: background 0.12s ease, box-shadow 0.12s ease !important;
+      transition: background 0.12s ease !important;
       background: transparent !important;
       border: none !important;
       box-shadow: none !important;
@@ -329,32 +366,52 @@
       }
 
       &.active {
-        background: var(--avmsg-card-bg) !important;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important;
+        background: var(--avmsg-item-active-bg) !important;
+        box-shadow: inset 0 0 0 1px var(--avmsg-item-active-ring) !important;
       }
     }
 
+    // Avatar — online status shown as green border (same as DiscussionPage)
     &-avatar {
       position: relative !important;
       flex-shrink: 0 !important;
 
       .Avatar {
-        width: 46px !important;
-        height: 46px !important;
+        width: 44px !important;
+        height: 44px !important;
         border-radius: 50% !important;
-        display: block !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
         object-fit: cover !important;
+        border: 2px solid var(--avmsg-avatar-ring) !important;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.10) !important;
+        background-color: var(--avatar-bg) !important;
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        color: #fff !important;
       }
 
+      // Online: green border on avatar (same as DiscussionPage)
+      &.is-online .Avatar,
+      .Avatar.is-online {
+        border-color: var(--avmsg-online) !important;
+        box-shadow: 0 0 0 2px var(--avmsg-sidebar-bg) !important;
+      }
+
+      // Hide raw UserOnline element
+      .UserOnline { display: none !important; }
+
+      // Unread count badge
       .Bubble {
         position: absolute !important;
         bottom: -2px !important;
         right: -2px !important;
         top: auto !important;
         left: auto !important;
-        min-width: 20px !important;
-        height: 20px !important;
-        padding: 0 5px !important;
+        min-width: 18px !important;
+        height: 18px !important;
+        padding: 0 4px !important;
         border-radius: 999px !important;
         font-size: 9px !important;
         font-weight: 800 !important;
@@ -380,7 +437,7 @@
       align-items: baseline !important;
       justify-content: space-between !important;
       gap: 4px !important;
-      font-size: 13px !important;
+      font-size: 13.5px !important;
       font-weight: 700 !important;
       color: var(--avmsg-text) !important;
       margin-bottom: 3px !important;
@@ -402,8 +459,7 @@
         font-weight: 600 !important;
         color: var(--avmsg-muted) !important;
         flex-shrink: 0 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.03em !important;
+        letter-spacing: 0.02em !important;
       }
 
       .DialogListItem-actions .Button {
@@ -411,7 +467,7 @@
         width: 22px !important;
         height: 22px !important;
         padding: 0 !important;
-        border-radius: 7px !important;
+        border-radius: 50% !important;
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
@@ -437,12 +493,25 @@
       white-space: nowrap !important;
       overflow: hidden !important;
       text-overflow: ellipsis !important;
-      font-weight: 500 !important;
+      font-weight: 400 !important;
     }
 
-    &--unread &-title { font-weight: 700 !important; }
-    &--unread &-lastMessage { font-weight: 700 !important; color: var(--avmsg-text) !important; }
-    &--unread &-avatar .Avatar { box-shadow: 0 0 0 2.5px var(--avmsg-unread-bg) !important; }
+    &--unread &-title     { font-weight: 800 !important; }
+    &--unread &-lastMessage {
+      font-weight: 600 !important;
+      color: var(--avmsg-text) !important;
+    }
+    // Unread dot — shown on the right side of the item
+    &--unread &-button::after {
+      content: '' !important;
+      display: block !important;
+      width: 9px !important;
+      height: 9px !important;
+      border-radius: 50% !important;
+      background: var(--avmsg-unread-bg) !important;
+      flex-shrink: 0 !important;
+      align-self: center !important;
+    }
   }
 }
 
@@ -456,56 +525,61 @@
   flex-direction: column !important;
   background: var(--avmsg-bg) !important;
   border-radius: 0 !important;
-  // NO overflow:hidden — dropdowns must escape
 
   @media @phone {
     min-height: 420px;
-    border-radius: 0 !important;
   }
 
-  // ── DialogSection ──────────────────────────────────────────────────────────
+  // ── DialogSection ────────────────────────────────────────────────────────
   .DialogSection {
     display: flex !important;
     flex-direction: column !important;
     flex: 1 1 auto !important;
-    // NO overflow:hidden here — Dropdown menus from header controls must escape
     min-height: 0 !important;
     background: transparent !important;
-    padding-inline-start: 0 !important;
     padding: 0 !important;
 
-    // ── Chat header ──────────────────────────────────────────────────────────
+    // ── Chat header ────────────────────────────────────────────────────────
     &-header {
       display: flex !important;
       align-items: center !important;
-      gap: 12px !important;
-      padding: 14px 18px !important;
+      gap: 10px !important;
+      padding: 14px 20px !important;
       border-bottom: 1px solid var(--avmsg-border) !important;
       background: var(--avmsg-header-bg) !important;
-      backdrop-filter: blur(10px) !important;
-      -webkit-backdrop-filter: blur(10px) !important;
+      backdrop-filter: blur(20px) !important;
+      -webkit-backdrop-filter: blur(20px) !important;
       flex-shrink: 0 !important;
       position: relative !important;
       z-index: 5 !important;
       min-height: 66px !important;
-      border-radius: 0 !important;
       box-sizing: border-box !important;
 
-      @media @phone { border-radius: 0 !important; padding: 12px 14px !important; }
+      @media @phone { padding: 12px 14px !important; }
 
       .Avatar {
-        width: 40px !important;
-        height: 40px !important;
+        width: 42px !important;
+        height: 42px !important;
         border-radius: 50% !important;
         flex-shrink: 0 !important;
+        border: 2px solid var(--avmsg-avatar-ring) !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.10) !important;
+        background-color: var(--avatar-bg) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 17px !important;
+        font-weight: 700 !important;
+        color: #fff !important;
       }
 
       &-info {
-        flex: 1 !important;
+        flex: 0 1 auto !important;
         min-width: 0 !important;
         display: flex !important;
-        flex-direction: column !important;
-        gap: 2px !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 6px !important;
 
         h2, &-title {
           font-size: 15px !important;
@@ -531,12 +605,24 @@
         }
       }
 
-      .badges { display: flex !important; gap: 3px !important; }
+      .badges {
+        display: flex !important;
+        align-items: center !important;
+        gap: 3px !important;
+        flex-shrink: 0 !important;
+
+        .Badge {
+          width: 18px !important;
+          height: 18px !important;
+          font-size: 10px !important;
+          border-radius: 50% !important;
+        }
+      }
 
       &-actions {
         display: flex !important;
         align-items: center !important;
-        gap: 4px !important;
+        gap: 2px !important;
         margin-left: auto !important;
         flex-shrink: 0 !important;
         position: relative !important;
@@ -544,7 +630,7 @@
       }
     }
 
-    // ── Back button (mobile) ─────────────────────────────────────────────────
+    // ── Back button (mobile) ───────────────────────────────────────────────
     .DialogSection-back {
       display: none !important;
 
@@ -553,7 +639,7 @@
         width: 34px !important;
         height: 34px !important;
         padding: 0 !important;
-        border-radius: 10px !important;
+        border-radius: 50% !important;
         background: var(--avmsg-search-bg) !important;
         border: none !important;
         box-shadow: none !important;
@@ -566,50 +652,44 @@
       }
     }
 
-    // ── Controls dropdown — fix all button variants ──────────────────────────
+    // ── Controls dropdown ─────────────────────────────────────────────────
     .DialogSection-controls {
       position: relative !important;
       z-index: 10 !important;
 
-      // Match all button combinations: Button--icon alone,
-      // Dropdown-toggle alone, and Dropdown-toggle + Button--icon together
       .Button {
-        width: 34px !important;
-        height: 34px !important;
+        width: 36px !important;
+        height: 36px !important;
         padding: 0 !important;
-        border-radius: 10px !important;
+        border-radius: 50% !important;
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        color: #8f90a0 !important;
+        color: var(--avmsg-muted) !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
         cursor: pointer !important;
-        visibility: visible !important;
-        opacity: 1 !important;
+        transition: background 0.12s ease !important;
+        overflow: visible !important;
 
-        .Button-icon,
-        i,
-        i.fas,
-        i.far,
-        i.fab {
-          font-size: 16px !important;
+        // Force FA icon to render visibly
+        i, .Button-icon {
+          font-size: 17px !important;
           margin: 0 !important;
           line-height: 1 !important;
-          color: #8f90a0 !important;
+          color: var(--avmsg-muted) !important;
           display: inline-block !important;
-          font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", FontAwesome !important;
-          font-weight: 900 !important;
+          visibility: visible !important;
+          opacity: 1 !important;
         }
         .Button-label { display: none !important; }
         .Button-caret { display: none !important; }
 
         &:hover {
           background: var(--avmsg-search-bg) !important;
-          color: #1a1b21 !important;
-
-          .Button-icon, i, i.fas, i.far, i.fab { color: #1a1b21 !important; }
+          color: var(--avmsg-text) !important;
+          i, .Button-icon { color: var(--avmsg-text) !important; }
         }
       }
 
@@ -653,7 +733,7 @@
     }
   }
 
-  // ── Empty state ────────────────────────────────────────────────────────────
+  // ── Empty state ──────────────────────────────────────────────────────────
   .Placeholder {
     flex: 1 !important;
     display: flex !important;
@@ -679,32 +759,36 @@
     }
   }
 
-  > .LoadingIndicator { margin: 64px auto !important; }
+  > .LoadingIndicator { display: none !important; }
+
+// ── Suppress ALL Flarum native spinners inside the messages page ──────────────
+// Our skeleton preloaders handle every loading state instead.
+.AvocadoMessages .LoadingIndicator,
+.MessagesPage .LoadingIndicator {
+  display: none !important;
+}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MessageStream — scrollable area
-// Override the extension's mask-image, margin, max-height, and avatar-column-width
 // ─────────────────────────────────────────────────────────────────────────────
 .AvocadoMessages-chatCol .MessageStream {
   flex: 1 1 auto !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
-  padding: 24px 28px 8px !important;
+  padding: 28px 20px 8px !important;
+  padding-inline-start: 20px !important;
+  padding-inline-end: 20px !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 0 !important;
-  scroll-behavior: smooth !important;
+  scroll-behavior: auto !important;
   background: var(--avmsg-bg) !important;
-  // Reset extension's negative margin and mask
   margin-inline-start: 0 !important;
-  padding-inline-start: 0 !important;
-  padding-inline-end: 0 !important;
   mask-image: none !important;
   -webkit-mask-image: none !important;
-  // Reset extension's max-height and avatar-column-width for grid
   max-height: none !important;
-  --avatar-column-width: 48px;
+  --avatar-column-width: 44px;
 
   &::-webkit-scrollbar { width: 0; }
 
@@ -713,6 +797,43 @@
 
 .AvocadoMessages-chatCol .MessageStream-item {
   padding: 2px 0 !important;
+}
+
+// ── Messenger-style message grouping ─────────────────────────────────────────
+// Post--grouped is added by JS when the previous message is from the same user.
+// Hide the repeated avatar (replaced by invisible spacer) and the name header.
+.AvocadoMessages-chatCol .MessageStream .Post.Post--grouped {
+  padding-top: 1px !important;
+
+  // Keep avatar spacer (so bubble alignment stays) but hide the image
+  .Post-side .Avatar { visibility: hidden !important; }
+
+  // Hide name + time for grouped messages
+  .Post-header { display: none !important; }
+
+  // Adjust bubble radius for grouped received: no tail
+  &:not(.Post--byCurrentUser):not(.Post--by-actor) .Post-body {
+    border-radius: 4px 20px 20px 4px !important;
+  }
+
+  // Adjust bubble radius for grouped sent: no tail
+  &.Post--byCurrentUser .Post-body,
+  &.Post--by-actor .Post-body {
+    border-radius: 20px 4px 4px 20px !important;
+  }
+}
+
+// Push messages to the bottom when there are few of them
+.AvocadoMessages-chatCol .MessageStream-item:first-child {
+  margin-top: auto !important;
+}
+
+// Suppress any slide/pulse animation on new messages or conversation switch
+.AvocadoMessages-chatCol .MessageStream-item,
+.AvocadoMessages-chatCol .Message,
+.AvocadoMessages-chatCol .Post {
+  animation: none !important;
+  transition: none !important;
 }
 
 // Load more buttons
@@ -735,37 +856,30 @@
   }
 }
 
-// ── Date separator ─────────────────────────────────────────────────────────────
+// ── Date separator — pill badge ───────────────────────────────────────────────
 .AvocadoMessages-chatCol .MessageStream .PostStream-timeGap {
   display: flex !important;
   align-items: center !important;
-  gap: 12px !important;
-  padding: 20px 0 12px !important;
+  justify-content: center !important;
+  padding: 20px 0 16px !important;
   pointer-events: none !important;
-
-  &::before, &::after {
-    content: '' !important;
-    flex: 1 !important;
-    height: 1px !important;
-    background: var(--avmsg-border) !important;
-  }
 
   > span {
     font-size: 10px !important;
     font-weight: 800 !important;
-    letter-spacing: 0.1em !important;
+    letter-spacing: 0.10em !important;
     text-transform: uppercase !important;
     color: var(--avmsg-muted) !important;
     white-space: nowrap !important;
-    background: none !important;
-    border: none !important;
-    padding: 0 !important;
-    border-radius: 0 !important;
+    background: color-mix(in srgb, var(--avmsg-muted) 10%, var(--avmsg-bg)) !important;
+    border: 1px solid var(--avmsg-border) !important;
+    padding: 4px 14px !important;
+    border-radius: 999px !important;
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Chat bubbles — received (left-aligned)
+// Chat bubbles — received (left)
 // ─────────────────────────────────────────────────────────────────────────────
 .AvocadoMessages-chatCol .MessageStream .Message,
 .AvocadoMessages-chatCol .MessageStream .Post {
@@ -773,49 +887,59 @@
   border: none !important;
   box-shadow: none !important;
   border-radius: 0 !important;
-  padding: 4px 0 !important;
+  padding: 3px 0 !important;
   margin: 0 !important;
 
   .Post-container {
     display: flex !important;
-    align-items: flex-end !important;
+    align-items: flex-start !important;
     gap: 10px !important;
     flex-direction: row !important;
+    position: relative !important; // anchor for absolutely-positioned badge
   }
 
   .Post-side {
     flex-shrink: 0 !important;
     width: 36px !important;
     margin: 0 !important;
+    position: relative !important;
 
     .Avatar {
       width: 36px !important;
       height: 36px !important;
       border-radius: 50% !important;
-      display: block !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border: 2px solid var(--avmsg-avatar-ring) !important;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08) !important;
+      background-color: var(--avatar-bg) !important;
+      font-size: 14px !important;
+      font-weight: 700 !important;
+      color: #fff !important;
     }
   }
 
   .Post-main {
-    flex: 1 !important;
+    flex: 0 1 auto !important;
     min-width: 0 !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: flex-start !important;
-    max-width: 65% !important;
+    max-width: 62% !important;
 
     @media @phone { max-width: 80% !important; }
   }
 
   .Post-header {
     font-size: 11px !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
     color: var(--avmsg-muted) !important;
-    margin-bottom: 6px !important;
+    margin-bottom: 4px !important;
     display: flex !important;
     align-items: center !important;
-    gap: 6px !important;
-    padding: 0 4px !important;
+    gap: 5px !important;
+    padding: 0 6px !important;
     border: none !important;
     background: none !important;
 
@@ -828,22 +952,31 @@
       &:hover { color: var(--primary-color) !important; }
     }
 
+    // PostUser-badges is absolutely positioned on the avatar (see rule below);
+    // don't affect inline header flow but also don't hide it here — the
+    // position:absolute in the global rule removes it from the header flow.
+    .PostUser-badges { height: 0 !important; overflow: visible !important; }
+
     .Post-meta time, time {
       color: var(--avmsg-muted) !important;
       font-size: 10px !important;
-      font-weight: 600 !important;
+      font-weight: 500 !important;
     }
   }
 
-  // Bubble (received) — white card
+  // Bubble received — white (only for messages NOT by current user)
+  &:not(.Post--by-actor):not(.Post--byCurrentUser) .Post-body {
+    border-radius: 4px 20px 20px 20px !important;
+  }
+
   .Post-body {
     display: inline-block !important;
     max-width: 100% !important;
-    padding: 14px 18px !important;
-    border-radius: 22px 22px 22px 6px !important;
+    padding: 12px 16px !important;
+    border-radius: 4px 20px 20px 20px !important;
     background: var(--avmsg-bubble-in) !important;
     border: 1px solid var(--avmsg-border) !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.05) !important;
     font-size: 14px !important;
     line-height: 1.55 !important;
     color: var(--avmsg-bubble-text) !important;
@@ -861,7 +994,7 @@
   // Hover actions
   .Post-actions, .Post-footer {
     opacity: 0 !important;
-    margin-top: 6px !important;
+    margin-top: 4px !important;
     transition: opacity 0.15s ease !important;
     display: flex !important;
     gap: 2px !important;
@@ -871,7 +1004,7 @@
       font-size: 11px !important;
       height: 26px !important;
       padding: 0 8px !important;
-      border-radius: 8px !important;
+      border-radius: 999px !important;
       background: transparent !important;
       border: none !important;
       box-shadow: none !important;
@@ -891,20 +1024,31 @@
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Sent messages — Post--byCurrentUser
+// Sent messages — Post--by-actor (set by core) + Post--byCurrentUser (fallback)
 // ─────────────────────────────────────────────────────────────────────────────
+.AvocadoMessages-chatCol .MessageStream .Message.Post--by-actor,
+.AvocadoMessages-chatCol .MessageStream .Post.Post--by-actor,
 .AvocadoMessages-chatCol .MessageStream .Message.Post--byCurrentUser,
 .AvocadoMessages-chatCol .MessageStream .Post.Post--byCurrentUser {
   .Post-container { flex-direction: row-reverse !important; }
   .Post-main      { align-items: flex-end !important; }
-  .Post-header    { flex-direction: row-reverse !important; }
+  // Hide sender name for own messages (unnecessary in 1:1 chat)
+  .Post-header    { display: none !important; }
+
+  // Sent messages never show the badge (Post-header is hidden)
+  .PostUser-badges { display: none !important; }
 
   .Post-body {
     background: var(--primary-color) !important;
     border-color: transparent !important;
     color: #fff !important;
-    border-radius: 22px 22px 6px 22px !important;
-    box-shadow: 0 4px 16px color-mix(in srgb, var(--primary-color) 30%, transparent) !important;
+    border-radius: 20px 4px 20px 20px !important;
+    box-shadow: 0 4px 18px color-mix(in srgb, var(--primary-color) 28%, transparent) !important;
+    // Offset by the hidden Post-header height so the sent bubble aligns
+    // vertically with the avatar — same visual baseline as received bubbles.
+    margin-top: 20px !important;
+    position: static !important;
+    top: 0 !important;
 
     p    { color: #fff !important; }
     a    { color: rgba(255,255,255,0.88) !important; }
@@ -920,26 +1064,120 @@
   }
 }
 
+// ── Badge overlay on avatar ────────────────────────────────────────────────────
+// Flarum's Discussion page approach: PostUser-badges is pulled back into the
+// avatar column via float + negative margin-left. We adapt this for our flex
+// layout: Post-container has position:relative (36px avatar, 10px gap).
+// Received (avatar LEFT):  badge bottom-right → left: 24px, top: 22px
+// Sent (Post-header hidden): PostUser-badges never renders, nothing to do.
+.AvocadoMessages-chatCol .MessageStream .Message .Post-header .PostUser-badges,
+.AvocadoMessages-chatCol .MessageStream .Post   .Post-header .PostUser-badges {
+  display: block !important;
+  position: absolute !important;
+  left: 24px !important;   // 36px avatar - 16px badge + 4px overlap
+  top: 22px !important;    // 36px avatar - 16px badge + 2px
+  float: none !important;
+  width: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  z-index: 3 !important;
+  list-style: none !important;
+  height: auto !important;
+
+  li { display: inline-block !important; margin: 0 !important; }
+
+  .Badge {
+    --size: 16px !important;
+    width: 16px !important;
+    height: 16px !important;
+    font-size: 8px !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 2px solid var(--avmsg-bg) !important;
+    box-shadow: none !important;
+  }
+}
+
+// ── Hide duplicate PostUser avatar inside Post-header ────────────────────────
+// PostUser renders an Avatar with .Post-avatar inside the header; the real
+// avatar lives in .Post-side, so we hide the header one to prevent duplicates.
+.AvocadoMessages-chatCol .MessageStream .Post-header .Post-avatar,
+.AvocadoMessages-chatCol .MessageStream .Post-header .PostUser .Avatar {
+  display: none !important;
+}
+
+// ── Online indicator — green border on avatar, same as DiscussionPage ────────
+.AvocadoMessages-chatCol .MessageStream .Post-side--online .Avatar {
+  border-color: var(--avmsg-online) !important;
+  box-shadow: 0 0 0 2px var(--avmsg-bg) !important;
+}
+
+// Hide the raw UserOnline element; the border on the avatar conveys it
+.AvocadoMessages-chatCol .MessageStream .UserOnline,
+.AvocadoMessages-chatCol .MessageStream .Post-header .UserOnline,
+.AvocadoMessages-chatCol .MessageStream .Post-side > .UserOnline {
+  display: none !important;
+}
+
+// Also apply to DialogSection header avatar when user is online
+.AvocadoMessages-chatCol .DialogSection-header.is-online .Avatar,
+.AvocadoMessages-chatCol .DialogSection-header .Avatar.is-online {
+  border-color: var(--avmsg-online) !important;
+  box-shadow: 0 0 0 2px var(--avmsg-header-bg) !important;
+}
+
+// ── Typing indicator ─────────────────────────────────────────────────────────
+.AvocadoMessages-chatCol .MessageStream .TypingIndicator,
+.AvocadoMessages-chatCol .MessageStream [class*="typing"],
+.AvocadoMessages-chatCol .MessageStream .Message--typing {
+  display: flex !important;
+  justify-content: center !important;
+  padding: 10px 0 6px !important;
+
+  > * {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 7px 18px !important;
+    border-radius: 999px !important;
+    background: color-mix(in srgb, var(--avmsg-muted) 10%, var(--avmsg-bg)) !important;
+    border: 1px solid var(--avmsg-border) !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: var(--avmsg-muted) !important;
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// AvocadoInlineReply — custom inline message composer
+// AvocadoInlineReply — inline message composer
 // ─────────────────────────────────────────────────────────────────────────────
 .AvocadoMessages-inlineReply {
   display: flex !important;
   align-items: flex-end !important;
   gap: 12px !important;
-  padding: 12px 18px 16px !important;
+  padding: 14px 24px 18px !important;
   background: var(--avmsg-bg) !important;
   border-top: 1px solid var(--avmsg-border) !important;
 
   @media @phone { padding: 10px 12px 14px !important; }
 
   > .Avatar {
-    width: 34px !important;
-    height: 34px !important;
+    width: 36px !important;
+    height: 36px !important;
     border-radius: 50% !important;
     flex-shrink: 0 !important;
-    display: block !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     margin-bottom: 3px !important;
+    border: 2px solid var(--avmsg-avatar-ring) !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08) !important;
+    background-color: var(--avatar-bg) !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: #fff !important;
   }
 
   &-wrap {
@@ -948,18 +1186,17 @@
     position: relative !important;
     display: flex !important;
     align-items: flex-end !important;
-    gap: 0 !important;
     background: var(--avmsg-input-bg) !important;
     border: 1.5px solid var(--avmsg-border) !important;
-    border-radius: 24px !important;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.06) !important;
+    border-radius: 999px !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06) !important;
     transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
-    padding: 0 52px 0 18px !important;
+    padding: 0 56px 0 20px !important;
     box-sizing: border-box !important;
 
     &:focus-within {
-      border-color: color-mix(in srgb, var(--primary-color) 45%, transparent) !important;
-      box-shadow: 0 2px 16px rgba(0,0,0,0.09) !important;
+      border-color: color-mix(in srgb, var(--primary-color) 50%, transparent) !important;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.08) !important;
     }
   }
 
@@ -975,8 +1212,8 @@
     font-weight: 500 !important;
     line-height: 1.5 !important;
     color: var(--avmsg-text) !important;
-    padding: 11px 0 !important;
-    min-height: 44px !important;
+    padding: 13px 0 !important;
+    min-height: 48px !important;
     max-height: 120px !important;
     overflow-y: auto !important;
     width: 100% !important;
@@ -992,10 +1229,10 @@
 
   &-send {
     position: absolute !important;
-    right: 5px !important;
-    bottom: 5px !important;
-    width: 36px !important;
-    height: 36px !important;
+    right: 6px !important;
+    bottom: 6px !important;
+    width: 38px !important;
+    height: 38px !important;
     border-radius: 50% !important;
     background: var(--primary-color) !important;
     border: none !important;
@@ -1007,17 +1244,16 @@
     color: #fff !important;
     font-size: 14px !important;
     transition: opacity 0.15s ease, transform 0.15s ease !important;
-    box-shadow: 0 3px 12px color-mix(in srgb, var(--primary-color) 40%, transparent) !important;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--primary-color) 36%, transparent) !important;
 
     i { color: #fff !important; font-size: 13px !important; }
 
     &:hover:not(.disabled) {
-      opacity: 0.88 !important;
+      opacity: 0.9 !important;
       transform: scale(1.06) !important;
     }
 
-    &.disabled,
-    &:disabled {
+    &.disabled, &:disabled {
       opacity: 0.35 !important;
       cursor: default !important;
       box-shadow: none !important;
@@ -1025,21 +1261,9 @@
   }
 }
 
-// Hide the original ReplyPlaceholder on the messages page (our inline reply replaces it)
+// Hide original ReplyPlaceholder (replaced by AvocadoInlineReply)
 .AvocadoMessages-chatCol .MessageStream .ReplyPlaceholder {
   display: none !important;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// "New message" button
-// ─────────────────────────────────────────────────────────────────────────────
-.MessagesPage-newMessage.Button {
-  border-radius: 999px !important;
-  height: 34px !important;
-  padding: 0 16px !important;
-  font-size: 12px !important;
-  font-weight: 700 !important;
-  font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif !important;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1073,8 +1297,220 @@
 
     .Avatar { width: 30px !important; height: 30px !important; border-radius: 50% !important; }
 
-    a { color: var(--text-color) !important; text-decoration: none !important; &:hover { color: var(--primary-color) !important; } }
+    a {
+      color: var(--text-color) !important;
+      text-decoration: none !important;
+      &:hover { color: var(--primary-color) !important; }
+    }
 
     .badges { display: flex; gap: 3px; }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dialog-switch skeleton — shown while switching conversations
+// Matches discussion-page post skeleton style
+// ─────────────────────────────────────────────────────────────────────────────
+.AvocadoMessages-skeleton-dialog {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  background: var(--avmsg-bg);
+  overflow: hidden;
+}
+
+.AvocadoMessages-skeleton-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--avmsg-border);
+  background: var(--avmsg-header-bg);
+  min-height: 66px;
+  flex-shrink: 0;
+
+  .AvocadoMessages-skeleton-avatar {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 50% !important;
+    flex-shrink: 0;
+  }
+
+  .AvocadoMessages-skeleton-dialog-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    .AvocadoMessages-skeleton-line--name {
+      width: 120px;
+      height: 14px;
+    }
+  }
+}
+
+.AvocadoMessages-skeleton-dialog-msg {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 6px 20px;
+
+  .AvocadoMessages-skeleton-avatar--sm {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    flex-shrink: 0;
+  }
+
+  .AvocadoMessages-skeleton-dialog-bubble-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+    max-width: 60%;
+    min-width: 0;
+  }
+
+  .AvocadoMessages-skeleton-dialog-bubble {
+    height: 38px;
+    border-radius: 18px;
+    background: linear-gradient(
+      90deg,
+      var(--avmsg-sk-base) 25%,
+      var(--avmsg-sk-shine) 50%,
+      var(--avmsg-sk-base) 75%
+    );
+    background-size: 800px 100%;
+    animation: avmsg-shimmer 1.4s infinite linear;
+  }
+
+  &.is-out {
+    flex-direction: row-reverse;
+
+    .AvocadoMessages-skeleton-dialog-bubble-wrap {
+      align-items: flex-end;
+    }
+
+    .AvocadoMessages-skeleton-dialog-bubble {
+      background: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--primary-color) 25%, var(--avmsg-sk-base)) 25%,
+        color-mix(in srgb, var(--primary-color) 15%, var(--avmsg-sk-shine)) 50%,
+        color-mix(in srgb, var(--primary-color) 25%, var(--avmsg-sk-base)) 75%
+      );
+      background-size: 800px 100%;
+      animation: avmsg-shimmer 1.4s infinite linear;
+    }
+  }
+
+  @media @phone { padding: 4px 14px; }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Messages page skeleton (shown while app.dialogs.isLoading())
+// ─────────────────────────────────────────────────────────────────────────────
+
+@keyframes avmsg-shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+
+.AvocadoMessages-skeleton-line,
+.AvocadoMessages-skeleton-avatar {
+  background: linear-gradient(
+    90deg,
+    var(--avmsg-sk-base) 25%,
+    var(--avmsg-sk-shine) 50%,
+    var(--avmsg-sk-base) 75%
+  );
+  background-size: 800px 100%;
+  animation: avmsg-shimmer 1.4s infinite linear;
+  border-radius: 6px;
+}
+
+// ── List skeleton ─────────────────────────────────────────────────────────────
+.AvocadoMessages-skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 10px;
+}
+
+.AvocadoMessages-skeleton-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 16px;
+}
+
+.AvocadoMessages-skeleton-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50% !important;
+  flex-shrink: 0;
+}
+
+.AvocadoMessages-skeleton-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.AvocadoMessages-skeleton-line {
+  height: 10px;
+  border-radius: 6px;
+
+  &--name { width: 55%; height: 11px; }
+  &--msg  { width: 75%; height: 9px; opacity: 0.7; }
+
+  // Chat bubble sizes
+  &--bubble-sm  { width: 120px; height: 36px; border-radius: 18px; }
+  &--bubble-md  { width: 200px; height: 44px; border-radius: 18px; }
+  &--bubble-lg  { width: 260px; height: 56px; border-radius: 18px; }
+}
+
+// ── Chat skeleton ─────────────────────────────────────────────────────────────
+.AvocadoMessages-skeleton-chat {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 28px 32px;
+  overflow: hidden;
+
+  @media @phone { padding: 16px 14px; }
+}
+
+.AvocadoMessages-skeleton-bubble {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+
+  .AvocadoMessages-skeleton-avatar {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+
+  .AvocadoMessages-skeleton-bubble-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &--out {
+    flex-direction: row-reverse;
+
+    .AvocadoMessages-skeleton-line {
+      background: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--primary-color) 25%, var(--avmsg-sk-base)) 25%,
+        color-mix(in srgb, var(--primary-color) 15%, var(--avmsg-sk-shine)) 50%,
+        color-mix(in srgb, var(--primary-color) 25%, var(--avmsg-sk-base)) 75%
+      );
+      background-size: 800px 100%;
+      animation: avmsg-shimmer 1.4s infinite linear;
+    }
   }
 }

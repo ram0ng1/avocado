@@ -761,6 +761,7 @@
   // Dark tokens for the "Signal" chat design
 
   .AvocadoMessages,
+  .AvocadoMessages-card,
   .MessagesPage {
     --avmsg-bg:               color-mix(in srgb, var(--body-bg) 95%, #000);
     --avmsg-sidebar-bg:       var(--body-bg);
@@ -769,17 +770,22 @@
     --avmsg-border:           rgba(255, 255, 255, 0.07);
     --avmsg-text:             var(--heading-color, #e8e9f2);
     --avmsg-muted:            var(--muted-color);
-    --avmsg-item-hover:       rgba(255, 255, 255, 0.05);
-    --avmsg-item-active:      rgba(255, 255, 255, 0.08);
+    --avmsg-item-hover:          rgba(255, 255, 255, 0.05);
+    --avmsg-item-active:         rgba(255, 255, 255, 0.08);
+    --avmsg-item-active-bg:      color-mix(in srgb, var(--primary-color) 14%, transparent);
+    --avmsg-item-active-ring:    color-mix(in srgb, var(--primary-color) 25%, transparent);
     --avmsg-bubble-in:        color-mix(in srgb, var(--body-bg) 55%, #fff);
     --avmsg-bubble-in-border: rgba(255, 255, 255, 0.07);
     --avmsg-bubble-text:      var(--text-color);
-    --avmsg-input-bg:         color-mix(in srgb, var(--body-bg) 55%, #fff);
-    --avmsg-input-border:     rgba(255, 255, 255, 0.08);
+    --avmsg-input-bg:         rgba(255, 255, 255, 0.07);
+    --avmsg-input-border:     rgba(255, 255, 255, 0.18);
     --avmsg-search-bg:        rgba(255, 255, 255, 0.07);
     --avmsg-send-btn:         var(--primary-color);
     --avmsg-send-icon:        #ffffff;
     --avmsg-unread-bg:        var(--primary-color);
+    --avmsg-avatar-ring:      var(--body-bg);
+    --avmsg-sk-base:          color-mix(in srgb, var(--body-bg) 60%, #fff);
+    --avmsg-sk-shine:         color-mix(in srgb, var(--body-bg) 40%, #fff);
   }
 
   .AvocadoMessages-title { color: var(--heading-color, #e8e9f2); }
@@ -812,6 +818,14 @@
   .MessagesPage .MessageStream .ReplyPlaceholder .Post-header,
   .AvocadoMessages .MessageStream .ReplyPlaceholder .Post-header {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  // Inline reply textarea — force text/placeholder visible on dark backgrounds
+  .AvocadoMessages-inlineReply-input {
+    color: var(--avmsg-text) !important;
+    -webkit-text-fill-color: var(--avmsg-text) !important;
+    caret-color: var(--avmsg-text) !important;
+    &::placeholder { color: var(--avmsg-muted) !important; opacity: 1 !important; }
   }
 
   // Composer

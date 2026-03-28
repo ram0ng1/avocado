@@ -1020,51 +1020,6 @@ app.initializers.add(
       });
     });
 
-    // ── 24a. WebSocket: remove unlike notification from UI ────────────────────
-    // When the current user's post is unliked, the DB notification is already
-    // removed by flarum/likes. We listen on the private user channel to update
-    // the store in real-time so the bell badge and notification list stay in sync.
-    if (v2Enabled && app.pusher && typeof app.pusher.then === 'function') {
-      app.pusher.then(({ channels }) => {
-        if (!channels?.user || !app.session?.user) return;
-        channels.user.bind('postUnliked', (data) => {
-          const postId = String(data?.postId || '');
-          if (!postId) return;
-
-          // Try to find the notification in the local store.
-          // It may NOT be there if the user never opened the bell in this session,
-          // which happens when a like→unlike occurs very quickly.
-          const notif = app.store.all('notifications').find((n) =>
-            n.contentType?.() === 'postLiked' &&
-            String(n.subject?.()?.id?.() || '') === postId
-          );
-
-          if (notif) {
-            // Notification is in the store: remove it immediately
-            const notifId = notif.id?.();
-            if (notifId && app.store.data?.notifications) {
-              delete app.store.data.notifications[notifId];
-            }
-          }
-
-          // Clear the panel cache so it re-fetches from server on next open
-          if (app.notifications?.clear) app.notifications.clear();
-
-          // Re-fetch the current user from the server to get the accurate
-          // unreadNotificationCount — avoids blindly touching counts for
-          // unrelated notifications.
-          const userId = app.session?.user?.id?.();
-          if (userId) {
-            app.store.find('users', userId)
-              .then(() => m.redraw())
-              .catch(() => m.redraw());
-          } else {
-            m.redraw();
-          }
-        });
-      });
-    }
-
     // ── 25. Footer ────────────────────────────────────────────────────────────
     override(Footer.prototype, 'view', function () {
       return null;
@@ -1154,10 +1109,42 @@ app.initializers.add(
       }
     }
 
-    // ── MessageStream override: inject inline reply ──────────────────────────
+    // ── MessageStream skeleton — replaces native LoadingIndicator ────────────
+    const renderStreamSkeleton = () => (
+      <div className="AvocadoMessages-skeleton-dialog" style="flex:1;padding-top:0">
+        {[
+          { out: false, w1: '55%', w2: '40%' },
+          { out: true,  w1: '45%', w2: null   },
+          { out: false, w1: '60%', w2: '35%' },
+          { out: true,  w1: '50%', w2: '30%' },
+          { out: false, w1: '40%', w2: null   },
+          { out: true,  w1: '65%', w2: '20%' },
+        ].map((row, i) => (
+          <div key={i} className={'AvocadoMessages-skeleton-dialog-msg' + (row.out ? ' is-out' : '')}>
+            {!row.out && <div className="AvocadoMessages-skeleton-avatar AvocadoMessages-skeleton-avatar--sm" />}
+            <div className="AvocadoMessages-skeleton-dialog-bubble-wrap">
+              <div className="AvocadoMessages-skeleton-dialog-bubble" style={`width:${row.w1}`} />
+              {row.w2 && <div className="AvocadoMessages-skeleton-dialog-bubble" style={`width:${row.w2}`} />}
+            </div>
+            {row.out && <div className="AvocadoMessages-skeleton-avatar AvocadoMessages-skeleton-avatar--sm" />}
+          </div>
+        ))}
+      </div>
+    );
+
+    // ── MessageStream override: skeleton + inline reply ───────────────────────
     const applyMessageStreamOverride = (StreamClass) => {
       if (!StreamClass || StreamClass._avocadoStreamPatched) return;
       StreamClass._avocadoStreamPatched = true;
+
+      // Override view() to replace native LoadingIndicator with skeleton
+      override(StreamClass.prototype, 'view', function (original) {
+        if (this.attrs.state?.isLoading?.()) {
+          return <div className="MessageStream">{renderStreamSkeleton()}</div>;
+        }
+        return original();
+      });
+
       extend(StreamClass.prototype, 'content', function (items) {
         // Replace the ReplyPlaceholder item (key='reply') with our inline box
         const idx = items.findIndex(i => i && i.key === 'reply');
@@ -1168,7 +1155,25 @@ app.initializers.add(
             <div className="MessageStream-item" key="reply">
               <AvocadoInlineReply
                 dialog={dialog}
-                onSent={() => this.attrs.state.refresh().then(() => setTimeout(scrollToBottom, 60))}
+                onSent={() => {
+                  const state  = this.attrs.state;
+                  const dialog = this.attrs.dialog;
+                  state.refresh().then(() => {
+                    // Sync dialog.lastMessage to the newest loaded message so
+                    // content() doesn't show the spurious LoadingPost + button.
+                    try {
+                      const msgs = state.getAllItems();
+                      if (msgs && msgs.length) {
+                        const newest = msgs.reduce((a, b) => (a.number() > b.number() ? a : b));
+                        if (dialog.data?.relationships?.lastMessage) {
+                          dialog.data.relationships.lastMessage.data = { type: 'dialog-messages', id: newest.id() };
+                        }
+                      }
+                    } catch (_) {}
+                    setTimeout(scrollToBottom, 60);
+                    m.redraw();
+                  });
+                }}
               />
             </div>
           );
@@ -1181,6 +1186,16 @@ app.initializers.add(
       if (!MsgPage || MsgPage._avocadoOverridden) return;
       MsgPage._avocadoOverridden = true;
 
+      // Guard MessagesPage.onupdate — the extension reads this.element.querySelector(...)
+      // which crashes when element is not yet set (e.g. during skeleton render).
+      if (typeof MsgPage.prototype.onupdate === 'function') {
+        const _origOnUpdate = MsgPage.prototype.onupdate;
+        MsgPage.prototype.onupdate = function (vnode) {
+          if (!this.element) return;
+          try { _origOnUpdate.call(this, vnode); } catch (_) {}
+        };
+      }
+
       // Patch Message component: add Post--byCurrentUser when the message is
       // by the current user (the extension uses attrs.message, not attrs.post,
       // so Flarum core never adds this class automatically).
@@ -1190,8 +1205,22 @@ app.initializers.add(
           if (MessageClass && !MessageClass._avocadoPatched) {
             extend(MessageClass.prototype, 'classes', function (classes) {
               const msg = this.attrs.message;
-              if (msg && app.session.user && msg.user?.() === app.session.user) {
-                if (!classes.includes('Post--byCurrentUser')) classes.push('Post--byCurrentUser');
+              if (msg && app.session.user) {
+                const msgUserId = msg.user?.()?.id?.() ?? msg.attribute?.('userId');
+                const meId = app.session.user.id?.();
+                if (msgUserId && meId && String(msgUserId) === String(meId)) {
+                  if (!classes.includes('Post--byCurrentUser')) classes.push('Post--byCurrentUser');
+                }
+              }
+              // Messenger-style grouping: add Post--grouped when previous message
+              // is from the same user so we can hide the repeated avatar/name via CSS.
+              const prevMsg = this.attrs.prevMessage;
+              if (prevMsg && msg) {
+                const thisSender = String(msg.user?.()?.id?.() ?? msg.attribute?.('userId') ?? '');
+                const prevSender = String(prevMsg.user?.()?.id?.() ?? prevMsg.attribute?.('userId') ?? '');
+                if (thisSender && prevSender && thisSender === prevSender) {
+                  if (!classes.includes('Post--grouped')) classes.push('Post--grouped');
+                }
               }
             });
             MessageClass._avocadoPatched = true;
@@ -1201,49 +1230,170 @@ app.initializers.add(
         } catch (_) {}
       };
 
-      override(MsgPage.prototype, 'view', function () {
-        patchMessageClass();
-        if (!v2Enabled) return this.__originalView ? this.__originalView() : <div />;
+      // Module-level flag so it survives component remounts
+      let _msgPageFullyLoaded = false;
 
-        // Build nav — same filter logic as renderNavBar() in HomePage
-        let navEl = null;
+      // ── Mobile: don't auto-select first dialog (let user pick) ────────────
+      const _origInitDialog = MsgPage.prototype.initDialog;
+      MsgPage.prototype.initDialog = async function () {
+        const isMobile = window.innerWidth < 768;
+        if (isMobile && !m.route.param('id')) {
+          const title = app.translator.trans('flarum-messages.forum.messages_page.title', {}, true);
+          this.selectedDialog(null);
+          this.currentDialogId = null;
+          app.setTitle(title);
+          m.redraw();
+          return;
+        }
         try {
-          const itemList = IndexSidebar.prototype.navItems.call({});
-          itemList.remove('tags');
-          itemList.remove('popularHome');
-          itemList.remove('allDiscussions');
-          const navItems = itemList.toArray().filter((item) => {
-            if (!item || typeof item.tag === 'string') return false;
-            if (item.attrs && 'model' in item.attrs) return false;
-            const href = item.attrs?.href || '';
-            if (/\/t\//.test(href)) return false;
-            return true;
-          });
-          if (navItems.length) {
-            navEl = <nav className="AvocadoHomeNav" aria-label="Navigation">{navItems}</nav>;
+          await _origInitDialog.call(this);
+          // If the dialog was found in store but users weren't included
+          // (e.g. fresh from MessageComposer POST), re-fetch with users.
+          const dialog = this.selectedDialog?.();
+          if (dialog && (!dialog.users() || dialog.users().length === 0)) {
+            const fresh = await app.store.find('dialogs', dialog.id(), { include: 'users.groups' });
+            if (fresh) {
+              this.selectedDialog(fresh);
+              m.redraw();
+            }
           }
-        } catch (_) {}
+        } finally {
+          _msgPageFullyLoaded = true;
+          m.redraw();
+        }
+      };
 
-        // Pull the extension's own rendered pieces from contentItems()
+      // ── Chat-switch skeleton (mimics discussion post skeleton) ──────────────
+      const renderDialogSwitchSkeleton = () => (
+        <div className="AvocadoMessages-skeleton-dialog">
+          {/* Fake header */}
+          <div className="AvocadoMessages-skeleton-dialog-header">
+            <div className="AvocadoMessages-skeleton-avatar" />
+            <div className="AvocadoMessages-skeleton-dialog-header-info">
+              <div className="AvocadoMessages-skeleton-line AvocadoMessages-skeleton-line--name" />
+            </div>
+          </div>
+          {/* Fake messages */}
+          {[
+            { out: false, w1: '55%', w2: '40%' },
+            { out: true,  w1: '45%', w2: null  },
+            { out: false, w1: '60%', w2: '35%' },
+            { out: true,  w1: '50%', w2: '30%' },
+            { out: false, w1: '40%', w2: null  },
+            { out: true,  w1: '65%', w2: '20%' },
+          ].map((row, i) => (
+            <div key={i} className={'AvocadoMessages-skeleton-dialog-msg' + (row.out ? ' is-out' : '')}>
+              {!row.out && <div className="AvocadoMessages-skeleton-avatar AvocadoMessages-skeleton-avatar--sm" />}
+              <div className="AvocadoMessages-skeleton-dialog-bubble-wrap">
+                <div className="AvocadoMessages-skeleton-dialog-bubble" style={`width:${row.w1}`} />
+                {row.w2 && <div className="AvocadoMessages-skeleton-dialog-bubble" style={`width:${row.w2}`} />}
+              </div>
+              {row.out && <div className="AvocadoMessages-skeleton-avatar AvocadoMessages-skeleton-avatar--sm" />}
+            </div>
+          ))}
+        </div>
+      );
+
+      // ── Skeleton helpers ────────────────────────────────────────────────────
+      const renderMsgListSkeleton = () => (
+        <div className="AvocadoMessages-skeleton-list">
+          {[1,2,3,4,5].map(i => (
+            <div key={i} className="AvocadoMessages-skeleton-item">
+              <div className="AvocadoMessages-skeleton-avatar" />
+              <div className="AvocadoMessages-skeleton-body">
+                <div className="AvocadoMessages-skeleton-line AvocadoMessages-skeleton-line--name" />
+                <div className="AvocadoMessages-skeleton-line AvocadoMessages-skeleton-line--msg" />
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+
+      const renderMsgChatSkeleton = () => (
+        <div className="AvocadoMessages-skeleton-chat">
+          {/* Received bubbles */}
+          <div className="AvocadoMessages-skeleton-bubble AvocadoMessages-skeleton-bubble--in">
+            <div className="AvocadoMessages-skeleton-avatar" />
+            <div className="AvocadoMessages-skeleton-bubble-body">
+              <div className="AvocadoMessages-skeleton-line AvocadoMessages-skeleton-line--name" />
+              <div className="AvocadoMessages-skeleton-line AvocadoMessages-skeleton-line--bubble-lg" />
+            </div>
+          </div>
+          <div className="AvocadoMessages-skeleton-bubble AvocadoMessages-skeleton-bubble--out">
+            <div className="AvocadoMessages-skeleton-bubble-body">
+              <div className="AvocadoMessages-skeleton-line AvocadoMessages-skeleton-line--bubble-md" />
+            </div>
+            <div className="AvocadoMessages-skeleton-avatar" />
+          </div>
+          <div className="AvocadoMessages-skeleton-bubble AvocadoMessages-skeleton-bubble--in">
+            <div className="AvocadoMessages-skeleton-avatar" />
+            <div className="AvocadoMessages-skeleton-bubble-body">
+              <div className="AvocadoMessages-skeleton-line AvocadoMessages-skeleton-line--bubble-sm" />
+              <div className="AvocadoMessages-skeleton-line AvocadoMessages-skeleton-line--bubble-lg" />
+            </div>
+          </div>
+          <div className="AvocadoMessages-skeleton-bubble AvocadoMessages-skeleton-bubble--out">
+            <div className="AvocadoMessages-skeleton-bubble-body">
+              <div className="AvocadoMessages-skeleton-line AvocadoMessages-skeleton-line--bubble-sm" />
+            </div>
+            <div className="AvocadoMessages-skeleton-avatar" />
+          </div>
+        </div>
+      );
+
+      override(MsgPage.prototype, 'view', function (original) {
+        patchMessageClass();
+        if (!v2Enabled) return original();
+
+        // Show full skeleton only on very first load (before any dialog has been fetched)
+        const isLoading = app.dialogs.isLoading() && !_msgPageFullyLoaded;
+
+        // Show switch skeleton whenever the URL dialog ID doesn't match the
+        // currently loaded dialog — purely synchronous, no async flag needed.
+        const routeId    = String(m.route.param('id') ?? '');
+        const loadedId   = String(this.selectedDialog?.()?.id?.() ?? '');
+        const isSwitching = !isLoading && !!routeId && routeId !== loadedId;
+
+        const hasDialog = (!!this.selectedDialog?.() || isSwitching) && !isLoading;
+        const cardClass      = 'AvocadoMessages-card' + (hasDialog ? ' AvocadoMessages-card--onDialog' : '');
+
         const items = this.contentItems();
         const sidebarVnode = items.get('sidebar');
         const dialogVnode  = items.get('dialog');
 
+        const self = this;
+        const handleBackClick = (e) => {
+          if (e.target.closest('.DialogSection-back')) {
+            e.preventDefault();
+            e.stopPropagation();
+            self.selectedDialog(null);
+            self.currentDialogId = null;
+            const title = app.translator.trans('flarum-messages.forum.messages_page.title', {}, true);
+            app.setTitle(title);
+            // Navigate to base messages route so the URL no longer has an id
+            // and initDialog won't re-load the previous conversation.
+            try {
+              m.route.set(app.route('messages'));
+            } catch (_) {
+              m.route.set('/messages');
+            }
+          }
+        };
+
         return (
           <div className="AvocadoMessages MessagesPage">
-            {/* IndexSidebar helper: App-titleControl escapes position:absolute to mobile header */}
             <div className="AvocadoNav-helper"><IndexSidebar key={m.route.get()} /></div>
-            {/* Head + nav: constrained to max-width, same as homepage */}
-            <div className="AvocadoMessages-inner">
-              <div className="AvocadoMessages-head">
-                <h1 className="AvocadoMessages-title">{app.translator.trans('flarum-messages.forum.messages_page.title')}</h1>
+            <div className={cardClass}>
+              <div className="AvocadoMessages-listCol">
+                {isLoading ? renderMsgListSkeleton() : sidebarVnode}
               </div>
-              {navEl}
-            </div>
-            {/* Card: full page width, no max-width constraint */}
-            <div className="AvocadoMessages-card">
-              <div className="AvocadoMessages-listCol">{sidebarVnode}</div>
-              <div className="AvocadoMessages-chatCol">{dialogVnode}</div>
+              <div className="AvocadoMessages-chatCol" onclick={handleBackClick}>
+                {isLoading
+                  ? renderMsgChatSkeleton()
+                  : isSwitching
+                    ? renderDialogSwitchSkeleton()
+                    : dialogVnode}
+              </div>
             </div>
           </div>
         );
@@ -1267,6 +1417,57 @@ app.initializers.add(
         }
       };
     }
+
+    // ── 25. Notification polling (no WebSocket required) ─────────────────────
+    // Polls the current user's data every 30 s to refresh unread notification
+    // and message counts. Only runs when the tab is visible and the user is
+    // logged in. Skips when the native Pusher/Echo WebSocket is already active.
+    (() => {
+      const INTERVAL_MS = 30_000;
+
+      const isWebSocketActive = () => {
+        try {
+          // Flarum's pusher extension sets app.pusher when connected
+          return !!(window.Echo || app.pusher || app._pusher);
+        } catch (_) { return false; }
+      };
+
+      const poll = () => {
+        if (document.hidden) return;
+        if (!app.session?.user) return;
+        if (isWebSocketActive()) return;
+
+        const userId = app.session.user.id?.();
+        if (!userId) return;
+
+        // Refresh the current user record — this updates unreadNotificationCount
+        // and newNotificationCount, which drives the bell badge in the header.
+        app.request({
+          method: 'GET',
+          url: `${app.forum.attribute('apiUrl')}/users/${userId}`,
+          errorHandler: () => {},
+        }).then(payload => {
+          app.store.pushPayload(payload);
+          m.redraw();
+        }).catch(() => {});
+
+        // Also refresh unread dialog count if on the messages page
+        if (app.dialogs && typeof app.dialogs.load === 'function') {
+          try { app.dialogs.load?.(); } catch (_) {}
+        }
+      };
+
+      // Start polling after a short delay so boot completes first
+      setTimeout(() => {
+        poll();
+        setInterval(poll, INTERVAL_MS);
+      }, 5000);
+
+      // Also poll immediately when the tab becomes visible again after being hidden
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) poll();
+      });
+    })();
 
     // ── 24. DiscussionListItem infoItems (excerpt) ────────────────────────────
     extend(DiscussionListItem.prototype, 'infoItems', function (items) {

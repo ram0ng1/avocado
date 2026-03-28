@@ -836,7 +836,12 @@
   }
 }
 
-// ReplyPlaceholder — reset to Flarum default (no custom overrides)
+// ReplyPlaceholder — add breathing room below the typing indicator
+@media @desktop-up {
+  .ReplyPlaceholder {
+    margin-top: 16px;
+  }
+}
 
 // ── PostStream load-more button — specificity 0,4,0 vs Flarum's .Button 0,1,0
 .Page.DiscussionPage .PostStream-loadMore {
@@ -1140,5 +1145,275 @@
     .AvocadoSkeleton-stream { padding: 0 14px; }
     .AvocadoSkeleton-post { padding: 18px 0; }
     .AvocadoSkeleton-line--lg { height: 56px; }
+  }
+}
+
+@media @phone {
+  .Page.DiscussionPage .CommentPost {
+    position: relative;
+    padding-bottom: 10% !important;
+  }
+
+  .Post-actions {
+    position: relative;
+    padding-top: 3% !important;
+  }
+}
+
+// ── DiscussionList sidebar inside DiscussionPage — Avocado design ──────────────
+// Applies to the sliding panel (App-drawer) that shows the discussion list
+// while reading a thread on mobile, and to the sidebar on tablet/desktop.
+
+.DiscussionPage .DiscussionList,
+.App-drawer .DiscussionList {
+
+  background: #f6f6fa;
+  padding: 10px 10px 20px;
+
+  // ── Container: no extra margin ──────────────────────────────────────────────
+  &-discussions > li {
+    list-style: none;
+    margin: 0 0 6px;
+  }
+
+  // ── Each item ───────────────────────────────────────────────────────────────
+  .DiscussionListItem {
+    position: relative;
+    background: #fff;
+    border: 1px solid #eaeaf0;
+    border-radius: 14px;
+    margin: 0;
+    transition: box-shadow 0.18s ease, border-color 0.18s ease;
+    overflow: visible;
+
+    &:hover {
+      border-color: #d8d8e4;
+      box-shadow: 0 4px 14px rgba(26, 26, 36, 0.07);
+    }
+
+    // ── Active / selected ────────────────────────────────────────────────────
+    &.active {
+      border-color: var(--primary-color) !important;
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 18%, transparent) !important;
+    }
+
+    // ── Content wrapper ──────────────────────────────────────────────────────
+    .DiscussionListItem-content {
+      display: flex;
+      align-items: flex-start;
+      padding: 11px 12px 11px 11px;
+      gap: 0;
+      overflow: visible;
+      border-radius: 14px;
+    }
+
+    // ── Avatar column ────────────────────────────────────────────────────────
+    .DiscussionListItem-author {
+      flex-shrink: 0;
+      margin-right: 10px;
+      float: none;
+
+      .Avatar {
+        width: 38px !important;
+        height: 38px !important;
+        min-width: 38px;
+        border-radius: 50% !important;
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        // Restore Flarum's own --avatar-bg instead of overriding with body-bg
+        background-color: var(--avatar-bg) !important;
+        box-shadow: none !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+
+      // badges (sticky, locked, etc.)
+      .DiscussionListItem-badges {
+        position: absolute;
+        right: -6px;
+        top: -3px;
+        margin: 0;
+        float: none;
+
+        .Badge {
+          --size: 18px;
+          width: var(--size);
+          height: var(--size);
+          line-height: var(--size);
+          font-size: 9px;
+        }
+      }
+    }
+
+    // ── Main body ────────────────────────────────────────────────────────────
+    .DiscussionListItem-main {
+      flex: 1;
+      min-width: 0;
+      padding: 0;
+      margin: 0;
+    }
+
+    // ── Title ────────────────────────────────────────────────────────────────
+    .DiscussionListItem-title {
+      font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #1a1b21 !important;
+      line-height: 1.35;
+      margin: 0 0 5px;
+      white-space: normal;
+      overflow: hidden;
+      text-align: left;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    // Unread dot
+    &--unread .DiscussionListItem-title::after {
+      --size: 7px;
+      content: "";
+      display: inline-block;
+      width: var(--size);
+      height: var(--size);
+      border-radius: 50%;
+      background: var(--primary-color);
+      margin-left: 5px;
+      margin-bottom: 1px;
+      vertical-align: middle;
+    }
+
+    // ── Info row (tags, replied by, excerpt) ─────────────────────────────────
+    .DiscussionListItem-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 3px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 11.5px;
+      color: #8f9097;
+      text-align: left;
+
+      li { margin: 0; list-style: none; }
+    }
+
+    // Tags — show max 3, hide the rest
+    .item-tags {
+      text-align: left;
+      width: 100%;
+
+      .TagsLabel {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .TagLabel {
+        font-size: 10.5px;
+        font-weight: 700;
+        border-radius: 999px;
+        padding: 2px 8px 2px 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        line-height: 1.6;
+        flex-shrink: 0;
+        white-space: nowrap;
+
+        .TagLabel-icon { font-size: 9px; }
+
+        // Hide 4th tag onwards
+        &:nth-child(n+4) {
+          display: none !important;
+        }
+      }
+    }
+
+    // "X replied Y ago"
+    .item-terminalPost {
+      color: #8f9097;
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1.4;
+      text-align: left;
+
+      .username { color: #43454e; font-weight: 600; }
+      .icon { font-size: 9px; margin-right: 2px; }
+    }
+
+    // Excerpt
+    .item-excerpt {
+      font-size: 11px;
+      color: #a0a0ac;
+      line-height: 1.45;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin: 0;
+      text-align: left;
+    }
+
+    // ── Stats (comment count) ────────────────────────────────────────────────
+    .DiscussionListItem-stats {
+      flex-shrink: 0;
+      align-self: flex-start;
+      margin-left: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .DiscussionListItem-stats-item {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      color: #a0a0ac;
+      font-size: 11.5px;
+      font-weight: 600;
+      margin: 0;
+
+      .DiscussionListItem-stats-item-icon { font-size: 12px; }
+    }
+
+    // ── Controls (ellipsis "...") — absolute top-right corner ────────────────
+    .DiscussionListItem-controls {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 2;
+
+      .Dropdown-toggle {
+        color: #b0b0bc;
+        border-radius: 8px;
+        padding: 4px 7px;
+        line-height: 1;
+        font-size: 14px;
+
+        &:hover { color: #43454e; background: #f2f2f6; }
+      }
+    }
+  }
+
+  // ── Load more button ─────────────────────────────────────────────────────────
+  .DiscussionList-loadMore .Button {
+    width: 100%;
+    border-radius: 999px;
+    border: 1px solid #eaeaf0;
+    background: #fff;
+    color: #43454e;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 8px 0;
+    margin-top: 4px;
+
+    &:hover {
+      background: #f6f6fa;
+      border-color: #d8d8e4;
+    }
   }
 }
