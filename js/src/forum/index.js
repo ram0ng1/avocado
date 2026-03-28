@@ -1071,8 +1071,138 @@ app.initializers.add(
     });
 
     // ── 26. MessagesPage: Avocado design integration ──────────────────────────
-    if (MessagesPage) {
-      override(MessagesPage.prototype, 'view', function () {
+    // MessagesPage lives in a lazy webpack chunk (chunk 301 of flarum-messages).
+    // At initializer time flarum.reg.get() returns undefined because the chunk
+    // hasn't loaded yet.  We intercept flarum.reg.add() so the override is
+    // applied the instant the chunk evaluates — whether that happens before or
+    // after this initializer runs.
+
+    // ── Inline reply component ───────────────────────────────────────────────
+    // Replaces the ReplyPlaceholder+Composer combo with a real in-place textarea.
+    class AvocadoInlineReply {
+      oninit(vnode) {
+        this.value   = '';
+        this.sending = false;
+      }
+      view(vnode) {
+        const { dialog, onSent } = vnode.attrs;
+        const user = app.session.user;
+        const disabled = this.sending || !this.value.trim();
+        return (
+          <div className="AvocadoMessages-inlineReply">
+            {user && <Avatar user={user} />}
+            <div className="AvocadoMessages-inlineReply-wrap">
+              <textarea
+                className="AvocadoMessages-inlineReply-input"
+                placeholder={app.translator.trans('flarum-messages.forum.composer.placeholder')}
+                value={this.value}
+                rows="1"
+                oninput={(e) => {
+                  this.value = e.target.value;
+                  // auto-grow
+                  e.target.style.height = 'auto';
+                  e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                }}
+                onkeydown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    this._send(dialog, onSent);
+                  }
+                }}
+              />
+              <button
+                className={'AvocadoMessages-inlineReply-send' + (disabled ? ' disabled' : '')}
+                disabled={disabled}
+                onclick={() => this._send(dialog, onSent)}
+                title="Send"
+              >
+                <i className="fas fa-paper-plane" />
+              </button>
+            </div>
+          </div>
+        );
+      }
+      _send(dialog, onSent) {
+        const text = this.value.trim();
+        if (!text || this.sending) return;
+        this.sending = true;
+        m.redraw();
+        // Use app.request directly to guarantee correct JSON:API relationship serialization.
+        // Model.save({ dialog }) does not reliably serialize Model instances as relationships.
+        app.request({
+          method: 'POST',
+          url: `${app.forum.attribute('apiUrl')}/dialog-messages`,
+          body: {
+            data: {
+              type: 'dialog-messages',
+              attributes: { content: text },
+              relationships: {
+                dialog: { data: { type: 'dialogs', id: String(dialog.id()) } },
+              },
+            },
+          },
+        }).then((response) => {
+          try { app.store.pushPayload(response); } catch (_) {}
+          this.value   = '';
+          this.sending = false;
+          if (typeof onSent === 'function') onSent();
+          m.redraw();
+        }).catch(() => {
+          this.sending = false;
+          m.redraw();
+        });
+      }
+    }
+
+    // ── MessageStream override: inject inline reply ──────────────────────────
+    const applyMessageStreamOverride = (StreamClass) => {
+      if (!StreamClass || StreamClass._avocadoStreamPatched) return;
+      StreamClass._avocadoStreamPatched = true;
+      extend(StreamClass.prototype, 'content', function (items) {
+        // Replace the ReplyPlaceholder item (key='reply') with our inline box
+        const idx = items.findIndex(i => i && i.key === 'reply');
+        if (idx >= 0 && app.session.user?.canSendAnyMessage?.()) {
+          const dialog = this.attrs.dialog;
+          const scrollToBottom = () => { try { this.scrollToBottom(); } catch (_) {} };
+          items[idx] = (
+            <div className="MessageStream-item" key="reply">
+              <AvocadoInlineReply
+                dialog={dialog}
+                onSent={() => this.attrs.state.refresh().then(() => setTimeout(scrollToBottom, 60))}
+              />
+            </div>
+          );
+        }
+        return items;
+      });
+    };
+
+    const applyMessagesPageOverride = (MsgPage) => {
+      if (!MsgPage || MsgPage._avocadoOverridden) return;
+      MsgPage._avocadoOverridden = true;
+
+      // Patch Message component: add Post--byCurrentUser when the message is
+      // by the current user (the extension uses attrs.message, not attrs.post,
+      // so Flarum core never adds this class automatically).
+      const patchMessageClass = () => {
+        try {
+          const MessageClass = flarum.reg.get('flarum-messages', 'forum/components/Message');
+          if (MessageClass && !MessageClass._avocadoPatched) {
+            extend(MessageClass.prototype, 'classes', function (classes) {
+              const msg = this.attrs.message;
+              if (msg && app.session.user && msg.user?.() === app.session.user) {
+                if (!classes.includes('Post--byCurrentUser')) classes.push('Post--byCurrentUser');
+              }
+            });
+            MessageClass._avocadoPatched = true;
+          }
+          const StreamClass = flarum.reg.get('flarum-messages', 'forum/components/MessageStream');
+          applyMessageStreamOverride(StreamClass);
+        } catch (_) {}
+      };
+
+      override(MsgPage.prototype, 'view', function () {
+        patchMessageClass();
         if (!v2Enabled) return this.__originalView ? this.__originalView() : <div />;
 
         // Build nav — same filter logic as renderNavBar() in HomePage
@@ -1103,19 +1233,39 @@ app.initializers.add(
           <div className="AvocadoMessages MessagesPage">
             {/* IndexSidebar helper: App-titleControl escapes position:absolute to mobile header */}
             <div className="AvocadoNav-helper"><IndexSidebar key={m.route.get()} /></div>
+            {/* Head + nav: constrained to max-width, same as homepage */}
             <div className="AvocadoMessages-inner">
               <div className="AvocadoMessages-head">
-                <h1 className="AvocadoMessages-title">{app.translator.trans('flarum-messages.forum.list.nav_link')}</h1>
+                <h1 className="AvocadoMessages-title">{app.translator.trans('flarum-messages.forum.messages_page.title')}</h1>
               </div>
               {navEl}
-              <div className="AvocadoMessages-card">
-                <div className="AvocadoMessages-listCol">{sidebarVnode}</div>
-                <div className="AvocadoMessages-chatCol">{dialogVnode}</div>
-              </div>
+            </div>
+            {/* Card: full page width, no max-width constraint */}
+            <div className="AvocadoMessages-card">
+              <div className="AvocadoMessages-listCol">{sidebarVnode}</div>
+              <div className="AvocadoMessages-chatCol">{dialogVnode}</div>
             </div>
           </div>
         );
       });
+    };
+
+    // Case A: chunk already loaded (e.g. SSR or eager bundle)
+    const MsgPageSync = flarum.reg.get('flarum-messages', 'forum/components/MessagesPage');
+    if (MsgPageSync) {
+      applyMessagesPageOverride(MsgPageSync);
+    } else {
+      // Case B: lazy chunk — intercept flarum.reg.add() to catch the moment
+      // the chunk evaluates and registers the component.
+      const _origRegAdd = flarum.reg.add.bind(flarum.reg);
+      flarum.reg.add = function (extId, compName, comp) {
+        _origRegAdd(extId, compName, comp);
+        if (extId === 'flarum-messages' && compName === 'forum/components/MessagesPage') {
+          applyMessagesPageOverride(comp);
+          // Restore original so we don't intercept unrelated calls forever
+          flarum.reg.add = _origRegAdd;
+        }
+      };
     }
 
     // ── 24. DiscussionListItem infoItems (excerpt) ────────────────────────────

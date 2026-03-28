@@ -16,6 +16,14 @@
   padding: 20px 0 !important;
 }
 
+@media @phone {
+  // On mobile the modal is shorter (no side panel), so center it like Flarum default
+  .Modal-backdrop:has(.AvocadoAuth-panel) {
+    align-items: center !important;
+    padding: 12px 0 !important;
+  }
+}
+
 // ─── Side-panel ───────────────────────────────────────────────────────────────
 
 .AvocadoAuth-panel {
@@ -185,21 +193,6 @@
     margin: 12px auto !important;
   }
 
-  // Reduce inner padding so form content fits
-  .Modal-content:has(.AvocadoAuth-panel) {
-    padding: 80px 18px 24px !important;
-  }
-
-  // Move form icon closer to the top-left on small screens
-  .AvocadoAuth-formIcon {
-    top: 20px;
-    left: 18px;
-    width: 40px;
-    height: 40px;
-    font-size: 17px;
-    border-radius: 11px;
-  }
-
   // Ensure the modal fills well on very small screens (e.g. 320px)
   .Modal--small .Modal-dialog,
   .LogInModal.Modal--small .Modal-dialog,
@@ -207,6 +200,24 @@
   .ForgotPasswordModal.Modal--small .Modal-dialog {
     width: calc(100vw - 24px) !important;
     min-width: 0 !important;
+  }
+
+  // On mobile: icon centered in-flow, below the absolute Modal-header
+  // The Modal-header is ~72px tall (position:absolute, covers the top).
+  // padding-top pushes the flow start below the header; margin adds the visible gap.
+  .AvocadoAuth-formIcon {
+    position: static;
+    display: flex;
+    margin: 0 auto 20px;
+    width: 52px;
+    height: 52px;
+    font-size: 22px;
+    border-radius: 14px;
+  }
+
+  // padding-top = header height (~72px) + small gap (6px) = 78px
+  .Modal-content:has(.AvocadoAuth-panel) {
+    padding: 78px 20px 28px !important;
   }
 }
 

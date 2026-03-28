@@ -121,30 +121,48 @@
 }
 
 .AvocadoTagsPage-tagCard-icon {
-  min-width: 48px;
-  min-height: 48px;
-  width: auto;
-  height: auto;
-  border-radius: 14px;
-  flex-shrink: 0;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  width: fit-content;
+  height: auto;
+  min-width: 2.4em;
+  min-height: 2.4em;
+  padding: 0.6em;
+  border-radius: 14px;
   font-size: 20px;
   background: var(--icon-bg, #f0f0f5);
   color: var(--icon-color, #8f9097);
-  overflow: hidden;
-  padding: 4px;
   box-sizing: border-box;
+  // SEM overflow:hidden — cresce com o ícone
 
-  // FA icons keep original size; image logos expand the container
+  i {
+    font-size: 1.1em;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    height: auto;
+    flex-shrink: 0;
+  }
+
+  svg {
+    display: block;
+    width: 1.1em;
+    height: 1.1em;
+    flex-shrink: 0;
+  }
+
   img {
     display: block;
     width: auto;
     height: auto;
-    max-width: 80px;
-    max-height: 80px;
+    max-width: 4em;
+    max-height: 4em;
     object-fit: contain;
+    flex-shrink: 0;
   }
 }
 
@@ -413,6 +431,12 @@
   font-size: 20px;
   background: rgba(255,255,255,0.2);
   color: #fff;
+
+  i {
+    max-height: 44px !important;
+    width: fit-content !important;
+    padding: 0 10px;
+  }
 }
 
 .AvocadoTagPage-hero-text {

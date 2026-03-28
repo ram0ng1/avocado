@@ -344,6 +344,20 @@ export function buildHero(user, isEditable, controls = []) {
             </div>
           )}
         </div>
+        {/* FoF User Bio — rendered below the avatar/name row inside the hero */}
+        {(() => {
+          try {
+            const UserBio = flarum.reg.get('fof-user-bio', 'forum/components/UserBio');
+            if (UserBio && user.attribute('canViewBio')) {
+              return (
+                <div className="AvocadoUserPage-hero-bio">
+                  <UserBio user={user} editable={isEditable} />
+                </div>
+              );
+            }
+          } catch (_) {}
+          return null;
+        })()}
       </div>
     </div>
   );

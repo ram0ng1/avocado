@@ -2,6 +2,7 @@ import app from 'flarum/forum/app';
 import Page from 'flarum/common/components/Page';
 import Avatar from 'flarum/common/components/Avatar';
 import Tooltip from 'flarum/common/components/Tooltip';
+import listItems from 'flarum/common/helpers/listItems';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import DiscussionListState from 'flarum/forum/states/DiscussionListState';
 import PostListState from 'flarum/forum/states/PostListState';
@@ -536,6 +537,12 @@ export default class AvocadoSearchPage extends Page {
               {q ? highlight(dname, q) : dname}
             </a>
             <span className="AvocadoSearch-userCard-handle">@{username}</span>
+            {(() => {
+              const badges = user.badges?.()?.toArray?.() ?? [];
+              return badges.length > 0
+                ? <ul className="badges AvocadoSearch-userCard-badges">{listItems(badges)}</ul>
+                : null;
+            })()}
           </div>
           <a
             className="AvocadoHome-replyBtn AvocadoSearch-userCard-viewBtn"

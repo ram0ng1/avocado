@@ -690,6 +690,29 @@
   align-items: center;
   gap: 4px;
   flex-wrap: wrap;
+
+  // Ensure the ul added by Flarum/extensions also wraps and doesn't overflow
+  > ul {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    > li {
+      display: flex;
+      align-items: center;
+    }
+  }
+}
+
+// Ensure the post bottom padding grows with the footer (no overlap on next post)
+.Page.DiscussionPage .CommentPost {
+  padding-bottom: 24px;
+  // overflow:visible so a tall footer is never clipped
+  overflow: visible;
 }
 
 .Page.DiscussionPage .Post-footer .Button.Button--link,
@@ -735,36 +758,7 @@
   color: var(--primary-color);
 }
 
-// ── Post-footer + Post-actions: same row on mobile ───────────────────────────
-@media @phone {
-  .Page.DiscussionPage .CommentPost .Post-main {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
 
-    // Header and body take full width
-    > .Post-header,
-    > .Post-body {
-      flex: 0 0 100%;
-    }
-
-    // Footer (likes) grows to fill remaining space on the left
-    > .Post-footer {
-      flex: 1 1 auto;
-      min-width: 0;
-      margin-top: 8px;
-    }
-
-    // Actions (Reply/Share) stay on the right, same row as footer
-    > .Post-actions {
-      flex-shrink: 0;
-      margin-top: 8px;
-      margin-bottom: 0;
-      float: none;
-    }
-  }
-}
 
 // ── EventPost — .Page.DiscussionPage .EventPost has 0,3,0 vs Flarum's 0,1,0 ────
 .Page.DiscussionPage .EventPost {

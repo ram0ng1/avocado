@@ -374,3 +374,121 @@ svg.Header-logo {
   margin: 0 6px;
 }
 
+// ─── Composer: tag pills wrap to next line instead of overflowing ─────────────
+// Flarum renders tags as a <li class="item-tags"> inside .ComposerBody-header (a <ul>).
+// The default <li> is display:inline-block which keeps all tags on one line.
+// We switch to display:block + flex so tags flow onto multiple lines naturally.
+.ComposerBody-header > li.item-tags {
+  display: block;
+  width: 100%;
+  margin-right: 0;
+  white-space: normal;
+  overflow: visible;
+
+  // The TagControl inner container — make it wrap
+  > .TagControl,
+  > .TagsInput,
+  > span,
+  > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    white-space: normal;
+  }
+}
+
+// Allow the composer content to grow in height when tags wrap
+.Composer-body .ComposerBody-header {
+  overflow: visible;
+}
+
+// ─── Settings & Security pages: match avocado design system ──────────────────
+// These pages are wrapped in .AvocadoUserPage via the UserPage override.
+// Override Flarum's native .SettingsPage and .UserSecurityPage layout to
+// match the card-based look of the rest of the user profile pages.
+
+.AvocadoUserPage .SettingsPage,
+.AvocadoUserPage .UserSecurityPage {
+  margin-top: 0;
+
+  // Top-level section list
+  > ul {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    > li {
+      list-style: none;
+      margin: 0;
+    }
+  }
+
+  // Native HTML <fieldset> — same card look as .FieldSet component
+  fieldset {
+    border: 1px solid var(--home-border, #eaeaf0);
+    border-radius: 18px;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+
+    &:hover {
+      border-color: #dfdfe6;
+      box-shadow: 0 8px 24px rgba(26, 26, 36, 0.06);
+    }
+
+    // Section title (legend or label)
+    > legend,
+    > label:first-child {
+      float: none;
+      width: 100%;
+      padding: 14px 20px 12px;
+      border-bottom: 1px solid #f4f4f8;
+      font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--home-muted, #8f9097);
+      box-sizing: border-box;
+      margin: 0;
+    }
+
+    // Items inside fieldset
+    > ul {
+      list-style: none;
+      padding: 16px 20px 18px;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+
+      > li {
+        list-style: none;
+        margin: 0;
+      }
+    }
+  }
+}
+
+@media @phone {
+  .AvocadoUserPage .SettingsPage fieldset,
+  .AvocadoUserPage .UserSecurityPage fieldset {
+    border-radius: 14px;
+  }
+}
+
+// ─── Font Awesome Kit icons (.fa-kit) ─────────────────────────────────────────
+// Custom kit icons are SVG-based and behave differently from standard FA glyphs.
+// Allow them to size naturally rather than being clipped by fixed width/height.
+.fa-kit {
+  max-height: 44px !important;
+  width: fit-content !important;
+  padding: 0 10px;
+}
+

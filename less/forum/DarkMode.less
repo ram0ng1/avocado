@@ -758,94 +758,74 @@
   }
 
   // ── MessagesPage ──────────────────────────────────────────────────────────────
+  // Dark tokens for the "Signal" chat design
 
-  .MessagesPage { background: var(--body-bg); }
+  .AvocadoMessages,
+  .MessagesPage {
+    --avmsg-bg:               color-mix(in srgb, var(--body-bg) 95%, #000);
+    --avmsg-sidebar-bg:       var(--body-bg);
+    --avmsg-card-bg:          color-mix(in srgb, var(--body-bg) 70%, #fff);
+    --avmsg-header-bg:        rgba(0, 0, 0, 0.3);
+    --avmsg-border:           rgba(255, 255, 255, 0.07);
+    --avmsg-text:             var(--heading-color, #e8e9f2);
+    --avmsg-muted:            var(--muted-color);
+    --avmsg-item-hover:       rgba(255, 255, 255, 0.05);
+    --avmsg-item-active:      rgba(255, 255, 255, 0.08);
+    --avmsg-bubble-in:        color-mix(in srgb, var(--body-bg) 55%, #fff);
+    --avmsg-bubble-in-border: rgba(255, 255, 255, 0.07);
+    --avmsg-bubble-text:      var(--text-color);
+    --avmsg-input-bg:         color-mix(in srgb, var(--body-bg) 55%, #fff);
+    --avmsg-input-border:     rgba(255, 255, 255, 0.08);
+    --avmsg-search-bg:        rgba(255, 255, 255, 0.07);
+    --avmsg-send-btn:         var(--primary-color);
+    --avmsg-send-icon:        #ffffff;
+    --avmsg-unread-bg:        var(--primary-color);
+  }
 
   .AvocadoMessages-title { color: var(--heading-color, #e8e9f2); }
+  .AvocadoMessages-inner .AvocadoHomeNav { border-bottom-color: rgba(255, 255, 255, 0.08); }
 
-  .AvocadoMessages-card {
-    background: var(--body-bg);
-    border-color: rgba(255, 255, 255, 0.08);
+  .DialogListItem-button.active {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
   }
 
-  .AvocadoMessages-inner .AvocadoHomeNav {
-    border-bottom-color: rgba(255, 255, 255, 0.08);
+  .MessageStream .PostStream-timeGap::before,
+  .MessageStream .PostStream-timeGap::after {
+    background: rgba(255, 255, 255, 0.07);
   }
 
-  .AvocadoMessages-listCol {
-    background: var(--body-bg);
-    border-right-color: rgba(255, 255, 255, 0.08);
-
-    .IndexPage-toolbar {
-      border-bottom-color: rgba(255, 255, 255, 0.08);
-      &::before { color: var(--heading-color, #e8e9f2); }
-
-      .Dropdown > .Button,
-      .Button.Dropdown-toggle {
-        background: rgba(255, 255, 255, 0.07) !important;
-        color: var(--muted-color) !important;
-      }
-    }
-
-    .Dropdown-menu {
-      background: var(--body-bg) !important;
-      border-color: rgba(255, 255, 255, 0.08) !important;
-      li > a:hover, li > button:hover { background: rgba(255, 255, 255, 0.06) !important; }
-    }
-  }
-
-  .DialogListItem {
-    &-button:hover, &-button:focus { background: rgba(255, 255, 255, 0.05) !important; }
-    &-button.active { background: color-mix(in srgb, var(--primary-color) 12%, transparent) !important; }
-    &-title { color: var(--heading-color, #e8e9f2); }
-    &-lastMessage { color: var(--muted-color); }
-    &--unread &-title { color: #fff; }
-    &-avatar .Bubble { border-color: var(--body-bg); }
-  }
-
-  .AvocadoMessages-chatCol {
-    .DialogSection {
-      background: color-mix(in srgb, var(--body-bg) 85%, #000);
-
-      &-header {
-        background: var(--body-bg);
-        border-bottom-color: rgba(255, 255, 255, 0.08);
-        &-info-title { color: var(--heading-color, #e8e9f2); }
-      }
-
-      .DialogSection-controls {
-        .Dropdown-toggle.Button,
-        .Button.Button--icon {
-          color: var(--muted-color) !important;
-          &:hover { background: rgba(255, 255, 255, 0.08) !important; color: var(--heading-color, #e8e9f2) !important; }
-        }
-
-        .Dropdown-menu {
-          background: var(--body-bg) !important;
-          border-color: rgba(255, 255, 255, 0.08) !important;
-          li > a:hover, li > button:hover { background: rgba(255, 255, 255, 0.06) !important; }
-        }
-      }
-    }
-  }
-
-  .MessageStream .PostStream-timeGap > span {
-    background: rgba(0, 0, 0, 0.3);
-    border-color: rgba(255, 255, 255, 0.06);
-  }
-
+  // Received bubble: slightly lighter than bg
   .MessageStream-item .Post .Post-body,
   .MessageStream-item .Message .Post-body {
-    background: color-mix(in srgb, var(--body-bg) 60%, #fff) !important;
-    border-color: rgba(255, 255, 255, 0.08) !important;
-    color: var(--text-color) !important;
+    box-shadow: none !important;
   }
 
+  // Sent bubble keeps primary color in dark mode
   .MessageStream-item .Post.Post--byCurrentUser .Post-body,
   .MessageStream-item .Message.Post--byCurrentUser .Post-body {
     background: var(--primary-color) !important;
     border-color: transparent !important;
     color: #fff !important;
+  }
+
+  // Reply placeholder input area
+  .MessagesPage .MessageStream .ReplyPlaceholder .Post-header,
+  .AvocadoMessages .MessageStream .ReplyPlaceholder .Post-header {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  // Composer
+  .AvocadoMessages-chatCol .Composer,
+  .MessagesPage .Composer {
+    background: var(--body-bg) !important;
+    border-top-color: rgba(255, 255, 255, 0.07) !important;
+
+    .ComposerBody {
+      background: color-mix(in srgb, var(--body-bg) 55%, #fff) !important;
+      border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .TextEditor-editor { color: var(--text-color) !important; }
   }
 
 }

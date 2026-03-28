@@ -706,3 +706,112 @@
   .AvocadoUserPage-bodyInner     { padding: 16px 12px 40px; }
   .AvocadoUserPage .FieldSet     { border-radius: 14px; }
 }
+
+// ─── FoF User Bio — hero integration ─────────────────────────────────────────
+// The bio renders inside .AvocadoUserPage-hero (colored banner), so text must
+// be white/light, matching the rest of the hero content.
+.AvocadoUserPage-hero-bio {
+  margin-top: 14px;
+  max-width: 600px;
+
+  // Override extension's dark-background dashed border approach
+  .UserBio {
+    margin: 0;
+    border: 1px dashed transparent;
+    border-radius: 10px;
+    transition: border-color 0.2s ease;
+
+    // Editable state — show a subtle light dashed border on hover
+    &.editable:not(.editing) {
+      cursor: text;
+      border-color: rgba(255, 255, 255, 0.15);
+
+      &:hover, &:focus {
+        border-color: rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.06);
+      }
+    }
+
+    // Editing state — dark input on light translucent card
+    &.editing {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.3);
+      border-style: solid;
+      padding: 10px;
+
+      textarea.FormControl {
+        background: rgba(255, 255, 255, 0.9) !important;
+        color: #1a1b21 !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-size: 14px !important;
+        font-family: 'DM Sans', Inter, "Segoe UI", sans-serif !important;
+        resize: none !important;
+      }
+    }
+
+    // Action buttons (Save / Cancel) while editing
+    &-actions {
+      margin-top: 8px;
+      gap: 6px;
+
+      .Button--primary {
+        background: rgba(255, 255, 255, 0.9) !important;
+        color: #1a1b21 !important;
+        border-radius: 999px !important;
+        font-size: 12px !important;
+        font-weight: 700 !important;
+
+        &:hover { background: #fff !important; }
+      }
+
+      .Button:not(.Button--primary) {
+        background: rgba(255, 255, 255, 0.15) !important;
+        color: rgba(255, 255, 255, 0.85) !important;
+        border-radius: 999px !important;
+        font-size: 12px !important;
+        font-weight: 700 !important;
+        border: none !important;
+
+        &:hover { background: rgba(255, 255, 255, 0.25) !important; }
+      }
+    }
+  }
+
+  // Bio content — white text to match hero
+  .UserBio-content {
+    padding: 6px 2px 1px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    font-weight: 500;
+    max-height: calc(1px + 20px + 21px * 5);
+    overflow-y: auto;
+
+    p { margin: 0 0 4px; color: rgba(255, 255, 255, 0.9); }
+
+    a {
+      color: rgba(255, 255, 255, 0.95) !important;
+      font-weight: 600;
+      text-decoration: underline;
+      text-decoration-color: rgba(255, 255, 255, 0.4);
+
+      &:hover {
+        text-decoration-color: rgba(255, 255, 255, 0.9);
+        border-bottom: none;
+      }
+    }
+  }
+
+  // Placeholder text ("Add a bio...")
+  .UserBio-placeholder {
+    color: rgba(255, 255, 255, 0.45) !important;
+    font-size: 13px;
+    font-style: italic;
+    padding: 4px 2px;
+  }
+
+  // Scrollbar — subtle white
+  .UserBio-content::-webkit-scrollbar { width: 3px; }
+  .UserBio-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); border-radius: 3px; }
+}
