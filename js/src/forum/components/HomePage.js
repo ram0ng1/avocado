@@ -1133,14 +1133,23 @@ export default class HomePage extends Component {
             </div>
           )}
 
-          {/* ── Extension nav bar ─────────────────────────────────────────── */}
-          {this.renderNavBar()}
-
           {/* ── Categories section ────────────────────────────────────────── */}
           {categories.length > 0 && !isFollowingPage && (
             <section className="AvocadoHome-section AvocadoHome-section--categories">
               <div className="AvocadoHome-sectionHead">
                 <h2>{trans('ramon-avocado.forum.home.categories_heading', 'Categories')}</h2>
+                {/* AvocadoHomeNav inline — separator dash + MENU label + nav pills */}
+                {(() => {
+                  const nav = this.renderNavBar();
+                  if (!nav) return null;
+                  // Clone the nav vnode adding the --inline modifier class
+                  const inlineNav = { ...nav, attrs: { ...nav.attrs, className: (nav.attrs?.className || '') + ' AvocadoHomeNav--inline' } };
+                  return (
+                    <div className="AvocadoHome-sectionHead-nav">
+                      {inlineNav}
+                    </div>
+                  );
+                })()}
               </div>
               <div className="AvocadoHome-categories">
                 {categories.map((cat, idx) => {

@@ -1102,7 +1102,7 @@ app.initializers.add(
         return (
           <div className="AvocadoMessages MessagesPage">
             {/* IndexSidebar helper: App-titleControl escapes position:absolute to mobile header */}
-            <div className="AvocadoNav-helper"><IndexSidebar /></div>
+            <div className="AvocadoNav-helper"><IndexSidebar key={m.route.get()} /></div>
             <div className="AvocadoMessages-inner">
               <div className="AvocadoMessages-head">
                 <h1 className="AvocadoMessages-title">{app.translator.trans('flarum-messages.forum.list.nav_link')}</h1>

@@ -160,8 +160,8 @@ export function tagPageView(original) {
     });
   const cloudTags   = tags.filter((t) => t.position?.() === null);
 
-  const homeHref    = (() => { try { return app.route('index'); } catch (e) { return '/'; } })();
-  const discHref    = (() => { try { return app.route('avocado-discussions'); } catch (e) { return '/discussions'; } })();
+  const homeHref = (() => { try { return app.route('index'); } catch (e) { return '/'; } })();
+  const discHref = (() => { try { return app.route('avocado-discussions'); } catch (e) { return '/discussions'; } })();
 
   return (
     <div className="AvocadoTagsPage">
@@ -173,11 +173,11 @@ export function tagPageView(original) {
         <div className="AvocadoTagsPage-headerActions">
           <a className="AvocadoTagsPage-headerLink" href={discHref} onclick={(e) => navigate(e, discHref)}>
             <i className="fas fa-list" aria-hidden="true" />
-            {trans('ramon-avocado.forum.home.all_title', 'All Discussions')}
+            {trans('ramon-avocado.forum.tags.all_discussions', 'All discussions')}
           </a>
           <a className="AvocadoTagsPage-headerLink" href={homeHref} onclick={(e) => navigate(e, homeHref)}>
             <i className="fas fa-house" aria-hidden="true" />
-            {trans('ramon-avocado.forum.home.back_home', 'Home')}
+            {trans('ramon-avocado.forum.tags.home', 'Home')}
           </a>
         </div>
       </div>

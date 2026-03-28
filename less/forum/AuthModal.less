@@ -8,6 +8,14 @@
 // brand) and the original form on the right.
 //
 
+// ─── Modal backdrop: align to top on short viewports so modal never clips ─────
+// Flarum's default is align-items:center which cuts off tall modals.
+// align-items:flex-start + padding lets the ModalManager (overflow-y:auto) scroll.
+.Modal-backdrop:has(.AvocadoAuth-panel) {
+  align-items: flex-start !important;
+  padding: 20px 0 !important;
+}
+
 // ─── Side-panel ───────────────────────────────────────────────────────────────
 
 .AvocadoAuth-panel {
@@ -120,31 +128,15 @@
   .Modal-content:has(.AvocadoAuth-panel) {
     padding-right: 408px;
   }
+
+  // Clip the panel (position:absolute; bottom:0) by constraining Modal-content height
+  // The panel's bottom:0 anchors to Modal-content — so capping Modal-content clips the panel
+  .Modal-content:has(.AvocadoAuth-panel) {
+    max-height: calc(100vh - 60px) !important;
+    overflow: hidden !important;
+  }
 }
 
-// ─── Close button: frosted-glass circle over the panel ───────────────────────
-
-.Modal-content:has(.AvocadoAuth-panel) .Modal-close {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  z-index: 10;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  color: var(--muted-color);
-  box-shadow: none;
-  transition: background 0.15s;
-
-  .Button-label { display: none; }
-  &:hover { background: rgba(0, 0, 0, 0.14); }
-}
 
 // ─── Form icon (lock / user-plus / envelope) ──────────────────────────────────
 
@@ -178,6 +170,43 @@
   .ForgotPasswordModal:has(.AvocadoAuth-panel) {
     max-width: 860px !important;
     width: 92vw !important;
+  }
+}
+
+// ─── Mobile: modal adapts to small screens ────────────────────────────────────
+
+@media @phone {
+  // Constrain dialog to viewport width with margin
+  .LogInModal .Modal-dialog,
+  .SignUpModal .Modal-dialog,
+  .ForgotPasswordModal .Modal-dialog {
+    width: calc(100vw - 24px) !important;
+    max-width: 100% !important;
+    margin: 12px auto !important;
+  }
+
+  // Reduce inner padding so form content fits
+  .Modal-content:has(.AvocadoAuth-panel) {
+    padding: 80px 18px 24px !important;
+  }
+
+  // Move form icon closer to the top-left on small screens
+  .AvocadoAuth-formIcon {
+    top: 20px;
+    left: 18px;
+    width: 40px;
+    height: 40px;
+    font-size: 17px;
+    border-radius: 11px;
+  }
+
+  // Ensure the modal fills well on very small screens (e.g. 320px)
+  .Modal--small .Modal-dialog,
+  .LogInModal.Modal--small .Modal-dialog,
+  .SignUpModal.Modal--small .Modal-dialog,
+  .ForgotPasswordModal.Modal--small .Modal-dialog {
+    width: calc(100vw - 24px) !important;
+    min-width: 0 !important;
   }
 }
 

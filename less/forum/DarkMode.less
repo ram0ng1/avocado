@@ -712,27 +712,6 @@
     box-shadow: 0 0 0 2px var(--body-bg);
   }
 
-  // ── 28. ReplyPlaceholder ("Write a Reply..." button) ─────────────────────────
-
-  .Page.DiscussionPage .ReplyPlaceholder {
-    background: var(--control-bg);
-    border-color: rgba(255, 255, 255, 0.1);
-
-    &:hover {
-      background: color-mix(in srgb, var(--control-bg) 85%, #fff);
-      border-color: var(--primary-color);
-      border-style: solid;
-    }
-
-    .Post-side .Avatar,
-    .Post-side .Post-avatar {
-      border-color: var(--body-bg);
-    }
-
-    .Post-main .Post-header {
-      color: var(--muted-color);
-    }
-  }
 
   // ── 29. Discussion page skeleton (preloader) ──────────────────────────────────
 
@@ -869,15 +848,4 @@
     color: #fff !important;
   }
 
-  .Post.ReplyPlaceholder .Post-container,
-  .ReplyPlaceholder .Post-container {
-    background: var(--body-bg) !important;
-    border-top-color: rgba(255, 255, 255, 0.08) !important;
-  }
-
-  .Post.ReplyPlaceholder .Post-header,
-  .ReplyPlaceholder .Post-header {
-    background: rgba(255, 255, 255, 0.06) !important;
-    color: var(--muted-color) !important;
-  }
 }

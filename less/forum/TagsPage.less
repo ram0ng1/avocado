@@ -13,7 +13,6 @@
 .AvocadoTagsPage-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
   margin-bottom: 24px;
   flex-wrap: wrap;
@@ -30,17 +29,20 @@
 .AvocadoTagsPage-headerActions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .AvocadoTagsPage-headerLink {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   font-size: 13px;
   font-weight: 700;
   color: var(--primary-color);
   text-decoration: none;
+  white-space: nowrap;
 
   i { font-size: 12px; }
 
@@ -119,8 +121,10 @@
 }
 
 .AvocadoTagsPage-tagCard-icon {
-  width: 48px;
-  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  width: auto;
+  height: auto;
   border-radius: 14px;
   flex-shrink: 0;
   display: inline-flex;
@@ -129,6 +133,19 @@
   font-size: 20px;
   background: var(--icon-bg, #f0f0f5);
   color: var(--icon-color, #8f9097);
+  overflow: hidden;
+  padding: 4px;
+  box-sizing: border-box;
+
+  // FA icons keep original size; image logos expand the container
+  img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 80px;
+    max-height: 80px;
+    object-fit: contain;
+  }
 }
 
 .AvocadoTagsPage-tagCard-info {

@@ -11,8 +11,9 @@
 }
 
 // V1-style layout for CommentPost: avatar absolutely positioned, content padded left
+// .ReplyPlaceholder is excluded — it uses Flarum's own native layout unchanged.
 @media @desktop-up {
-  .CommentPost {
+  .CommentPost:not(.ReplyPlaceholder) {
     padding-left: 105px;
 
     .Post-container {
@@ -116,26 +117,6 @@
     }
   }
 
-  // ReplyPlaceholder keeps V2 grid so avatar sits inside the dashed border on the left
-  .ReplyPlaceholder {
-    .Post-container {
-      display: grid;
-      grid-template-columns: var(--avatar-column-width) 1fr;
-      align-items: center;
-    }
-
-    .Post-side {
-      position: static;
-      display: flex;
-      justify-content: center;
-    }
-
-    .Post-main {
-      display: flex;
-      align-items: center;
-    }
-  }
-
   // EventPost still uses grid — keep icon column tight
   .EventPost .Post-container {
     display: grid;
@@ -156,17 +137,6 @@
   }
 }
 
-.ReplyPlaceholder {
-  margin-top: 30px;
-  min-height: 104px;
-  background-color: var(--control-bg);
-  border: 2px dashed transparent;
-  transition: border-color 0.2s;
-
-  &:hover {
-    border-color: var(--body-bg);
-  }
-}
 
 .EventPost {
   background-color: transparent;

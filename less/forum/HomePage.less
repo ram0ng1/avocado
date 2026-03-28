@@ -21,20 +21,6 @@
   // to the phone header.
   //
   // Safe to use overflow:hidden here because Flarum's Dropdown-menu on phone uses
-  // position:fixed (slides up from bottom) — fixed elements are NEVER clipped by
-  // a parent's overflow:hidden. display:none would prevent App-titleControl from
-  // escaping, so we collapse with height:0 + overflow:hidden instead.
-  @media @phone {
-    .Page-sidebar {
-      height: 0;
-      overflow: hidden;
-    }
-  }
-  @media @tablet-up {
-    .Page-sidebar {
-      display: none;
-    }
-  }
 
   // Hide toolbar and discussion list when custom home is active
   .Page-toolbar,
@@ -196,6 +182,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 // New-content dot in the section header — always visible including on phone
@@ -313,6 +300,13 @@
   margin-bottom: 22px;
   padding-bottom: 8px; // room for the active ::after indicator
 
+  // When used inline (same row as a heading), reset vertical margins
+  &--inline {
+    margin: 0 !important;
+    padding-bottom: 0 !important;
+    justify-content: flex-start;
+  }
+
   // Each LinkButton / TagLinkButton rendered as a pill
   > .Button,
   > .LinkButton,
@@ -404,11 +398,24 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 14px;
+  flex-wrap: nowrap;
+  gap: 10px;
 
   h2 {
     margin: 0;
+    flex: 1 1 auto;
+    min-width: 0;
   }
 }
+
+// Inline MENU nav — sits on the same row as the section h2
+.AvocadoHome-sectionHead-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 
 .AvocadoHome-seeAll {
   font-size: 14px;
@@ -454,8 +461,10 @@
 }
 
 .AvocadoHome-categoryIcon {
-  width: 44px;
-  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  width: auto;
+  height: auto;
   border-radius: 999px;
   flex-shrink: 0;
   display: inline-flex;
@@ -464,27 +473,36 @@
   font-size: 18px;
   background: var(--cat-bg, #f4f4f7);
   color: var(--cat-color, #8f9097);
-  // Clip any icon content (image logos, wide SVGs) that overflows the circle
   overflow: hidden;
+  padding: 6px;
+  box-sizing: border-box;
 
-  // FA converts <i> to inline SVG with vertical-align: -0.125em which breaks
-  // centering inside a flex circle. Clamp to the circle interior.
-  i, svg, img {
+  // FA icons and SVGs stay at their natural icon size
+  i, svg {
     display: block;
-    max-width: 26px;   // cap at ~60% of the 44px circle so there's visual padding
-    max-height: 26px;
+    max-width: 24px;
+    max-height: 24px;
     width: auto;
     height: auto;
     vertical-align: 0;
-    overflow: hidden;
     object-fit: contain;
   }
-  // FA-injected SVGs arrive with width/height as 1em — enforce same cap
   svg {
     width: 1em;
     height: 1em;
     max-width: 24px;
     max-height: 24px;
+  }
+
+  // Image logos: allow expansion up to a reasonable max
+  img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 72px;
+    max-height: 72px;
+    object-fit: contain;
+    vertical-align: 0;
   }
 }
 
@@ -845,8 +863,7 @@
   .AvocadoHome-brand              { font-size: 28px; }
   .AvocadoHome-main               { padding: 12px 10px 40px; }
   .AvocadoHome-postInput          { display: none; }
-  .AvocadoHome-section > h2,
-  .AvocadoHome-sectionHead h2     { font-size: 26px; }
+  .AvocadoHome-section > h2       { font-size: 26px; }
   .AvocadoHome-threadTitle        { font-size: 18px; letter-spacing: -0.1px; }
   .AvocadoHome-threadExcerpt      { font-size: 15px; }
   .AvocadoHome-threadCard         { padding: 12px; border-radius: 16px; }
@@ -863,15 +880,6 @@
     padding: 0 10px;
     i { font-size: 14px; }
   }
-
-  // Section heading: smaller size so "Following discussions" fits on one line
-  .AvocadoHome-sectionHead h2 {
-    font-size: 20px;
-    letter-spacing: -0.2px;
-  }
-
-  // Online avatars are decorative — hide on phone to free space for heading
-  .AvocadoHome-onlineAvatars { display: none; }
 
   // Thread meta: allow tags to wrap to a second line instead of overflowing
   .AvocadoHome-threadMain {
@@ -960,8 +968,8 @@
     opacity: 0.8;
   }
 
-  // Fixed-size icon slot — clamps FA SVGs and custom image icons alike
-  i, svg, img {
+  // FA icons and SVGs: fixed 14px slot
+  i, svg {
     flex-shrink: 0;
     display: inline-block;
     width: 14px;
@@ -972,12 +980,20 @@
     overflow: hidden;
     object-fit: contain;
     line-height: 1;
-    // FA overrides font-size to control SVG size; reset to our fixed dimensions
     font-size: 11px;
   }
-  svg {
-    width: 14px;
-    height: 14px;
+  svg { width: 14px; height: 14px; }
+
+  // Image logos: allowed to be taller/wider than 14px so they're readable
+  img {
+    flex-shrink: 0;
+    display: inline-block;
+    width: auto;
+    height: auto;
+    max-width: 20px;
+    max-height: 20px;
+    vertical-align: middle;
+    object-fit: contain;
   }
 }
 

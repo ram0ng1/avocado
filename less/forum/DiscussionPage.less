@@ -231,11 +231,17 @@
     }
 
     .CommentPost .Post-container {
-      display: flex;
-      flex-direction: row;
+      display: grid;
+      grid-template-columns: var(--disc-avatar) 1fr;
       gap: var(--disc-gap);
-      align-items: flex-start;
+      align-items: start;
       padding: 0;
+
+      // Extra children added by extensions (3rd+) must sit in the content column,
+      // not the avatar column.
+      > *:nth-child(n+3) {
+        grid-column: 2;
+      }
     }
 
     .CommentPost .Post-side {
@@ -247,7 +253,6 @@
     }
 
     .CommentPost .Post-main {
-      flex: 1;
       min-width: 0;
     }
   }
@@ -304,11 +309,15 @@
     margin: 0;
   }
   .Page.DiscussionPage .CommentPost .Post-container {
-    display: flex;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: var(--disc-avatar) 1fr;
     gap: var(--disc-gap);
-    align-items: flex-start;
+    align-items: start;
     padding: 0;
+
+    > *:nth-child(n+3) {
+      grid-column: 2;
+    }
   }
   .Page.DiscussionPage .CommentPost .Post-side {
     position: relative;
@@ -318,7 +327,6 @@
     left: auto;
   }
   .Page.DiscussionPage .CommentPost .Post-main {
-    flex: 1;
     min-width: 0;
   }
   .Page.DiscussionPage .Page-container.container {
@@ -727,6 +735,37 @@
   color: var(--primary-color);
 }
 
+// ── Post-footer + Post-actions: same row on mobile ───────────────────────────
+@media @phone {
+  .Page.DiscussionPage .CommentPost .Post-main {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+
+    // Header and body take full width
+    > .Post-header,
+    > .Post-body {
+      flex: 0 0 100%;
+    }
+
+    // Footer (likes) grows to fill remaining space on the left
+    > .Post-footer {
+      flex: 1 1 auto;
+      min-width: 0;
+      margin-top: 8px;
+    }
+
+    // Actions (Reply/Share) stay on the right, same row as footer
+    > .Post-actions {
+      flex-shrink: 0;
+      margin-top: 8px;
+      margin-bottom: 0;
+      float: none;
+    }
+  }
+}
+
 // ── EventPost — .Page.DiscussionPage .EventPost has 0,3,0 vs Flarum's 0,1,0 ────
 .Page.DiscussionPage .EventPost {
   background: transparent;
@@ -803,64 +842,7 @@
   }
 }
 
-// ── ReplyPlaceholder — specificity 0,3,0 vs Flarum's 0,1,0
-// DOM: <button.Post.ReplyPlaceholder> > .Post-container > .Post-side + .Post-main > .Post-header
-.Page.DiscussionPage .ReplyPlaceholder {
-  background: #f4f4f7;
-  border: 2px dashed #dfdfe6;
-  border-radius: 20px;
-  margin: 24px 0 4px;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-
-  &:hover {
-    background: #eeeef4;
-    border-color: var(--primary-color);
-    border-style: solid;
-  }
-
-  // Override the tablet/desktop grid layout from .CommentPost — placeholder
-  // should always be a simple horizontal flex (avatar + text)
-  .Post-container {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 14px;
-    padding: 16px 20px;
-  }
-
-  // Keep Post-side narrow, no sticky positioning
-  .Post-side {
-    position: static;
-    width: auto;
-    flex-shrink: 0;
-    top: auto;
-    left: auto;
-  }
-
-  // Avatar in the placeholder
-  .Post-side .Avatar,
-  .Post-side .Post-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 999px;
-    border: 2px solid #fff;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.10);
-    display: block;
-  }
-
-  // "Write a Reply..." label
-  .Post-main .Post-header {
-    font-size: 15px;
-    font-weight: 700;
-    font-family: "DM Sans Variable", "DM Sans", sans-serif;
-    color: #afafb8;
-    display: block;
-    border-bottom: none;
-    padding: 0;
-    margin: 0;
-  }
-}
+// ReplyPlaceholder — reset to Flarum default (no custom overrides)
 
 // ── PostStream load-more button — specificity 0,4,0 vs Flarum's .Button 0,1,0
 .Page.DiscussionPage .PostStream-loadMore {
@@ -910,7 +892,7 @@
   }
 
   .Dropdown-toggle.Button--primary {
-    border-radius: 0 16px 16px 0;
+    border-radius: 0;
     border: none;
     flex-shrink: 0;
     min-width: 44px;
@@ -940,6 +922,7 @@
     background: var(--primary-color) !important;
     color: #fff !important;
     opacity: 1 !important;
+    border-radius: 0 !important;
   }
   // Two Flarum rules suppress the icon/caret inside non-primary-control toggles:
   //   .Dropdown-toggle:not(.Button--flat) .Button-icon { display: none !important; }  (spec 2)

@@ -59,8 +59,27 @@ export default class AvocadoTagPage extends Page {
 
     this.bodyClass = 'App--index';
 
-    const slug = m.route.param('tags');
-    this.loadTag(slug);
+    this._currentSlug = m.route.param('tags');
+    this.loadTag(this._currentSlug);
+  }
+
+  onbeforeupdate(vnode) {
+    // Mithril reuses the same component instance when navigating between tags
+    // (same route pattern /t/:tags, same component class). Detect slug change
+    // and reload — same pattern IndexPage uses internally.
+    const newSlug = m.route.param('tags');
+    if (newSlug && newSlug !== this._currentSlug) {
+      this._currentSlug = newSlug;
+      this.tag         = null;
+      this.discussions = [];
+      this.hasMore     = false;
+      this.offset      = 0;
+      this.sort        = 'latest';
+      this._pendingDiscs.clear();
+      this._newDiscIds.clear();
+      this.loadTag(newSlug);
+    }
+    return true;
   }
 
   oncreate(vnode) {
@@ -463,6 +482,11 @@ export default class AvocadoTagPage extends Page {
   // ── View ──────────────────────────────────────────────────────────────────
 
   view() {
+    // Force app.currentTag() to re-read from the URL on every render.
+    // IndexPage does the same via addTagFilter's extend(IndexPage.prototype, 'view').
+    // Without this, app.currentTag() returns a stale cached tag (e.g. last-visited tag).
+    app.currentTag?.(true);
+
     // Tag still loading
     if (this.tagLoading) {
       return (
@@ -506,10 +530,9 @@ export default class AvocadoTagPage extends Page {
     return (
       <div className="AvocadoTagPage">
 
-        {/* ── IndexSidebar helper: provides App-titleControl (mobile nav center) ─ */}
-        {/* On @phone, App-titleControl escapes position:absolute to the header.   */}
-        {/* AvocadoNav-helper keeps the sidebar hidden but lets the control escape. */}
-        <div className="AvocadoNav-helper"><IndexSidebar /></div>
+        {/* ── Mobile nav: IndexSidebar provides App-titleControl (mobile header dropdown) */}
+        {/* key forces destroy+recreate so navItems() re-runs after currentTag cache reset */}
+        <div className="AvocadoNav-helper"><IndexSidebar key={m.route.param('tags')} /></div>
 
         {/* ── Hero ─────────────────────────────────────────────────────── */}
         <header className="AvocadoTagPage-hero" style={{ '--tag-color': color }}>

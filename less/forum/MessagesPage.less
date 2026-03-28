@@ -6,7 +6,6 @@
   background: transparent;
 
   .Page-hero    { display: none !important; }
-  .Page-sidebar { display: none !important; }
 
   .Page-container.container {
     max-width: var(--home-max-width, 1036px);
@@ -525,10 +524,11 @@
   }
 }
 
-// ── ReplyPlaceholder ─────────────────────────────────────────────────────────
-.MessageStream-item .ReplyPlaceholder,
-.MessageStream .ReplyPlaceholder,
-.Post.ReplyPlaceholder {
+// ── ReplyPlaceholder (messages page only) ────────────────────────────────────
+.MessagesPage .MessageStream-item .ReplyPlaceholder,
+.MessagesPage .MessageStream .ReplyPlaceholder,
+.AvocadoMessages .MessageStream-item .ReplyPlaceholder,
+.AvocadoMessages .MessageStream .ReplyPlaceholder {
   display: block !important; width: 100% !important;
   background: transparent !important; border: none !important;
   box-shadow: none !important; padding: 0 !important;

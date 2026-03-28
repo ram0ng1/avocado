@@ -207,7 +207,15 @@
 }
 
 // ─── Header logo sizing ───────────────────────────────────────────────────────
-img.Header-logo,
+// For PNG logos: fixed height so oversized images don't break the header.
+img.Header-logo {
+  height: 35px !important;
+  width: auto !important;
+  max-width: 200px !important;
+  vertical-align: middle !important;
+  display: inline-block !important;
+}
+// For the Avocado-injected SVG logo: force our custom dimensions.
 svg.Header-logo {
   height: 70px !important;
   width: auto !important;
@@ -216,22 +224,42 @@ svg.Header-logo {
   display: block;
   vertical-align: middle !important;
   margin-top: -12px !important;
-  // svg-specific: let the viewBox drive aspect ratio
-  &:is(svg) {
-    overflow: visible;
-  }
+  overflow: visible;
 }
 
 // Keep header title flex-aligned so logo and title baseline nicely
 .App-header .Header-title {
   display: flex !important;
   align-items: center !important;
+  padding: 5px 0;
 }
 
-// ─── Hide IndexPage native sideNav ────────────────────────────────────────────
-// Target only the .Page-sidebar placement so the AvocadoNav-helper (which lives
-// inside Page-content / page components) is NOT affected — it provides the
-// phone App-primaryControl escape trick via position:absolute children.
+// When using a PNG logo (svg logo disabled), constrain the header height
+.App-header:not(:has(svg.Header-logo)) {
+  height: 52px !important;
+  min-height: 52px !important;
+  line-height: 1;
+}
+
+// ─── Hide Page-sidebar globally (except DiscussionPage which needs the scrubber) ──
+// On phone: use height:0 + overflow:hidden so absolutely-positioned App-titleControl
+// children (SelectDropdown.App-titleControl) can still escape to the header.
+// On tablet-up: display:none is safe since no control needs to escape.
+@media @phone {
+  .Page:not(.DiscussionPage) .Page-sidebar {
+    height: 0 !important;
+    overflow: hidden !important;
+    display: block !important; // must not be display:none or abs children can't escape
+  }
+}
+@media @tablet-up {
+  .Page:not(.DiscussionPage) .Page-sidebar {
+    display: none !important;
+  }
+}
+
+// ─── Hide IndexPage native sideNav inside the sidebar ─────────────────────────
+// (AvocadoNav-helper rendered inside Page-content is NOT affected)
 .Page-sidebar .IndexPage-nav.sideNav { display: none !important; }
 
 // Phone: restore the home-page sidebar nav so App-primaryControl escapes to header.
