@@ -215,7 +215,7 @@ img.Header-logo {
   vertical-align: middle !important;
   display: inline-block !important;
 }
-// For the Avocado-injected SVG logo: force our custom dimensions.
+// For the Avocado-injected SVG logo: width/height set explicitly by JS from viewBox aspect ratio.
 svg.Header-logo {
   height: 35px !important;
   width: auto !important;
@@ -223,7 +223,8 @@ svg.Header-logo {
   max-height: none !important;
   display: inline-block !important;
   vertical-align: middle !important;
-  margin-top: 0 !important;
+  flex-shrink: 0 !important;
+  margin: 0 !important;
   overflow: visible;
 }
 

@@ -48,6 +48,7 @@ import {
 } from './utils';
 import { truncate } from 'flarum/common/utils/string';
 import TextEditor from 'flarum/common/components/TextEditor';
+import { setupRealtimeIntegration } from './components/RealtimeIntegration';
 
 // ─── Settings helpers ─────────────────────────────────────────────────────────
 
@@ -120,19 +121,29 @@ const syncFixedAvatarBadges = (component) => {
   const side = root.querySelector('.Post-side');
   if (!side) return;
 
-  // Detect UserOnline and mark Post-side (Flarum 2.0: UserOnline is inside PostUser-name > a)
+  // Detect UserOnline and mark Post-side via classList (safe — doesn't affect Mithril vdom children)
   side.classList.remove('Post-side--online');
   const userOnlineEl =
     root.querySelector('.PostUser-name .UserOnline') ||
     root.querySelector('.Post-header .UserOnline');
   if (userOnlineEl) side.classList.add('Post-side--online');
 
-  const badges = root.querySelector('.PostUser-badges');
-  if (!badges) return;
+  // Badges: DO NOT move the Mithril-managed .PostUser-badges node (causes removeChild errors).
+  // Instead, maintain a non-Mithril clone inside Post-side so badges appear near the avatar.
+  const origBadges = root.querySelector('.PostUser-badges:not(.PostUser-badges--sideClone)');
+  if (!origBadges) return;
 
-  if (badges.parentElement !== side) side.appendChild(badges);
-  badges.classList.remove('PostUser-badges--inPostHeader');
-  badges.querySelectorAll('.Badge').forEach((b) => b.removeAttribute('data-placement'));
+  let clone = side.querySelector('.PostUser-badges--sideClone');
+  if (!clone) {
+    clone = origBadges.cloneNode(true);
+    clone.classList.add('PostUser-badges--sideClone');
+    clone.classList.remove('PostUser-badges--inPostHeader');
+    side.appendChild(clone);
+  } else {
+    // Sync badge content on updates (subscription changes, etc.)
+    clone.innerHTML = origBadges.innerHTML;
+  }
+  clone.querySelectorAll('.Badge').forEach((b) => b.removeAttribute('data-placement'));
 };
 
 // FIX: removed queueSyncFixedAvatarBadges (had redundant RAF + unguarded setTimeout).
@@ -166,6 +177,9 @@ app.initializers.add(
       app.routes['user.likes']       = { path: '/u/:username/likes',       component: AvocadoUserLikesPage        };
       app.routes['user.mentions']    = { path: '/u/:username/mentions',    component: AvocadoUserMentionsPage     };
     }
+
+    // ── Realtime Integration —  Fix message updates for AvocadoMessages ──────
+    setupRealtimeIntegration();
 
     // ── 1. Theme class + logo override (needs app.forum — use beforeMount) ──────
     // initialize() runs before store.pushPayload() and before app.forum is set.
@@ -233,9 +247,20 @@ app.initializers.add(
               document.body.removeChild(probe);
 
               const out = svgEl.cloneNode(true);
-              out.removeAttribute('width');
-              out.removeAttribute('height');
               if (tightViewBox) out.setAttribute('viewBox', tightViewBox);
+
+              // Compute explicit width so the SVG doesn't collapse in flex containers.
+              // height is fixed at 35px; width = 35 * (viewBox-width / viewBox-height).
+              const LOGO_H = 35;
+              let logoW = LOGO_H; // fallback: square
+              if (tightViewBox) {
+                const vbParts = tightViewBox.split(' ');
+                const vbW = parseFloat(vbParts[2]);
+                const vbH = parseFloat(vbParts[3]);
+                if (vbW > 0 && vbH > 0) logoW = Math.round(LOGO_H * vbW / vbH);
+              }
+              out.setAttribute('width', String(logoW));
+              out.setAttribute('height', String(LOGO_H));
               out.setAttribute('class', 'Header-logo');
               out.setAttribute('role', 'img');
               out.setAttribute('aria-label', app.forum.attribute('title') || '');
@@ -865,34 +890,18 @@ app.initializers.add(
     });
 
     // ── 19. CommentPost oncreate/onupdate (badges + duplicate avatar fix) ────────
-    // The real avatar lives in Post-side. PostUser may render a second Avatar
-    // inside Post-header (32px, different class in Flarum 2.0). We find any
-    // .Avatar / .AvocadoDefaultAvatar inside Post-header and remove it along
-    // with its enclosing <li> or <a> wrapper.
-    // In Flarum 2.0, PostUser renders as:
-    //   <div.PostUser> <h3.PostUser-name> <a> <Avatar/> <UserOnline/> <span.username> </a> </h3> <ul.PostUser-badges> </div>
-    // The Avatar and username are BOTH inside the same <a> link.
-    // We must remove ONLY the Avatar element — never the parent <a> — to keep the username.
-    const removePostUserAvatar = (component) => {
-      const postHeader = component.element?.querySelector('.Post-header');
-      if (!postHeader) return;
-      // Scope to .PostUser-name only — UserCard avatar lives in .Post-header too
-      // and must NOT be removed.
-      postHeader.querySelectorAll('.PostUser-name .Avatar, .PostUser-name .AvocadoDefaultAvatar').forEach((avatar) => {
-        avatar.remove();
-      });
-    };
-
+    // Avatar duplicate: CSS in DiscussionPage.less already hides .PostUser-name .Avatar
+    // via display:none !important — no JS removal needed (avatar.remove() caused removeChild
+    // errors because Mithril still tracked the removed nodes in its vdom).
+    //
+    // Badges: instead of moving Mithril-managed nodes (which causes removeChild errors on
+    // redraw), we keep the original in place and maintain a non-Mithril clone in Post-side.
     extend(CommentPost.prototype, 'oncreate', function () {
-      removePostUserAvatar(this);
       syncFixedAvatarBadges(this);
     });
 
     // FIX: guard before DOM ops — onupdate fires on every parent redraw.
-    // Without the guard, 20 posts × 3 DOM queries = 60 ops per global m.redraw().
     extend(CommentPost.prototype, 'onupdate', function () {
-      if (!this.element?.querySelector('.PostUser-name .Avatar, .PostUser-name .AvocadoDefaultAvatar')) return;
-      removePostUserAvatar(this);
       syncFixedAvatarBadges(this);
     });
 
@@ -1101,7 +1110,7 @@ app.initializers.add(
           try { app.store.pushPayload(response); } catch (_) {}
           this.value   = '';
           this.sending = false;
-          if (typeof onSent === 'function') onSent();
+          if (typeof onSent === 'function') onSent(response);
           m.redraw();
         }).catch(() => {
           this.sending = false;
@@ -1134,9 +1143,23 @@ app.initializers.add(
     );
 
     // ── MessageStream override: skeleton + inline reply ───────────────────────
+    // Tracks the currently-mounted MessageStream instance so we can re-bind
+    // its realtime handler after the Pusher private channel becomes ready.
+    // (flarum/messages binds MESSAGE_CREATED_EVENT in oncreate, but the channel
+    // may not be set yet — this ensures the bind always happens.)
+    let _currentStreamComponent = null;
+
     const applyMessageStreamOverride = (StreamClass) => {
       if (!StreamClass || StreamClass._avocadoStreamPatched) return;
       StreamClass._avocadoStreamPatched = true;
+
+      // Track the mounted instance so bindChannels() can re-bind after ready
+      extend(StreamClass.prototype, 'oninit', function () {
+        _currentStreamComponent = this;
+      });
+      extend(StreamClass.prototype, 'onremove', function () {
+        if (_currentStreamComponent === this) _currentStreamComponent = null;
+      });
 
       // Override view() to replace native LoadingIndicator with skeleton
       override(StreamClass.prototype, 'view', function (original) {
@@ -1156,24 +1179,34 @@ app.initializers.add(
             <div className="MessageStream-item" key="reply">
               <AvocadoInlineReply
                 dialog={dialog}
-                onSent={() => {
+                onSent={(response) => {
                   const state  = this.attrs.state;
                   const dialog = this.attrs.dialog;
-                  state.refresh().then(() => {
-                    // Sync dialog.lastMessage to the newest loaded message so
-                    // content() doesn't show the spurious LoadingPost + button.
-                    try {
-                      const msgs = state.getAllItems();
-                      if (msgs && msgs.length) {
-                        const newest = msgs.reduce((a, b) => (a.number() > b.number() ? a : b));
-                        if (dialog.data?.relationships?.lastMessage) {
-                          dialog.data.relationships.lastMessage.data = { type: 'dialog-messages', id: newest.id() };
-                        }
+                  // Use state.push() to append the sent message without a full reload.
+                  // Falls back to state.refresh() only if push is unavailable.
+                  try {
+                    const msgId  = response?.data?.id;
+                    const msg    = msgId ? app.store.getById('dialog-messages', msgId) : null;
+                    if (msg && state.hasItems() && typeof state.push === 'function') {
+                      state.push(msg);
+                      // Keep dialog.lastMessage in sync so sidebar shows latest message
+                      if (dialog.data?.relationships?.lastMessage) {
+                        dialog.data.relationships.lastMessage.data = { type: 'dialog-messages', id: msg.id() };
                       }
-                    } catch (_) {}
-                    setTimeout(scrollToBottom, 60);
-                    m.redraw();
-                  });
+                      setTimeout(scrollToBottom, 60);
+                      m.redraw();
+                    } else {
+                      state.refresh().then(() => {
+                        setTimeout(scrollToBottom, 60);
+                        m.redraw();
+                      });
+                    }
+                  } catch (_) {
+                    state.refresh().then(() => {
+                      setTimeout(scrollToBottom, 60);
+                      m.redraw();
+                    });
+                  }
                 }}
               />
             </div>
@@ -1386,6 +1419,16 @@ app.initializers.add(
         const items = this.contentItems();
         const sidebarVnode = items.get('sidebar');
         const dialogVnode  = items.get('dialog');
+        
+        // FORCE re-create of dialog component with a unique key tied to dialog ID
+        // This ensures MessageStream.oncreate() is called when dialog changes
+        const dialogId = this.selectedDialog?.()?.id?.();
+        const forceRecreatKey = isLoading ? 'loading' : (isSwitching ? 'switching' : (`dialog-${dialogId}`));
+        
+        // Apply key to force Mithril to destroy and recreate the component
+        if (dialogVnode && !isLoading && !isSwitching) {
+          dialogVnode.key = forceRecreatKey;
+        }
 
         const self = this;
         const handleBackClick = (e) => {
@@ -1424,6 +1467,21 @@ app.initializers.add(
           </div>
         );
       });
+
+      // ── Guard and verify realtime listeners are active (fallback) ────────────
+      // If for some reason oncreate is not called, this ensures channels exist
+      extend(MsgPage.prototype, 'onupdate', function (vnode) {
+        if (!app.websocket || !app.session.user) return;
+        if (!app.websocket_channels) app.websocket_channels = {};
+        if (!app.websocket_channels.user) {
+          try {
+            console.log('[Avocado] Fallback: Creating user channel subscription');
+            app.websocket_channels.user = app.websocket.subscribe(`private-user=${app.session.user.id()}`);
+          } catch (err) {
+            console.warn('[Avocado] Failed to subscribe to user channel:', err);
+          }
+        }
+      });
     };
 
     // Case A: chunk already loaded (e.g. SSR or eager bundle)
@@ -1444,17 +1502,16 @@ app.initializers.add(
       };
     }
 
-    // ── 25. Notification polling (no WebSocket required) ─────────────────────
-    // Polls the current user's data every 30 s to refresh unread notification
-    // and message counts. Only runs when the tab is visible and the user is
-    // logged in. Skips when the native Pusher/Echo WebSocket is already active.
+    // ── 25. Notification polling (fallback — only when no WebSocket is live) ────
+    // flarum/realtime sets app.websocket (Pusher) whose connection.state = 'connected'.
     (() => {
       const INTERVAL_MS = 30_000;
 
       const isWebSocketActive = () => {
         try {
-          // Flarum's pusher extension sets app.pusher when connected
-          return !!(window.Echo || app.pusher || app._pusher);
+          // flarum/realtime: app.websocket is the Pusher instance
+          return app.websocket?.connection?.state === 'connected'
+              || !!(window.Echo);
         } catch (_) { return false; }
       };
 
@@ -1466,8 +1523,6 @@ app.initializers.add(
         const userId = app.session.user.id?.();
         if (!userId) return;
 
-        // Refresh the current user record — this updates unreadNotificationCount
-        // and newNotificationCount, which drives the bell badge in the header.
         app.request({
           method: 'GET',
           url: `${app.forum.attribute('apiUrl')}/users/${userId}`,
@@ -1477,22 +1532,112 @@ app.initializers.add(
           m.redraw();
         }).catch(() => {});
 
-        // Also refresh unread dialog count if on the messages page
-        if (app.dialogs && typeof app.dialogs.load === 'function') {
-          try { app.dialogs.load?.(); } catch (_) {}
+        if (typeof app.dialogs?.load === 'function') {
+          try { app.dialogs.load(); } catch (_) {}
         }
       };
 
-      // Start polling after a short delay so boot completes first
-      setTimeout(() => {
-        poll();
-        setInterval(poll, INTERVAL_MS);
-      }, 5000);
+      setTimeout(() => { poll(); setInterval(poll, INTERVAL_MS); }, 5000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+    })();
 
-      // Also poll immediately when the tab becomes visible again after being hidden
-      document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) poll();
-      });
+    // ── 25b. flarum/realtime — custom event handlers ──────────────────────────
+    // Strategy: subscribe directly via app.websocket (Pusher instance) rather
+    // than going through RealtimeState callbacks.
+    //
+    // Why: RealtimeState.notifyPublicChannelReady is only called for guests;
+    // logged-in users only get notifyUserChannelReady. Subscribing directly
+    // avoids that asymmetry and works even if flarum/realtime's own boot
+    // sequence hasn't fired yet.
+    //
+    // Channels:
+    //   public            — public broadcasts (guests + fallback)
+    //   private-user={id} — per-user personalised payload (logged-in users)
+    //
+    // Events bound on both channels (SendTriggerJob dispatches to both):
+    //   likesMutation, discussionPinned
+    // Events bound on user channel only (SendDialogMessageJob → private only):
+    //   Flarum\Messages\DialogMessage\Event\Created/Updated
+    (() => {
+      const EV_MSG_CREATED = 'Flarum\\Messages\\DialogMessage\\Event\\Created';
+      const EV_MSG_UPDATED = 'Flarum\\Messages\\DialogMessage\\Event\\Updated';
+
+      const onPayload = (data) => {
+        try { if (data) app.store.pushPayload(data); } catch (_) {}
+        m.redraw();
+      };
+
+      const onDialog = (data) => {
+        // Push the payload so the store is up-to-date.
+        // flarum/messages' own extendRealtime already calls state.push(message)
+        // and app.dialogs.refresh() — we must NOT call load/refresh again here
+        // or the stream will do a full reload (the "freeze" the user sees).
+        try { if (data) app.store.pushPayload(data); } catch (_) {}
+        m.redraw();
+      };
+
+      const bindChannels = () => {
+        try {
+          if (!app.websocket) return false;
+
+          // Public channel — for guests and as fallback for logged-in users.
+          const pub = app.websocket.subscribe('public');
+          if (!pub._avBound) {
+            pub._avBound = true;
+            pub.bind('likesMutation',    onPayload);
+            pub.bind('discussionPinned', onPayload);
+          }
+
+          // Private user channel — personalised payload for logged-in users.
+          if (app.session?.user) {
+            const priv = app.websocket.subscribe(`private-user=${app.session.user.id()}`);
+            if (!priv._avBound) {
+              priv._avBound = true;
+              priv.bind('likesMutation',    onPayload);
+              priv.bind('discussionPinned', onPayload);
+              priv.bind(EV_MSG_CREATED, onDialog);
+              priv.bind(EV_MSG_UPDATED, onDialog);
+            }
+            // Re-bind flarum/messages' MessageStream handler now that the channel
+            // is confirmed ready. MessageStream.oncreate binds via optional chaining
+            // (app.websocket_channels?.user?.bind) — if the channel wasn't ready at
+            // mount time the bind silently did nothing. We fix that here.
+            try {
+              const comp = _currentStreamComponent;
+              if (comp && typeof comp.messageCreatedHandler === 'function') {
+                priv.unbind(EV_MSG_CREATED, comp.messageCreatedHandler);
+                priv.bind(EV_MSG_CREATED, comp.messageCreatedHandler);
+              }
+            } catch (_) {}
+          }
+
+          // Also notify RealtimeState so other flarum/realtime consumers work.
+          const rs = flarum.reg.get('flarum-realtime', 'forum/RealtimeState');
+          if (rs && !rs._avocadoNotified) {
+            rs._avocadoNotified = true;
+            if (app.websocket_channels) {
+              if (app.websocket_channels.public)
+                rs.notifyPublicChannelReady?.(app.websocket_channels.public);
+              if (app.websocket_channels.user)
+                rs.notifyUserChannelReady?.(app.websocket_channels.user);
+            }
+          }
+
+          return true;
+        } catch (_) { return false; }
+      };
+
+      // Poll until app.websocket is initialised (set during Application.mount).
+      const MAX = 15_000, TICK = 300;
+      let elapsed = 0;
+      const timer = setInterval(() => {
+        elapsed += TICK;
+        if (bindChannels()) {
+          clearInterval(timer);
+        } else if (elapsed >= MAX) {
+          clearInterval(timer);
+        }
+      }, TICK);
     })();
 
     // ── 24. DiscussionListItem infoItems (excerpt) ────────────────────────────

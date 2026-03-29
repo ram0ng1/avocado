@@ -27,7 +27,7 @@ class AvocadoServiceProvider extends AbstractServiceProvider
      * Whole directories: [ src dir relative to extension root => dest dir relative to public/assets ]
      */
     private const BUNDLED_DIRS = [
-        'resources/fonts' => 'fonts',
+        'resources/assets/fonts' => 'fonts',
     ];
 
     public function boot(): void
@@ -37,16 +37,16 @@ class AvocadoServiceProvider extends AbstractServiceProvider
         $extDir = dirname(__DIR__);
         $assets = $paths->public . '/assets';
 
-        // Individual files
+        // Individual files — copy if missing OR source is newer than destination
         foreach (self::BUNDLED_FILES as $destFile => $relSrc) {
             $src  = $extDir . '/' . $relSrc;
             $dest = $assets . '/' . $destFile;
-            if (file_exists($src) && ! file_exists($dest)) {
+            if (file_exists($src) && (! file_exists($dest) || filemtime($src) > filemtime($dest))) {
                 @copy($src, $dest);
             }
         }
 
-        // Directories — copy missing files recursively
+        // Directories — copy missing files or files updated in the extension
         foreach (self::BUNDLED_DIRS as $relSrcDir => $destSubDir) {
             $srcDir  = $extDir . '/' . $relSrcDir;
             $destDir = $assets . '/' . $destSubDir;
@@ -61,7 +61,7 @@ class AvocadoServiceProvider extends AbstractServiceProvider
                     continue;
                 }
                 $dest = $destDir . '/' . $file->getFilename();
-                if (! file_exists($dest)) {
+                if (! file_exists($dest) || $file->getMTime() > filemtime($dest)) {
                     @copy($file->getPathname(), $dest);
                 }
             }

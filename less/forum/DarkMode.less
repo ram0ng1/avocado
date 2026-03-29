@@ -9,9 +9,37 @@
 // User choice:  Settings → Appearance → Dark / Auto / Light
 // ─────────────────────────────────────────────────────────────────────────────
 
-[data-theme^=dark] {
+[data-theme^=dark],
+body.dark-mode {
 
-  // ── 1. Global Avocado CSS variables ──────────────────────────────────────────
+  // ── ROOT VARIABLES ──────────────────────────────────────────────────────────
+  // Variables redefined by Flarum Core in [data-theme^=dark] scope:
+  // --body-bg, --control-bg, --shadow-color, --heading-color, --muted-color, etc.
+  // DiscussionListPane inherits automatically.
+
+  --avmsg-bg:            color-mix(in srgb, var(--body-bg) 95%, #000) !important;
+  --avmsg-sidebar-bg:    var(--body-bg) !important;
+  --avmsg-card-bg:       color-mix(in srgb, var(--body-bg) 70%, #fff) !important;
+  --avmsg-header-bg:     rgba(0, 0, 0, 0.3) !important;
+  --avmsg-border:        rgba(255, 255, 255, 0.07) !important;
+  --avmsg-text:          var(--heading-color, #e8e9f2) !important;
+  --avmsg-muted:         var(--muted-color) !important;
+  --avmsg-item-hover:    rgba(255, 255, 255, 0.05) !important;
+  --avmsg-item-active-bg: color-mix(in srgb, var(--primary-color) 14%, transparent) !important;
+  --avmsg-item-active-ring: color-mix(in srgb, var(--primary-color) 25%, transparent) !important;
+  --avmsg-bubble-in:     color-mix(in srgb, var(--body-bg) 55%, #fff) !important;
+  --avmsg-bubble-text:   var(--text-color) !important;
+  --avmsg-input-bg:      rgba(255, 255, 255, 0.07) !important;
+  --avmsg-search-bg:     rgba(255, 255, 255, 0.07) !important;
+  --avmsg-send-btn:      var(--primary-color) !important;
+  --avmsg-send-icon:     #ffffff !important;
+  --avmsg-unread-bg:     var(--primary-color) !important;
+  --avmsg-online:        #22c55e !important;
+  --avmsg-avatar-ring:   var(--body-bg) !important;
+  --avmsg-sk-base:       color-mix(in srgb, var(--body-bg) 60%, #fff) !important;
+  --avmsg-sk-shine:      color-mix(in srgb, var(--body-bg) 40%, #fff) !important;
+
+  // ── 3. Global Avocado CSS variables ──────────────────────────────────────────
 
   --home-border:  rgba(255, 255, 255, 0.08);
   --home-muted:   var(--muted-color);
@@ -788,6 +816,107 @@
   }
 
   .AvocadoMessages-title { color: var(--heading-color, #e8e9f2); }
+
+  // ─── DiscussionListPane Dark Mode ─────────────────────────────────────────
+  // Explicit dark mode styles for sidebar
+  
+  aside.DiscussionListPane {
+    background: var(--body-bg) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 2px 0 24px rgba(0, 0, 0, 0.50) !important;
+
+    // DiscussionList container: reset hardcoded #f6f6fa from DiscussionPage.less
+    .DiscussionList {
+      background: transparent !important;
+      padding: 0 !important;
+    }
+
+    // Each row: transparent bg, subtle bottom divider for separation
+    .DiscussionListItem {
+      background: transparent !important;
+      border-radius: 0 !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-bottom-color: transparent !important;
+      }
+    }
+
+    // Active item: stronger primary tint + left accent bar
+    .DiscussionListItem.active {
+      background: color-mix(in srgb, var(--primary-color) 16%, transparent) !important;
+      border-bottom-color: transparent !important;
+      border-left: 3px solid var(--primary-color) !important;
+      box-shadow: none !important;
+    }
+
+    // Non-active items: no left accent offset
+    .DiscussionListItem:not(.active) {
+      border-left: 3px solid transparent !important;
+    }
+
+    // Avatar
+    .DiscussionListItem-author .Avatar {
+      background-color: rgba(255, 255, 255, 0.08) !important;
+      box-shadow: none !important;
+    }
+
+    // Online ring
+    .DiscussionListItem-author.is-online .Avatar {
+      box-shadow: 0 0 0 2px var(--body-bg),
+                  0 0 0 4px #22c55e !important;
+    }
+
+    // Title: high contrast — specificity must beat DiscussionPage.less (0,4,0 !important)
+    // Adding .DiscussionListItem gives us 0,4,1 which wins.
+    .DiscussionListItem .DiscussionListItem-title,
+    .DiscussionListItem .DiscussionListItem-title a {
+      color: #e8e9f2 !important;
+      font-weight: 500 !important;
+    }
+
+    // Unread title: brighter
+    .DiscussionListItem--unread .DiscussionListItem-title,
+    .DiscussionListItem--unread .DiscussionListItem-title a {
+      color: #ffffff !important;
+      font-weight: 600 !important;
+    }
+
+    // Meta / secondary text
+    .DiscussionListItem-info,
+    .DiscussionListItem-info .item-user a,
+    .item-excerpt {
+      color: rgba(200, 202, 220, 0.65) !important;
+    }
+
+    // Stats / reply count
+    .DiscussionListItem-stats,
+    .DiscussionListItem-stats-item,
+    .item-count {
+      color: rgba(200, 202, 220, 0.50) !important;
+    }
+
+    // Scrollbar
+    &::-webkit-scrollbar { width: 4px; }
+    &::-webkit-scrollbar-track { background: transparent; }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.10);
+      border-radius: 2px;
+      &:hover { background: rgba(255, 255, 255, 0.18); }
+    }
+  }
+
+  // Compose button: keep visible against dark sidebar
+  .AvocadoMessages-composeBtn {
+    background: rgba(255,255,255,0.08) !important;
+    border-color: rgba(255,255,255,0.12) !important;
+    color: var(--heading-color, #e8e9f2) !important;
+    &:hover {
+      background: rgba(255,255,255,0.14) !important;
+      border-color: rgba(255,255,255,0.22) !important;
+    }
+  }
   .AvocadoMessages-inner .AvocadoHomeNav { border-bottom-color: rgba(255, 255, 255, 0.08); }
 
   .DialogListItem-button.active {
