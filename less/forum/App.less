@@ -217,13 +217,13 @@ img.Header-logo {
 }
 // For the Avocado-injected SVG logo: force our custom dimensions.
 svg.Header-logo {
-  height: 70px !important;
+  height: 35px !important;
   width: auto !important;
   max-width: none !important;
   max-height: none !important;
-  display: block;
+  display: inline-block !important;
   vertical-align: middle !important;
-  margin-top: -12px !important;
+  margin-top: 0 !important;
   overflow: visible;
 }
 
@@ -234,8 +234,8 @@ svg.Header-logo {
   padding: 5px 0;
 }
 
-// When using a PNG logo (svg logo disabled), constrain the header height
-.App-header:not(:has(svg.Header-logo)) {
+// Constrain header height for both PNG and SVG logos
+.App-header {
   height: 52px !important;
   min-height: 52px !important;
   line-height: 1;
