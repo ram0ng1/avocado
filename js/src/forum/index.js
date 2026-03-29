@@ -48,7 +48,6 @@ import {
 } from './utils';
 import { truncate } from 'flarum/common/utils/string';
 import TextEditor from 'flarum/common/components/TextEditor';
-import { setupRealtimeIntegration } from './components/RealtimeIntegration';
 
 // ─── Settings helpers ─────────────────────────────────────────────────────────
 
@@ -178,9 +177,6 @@ app.initializers.add(
       app.routes['user.mentions']    = { path: '/u/:username/mentions',    component: AvocadoUserMentionsPage     };
     }
 
-    // ── Realtime Integration —  Fix message updates for AvocadoMessages ──────
-    setupRealtimeIntegration();
-
     // ── 1. Theme class + logo override (needs app.forum — use beforeMount) ──────
     // initialize() runs before store.pushPayload() and before app.forum is set.
     // app.beforeMount() callbacks run after app.forum is set, before Mithril mounts.
@@ -188,6 +184,11 @@ app.initializers.add(
       // Theme class on <html> — added whenever V2 is active
       if (v2Enabled) {
         document.documentElement.classList.add('avocado-theme');
+      }
+
+      // Detect mobile-tab extension and add class if present
+      if (app.extensions && app.extensions['android-com-pl/mobile-tab']) {
+        document.documentElement.classList.add('has-mobile-tab');
       }
 
       // Custom SVG logo override.

@@ -1630,3 +1630,18 @@
     }
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Conditional: Position composer above MobileTab when extension is active
+// ─────────────────────────────────────────────────────────────────────────────
+html.has-mobile-tab .AvocadoMessages-inlineReply {
+  @media @phone {
+    bottom: 56px !important;
+  }
+}
+
+html.has-mobile-tab .AvocadoMessages-chatCol .MessageStream {
+  @media @phone {
+    padding-bottom: 136px !important;
+  }
+}
