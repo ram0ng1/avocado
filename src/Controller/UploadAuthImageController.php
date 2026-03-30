@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Ramon\Avocado\Controller;
 
 use Flarum\Api\Controller\UploadImageController;
@@ -12,6 +14,7 @@ class UploadAuthImageController extends UploadImageController
     protected string $filenamePrefix = 'avocado-auth';
     protected string $fileExtension = 'webp';
 
+    #[\Override]
     protected function makeImage(UploadedFileInterface $file): EncodedImageInterface
     {
         return $this->imageManager->read($file->getStream()->getMetadata('uri'))

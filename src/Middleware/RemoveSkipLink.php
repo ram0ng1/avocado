@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Ramon\Avocado\Middleware;
 
 use Laminas\Diactoros\Stream;
@@ -10,6 +12,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 class RemoveSkipLink implements MiddlewareInterface
 {
+    #[\Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $response = $handler->handle($request);

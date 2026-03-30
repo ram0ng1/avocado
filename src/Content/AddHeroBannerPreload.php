@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Ramon\Avocado\Content;
 
 use Flarum\Foundation\Config;
