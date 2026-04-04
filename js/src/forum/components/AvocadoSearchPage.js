@@ -122,6 +122,7 @@ export default class AvocadoSearchPage extends Page {
     } else if (tab === 'posts') {
       this.postsState.refreshParams(params, page);
     } else if (tab === 'users') {
+      if (!app.forum.attribute('canSearchUsers')) return;
       this._loadUsers(params.q || '', page);
     }
   }
@@ -827,7 +828,16 @@ export default class AvocadoSearchPage extends Page {
   // ── View ──────────────────────────────────────────────────────────────────
 
   view() {
-    const tab      = this.activeTab;
+    const canSearchUsers = !!app.forum.attribute('canSearchUsers');
+    const visibleTabs    = TABS.filter((t) => t !== 'users' || canSearchUsers);
+
+    // If the active tab is 'users' but we no longer have permission, fall back
+    let tab = this.activeTab;
+    if (tab === 'users' && !canSearchUsers) {
+      tab = 'discussions';
+      this.activeTab = tab;
+    }
+
     const q        = app.search.state.params().q || '';
     const hasQuery = !!q;
 
@@ -841,7 +851,7 @@ export default class AvocadoSearchPage extends Page {
 
             <div key="toolbar" className="AvocadoSearch-toolbar">
               <div className="AvocadoSearch-tabs" role="tablist">
-                {TABS.map((t) => (
+                {visibleTabs.map((t) => (
                   <button
                     key={t}
                     role="tab"
@@ -866,7 +876,7 @@ export default class AvocadoSearchPage extends Page {
             >
               {tab === 'discussions' && this.renderDiscussionsTab()}
               {tab === 'posts'       && this.renderPostsTab()}
-              {tab === 'users'       && this.renderUsersTab()}
+              {tab === 'users'       && canSearchUsers && this.renderUsersTab()}
             </div>
           </div>
         )}

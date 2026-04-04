@@ -44,6 +44,105 @@ const resolveAssetUrl = (assetPath) => {
   return null;
 };
 
+// ─── Showcase Tag Selector (single-select) ────────────────────────────────────
+
+class ShowcaseTagSelector extends Component {
+  oninit(vnode) {
+    super.oninit(vnode);
+    this.saving     = false;
+    this.tagsLoaded = false;
+    this.selected   = '';
+    this.tags       = [];
+    this._saveTimer = null;
+
+    try {
+      const raw = app.data.settings['avocado.showcase_tag'];
+      if (raw) this.selected = String(raw);
+    } catch (_) {}
+
+    app.store.find('tags').then((result) => {
+      this.tags = (Array.isArray(result) ? result : [])
+        .filter((t) => t && !t.parent?.())
+        .sort((a, b) => (a.position?.() ?? 9999) - (b.position?.() ?? 9999));
+      this.tagsLoaded = true;
+      m.redraw();
+    }).catch(() => {
+      this.tagsLoaded = true;
+      m.redraw();
+    });
+  }
+
+  select(id) {
+    this.selected = this.selected === id ? '' : id;
+    m.redraw();
+    clearTimeout(this._saveTimer);
+    this._saveTimer = setTimeout(() => this.persist(), 350);
+  }
+
+  persist() {
+    this.saving = true;
+    m.redraw();
+    const value  = this.selected;
+    const apiUrl = (app.forum.attribute('apiUrl') || '/api').replace(/\/+$/, '');
+    app.request({
+      method: 'POST',
+      url: `${apiUrl}/settings`,
+      body: { 'avocado.showcase_tag': value },
+    }).then(() => {
+      app.data.settings['avocado.showcase_tag'] = value;
+      this.saving = false;
+      m.redraw();
+    }).catch(() => {
+      this.saving = false;
+      m.redraw();
+    });
+  }
+
+  view() {
+    return (
+      <div className="Form-group AvocadoAdmin-featuredTags">
+        <label className="AvocadoAdmin-featuredTags-label">
+          {trans('ramon-avocado.admin.settings.showcase_tag_label', 'Showcase / Portfolio Tag')}
+          {this.saving && <span className="AvocadoAdmin-featuredTags-saving" aria-hidden="true" />}
+        </label>
+        <div className="AvocadoAdmin-tagPills">
+          {!this.tagsLoaded && (
+            <span className="AvocadoAdmin-tagPills-placeholder">Loading…</span>
+          )}
+          {this.tagsLoaded && this.tags.length === 0 && (
+            <span className="AvocadoAdmin-tagPills-placeholder">
+              {trans('ramon-avocado.admin.settings.featured_tags_empty', 'No tags found.')}
+            </span>
+          )}
+          {this.tags.map((tag) => {
+            const id     = String(tag.id?.() || '');
+            if (!id) return null;
+            const active = this.selected === id;
+            const color  = tag.color?.() || '#8f9097';
+            const icon   = tag.icon?.();
+            return (
+              <button
+                key={id}
+                type="button"
+                className={`AvocadoAdmin-tagPill${active ? ' is-active' : ''}`}
+                style={{ '--pill-color': color }}
+                onclick={() => this.select(id)}
+              >
+                {icon && <i className={`${icon} AvocadoAdmin-tagPill-icon`} aria-hidden="true" />}
+                <span className="AvocadoAdmin-tagPill-name">{tag.name?.()}</span>
+                <i className={`fas fa-check-circle AvocadoAdmin-tagPill-star${active ? ' is-active' : ''}`} aria-hidden="true" />
+              </button>
+            );
+          })}
+        </div>
+        <p className="helpText">
+          {trans('ramon-avocado.admin.settings.showcase_tag_help', 'Discussions from this tag appear in a slider on the homepage above Popular Discussions. Ideal for a portfolio or showcase section. Click the active tag again to deselect.')}
+        </p>
+      </div>
+    );
+  }
+}
+
 // ─── Featured Tags Selector ───────────────────────────────────────────────────
 
 class FeaturedTagsSelector extends Component {
@@ -194,6 +293,8 @@ app.initializers.add(
       ), 115)
 
       .registerSetting(() => <FeaturedTagsSelector />, 112)
+
+      .registerSetting(() => <ShowcaseTagSelector />, 111)
 
       .registerSetting({
         setting: 'avocado.show_online_users',

@@ -689,60 +689,45 @@ body.dark-mode {
     }
   }
 
-  // FieldSet cards (settings / security pages)
+  // FieldSet — flat, no card in dark mode
   .AvocadoUserPage .FieldSet {
-    background: var(--control-bg);
-    border-color: rgba(255, 255, 255, 0.08);
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 
-    &:hover {
-      border-color: rgba(255, 255, 255, 0.14);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-    }
-
-    &-label {
-      border-bottom-color: rgba(255, 255, 255, 0.06);
-
-      &::before {
-        background: rgba(255, 255, 255, 0.08);
-        color: var(--muted-color);
-      }
+    .FieldSet-label {
+      color: var(--heading-color, #e8e9f2);
+      border-bottom-color: rgba(255, 255, 255, 0.08);
     }
   }
 
-  // Security page FieldSet icon tint — keep blue tint but dimmed
-  .AvocadoUserPage .UserSecurityPage .FieldSet-label::before {
-    background: rgba(63, 136, 246, 0.15);
-    color: #6fa3f8;
-  }
-
-  // Settings & Security page buttons
   .AvocadoUserPage .SettingsPage,
   .AvocadoUserPage .UserSecurityPage {
+
     .Button--default {
       background: rgba(255, 255, 255, 0.07);
       border-color: transparent;
       color: var(--text-color);
-      &:hover { background: rgba(255, 255, 255, 0.12); color: var(--primary-color); }
     }
 
     .Button--danger {
       border-color: rgba(220, 50, 50, 0.35);
       color: #f87171;
-      &:hover { background: rgba(220, 50, 50, 0.1); }
     }
 
-    // AccessTokensList rows
+    .Switch-slider { background: rgba(255, 255, 255, 0.15); }
+
+    .ThemeMode {
+      &-legend { color: var(--muted-color); }
+      &--active &-legend { color: var(--primary-color); }
+    }
+
     .AccessTokensList-item {
       border-color: rgba(255, 255, 255, 0.07);
-
       &-title { color: var(--text-color); }
       &-title-sub { color: var(--muted-color); }
       &--active &-title-sub { color: #4ade80; }
-
-      .AccessToken-token, code {
-        background: rgba(255, 255, 255, 0.07);
-        color: var(--muted-color);
-      }
+      code { background: rgba(255, 255, 255, 0.07); color: var(--muted-color); }
     }
   }
 

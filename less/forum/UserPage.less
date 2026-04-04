@@ -655,132 +655,164 @@
     }
   }
 
-  // FieldSet — used by Settings and Security pages (generic, any page)
-  .FieldSet {
-    background: #fff;
-    border: 1px solid var(--home-border, #eaeaf0);
-    border-radius: 18px;
-    margin: 0 0 16px;
-    overflow: hidden;
-    transition: box-shadow 0.2s ease, border-color 0.2s ease;
-
-    &:hover {
-      border-color: #dfdfe6;
-      box-shadow: 0 8px 24px rgba(26, 26, 36, 0.06);
-    }
-
-    // Label row — icon bubble + uppercase label
-    // Flarum renders FieldSet as: <div.FieldSet> <label.FieldSet-label> <div.FieldSet-items>
-    &-label {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 16px 20px 14px;
-      border-bottom: 1px solid #f4f4f8;
-      font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
-      font-size: 12px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
-      color: var(--home-muted, #8f8f95);
-
-      &::before {
-        font-family: 'Font Awesome 6 Free', 'FontAwesome';
-        font-weight: 900;
-        font-style: normal;
-        content: '\f013'; // fa-gear — default
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 36px;
-        min-width: 36px;
-        border-radius: 10px;
-        background: rgba(143, 143, 149, 0.1);
-        color: var(--home-muted, #8f8f95);
-        font-size: 15px;
-        text-align: center;
-        line-height: 36px;
-        flex-shrink: 0;
-      }
-    }
-
-    // Flarum uses <div class="FieldSet-items"> (not <ul>)
-    &-items {
-      padding: 16px 20px 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-  }
 }
 
 // ─── Settings & Security pages ────────────────────────────────────────────────
+// Flat layout — no card/border on FieldSet. Sections separated by padding only.
+// Mirrors Flarum's native approach but with DM Sans, avocado colors, and pill buttons.
 
-// Top-level list: no markers, no gaps (cards are separated by FieldSet margin)
+// Top-level list: no markers, sections stacked with spacing
 .AvocadoUserPage .SettingsPage > ul,
 .AvocadoUserPage .UserSecurityPage > ul {
   list-style: none;
   padding: 0;
   margin: 0;
-
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
   > li { list-style: none; }
 }
 
-// Buttons — pill-shaped, scoped to the two pages only
+// ── FieldSet: flat section (no card/border/bg) ────────────────────────────────
+// !important overrides Flarum core's .FieldSet and any theme dark-mode rules
+// that apply background/border from CSS variables.
+.AvocadoUserPage .FieldSet {
+  background: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  margin: 0;
+  overflow: visible;
+  padding: 0;
+
+  // Section heading: bold, clear
+  .FieldSet-label {
+    display: block;
+    margin-bottom: 16px;
+    padding: 0 0 10px;
+    border: none;
+    border-bottom: 1px solid var(--home-border, #eaeaf0);
+    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.1px;
+    color: #1f2025;
+    text-transform: none;
+  }
+
+  // Items: Flarum handles column vs row via FieldSet--col.
+  // We must NOT set flex-direction here — let Flarum core control it.
+  .FieldSet-items {
+    gap: 14px;
+  }
+}
+
+// ── Settings & Security shared component styles ───────────────────────────────
 .AvocadoUserPage .SettingsPage,
 .AvocadoUserPage .UserSecurityPage {
 
+  // Buttons — pill style
   .Button {
     font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
     border-radius: 999px;
     font-weight: 700;
     font-size: 13px;
-    letter-spacing: 0;
     box-shadow: none;
-    transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
 
     &--primary {
       background: var(--primary-color);
       border-color: var(--primary-color);
       color: #fff;
-      &:hover { opacity: 0.88; }
     }
 
     &--default {
       background: #f3f3f6;
       border-color: transparent;
       color: #40424b;
-      &:hover { background: #eaeaee; color: var(--primary-color); }
     }
 
     &--danger {
       background: transparent;
       border: 1.5px solid rgba(220, 50, 50, 0.4);
       color: #dc3232;
-      &:hover { background: rgba(220, 50, 50, 0.06); }
     }
 
     &-icon { margin-right: 6px; }
   }
 
-  // Controls row (wraps buttons at the bottom of a section)
+  // Switch toggle
+  .Switch {
+    font-size: 14px;
+    font-weight: 500;
+    color: #43454e;
+    gap: 10px;
+
+    &-slider {
+      background: #d8dae8;
+      &::before { box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    }
+
+    &.on .Switch-slider { background: var(--primary-color); }
+  }
+
+  // Help text below toggles
+  .helpText {
+    font-size: 13px;
+    color: var(--home-muted, #8f8f95);
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  // Controls row (security page button groups)
   .UserSecurityPage-controls {
-    padding-top: 4px;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
   }
 
-  // AccessTokensList — token rows
+  // ThemeMode color scheme grid
+  // FieldSet--col makes .FieldSet-items flex-direction:row already (Flarum core).
+  // We only adjust the card size and typography.
+  // ThemeMode: only customise size, radius, and legend font.
+  // Border logic (inactive = var(--control-bg), active = var(--primary-color)) is
+  // handled entirely by Flarum core's ThemeMode.less — we must NOT override `border`
+  // here or we break the active-state specificity.
+  .ThemeMode {
+    max-width: 120px;
+
+    &-container {
+      border-radius: 12px;
+    }
+
+    &-preview {
+      width: 120px;
+      height: 110px;
+    }
+
+    &-legend {
+      padding: 8px 0 2px;
+      font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted-color);
+    }
+
+    &--active &-legend {
+      color: var(--primary-color);
+      font-weight: 700;
+    }
+  }
+
+  // AccessTokensList — token and session rows
   .AccessTokensList {
     width: 100%;
+    display: flex;
+    flex-direction: column;
 
     &--empty {
       font-size: 13px;
       color: var(--home-muted, #8f8f95);
       font-style: italic;
-      padding: 4px 0 8px;
     }
   }
 
@@ -789,17 +821,17 @@
     align-items: center;
     gap: 12px;
     padding: 12px 0;
-    border-bottom: 1px solid #f4f4f8;
-    background: transparent;
+    border-bottom: 1px solid var(--home-border, #eaeaf0);
+    background: transparent !important; // Flarum core sets background-color: var(--control-bg)
     color: inherit;
 
     &:last-child { border-bottom: 0; }
 
     &-icon {
-      --font-size: 1.2rem;
+      --font-size: 1.1rem;
       font-size: var(--font-size);
-      width: 32px;
-      min-width: 32px;
+      width: 28px;
+      min-width: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -831,18 +863,14 @@
       gap: 6px;
       margin-left: auto;
       flex-shrink: 0;
+
+      .Button {
+        font-size: 12px;
+        padding: 4px 12px;
+        height: auto;
+      }
     }
 
-    // Revoke / copy token button — small ghost
-    .Button {
-      font-size: 12px;
-      padding: 4px 12px;
-      height: auto;
-      line-height: 1.5;
-    }
-
-    // Token string (developer tokens)
-    .AccessToken-token,
     code {
       font-family: 'Courier New', monospace;
       font-size: 12px;
@@ -855,21 +883,6 @@
   }
 }
 
-// ── Section-specific FieldSet icons (higher specificity than .AvocadoUserPage .FieldSet-label::before)
-.AvocadoUserPage .Settings-account        .FieldSet-label::before { content: '\f007'; } // fa-user
-.AvocadoUserPage .Settings-notifications  .FieldSet-label::before { content: '\f0f3'; } // fa-bell
-.AvocadoUserPage .Settings-privacy        .FieldSet-label::before { content: '\f06e'; } // fa-eye
-.AvocadoUserPage .Settings-device         .FieldSet-label::before { content: '\f3cd'; } // fa-mobile-alt
-.AvocadoUserPage .Settings-colorScheme    .FieldSet-label::before { content: '\f53f'; } // fa-palette
-
-// Security sections — blue tint
-.AvocadoUserPage .UserSecurityPage .FieldSet-label::before {
-  background: rgba(63, 136, 246, 0.1);
-  color: #3f88f6;
-}
-.AvocadoUserPage .UserSecurityPage-developerTokens .FieldSet-label::before { content: '\f084'; } // fa-key
-.AvocadoUserPage .UserSecurityPage-sessions        .FieldSet-label::before { content: '\f109'; } // fa-laptop
-.AvocadoUserPage .UserSecurityPage-globalLogout    .FieldSet-label::before { content: '\f2f5'; } // fa-sign-out-alt
 
 // ── Responsive: tablet ────────────────────────────────────────────────────────
 
@@ -908,7 +921,6 @@
 
   // Body
   .AvocadoUserPage-bodyInner     { padding: 16px 12px 40px; }
-  .AvocadoUserPage .FieldSet     { border-radius: 14px; }
 }
 
 // ─── FoF User Bio — hero integration ─────────────────────────────────────────
