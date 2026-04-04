@@ -6,31 +6,27 @@ import Tooltip from 'flarum/common/components/Tooltip';
 import {
   trans,
   numberOr,
-  hexToRgba,
   iconColors,
   displayName,
   formatTimeLabel,
   postPreview,
   tagRoute,
+  resolveAssetUrl,
+  navigate,
+  getFeaturedTagIds,
+  iconPillStyle,
 } from '../utils';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const navigate = (e, href) => {
-  e.preventDefault();
-  m.route.set(href);
-};
 
-const tagHref = (tag) => {
-  try { return app.route.tag(tag); } catch (e) { return '#'; }
-};
 
 // ─── Tag card (primary tag) ───────────────────────────────────────────────────
 
 function renderTagCard(tag, featured = false, fireUrl = '') {
   const color   = tag.color?.() || '#3f88f6';
   const { bg: iconBg, color: iconColor } = iconColors(color, 0.12);
-  const href    = tagHref(tag);
+  const href    = tagRoute(tag);
   const lastDisc = tag.lastPostedDiscussion?.();
   const children = sortTags((tag.children?.() || []).filter(Boolean));
   const count   = tag.discussionCount?.() || 0;
@@ -78,7 +74,7 @@ function renderTagCard(tag, featured = false, fireUrl = '') {
         <div className="AvocadoTagsPage-tagCard-children">
           {children.map((child) => {
             const childColor = child.color?.() || color;
-            const childHref  = tagHref(child);
+            const childHref  = tagRoute(child);
             return (
               <a
                 key={child.id()}
@@ -137,18 +133,9 @@ export function tagPageView(original) {
   const tags        = this.tags || [];
   const loading     = !!this.loading;
 
-  const featuredIds = (() => {
-    try {
-      const raw = app.forum?.attribute('avocadoFeaturedTags');
-      return new Set((raw ? JSON.parse(raw) : []).map(String));
-    } catch (_) { return new Set(); }
-  })();
+  const featuredIds = getFeaturedTagIds();
 
-  const fireUrl = (() => {
-    const base = app.forum?.attribute('assetsBaseUrl') || '';
-    if (base) return base.replace(/\/+$/, '') + '/fire.webp';
-    return (app.forum?.attribute('baseUrl') || '').replace(/\/+$/, '') + '/assets/fire.webp';
-  })();
+  const fireUrl = resolveAssetUrl('extensions/ramon-avocado/fire.webp');
 
   const primaryTags = tags
     .filter((t) => t.position?.() !== null)
@@ -194,7 +181,7 @@ export function tagPageView(original) {
           <div className="AvocadoTagsPage-cloud-pills">
             {cloudTags.map((tag) => {
               const color = tag.color?.() || '#3f88f6';
-              const href  = tagHref(tag);
+              const href  = tagRoute(tag);
               const count = tag.discussionCount?.() || 0;
               return (
                 <a

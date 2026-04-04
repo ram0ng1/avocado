@@ -35,6 +35,8 @@ ramon-avocado:
       show_guest_cta_help: Exibir uma mensagem de call-to-action para usuários não logados.
       custom_default_avatar_label: Avatar padrão personalizado
       custom_default_avatar_help: Envie uma imagem de avatar padrão personalizada para usuários sem foto.
+      hide_links_for_guests_label: Ocultar links para visitantes
+      hide_links_for_guests_help: Impedir que visitantes acessem links nos posts. Ao clicar em um link, é exibido um botão de Login / Cadastro.
     footer_settings:
       footer_enabled: Ativar rodapé personalizado
       footer_company: Informações da empresa
@@ -52,7 +54,12 @@ ramon-avocado:
   forum:
     actions:
       share: Compartilhar
+    post_cta:
+      text: "Gostou? Participe da discussão!"
+    link_cta:
+      placeholder: "Faça login para ver o link"
     header:
+      back_home: Voltar para o Início
     user:
     tag:
     discussion:

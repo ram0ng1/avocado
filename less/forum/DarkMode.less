@@ -348,9 +348,11 @@ body.dark-mode {
     }
   }
 
+
   // ── 22. All Discussions page ──────────────────────────────────────────────────
 
-  .AvocadoDiscussions-title {
+  .AvocadoDiscussions-title,
+  .AvocadoExtensionPage-title {
     color: var(--heading-color, #e8e9f2);
   }
 
@@ -586,20 +588,24 @@ body.dark-mode {
     border-bottom-color: rgba(255, 255, 255, 0.07);
   }
 
-  .AvocadoUserPage-navItem {
-    &:hover { color: var(--text-color); }
+  .AvocadoUserPage-navItem,
+  .AvocadoUserPage-navInner .LinkButton {
+    &:hover, &:focus { color: var(--text-color); background: transparent; }
   }
 
-  .AvocadoUserPage-navCount {
+  .AvocadoUserPage-navCount,
+  .AvocadoUserPage-navInner .LinkButton .Button-badge {
     background: rgba(255, 255, 255, 0.08);
     color: var(--muted-color);
-
-    .AvocadoUserPage-navItem.is-active & {
-      background: rgba(255, 255, 255, 0.13);
-    }
   }
 
-  .AvocadoUserPage-navDivider {
+  .AvocadoUserPage-navItem.is-active .AvocadoUserPage-navCount,
+  .AvocadoUserPage-navInner .LinkButton[active="true"] .Button-badge {
+    background: rgba(255, 255, 255, 0.13);
+  }
+
+  .AvocadoUserPage-navDivider,
+  .AvocadoUserPage-navInner > li.Dropdown-separator {
     background: rgba(255, 255, 255, 0.08);
   }
 
@@ -707,6 +713,37 @@ body.dark-mode {
   .AvocadoUserPage .UserSecurityPage .FieldSet-label::before {
     background: rgba(63, 136, 246, 0.15);
     color: #6fa3f8;
+  }
+
+  // Settings & Security page buttons
+  .AvocadoUserPage .SettingsPage,
+  .AvocadoUserPage .UserSecurityPage {
+    .Button--default {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: transparent;
+      color: var(--text-color);
+      &:hover { background: rgba(255, 255, 255, 0.12); color: var(--primary-color); }
+    }
+
+    .Button--danger {
+      border-color: rgba(220, 50, 50, 0.35);
+      color: #f87171;
+      &:hover { background: rgba(220, 50, 50, 0.1); }
+    }
+
+    // AccessTokensList rows
+    .AccessTokensList-item {
+      border-color: rgba(255, 255, 255, 0.07);
+
+      &-title { color: var(--text-color); }
+      &-title-sub { color: var(--muted-color); }
+      &--active &-title-sub { color: #4ade80; }
+
+      .AccessToken-token, code {
+        background: rgba(255, 255, 255, 0.07);
+        color: var(--muted-color);
+      }
+    }
   }
 
   // ── 26. Discussion page (/d/…) ────────────────────────────────────────────────

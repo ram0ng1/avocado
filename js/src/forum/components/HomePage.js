@@ -4,6 +4,7 @@ import TextEditor from 'flarum/common/components/TextEditor';
 import Tooltip from 'flarum/common/components/Tooltip';
 import Avatar from 'flarum/common/components/Avatar';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
+import abbreviateNumber from 'flarum/common/utils/abbreviateNumber';
 // FIX: import shared utilities — removes all local duplicates
 import {
   trans,
@@ -11,7 +12,6 @@ import {
   safeRoute,
   discussionRoute,
   tagRoute,
-  hexToRgba,
   iconColors,
   tagPillStyle,
   displayName,
@@ -20,16 +20,19 @@ import {
   resolveAssetUrl,
   FALLBACK_COLORS,
   FALLBACK_ICONS,
+  truncate,
+  navigate,
+  userRoute,
+  renderThreadSkeleton,
+  getFeaturedTagIds,
+  categoryCardStyle,
+  safeCssUrl,
 } from '../utils';
 
 
-// FIX: all local helpers removed — imported from ../utils above.
 
-const formatThreadCount = (count) => {
-  const n = numberOr(count, 0);
-  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
-  return String(n);
-};
+// FIX: all local helpers removed — imported from ../utils above.
+// formatThreadCount replaced by Flarum core's abbreviateNumber.
 
 // SVG person silhouette — colours driven by var(--primary-color) via CSS classes
 const defaultAvatarSvg = (
@@ -121,7 +124,6 @@ export default class HomePage extends Component {
       };
 
       const handleLikeEvent = (data) => {
-        console.log('[Avocado] Like event received:', data);
         const discId = String(data?.discussionId || '');
         if (!discId) return;
         
@@ -136,7 +138,7 @@ export default class HomePage extends Component {
         app.store
           .find('discussions', discId, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
           .then(() => {
-            console.log('[Avocado] Like event sync completed for:', discId);
+
             if (!isSelf) {
               this._updatedLikeIds.add(discId);
               setTimeout(() => { 
@@ -146,8 +148,7 @@ export default class HomePage extends Component {
             }
             m.redraw();
           })
-          .catch((error) => {
-            console.error('[Avocado] Like event handler error:', error);
+          .catch(() => {
             m.redraw();
           });
       };
@@ -210,10 +211,7 @@ export default class HomePage extends Component {
     }
   }
 
-  navigate(event, href) {
-    event.preventDefault();
-    m.route.set(href);
-  }
+
 
   allDiscussions() {
     try {
@@ -448,7 +446,7 @@ export default class HomePage extends Component {
     if (!lastPoster && !lastPost) return null;
 
     const rawText = lastPost?.contentPlain?.() || '';
-    const preview = rawText ? rawText.slice(0, 100) + (rawText.length > 100 ? '…' : '') : '';
+    const preview = truncate(rawText, 100);
     const otherCount = replies - 1;
     const href = discussionRoute(discussion);
     const lastPostHref = (() => {
@@ -466,7 +464,7 @@ export default class HomePage extends Component {
         <a
           className="AvocadoHome-replyCard-line"
           href={lastPostHref}
-          onclick={(e) => { e.stopPropagation(); this.navigate(e, lastPostHref); }}
+          onclick={(e) => { e.stopPropagation(); navigate(e, lastPostHref); }}
         >
           <div className="AvocadoHome-replyCard-avatar">
             {this.renderAvatar(lastPoster)}
@@ -478,7 +476,7 @@ export default class HomePage extends Component {
           <a
             className="AvocadoHome-replyCard-seeMore"
             href={secondPostHref}
-            onclick={(e) => { e.stopPropagation(); this.navigate(e, secondPostHref); }}
+            onclick={(e) => { e.stopPropagation(); navigate(e, secondPostHref); }}
           >
             {otherCount === 1 ? trans('ramon-avocado.forum.home.see_other_reply_singular', 'See other {count} reply', { count: otherCount }) : trans('ramon-avocado.forum.home.see_other_replies', 'See other {count} replies', { count: otherCount })}
           </a>
@@ -505,10 +503,7 @@ export default class HomePage extends Component {
     const excerpt = postPreview(discussion);
     const lastPostedAt = discussion.lastPostedAt?.();
     const timeLabel = formatTimeLabel(lastPostedAt);
-    const userProfileHref = (() => {
-      if (!user) return '#';
-      try { return app.route('user', { username: user.username?.() || '' }); } catch (e) { return '#'; }
-    })();
+    const userProfileHref = userRoute(user);
 
     return (
       <article
@@ -524,7 +519,7 @@ export default class HomePage extends Component {
               <a
                 className="AvocadoHome-threadAuthor"
                 href={userProfileHref}
-                onclick={(e) => { e.stopPropagation(); this.navigate(e, userProfileHref); }}
+                onclick={(e) => { e.stopPropagation(); navigate(e, userProfileHref); }}
               >{displayName(user)}</a>
               {timeLabel && (
                 <span className="AvocadoHome-threadTime">{timeLabel}</span>
@@ -552,7 +547,7 @@ export default class HomePage extends Component {
                     key={tag.id?.()}
                     className={`AvocadoHome-tagPill${extraClass}`}
                     href={tagRoute(tag)}
-                    onclick={(e) => { e.stopPropagation(); this.navigate(e, tagRoute(tag)); }}
+                    onclick={(e) => { e.stopPropagation(); navigate(e, tagRoute(tag)); }}
                     style={tagStyle}
                   >
                     {tag.icon?.() && <i className={tag.icon()} aria-hidden="true" />}
@@ -567,7 +562,7 @@ export default class HomePage extends Component {
             <a
               className="AvocadoHome-threadTitle"
               href={href}
-              onclick={(e) => this.navigate(e, href)}
+              onclick={(e) => navigate(e, href)}
             >
               {title}
             </a>
@@ -699,7 +694,7 @@ export default class HomePage extends Component {
               key={key}
               className="AvocadoHome-onlineAvatars-item"
               href={profileHref}
-              onclick={(e) => { e.stopPropagation(); this.navigate(e, profileHref); }}
+              onclick={(e) => { e.stopPropagation(); navigate(e, profileHref); }}
               title={name}
               style={{ zIndex: MAX_SHOWN - i }}
             >
@@ -725,18 +720,7 @@ export default class HomePage extends Component {
     );
   }
 
-  renderSkeleton() {
-    return [0, 1, 2].map((i) => (
-      <div key={String(i)} className="AvocadoHome-skeletonCard">
-        <div className="AvocadoHome-skeletonAvatar" />
-        <div className="AvocadoHome-skeletonBody">
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--sm" />
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--lg" />
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--md" />
-        </div>
-      </div>
-    ));
-  }
+
 
   renderTagPicker() {
     // Limits from forum settings (mirrors TagDiscussionModal / addTagComposer.js)
@@ -984,12 +968,7 @@ export default class HomePage extends Component {
       ? this.allDiscussions().slice(0, 5)
       : this.popularDiscussions(5);
 
-    const featuredIds = (() => {
-      try {
-        const raw = app.forum?.attribute('avocadoFeaturedTags');
-        return new Set((raw ? JSON.parse(raw) : []).map(String));
-      } catch (_) { return new Set(); }
-    })();
+    const featuredIds = getFeaturedTagIds();
 
     // Featured categories appear first, then the rest in position order
     const categories = this.topCategories(7).sort((a, b) => {
@@ -1034,7 +1013,7 @@ export default class HomePage extends Component {
             <div
               className={`AvocadoHome-heroBanner${heroUrl ? ' AvocadoHome-heroBanner--hasImage' : ''}`}
               style={heroUrl ? {
-                backgroundImage: `url(${heroUrl})`,
+                backgroundImage: safeCssUrl(heroUrl),
                 backgroundSize: 'cover',
                 backgroundPosition: heroImagePosition,
               } : {}}
@@ -1163,11 +1142,7 @@ export default class HomePage extends Component {
                   const count      = numberOr(cat.discussionCount?.(), 0);
                   const isFeatured = featuredIds.has(String(cat.id?.()));
                   const fireUrl = isFeatured
-                    ? (() => {
-                        const base = app.forum?.attribute('assetsBaseUrl') || '';
-                        if (base) return base.replace(/\/+$/, '') + '/fire.webp';
-                        return (app.forum?.attribute('baseUrl') || '').replace(/\/+$/, '') + '/assets/fire.webp';
-                      })()
+                    ? resolveAssetUrl('extensions/ramon-avocado/fire.webp')
                     : null;
 
                   return (
@@ -1175,8 +1150,8 @@ export default class HomePage extends Component {
                       key={cat.id?.()}
                       className={`AvocadoHome-categoryCard${isFeatured ? ' AvocadoHome-categoryCard--featured' : ''}`}
                       href={catRoute}
-                      onclick={(e) => this.navigate(e, catRoute)}
-                      style={(() => { const ic = iconColors(catColor, 0.12); return { '--cat-color': ic.color, '--cat-bg': ic.bg }; })()}
+                      onclick={(e) => navigate(e, catRoute)}
+                      style={categoryCardStyle(catColor)}
                     >
                       {isFeatured && fireUrl && (
                         <Tooltip text={trans('ramon-avocado.forum.tags.featured', 'Featured')} position="top">
@@ -1190,7 +1165,7 @@ export default class HomePage extends Component {
                       </span>
                       <div className="AvocadoHome-categoryBody">
                         <h3>{cat.name?.()}</h3>
-                        <p>{formatThreadCount(count)} {trans('ramon-avocado.forum.home.discussions', 'discussions')}</p>
+                        <p>{abbreviateNumber(numberOr(count, 0))} {trans('ramon-avocado.forum.home.discussions', 'discussions')}</p>
                       </div>
                     </a>
                   );
@@ -1198,7 +1173,7 @@ export default class HomePage extends Component {
                 <a
                   className="AvocadoHome-categoryCard AvocadoHome-categoryCard--all"
                   href={safeRoute('tags')}
-                  onclick={(e) => this.navigate(e, safeRoute('tags'))}
+                  onclick={(e) => navigate(e, safeRoute('tags'))}
                 >
                   <div className="AvocadoHome-categoryBody">
                     <h3>{trans('ramon-avocado.forum.home.all_categories', 'All categories')}</h3>
@@ -1223,7 +1198,7 @@ export default class HomePage extends Component {
                 <a
                   className="AvocadoHome-seeAll"
                   href={safeRoute('avocado-discussions')}
-                  onclick={(e) => this.navigate(e, safeRoute('avocado-discussions'))}
+                  onclick={(e) => navigate(e, safeRoute('avocado-discussions'))}
                 >
                   {trans('ramon-avocado.forum.home.see_all', 'See all')}{' '}
                   <i className="fas fa-arrow-right" aria-hidden="true" />
@@ -1232,7 +1207,7 @@ export default class HomePage extends Component {
             </div>
             <div className="AvocadoHome-threadStack">
               {popular.length === 0
-                ? this.renderSkeleton()
+                ? renderThreadSkeleton()
                 : popular.map((d) => this.renderThreadCard(d))
               }
             </div>

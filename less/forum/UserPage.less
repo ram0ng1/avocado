@@ -290,6 +290,29 @@
   width: 100%;
 }
 
+// Back-to-home link — hidden on phone (phone uses the SelectDropdown nav)
+.AvocadoUserPage-homeLink {
+  display: none; // hidden by default, shown on tablet+
+
+  @media @tablet-up {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--home-muted, #8f8f95);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.15s;
+    border-bottom: none;
+
+    i { font-size: 12px; }
+
+    &:hover { color: var(--primary-color); text-decoration: none; }
+  }
+}
+
 .AvocadoUserPage-navInner {
   max-width: var(--home-max-width, 1036px);
   margin: 0 auto;
@@ -299,8 +322,88 @@
   gap: 0;
   overflow-x: auto;
   scrollbar-width: none;
+  list-style: none;
+  padding-left: 20px;
 
   &::-webkit-scrollbar { display: none; }
+
+  // Each <li> from listItems() is transparent to the flex layout so that
+  // the inner LinkButton itself becomes the flex item.
+  > li {
+    display: contents;
+  }
+
+  // Separator (<li class="Dropdown-separator">) → vertical divider line
+  > li.Dropdown-separator {
+    display: flex;
+    align-self: center;
+    width: 1px;
+    height: 20px;
+    background: var(--home-border, #eaeaf0);
+    margin: 0 8px;
+    flex-shrink: 0;
+  }
+
+  // ── Style native Flarum LinkButton as our horizontal nav tab ──────────────
+  .LinkButton {
+    display: inline-flex;
+    align-items: center;
+    height: 48px;
+    padding: 0 16px;
+    gap: 7px;
+    border: none;
+    border-bottom: 2.5px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--home-muted, #8f8f95);
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: color 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+
+    .Button-icon { font-size: 13px; margin: 0; }
+
+    // Badge wraps icon+label; flatten it for our inline flex layout
+    .Button-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    &:hover, &:focus {
+      color: #2a2b30;
+      text-decoration: none;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    // Flarum sets active="true" attribute on <a> when route matches
+    &[active="true"] {
+      color: var(--primary-color);
+      border-bottom-color: var(--primary-color);
+      font-weight: 700;
+    }
+
+    // Post/discussion count badge
+    .Button-badge {
+      font-size: 12px;
+      font-weight: 700;
+      background: #f0f0f5;
+      border-radius: 999px;
+      padding: 1px 7px;
+      color: #8f8f95;
+      transition: background 0.15s, color 0.15s;
+      margin-left: 0;
+    }
+
+    &[active="true"] .Button-badge {
+      background: rgba(0, 0, 0, 0.06);
+      color: inherit;
+    }
+  }
 }
 
 .AvocadoUserPage-navItem {
@@ -386,46 +489,11 @@
   // Phone nav dropdown: reset Button overrides (button lives inside AvocadoUserPage in DOM
   // but is visually positioned in the header — it should not look like a pill button)
   .AvocadoNav-helper .Dropdown-toggle {
-    font-weight: 400 !important;
     border-radius: 0 !important;
     background: none !important;
     border: none !important;
     box-shadow: none !important;
     padding: 0 !important;
-  }
-
-  // Buttons — pill-shaped
-  .Button {
-    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif !important;
-    border-radius: 999px !important;
-    font-weight: 700 !important;
-    font-size: 13px !important;
-    letter-spacing: 0 !important;
-    transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease !important;
-    box-shadow: none !important;
-
-    &--primary {
-      background: var(--primary-color) !important;
-      border-color: var(--primary-color) !important;
-      color: #fff !important;
-      &:hover { opacity: 0.88 !important; }
-    }
-
-    &--default {
-      background: #f3f3f6 !important;
-      border-color: transparent !important;
-      color: #40424b !important;
-      &:hover { background: #eaeaee !important; color: var(--primary-color) !important; }
-    }
-
-    &--danger {
-      background: transparent !important;
-      border: 1.5px solid rgba(220, 50, 50, 0.4) !important;
-      color: #dc3232 !important;
-      &:hover { background: rgba(220, 50, 50, 0.06) !important; }
-    }
-
-    &-icon { margin-right: 5px; }
   }
 
   // Inputs — .AvocadoUserPage .FormControl has 0,2,0 specificity vs Flarum's 0,1,0
@@ -647,26 +715,161 @@
   }
 }
 
-// Security page FieldSet: lock icon, blue tint
-// Specificity 0,3,1 beats .AvocadoUserPage .FieldSet-label::before 0,2,1 — no !important needed
-.AvocadoUserPage .UserSecurityPage .FieldSet-label::before {
-  content: '\f023';
-  background: rgba(63, 136, 246, 0.1);
-  color: #3f88f6;
-}
+// ─── Settings & Security pages ────────────────────────────────────────────────
 
-// Settings/Security page: make the top-level list use card layout
+// Top-level list: no markers, no gaps (cards are separated by FieldSet margin)
 .AvocadoUserPage .SettingsPage > ul,
 .AvocadoUserPage .UserSecurityPage > ul {
   list-style: none;
   padding: 0;
   margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
 
   > li { list-style: none; }
 }
+
+// Buttons — pill-shaped, scoped to the two pages only
+.AvocadoUserPage .SettingsPage,
+.AvocadoUserPage .UserSecurityPage {
+
+  .Button {
+    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0;
+    box-shadow: none;
+    transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+
+    &--primary {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+      color: #fff;
+      &:hover { opacity: 0.88; }
+    }
+
+    &--default {
+      background: #f3f3f6;
+      border-color: transparent;
+      color: #40424b;
+      &:hover { background: #eaeaee; color: var(--primary-color); }
+    }
+
+    &--danger {
+      background: transparent;
+      border: 1.5px solid rgba(220, 50, 50, 0.4);
+      color: #dc3232;
+      &:hover { background: rgba(220, 50, 50, 0.06); }
+    }
+
+    &-icon { margin-right: 6px; }
+  }
+
+  // Controls row (wraps buttons at the bottom of a section)
+  .UserSecurityPage-controls {
+    padding-top: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  // AccessTokensList — token rows
+  .AccessTokensList {
+    width: 100%;
+
+    &--empty {
+      font-size: 13px;
+      color: var(--home-muted, #8f8f95);
+      font-style: italic;
+      padding: 4px 0 8px;
+    }
+  }
+
+  .AccessTokensList-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f4f4f8;
+    background: transparent;
+    color: inherit;
+
+    &:last-child { border-bottom: 0; }
+
+    &-icon {
+      --font-size: 1.2rem;
+      font-size: var(--font-size);
+      width: 32px;
+      min-width: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--home-muted, #8f8f95);
+    }
+
+    &-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2a2b30;
+      flex: 1;
+      min-width: 0;
+
+      &-sub {
+        display: block;
+        font-size: 12px;
+        font-weight: 500;
+        font-style: normal;
+        color: var(--home-muted, #8f8f95);
+        margin-top: 2px;
+      }
+    }
+
+    &--active &-title-sub { color: #15803d; }
+
+    &-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    // Revoke / copy token button — small ghost
+    .Button {
+      font-size: 12px;
+      padding: 4px 12px;
+      height: auto;
+      line-height: 1.5;
+    }
+
+    // Token string (developer tokens)
+    .AccessToken-token,
+    code {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      background: #f4f4f7;
+      border-radius: 6px;
+      padding: 2px 7px;
+      color: #60616c;
+      word-break: break-all;
+    }
+  }
+}
+
+// ── Section-specific FieldSet icons (higher specificity than .AvocadoUserPage .FieldSet-label::before)
+.AvocadoUserPage .Settings-account        .FieldSet-label::before { content: '\f007'; } // fa-user
+.AvocadoUserPage .Settings-notifications  .FieldSet-label::before { content: '\f0f3'; } // fa-bell
+.AvocadoUserPage .Settings-privacy        .FieldSet-label::before { content: '\f06e'; } // fa-eye
+.AvocadoUserPage .Settings-device         .FieldSet-label::before { content: '\f3cd'; } // fa-mobile-alt
+.AvocadoUserPage .Settings-colorScheme    .FieldSet-label::before { content: '\f53f'; } // fa-palette
+
+// Security sections — blue tint
+.AvocadoUserPage .UserSecurityPage .FieldSet-label::before {
+  background: rgba(63, 136, 246, 0.1);
+  color: #3f88f6;
+}
+.AvocadoUserPage .UserSecurityPage-developerTokens .FieldSet-label::before { content: '\f084'; } // fa-key
+.AvocadoUserPage .UserSecurityPage-sessions        .FieldSet-label::before { content: '\f109'; } // fa-laptop
+.AvocadoUserPage .UserSecurityPage-globalLogout    .FieldSet-label::before { content: '\f2f5'; } // fa-sign-out-alt
 
 // ── Responsive: tablet ────────────────────────────────────────────────────────
 
@@ -700,7 +903,8 @@
   .AvocadoUserPage-shimmer--avatar { width: 56px; height: 56px; }
 
   // Nav tabs: compact
-  .AvocadoUserPage-navItem       { padding: 0 12px; font-size: 13px; }
+  .AvocadoUserPage-navItem,
+  .AvocadoUserPage-navInner .LinkButton { padding: 0 12px; font-size: 13px; }
 
   // Body
   .AvocadoUserPage-bodyInner     { padding: 16px 12px 40px; }

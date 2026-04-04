@@ -8,7 +8,6 @@ import DiscussionListState from 'flarum/forum/states/DiscussionListState';
 import PostListState from 'flarum/forum/states/PostListState';
 import extractText from 'flarum/common/utils/extractText';
 import {
-  hexToRgba,
   iconColors,
   tagPillStyle,
   discussionRoute,
@@ -21,8 +20,14 @@ import {
   highlight,
   numberOr,
   trans,
+  resolveAssetUrl,
   FALLBACK_COLORS,
   FALLBACK_ICONS,
+  navigate,
+  userRoute,
+  renderThreadSkeleton as renderDiscSkeleton,
+  renderPostSkeleton,
+  getFeaturedTagIds,
 } from '../utils';
 
 const DISC_SORT_LABELS = {
@@ -99,10 +104,7 @@ export default class AvocadoSearchPage extends Page {
     app.setTitleCount(0);
   }
 
-  navigate(e, href) {
-    e.preventDefault();
-    m.route.set(href);
-  }
+
 
   switchTab(tab) {
     if (tab === this.activeTab) return;
@@ -181,34 +183,7 @@ export default class AvocadoSearchPage extends Page {
     return <Avatar user={user} title={displayName(user)} />;
   }
 
-  // ── Skeleton ──────────────────────────────────────────────────────────────
 
-  renderDiscSkeleton() {
-    return [0, 1, 2].map((i) => (
-      <div key={String(i)} className="AvocadoHome-skeletonCard">
-        <div className="AvocadoHome-skeletonAvatar" />
-        <div className="AvocadoHome-skeletonBody">
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--sm" />
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--lg" />
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--md" />
-        </div>
-      </div>
-    ));
-  }
-
-  renderPostSkeleton() {
-    return [0, 1, 2].map((i) => (
-      <div key={String(i)} className="AvocadoSearch-postSkeleton">
-        <div className="AvocadoHome-skeletonAvatar" />
-        <div className="AvocadoHome-skeletonBody">
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--sm" />
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--lg" />
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--md" />
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--sm" style="width:28%" />
-        </div>
-      </div>
-    ));
-  }
 
   renderUserSkeleton() {
     return [0, 1, 2].map((i) => (
@@ -250,7 +225,7 @@ export default class AvocadoSearchPage extends Page {
         <a
           className="AvocadoHome-replyCard-line"
           href={lastPostHref}
-          onclick={(e) => { e.stopPropagation(); this.navigate(e, lastPostHref); }}
+          onclick={(e) => { e.stopPropagation(); navigate(e, lastPostHref); }}
         >
           <div className="AvocadoHome-replyCard-avatar">
             {this.renderAvatar(lastPoster)}
@@ -262,7 +237,7 @@ export default class AvocadoSearchPage extends Page {
           <a
             className="AvocadoHome-replyCard-seeMore"
             href={secondPostHref}
-            onclick={(e) => { e.stopPropagation(); this.navigate(e, secondPostHref); }}
+            onclick={(e) => { e.stopPropagation(); navigate(e, secondPostHref); }}
           >
             {otherCount === 1
               ? trans('ramon-avocado.forum.home.see_other_reply_singular', 'See other {count} reply', { count: otherCount })
@@ -289,10 +264,7 @@ export default class AvocadoSearchPage extends Page {
     const q           = app.search.state.params().q || '';
     const excerpt     = postPreview(discussion);
     const timeLabel   = formatTimeLabel(discussion.lastPostedAt?.());
-    const userProfileHref = (() => {
-      if (!user) return '#';
-      try { return app.route('user', { username: user.username?.() || '' }); } catch (_) { return '#'; }
-    })();
+    const userProfileHref = userRoute(user);
 
     return (
       <article key={id} className={`AvocadoHome-threadCard${isUnread ? ' AvocadoHome-threadCard--unread' : ''}`}>
@@ -305,7 +277,7 @@ export default class AvocadoSearchPage extends Page {
               <a
                 className="AvocadoHome-threadAuthor"
                 href={userProfileHref}
-                onclick={(e) => { e.stopPropagation(); this.navigate(e, userProfileHref); }}
+                onclick={(e) => { e.stopPropagation(); navigate(e, userProfileHref); }}
               >{displayName(user)}</a>
               {timeLabel && <span className="AvocadoHome-threadTime">{timeLabel}</span>}
               {isSticky && (
@@ -330,7 +302,7 @@ export default class AvocadoSearchPage extends Page {
                   <a
                     className={`AvocadoHome-tagPill${extraClass}`}
                     href={tagRoute(tag)}
-                    onclick={(e) => { e.stopPropagation(); this.navigate(e, tagRoute(tag)); }}
+                    onclick={(e) => { e.stopPropagation(); navigate(e, tagRoute(tag)); }}
                     style={tagStyle}
                   >
                     {tag.icon?.() && <i className={tag.icon()} aria-hidden="true" />}
@@ -345,7 +317,7 @@ export default class AvocadoSearchPage extends Page {
             <a
               className="AvocadoHome-threadTitle"
               href={href}
-              onclick={(e) => this.navigate(e, href)}
+              onclick={(e) => navigate(e, href)}
             >
               {q ? highlight(title, q) : title}
             </a>
@@ -430,10 +402,7 @@ export default class AvocadoSearchPage extends Page {
     const href     = (() => { try { return app.route.discussion(discussion, postNum); } catch (_) { return discussionRoute(discussion); } })();
     const tags     = (discussion.tags?.() || []).filter(Boolean);
     const timeLabel = formatTimeLabel(post.createdAt?.());
-    const userProfileHref = (() => {
-      if (!user) return '#';
-      try { return app.route('user', { username: user.username?.() || '' }); } catch (_) { return '#'; }
-    })();
+    const userProfileHref = userRoute(user);
     const plain   = post.contentPlain?.() || '';
     const excerpt = plain ? (q ? highlight(plain, q, 200) : truncate(plain, 200)) : null;
     const replies = numberOr(discussion.replyCount?.(), 0);
@@ -449,7 +418,7 @@ export default class AvocadoSearchPage extends Page {
               <a
                 className="AvocadoHome-threadAuthor"
                 href={userProfileHref}
-                onclick={(e) => { e.stopPropagation(); this.navigate(e, userProfileHref); }}
+                onclick={(e) => { e.stopPropagation(); navigate(e, userProfileHref); }}
               >{displayName(user)}</a>
               {timeLabel && <span className="AvocadoHome-threadTime">{timeLabel}</span>}
               {tags.slice(0, 2).map((tag) => {
@@ -459,7 +428,7 @@ export default class AvocadoSearchPage extends Page {
                   <a
                     className="AvocadoHome-tagPill"
                     href={tagRoute(tag)}
-                    onclick={(e) => { e.stopPropagation(); this.navigate(e, tagRoute(tag)); }}
+                    onclick={(e) => { e.stopPropagation(); navigate(e, tagRoute(tag)); }}
                     style={tagStyle}
                   >
                     {tag.icon?.() && <i className={tag.icon()} aria-hidden="true" />}
@@ -471,7 +440,7 @@ export default class AvocadoSearchPage extends Page {
             <a
               className="AvocadoHome-threadTitle"
               href={href}
-              onclick={(e) => this.navigate(e, href)}
+              onclick={(e) => navigate(e, href)}
             >
               {q ? highlight(title, q) : title}
             </a>
@@ -482,7 +451,7 @@ export default class AvocadoSearchPage extends Page {
           <a
             className="AvocadoHome-replyBtn"
             href={href}
-            onclick={(e) => { e.stopPropagation(); this.navigate(e, href); }}
+            onclick={(e) => { e.stopPropagation(); navigate(e, href); }}
           >
             <i className="fas fa-arrow-right" aria-hidden="true" />
             View
@@ -687,17 +656,8 @@ export default class AvocadoSearchPage extends Page {
 
   renderEmptyState() {
     const tags = app.store.all('tags').filter((t) => t && !t.parent?.()).slice(0, 8);
-    const featuredIds = (() => {
-      try {
-        const raw = app.forum?.attribute('avocadoFeaturedTags');
-        return new Set((raw ? JSON.parse(raw) : []).map(String));
-      } catch (_) { return new Set(); }
-    })();
-    const fireUrl = (() => {
-      const base = app.forum?.attribute('assetsBaseUrl') || '';
-      if (base) return base.replace(/\/+$/, '') + '/fire.webp';
-      return (app.forum?.attribute('baseUrl') || '').replace(/\/+$/, '') + '/assets/fire.webp';
-    })();
+    const featuredIds = getFeaturedTagIds();
+    const fireUrl = resolveAssetUrl('extensions/ramon-avocado/fire.webp');
 
     return (
       <div className="AvocadoSearch-hero">
@@ -769,7 +729,7 @@ export default class AvocadoSearchPage extends Page {
     const q         = app.search.state.params().q || '';
 
     if (isLoading && items.length === 0) {
-      return <div className="AvocadoSearch-stack">{this.renderDiscSkeleton()}</div>;
+      return <div className="AvocadoSearch-stack">{renderDiscSkeleton()}</div>;
     }
     if (items.length === 0) {
       return (
@@ -782,7 +742,7 @@ export default class AvocadoSearchPage extends Page {
     return (
       <div className="AvocadoSearch-stack">
         {items.map((d) => this.renderDiscussionCard(d))}
-        {isLoading && this.renderDiscSkeleton()}
+        {isLoading && renderDiscSkeleton()}
         {!isLoading && state.hasNext() && (
           <div key="load-more" className="AvocadoDiscussions-loadMore">
             <button
@@ -804,7 +764,7 @@ export default class AvocadoSearchPage extends Page {
     const q         = app.search.state.params().q || '';
 
     if (isLoading && allPosts.length === 0) {
-      return <div className="AvocadoSearch-postStack">{this.renderPostSkeleton()}</div>;
+      return <div className="AvocadoSearch-postStack">{renderPostSkeleton()}</div>;
     }
     if (allPosts.length === 0) {
       return (
@@ -817,7 +777,7 @@ export default class AvocadoSearchPage extends Page {
     return (
       <div className="AvocadoSearch-stack">
         {allPosts.map((post) => this.renderPostCard(post))}
-        {isLoading && this.renderDiscSkeleton()}
+        {isLoading && renderDiscSkeleton()}
         {!isLoading && state.hasNext() && (
           <div key="load-more" className="AvocadoDiscussions-loadMore">
             <button

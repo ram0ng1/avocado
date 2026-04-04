@@ -379,6 +379,7 @@
   }
 }
 
+
 .AvocadoHome-section {
   margin-top: 30px;
 
@@ -1815,6 +1816,57 @@
 // NOTE: @desktop-up = 992px+, @tablet-up = 768px+. Must use @tablet-up so the
 //       nav does not leak inline at 768-991px (the tablet gap).
 
+// Strip list markers from the AvocadoExtensionNav ul — the li.App-primaryControl
+// escapes via position:absolute on phone and its ::marker would otherwise be visible.
+.AvocadoExtensionNav > ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  > li { list-style: none; }
+}
+
+// ─── Extension page header (inside .Page-content) ────────────────────────────
+// Injected at the top of providedContent() for all non-DiscussionPage/IndexPage.
+// Matches the layout of .AvocadoDiscussions-header: title on the left, back link
+// on the right. app.title supplies the page name (set by each page's oncreate).
+
+.AvocadoExtensionPage-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.AvocadoExtensionPage-title {
+  margin: 0;
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  color: #1a1b21;
+  line-height: 1.2;
+}
+
+.AvocadoExtensionPage-homeLink {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary-color);
+  text-decoration: none;
+
+  .fas { font-size: 12px; }
+
+  &:hover, &:focus {
+    text-decoration: underline;
+    color: var(--primary-color);
+  }
+}
+
 .AvocadoNav-helper {
   @media @phone {
     height: 0;
@@ -1826,7 +1878,7 @@
 }
 
 // ── Hide native "More…" tag nav link inside AvocadoHome ───────────────────────
-.AvocadoHome .IndexPage-nav .sideNav-more,
-.AvocadoHome .IndexPage-nav li.item-more {
+.AvocadoHome .AvocadoExtensionNav .sideNav-more,
+.AvocadoHome .AvocadoExtensionNav li.item-more {
   display: none !important;
 }

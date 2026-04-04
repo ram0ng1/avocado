@@ -6,22 +6,42 @@ const trans = (key, fallback) => {
   return out && out !== key ? out : fallback;
 };
 
+// Normalize paths and remove traversal sequences
+const normalizePath = (path) => {
+  return String(path)
+    .replace(/\\/g, '/')
+    .replace(/\/+/g, '/')
+    .split('/')
+    .filter((segment, i) => {
+      if (segment === '.' || segment === '') return i === 0;
+      if (segment === '..') return false;
+      return true;
+    })
+    .join('/');
+};
+
 const resolveAssetUrl = (assetPath) => {
   if (!assetPath) return null;
 
   if (/^https?:\/\//i.test(assetPath)) return assetPath;
 
+  // Block dangerous protocols (javascript:, data:, vbscript:, etc.)
+  if (/^[a-z][a-z0-9+.-]*:/i.test(assetPath)) return null;
+
+  const normalized = normalizePath(assetPath);
+
   const assetsBaseUrl = app.forum.attribute('assetsBaseUrl');
   if (assetsBaseUrl) {
-    return assetsBaseUrl.replace(/\/+$/, '') + '/' + String(assetPath).replace(/^\/+/, '');
+    return assetsBaseUrl.replace(/\/+$/, '') + '/' + normalized;
   }
 
   const forumBaseUrl = app.forum.attribute('baseUrl');
   if (forumBaseUrl) {
-    return forumBaseUrl.replace(/\/+$/, '') + '/assets/' + String(assetPath).replace(/^\/+/, '');
+    return forumBaseUrl.replace(/\/+$/, '') + '/assets/' + normalized;
   }
 
-  return String(assetPath);
+  // Reject unsafe fallback instead of returning raw path
+  return null;
 };
 
 // ─── Featured Tags Selector ───────────────────────────────────────────────────
@@ -197,6 +217,28 @@ app.initializers.add(
       }, 106)
 
       .registerSetting({
+        setting: 'avocado.show_post_cta',
+        type: 'boolean',
+        label: trans('ramon-avocado.admin.settings.show_post_cta_label', 'Show Join CTA after first post for guests'),
+        help: trans('ramon-avocado.admin.settings.show_post_cta_help', 'Display a Log In / Sign Up call-to-action card after the first post in a discussion, visible only to guests.'),
+      }, 106)
+
+      .registerSetting({
+        setting: 'avocado.post_cta_position',
+        type: 'select',
+        label: trans('ramon-avocado.admin.settings.post_cta_position_label', 'CTA position (after which post number)'),
+        help: trans('ramon-avocado.admin.settings.post_cta_position_help', 'Insert the CTA banner between this post number and the next one.'),
+        options: {
+          '1': trans('ramon-avocado.admin.settings.post_cta_position_1', 'After post #1'),
+          '2': trans('ramon-avocado.admin.settings.post_cta_position_2', 'After post #2'),
+          '3': trans('ramon-avocado.admin.settings.post_cta_position_3', 'After post #3'),
+          '4': trans('ramon-avocado.admin.settings.post_cta_position_4', 'After post #4'),
+          '5': trans('ramon-avocado.admin.settings.post_cta_position_5', 'After post #5'),
+        },
+        default: '1',
+      }, 105)
+
+      .registerSetting({
         setting: 'avocado.show_auth_buttons',
         type: 'boolean',
         label: trans('ramon-avocado.admin.settings.show_auth_buttons_label', 'Show Login / Sign Up buttons in header for guests'),
@@ -298,7 +340,14 @@ app.initializers.add(
         type: 'boolean',
         label: trans('ramon-avocado.admin.settings.fixed_avatar_effect_label', 'Enable fixed avatar effect in discussion posts'),
         help: trans('ramon-avocado.admin.settings.fixed_avatar_effect_help', 'Keep the post avatar sticky while reading long comments on desktop.'),
-      }, 30);
+      }, 30)
+
+      .registerSetting({
+        setting: 'avocado.hide_links_for_guests',
+        type: 'boolean',
+        label: trans('ramon-avocado.admin.settings.hide_links_for_guests_label', 'Hide links for guests'),
+        help: trans('ramon-avocado.admin.settings.hide_links_for_guests_help', 'Prevent guests from following links in posts. Clicking a link shows a Login / Sign Up prompt instead.'),
+      }, 25);
   },
   -999999
 );

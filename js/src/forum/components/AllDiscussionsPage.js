@@ -11,8 +11,13 @@ import {
   displayName,
   formatTimeLabel,
   postPreview,
-  hexToRgba,
   tagPillStyle,
+  truncate,
+  navigate,
+  userRoute,
+  renderThreadSkeleton,
+  renderLoadMore,
+  renderEmpty,
 } from '../utils';
 
 const SORT_OPTIONS = [
@@ -197,10 +202,7 @@ export default class AllDiscussionsPage extends Page {
       });
   }
 
-  navigate(event, href) {
-    event.preventDefault();
-    m.route.set(href);
-  }
+
 
   toggleLike(discussion) {
     const firstPost = discussion.firstPost?.();
@@ -230,7 +232,7 @@ export default class AllDiscussionsPage extends Page {
     const replies = numberOr(discussion.replyCount?.(), 0);
     if (!lastPoster && !lastPost) return null;
     const rawText = lastPost?.contentPlain?.() || '';
-    const preview = rawText ? rawText.slice(0, 100) + (rawText.length > 100 ? '…' : '') : '';
+    const preview = truncate(rawText, 100);
     const otherCount = replies - 1;
     const href = discussionRoute(discussion);
     const lastPostHref = (() => {
@@ -247,7 +249,7 @@ export default class AllDiscussionsPage extends Page {
         <a
           className="AvocadoHome-replyCard-line"
           href={lastPostHref}
-          onclick={(e) => { e.stopPropagation(); this.navigate(e, lastPostHref); }}
+          onclick={(e) => { e.stopPropagation(); navigate(e, lastPostHref); }}
         >
           <div className="AvocadoHome-replyCard-avatar">{this.renderAvatar(lastPoster)}</div>
           <span className="AvocadoHome-replyCard-name">{displayName(lastPoster)}</span>
@@ -257,7 +259,7 @@ export default class AllDiscussionsPage extends Page {
           <a
             className="AvocadoHome-replyCard-seeMore"
             href={secondPostHref}
-            onclick={(e) => { e.stopPropagation(); this.navigate(e, secondPostHref); }}
+            onclick={(e) => { e.stopPropagation(); navigate(e, secondPostHref); }}
           >
             {otherCount === 1 ? trans('ramon-avocado.forum.home.see_other_reply_singular', 'See other {count} reply', { count: otherCount }) : trans('ramon-avocado.forum.home.see_other_replies', 'See other {count} replies', { count: otherCount })}
           </a>
@@ -282,10 +284,7 @@ export default class AllDiscussionsPage extends Page {
     const isLiking = this.likingIds.has(id);
     const excerpt = postPreview(discussion);
     const timeLabel = formatTimeLabel(discussion.lastPostedAt?.());
-    const userProfileHref = (() => {
-      if (!user) return '#';
-      try { return app.route('user', { username: user.username?.() || '' }); } catch (e) { return '#'; }
-    })();
+    const userProfileHref = userRoute(user);
 
     const isNewDisc = this._newDiscIds.has(id);
 
@@ -298,7 +297,7 @@ export default class AllDiscussionsPage extends Page {
               <a
                 className="AvocadoHome-threadAuthor"
                 href={userProfileHref}
-                onclick={(e) => { e.stopPropagation(); this.navigate(e, userProfileHref); }}
+                onclick={(e) => { e.stopPropagation(); navigate(e, userProfileHref); }}
               >{displayName(user)}</a>
               {timeLabel && <span className="AvocadoHome-threadTime">{timeLabel}</span>}
               {isNewDisc && <span className="AvocadoStatDot AvocadoStatDot--new" aria-hidden="true" />}
@@ -325,7 +324,7 @@ export default class AllDiscussionsPage extends Page {
                     key={tag.id?.()}
                     className={`AvocadoHome-tagPill${extraClass}`}
                     href={tagRoute(tag)}
-                    onclick={(e) => { e.stopPropagation(); this.navigate(e, tagRoute(tag)); }}
+                    onclick={(e) => { e.stopPropagation(); navigate(e, tagRoute(tag)); }}
                     style={tagStyle}
                   >
                     {tag.icon?.() && <i className={tag.icon()} aria-hidden="true" />}
@@ -340,7 +339,7 @@ export default class AllDiscussionsPage extends Page {
             <a
               className="AvocadoHome-threadTitle"
               href={href}
-              onclick={(e) => this.navigate(e, href)}
+              onclick={(e) => navigate(e, href)}
             >
               {title}
             </a>
@@ -401,18 +400,7 @@ export default class AllDiscussionsPage extends Page {
     );
   }
 
-  renderSkeleton() {
-    return [0, 1, 2].map((i) => (
-      <div key={String(i)} className="AvocadoHome-skeletonCard">
-        <div className="AvocadoHome-skeletonAvatar" />
-        <div className="AvocadoHome-skeletonBody">
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--sm" />
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--lg" />
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--md" />
-        </div>
-      </div>
-    ));
-  }
+
 
   view() {
     const homeHref = app.route('index');
@@ -461,7 +449,7 @@ export default class AllDiscussionsPage extends Page {
             <a
               className="AvocadoDiscussions-homeLink"
               href={homeHref}
-              onclick={(e) => this.navigate(e, homeHref)}
+              onclick={(e) => navigate(e, homeHref)}
             >
               <i className="fas fa-arrow-left" aria-hidden="true" />
               {trans('ramon-avocado.forum.discussions.home', 'Home')}
@@ -500,24 +488,11 @@ export default class AllDiscussionsPage extends Page {
 
         <div className="AvocadoHome-threadStack">
           {this.discussions.map((d) => this.renderThreadCard(d))}
-          {this.loading && this.renderSkeleton()}
-          {!this.loading && this.discussions.length === 0 && (
-            <div className="AvocadoDiscussions-empty">
-              {trans('ramon-avocado.forum.discussions.empty', 'No discussions found.')}
-            </div>
-          )}
+          {this.loading && renderThreadSkeleton()}
+          {!this.loading && this.discussions.length === 0 && renderEmpty(trans('ramon-avocado.forum.discussions.empty', 'No discussions found.'))}
         </div>
 
-        {this.hasMore && !this.loading && (
-          <div className="AvocadoDiscussions-loadMore">
-            <button
-              className="AvocadoDiscussions-loadMoreBtn"
-              onclick={() => this.loadDiscussions(false)}
-            >
-              {trans('ramon-avocado.forum.discussions.load_more', 'Load more')}
-            </button>
-          </div>
-        )}
+        {this.hasMore && !this.loading && renderLoadMore(trans('ramon-avocado.forum.discussions.load_more', 'Load more'), () => this.loadDiscussions(false))}
       </div>
     );
   }

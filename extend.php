@@ -12,11 +12,10 @@
 namespace Ramon\Avocado;
 
 use Flarum\Extend;
+use Flarum\Messages\DialogMessage;
 use Ramon\Avocado\Middleware\RemoveSkipLink;
 
 return [
-    new Extend\ServiceProvider(\Ramon\Avocado\AvocadoServiceProvider::class),
-
     (new Extend\Frontend('forum'))
         ->js(__DIR__.'/js/dist/forum.js')
         ->css(__DIR__.'/less/forum.less')
@@ -33,6 +32,44 @@ return [
         ->css(__DIR__.'/less/admin.less'),
 
     new Extend\Locales(__DIR__.'/locale'),
+
+    // ── flarum/realtime: NOT NEEDED - flarum/messages already handles it ────────────
+
+    // ── flarum/realtime + flarum/likes ───────────────────────────────────────
+    (new Extend\Conditional())
+        ->whenExtensionEnabled('flarum-realtime', fn () => [
+            (new Extend\Conditional())
+                ->whenExtensionEnabled('flarum-likes', fn () => [
+                    (new \Flarum\Realtime\Extend\Realtime())
+                        ->broadcastModelEvent(
+                            [
+                                \Flarum\Likes\Event\PostWasLiked::class,
+                                \Flarum\Likes\Event\PostWasUnliked::class,
+                            ],
+                            fn ($event) => $event->post,
+                            fn ($event) => $event->user,
+                            'likesMutation',
+                        ),
+                ]),
+        ]),
+
+    // ── flarum/realtime + flarum/sticky ──────────────────────────────────────
+    (new Extend\Conditional())
+        ->whenExtensionEnabled('flarum-realtime', fn () => [
+            (new Extend\Conditional())
+                ->whenExtensionEnabled('flarum-sticky', fn () => [
+                    (new \Flarum\Realtime\Extend\Realtime())
+                        ->broadcastModelEvent(
+                            [
+                                \Flarum\Sticky\Event\DiscussionWasStickied::class,
+                                \Flarum\Sticky\Event\DiscussionWasUnstickied::class,
+                            ],
+                            fn ($event) => $event->discussion,
+                            fn ($event) => $event->actor,
+                            'discussionPinned',
+                        ),
+                ]),
+        ]),
 
     (new Extend\ApiResource(\Flarum\Api\Resource\ForumResource::class))
         ->fields(\Ramon\Avocado\Api\ForumAttributes::class),
@@ -58,6 +95,11 @@ return [
         ->serializeToForum('avocadoFeaturedTags', 'avocado.featured_tags')
         ->serializeToForum('avocadoLogoSvg', 'avocado.logo_svg')
         ->serializeToForum('avocadoLogoEnabled', 'avocado.logo_enabled', 'boolval')
+        ->serializeToForum('avocadoCustomDefaultAvatar', 'avocado.custom_default_avatar', 'boolval')
+        ->serializeToForum('avocadoShowGuestCta', 'avocado.show_guest_cta', 'boolval')
+        ->serializeToForum('avocadoShowPostCta', 'avocado.show_post_cta', 'boolval')
+        ->serializeToForum('avocadoPostCtaPosition', 'avocado.post_cta_position')
+        ->serializeToForum('avocadoHideLinksForGuests', 'avocado.hide_links_for_guests', 'boolval')
         ->default('avocado.hero_image_position', 'center top')
         ->default('avocado.show_online_users', true)
         ->default('avocado.show_auth_buttons', false)
@@ -66,5 +108,10 @@ return [
         ->default('avocado.show_action_icons', true)
         ->default('avocado.fixed_avatar_effect', true)
         ->default('avocado.featured_tags', '[]')
-        ->default('avocado.logo_enabled', false),
+        ->default('avocado.logo_enabled', false)
+        ->default('avocado.custom_default_avatar', true)
+        ->default('avocado.show_guest_cta', true)
+        ->default('avocado.show_post_cta', false)
+        ->default('avocado.post_cta_position', '1')
+        ->default('avocado.hide_links_for_guests', false),
 ];

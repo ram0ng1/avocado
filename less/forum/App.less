@@ -217,7 +217,7 @@ img.Header-logo {
 }
 // For the Avocado-injected SVG logo: width/height set explicitly by JS from viewBox aspect ratio.
 svg.Header-logo {
-  height: 35px !important;
+  height: 50px !important;
   width: auto !important;
   max-width: none !important;
   max-height: none !important;
@@ -242,36 +242,20 @@ svg.Header-logo {
   line-height: 1;
 }
 
-// ─── Hide Page-sidebar globally (except DiscussionPage which needs the scrubber) ──
-// On phone: use height:0 + overflow:hidden so absolutely-positioned App-titleControl
-// children (SelectDropdown.App-titleControl) can still escape to the header.
-// On tablet-up: display:none is safe since no control needs to escape.
-@media @phone {
-  .Page:not(.DiscussionPage) .Page-sidebar {
-    height: 0 !important;
-    overflow: hidden !important;
-    display: block !important; // must not be display:none or abs children can't escape
-  }
-}
-@media @tablet-up {
-  .Page:not(.DiscussionPage) .Page-sidebar {
-    display: none !important;
-  }
-}
+// ─── DiscussionPage sidebar (scrubber/stream pane) ───────────────────────────
+// All other pages get AvocadoNav-helper instead of Page-sidebar via the
+// PageStructure.prototype.sidebar() override in JS — no CSS hiding needed.
 
-// ─── Hide IndexPage native sideNav inside the sidebar ─────────────────────────
-// (AvocadoNav-helper rendered inside Page-content is NOT affected)
-.Page-sidebar .IndexPage-nav.sideNav { display: none !important; }
-
-// Phone: restore the home-page sidebar nav so App-primaryControl escapes to header.
-@media @phone {
-  .IndexPage--avocadoHome .Page-sidebar .IndexPage-nav.sideNav { display: block !important; }
+// ─── Safety net: suppress Page-hero on all unregistered extension pages ───────
+// JS layers (mainItems.remove + providedHero override) handle this at runtime,
+// but if a third-party extension re-adds a hero after our extend callbacks run,
+// this CSS catches it.
+// Guard uses IndexPage--avocadoRoot (stamped by our IndexPage.view extend) so that
+// extension pages sharing the 'IndexPage' class (e.g. LeaderboardPage uses
+// className="IndexPage LeaderboardPage") are still matched and their hero is hidden.
+.Page:not(.DiscussionPage):not(.IndexPage--avocadoRoot) {
+  .Page-hero { display: none !important; }
 }
-
-// ─── Hide standard Flarum hero banners on extension pages ─────────────────────
-// Avocado's WelcomeHero renders with .WelcomeHero so it is preserved.
-// Extension heroes (MessagesPageHero, etc.) only have .Hero — hidden here.
-.Hero:not(.WelcomeHero) { display: none !important; }
 
 // ─── Global: no underlines on links inside avocado theme pages ────────────────
 .AvocadoHome a,
@@ -484,5 +468,33 @@ svg.Header-logo {
   max-height: 44px !important;
   width: fit-content !important;
   padding: 0 10px;
+}
+
+// ─── Avocado SVG Logo ──────────────────────────────────────────────────────────
+// Responsive SVG logo that auto-scales and centers
+.AvocadoLogoSvg {
+  max-width: 100%;
+  height: auto !important;
+  max-height: 50px;
+  width: auto !important;
+  object-fit: contain;
+  object-position: center;
+
+  // On mobile/tablet, allow slightly smaller logo
+  @media @tablet {
+    max-height: 45px;
+  }
+
+  @media @phone {
+    max-height: 40px;
+  }
+}
+
+// Ensure parent container centers the logo properly
+#home-link.Header-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
 }
 

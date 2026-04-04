@@ -4,6 +4,15 @@
   border-radius: 8px;
 }
 
+.PostEdited .fa-pencil-alt {
+  font-size: 10px;
+}
+
+.CommentPost.editing .PostUser-badges--inSide,
+.CommentPost.editing .Post-header .PostUser > .PostUser-badges {
+  display: none !important;
+}
+
 @media @phone, @tablet {
   .Post {
     padding-left: var(--post-padding);
@@ -58,7 +67,7 @@
 
       .PostUser-name .username {
         position: relative;
-        top: -1px;
+        top: 2px;
       }
     }
 
@@ -66,57 +75,59 @@
       min-width: 0;
     }
 
-    .Post-header .PostUser > .PostUser-badges.PostUser-badges--inPostHeader {
-      position: static;
-      display: inline-flex;
-      align-items: center;
-      gap: 2px;
-      width: auto;
-      margin: 0;
-      margin-left: 4px;
-      margin-right: 0;
-      float: none;
-      text-align: left;
-      pointer-events: auto;
-      white-space: nowrap;
-      z-index: 4;
-      vertical-align: middle;
-      transform: none;
+    // display: contents removes the Post-header block box so its children
+    // participate directly in the Post-main flow.
+    .Post-header,
+    .Post-header > ul {
+      display: contents;
     }
 
-    .Post-header .PostUser > .PostUser-badges.PostUser-badges--inPostHeader > li {
-      margin: 0;
-      line-height: 1;
+    // Hide the original PostUser-badges in Post-header — badges are injected
+    // into Post-side via sideItems() instead, so they stick with the avatar.
+    .Post-header .PostUser > .PostUser-badges {
+      display: none !important;
+    }
+
+    // .Post-side-inner is a normal in-flow child of the sticky Post-side.
+    // It has position:relative so it acts as containing block for the badge.
+    // The sticky element itself is NOT a containing block for absolute children,
+    // but its in-flow children with position:relative ARE — so the badge is
+    // always anchored to the same corner of the avatar regardless of scroll.
+    .Post-side-inner {
       position: relative;
-      left: 4px;
-      top: -3px;
-    }
-
-    .Post-header .PostUser > .PostUser-badges.PostUser-badges--inPostHeader > li .Badge {
-      --size: 18px;
-      width: var(--size);
-      height: var(--size);
-      min-width: var(--size);
-      padding: 0;
-      box-sizing: border-box;
-      line-height: var(--size);
-      display: inline-flex;
-      align-items: center;
+      width: 64px;
+      display: flex;
       justify-content: center;
-      border-radius: 999px;
     }
 
-    .Post-header .PostUser > .PostUser-badges.PostUser-badges--inPostHeader > li .Badge-icon,
-    .Post-header .PostUser > .PostUser-badges.PostUser-badges--inPostHeader > li .Badge .icon {
-      font-size: 10px;
-      line-height: 1;
-      margin: 0;
-      width: 1em;
-      text-align: center;
-      display: inline-block;
+    .Post-side .PostUser-badges--inSide {
+      position: relative !important;
+      top: auto !important;
+      left: 0;
+      width: 64px;
+      text-align: right;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 3;
     }
   }
+}
 
+// On phone/tablet the sticky layout is inactive, so hide the sideItems badge
+// and restore the original PostUser-badges in the header.
+@media @phone, @tablet {
+  .CommentPost--fixedAvatar {
+    .Post-side .PostUser-badges--inSide {
+      display: none !important;
+    }
+
+    .Post-header .PostUser > .PostUser-badges {
+      display: inline !important;
+    }
+  }
+}
+
+@media @desktop-up {
   // EventPost still uses grid — keep icon column tight
   .EventPost .Post-container {
     display: grid;

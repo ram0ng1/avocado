@@ -3,7 +3,6 @@ import Component from 'flarum/common/Component';
 import Avatar from 'flarum/common/components/Avatar';
 import Tooltip from 'flarum/common/components/Tooltip';
 import {
-  hexToRgba,
   tagPillStyle,
   discussionRoute,
   tagRoute,
@@ -12,6 +11,10 @@ import {
   truncate,
   highlight,
   numberOr,
+  navigate,
+  userRoute,
+  renderThreadSkeleton,
+  renderLoadMore,
 } from '../utils';
 
 const SORT_LABELS = {
@@ -35,10 +38,7 @@ export default class AvocadoDiscussionsSearchPage extends Component {
     this.likingIds = new Set();
   }
 
-  navigate(e, href) {
-    e.preventDefault();
-    m.route.set(href);
-  }
+
 
   toggleLike(discussion) {
     const firstPost = discussion.firstPost?.();
@@ -67,18 +67,7 @@ export default class AvocadoDiscussionsSearchPage extends Component {
     }
   }
 
-  renderSkeleton() {
-    return [0, 1, 2].map((i) => (
-      <div key={String(i)} className="AvocadoHome-skeletonCard">
-        <div className="AvocadoHome-skeletonAvatar" />
-        <div className="AvocadoHome-skeletonBody">
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--sm" />
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--lg" />
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--md" />
-        </div>
-      </div>
-    ));
-  }
+
 
   renderThreadCard(discussion) {
     const id       = discussion.id?.();
@@ -93,10 +82,7 @@ export default class AvocadoDiscussionsSearchPage extends Component {
     const q        = m.route.param('q') || '';
     const rawExcerpt = this.getRawExcerpt(discussion);
     const timeLabel = formatTimeLabel(discussion.lastPostedAt?.());
-    const userProfileHref = (() => {
-      if (!user) return '#';
-      try { return app.route('user', { username: user.username?.() || '' }); } catch (_) { return '#'; }
-    })();
+    const userProfileHref = userRoute(user);
 
     return (
       <article key={id} className={`AvocadoSearch-threadCard${isUnread ? ' AvocadoSearch-threadCard--unread' : ''}`}>
@@ -109,7 +95,7 @@ export default class AvocadoDiscussionsSearchPage extends Component {
               <a
                 className="AvocadoSearch-threadAuthor"
                 href={userProfileHref}
-                onclick={(e) => { e.stopPropagation(); this.navigate(e, userProfileHref); }}
+                onclick={(e) => { e.stopPropagation(); navigate(e, userProfileHref); }}
               >
                 {displayName(user)}
               </a>
@@ -137,7 +123,7 @@ export default class AvocadoDiscussionsSearchPage extends Component {
                     key={tag.id?.()}
                     className={`AvocadoHome-tagPill${extraClass}`}
                     href={tagRoute(tag)}
-                    onclick={(e) => { e.stopPropagation(); this.navigate(e, tagRoute(tag)); }}
+                    onclick={(e) => { e.stopPropagation(); navigate(e, tagRoute(tag)); }}
                     style={tagStyle}
                   >
                     {tag.icon?.() && <i className={tag.icon()} aria-hidden="true" />}
@@ -149,7 +135,7 @@ export default class AvocadoDiscussionsSearchPage extends Component {
             <a
               className="AvocadoSearch-threadTitle"
               href={href}
-              onclick={(e) => this.navigate(e, href)}
+              onclick={(e) => navigate(e, href)}
             >
               {q ? highlight(title, q) : title}
             </a>
@@ -242,7 +228,7 @@ export default class AvocadoDiscussionsSearchPage extends Component {
         </div>
 
         {isLoading && items.length === 0 ? (
-          <div className="AvocadoSearch-stack">{this.renderSkeleton()}</div>
+          <div className="AvocadoSearch-stack">{renderThreadSkeleton()}</div>
         ) : items.length === 0 ? (
           <div className="AvocadoSearch-empty">
             <i className="far fa-frown-open" aria-hidden="true" />
@@ -251,7 +237,7 @@ export default class AvocadoDiscussionsSearchPage extends Component {
         ) : (
           <div className="AvocadoSearch-stack">
             {items.map((d) => this.renderThreadCard(d))}
-            {isLoading && this.renderSkeleton()}
+            {isLoading && renderThreadSkeleton()}
             {!isLoading && state.hasNext() && (
               <div className="AvocadoDiscussions-loadMore">
                 <button

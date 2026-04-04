@@ -4,6 +4,8 @@
  * index.js, HomePage.js, AllDiscussionsPage.js, TagPage.js and UserProfilePage.js.
  */
 import app from 'flarum/forum/app';
+import { truncate as coreTruncate } from 'flarum/common/utils/string';
+import coreHighlight from 'flarum/common/helpers/highlight';
 
 // ─── Translation helper ────────────────────────────────────────────────────────
 
@@ -32,7 +34,7 @@ export const hexToRgba = (hex, alpha = 1) => {
 };
 
 // Relative luminance (WCAG 2.1).
-const hexLuminance = (hex) => {
+export const hexLuminance = (hex) => {
   if (!hex) return 0;
   const h = hex.replace('#', '');
   if (h.length !== 6) return 0;
@@ -101,33 +103,18 @@ export const formatTimeLabel = (dateValue) => {
   return `${dateLabel}, ${time}`;
 };
 
-// ─── Text truncation ──────────────────────────────────────────────────────────
+// ─── Text truncation (delegates to Flarum core) ──────────────────────────────
 
 export const truncate = (str, max = 150) =>
-  str && str.length > max ? str.slice(0, max).trimEnd() + '…' : (str || '');
+  str ? coreTruncate(str, max) : '';
 
-// ─── Search highlight ─────────────────────────────────────────────────────────
-// Returns a Mithril trusted-HTML vnode with matched terms wrapped in <mark>.
-// Text is HTML-escaped before insertion so there is no XSS risk.
-
-const _escHtml = (s) => s
-  .replace(/&/g, '&amp;')
-  .replace(/</g, '&lt;')
-  .replace(/>/g, '&gt;')
-  .replace(/"/g, '&quot;');
+// ─── Search highlight (delegates to Flarum core) ─────────────────────────────
+// Core highlight(string, phrase, length?, safe?) handles HTML escaping,
+// <mark> wrapping and truncation around the first match.
 
 export const highlight = (text, query, maxLength = 0) => {
   if (!text) return '';
-  let str = maxLength > 0 && text.length > maxLength
-    ? text.slice(0, maxLength).trimEnd() + '…'
-    : text;
-  const safe = _escHtml(str);
-  if (!query) return m.trust(safe);
-  const words = String(query).trim().split(/\s+/).filter(Boolean)
-    .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  if (!words.length) return m.trust(safe);
-  const re = new RegExp(`(${words.join('|')})`, 'gi');
-  return m.trust(safe.replace(re, '<mark>$1</mark>'));
+  return coreHighlight(text, query || undefined, maxLength || undefined);
 };
 
 // ─── Discussion first-post excerpt ────────────────────────────────────────────
@@ -156,45 +143,59 @@ export const tagRoute = (tag) => {
   try { return app.route('tag', { tags: tag.slug() }); } catch (e) { return '#'; }
 };
 
+// ─── Path normalization (prevent traversal attacks) ───────────────────────────
+// Removes ../ and \.\ sequences to prevent directory traversal.
+
+const normalizePath = (path) => {
+  return String(path)
+    .replace(/\\/g, '/')
+    .replace(/\/+/g, '/')
+    .split('/')
+    .filter((segment, i) => {
+      if (segment === '.' || segment === '') return i === 0;
+      if (segment === '..') return false;
+      return true;
+    })
+    .join('/');
+};
+
 // ─── Asset URL resolver ───────────────────────────────────────────────────────
+// Validates that the resolved URL uses a safe protocol (http/https) to prevent
+// javascript: or data: URI injection when used in <img src> or CSS url().
+// Also normalizes paths to prevent directory traversal attacks.
 
 export const resolveAssetUrl = (assetPath) => {
   if (!assetPath) return null;
   if (/^https?:\/\//i.test(assetPath)) return assetPath;
+  // Block dangerous protocols (javascript:, data:, vbscript:, etc.)
+  if (/^[a-z][a-z0-9+.-]*:/i.test(assetPath)) return null;
+
+  const normalized = normalizePath(assetPath);
 
   const base = app.forum?.attribute('assetsBaseUrl') || app.forum?.attribute('baseUrl');
-  if (!base) return String(assetPath);
+  if (!base) return null; // No base URL — refuse to construct a relative path
 
   const suffix = app.forum?.attribute('assetsBaseUrl')
     ? ''
     : '/assets';
-  return base.replace(/\/+$/, '') + suffix + '/' + String(assetPath).replace(/^\/+/, '');
+  return base.replace(/\/+$/, '') + suffix + '/' + normalized;
 };
 
-// ─── Clipboard helper (no deprecated execCommand) ─────────────────────────────
+// Returns a properly quoted and escaped CSS url() value.
+// Prevents CSS injection by escaping parentheses, quotes, and backslashes.
+export const safeCssUrl = (url) => {
+  if (!url) return 'none';
+  // Remove any characters that could break out of url('...')
+  const escaped = String(url).replace(/[\\()'";]/g, '');
+  return `url('${escaped}')`;
+};
+
+// ─── Clipboard helper ─────────────────────────────────────────────────────────
 
 export const copyTextToClipboard = async (text) => {
   if (navigator.clipboard?.writeText) {
     return navigator.clipboard.writeText(text);
   }
-  // Legacy fallback — wrapped in try/catch, kept for older browsers
-  try {
-    const ta = Object.assign(document.createElement('textarea'), {
-      value: text,
-      readOnly: true,
-    });
-    Object.assign(ta.style, {
-      position: 'fixed',
-      top: '0',
-      left: '0',
-      opacity: '0',
-      pointerEvents: 'none',
-    });
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy'); // eslint-disable-line no-unused-vars
-    document.body.removeChild(ta);
-  } catch (_) {}
 };
 
 // ─── Design constants ─────────────────────────────────────────────────────────
@@ -208,3 +209,79 @@ export const FALLBACK_ICONS = [
   'fas fa-tag', 'fas fa-folder', 'fas fa-comments', 'fas fa-star',
   'fas fa-fire', 'fas fa-bolt', 'fas fa-globe', 'fas fa-heart',
 ];
+
+// ─── Navigation helper ────────────────────────────────────────────────────────
+
+export const navigate = (e, href) => {
+  e.preventDefault();
+  m.route.set(href);
+};
+
+// ─── User profile route ───────────────────────────────────────────────────────
+
+export const userRoute = (user) =>
+  safeRoute('user', { username: user?.username?.() || '' });
+
+// ─── Featured tag IDs ─────────────────────────────────────────────────────────
+
+export const getFeaturedTagIds = () => {
+  try {
+    const raw = app.forum?.attribute('avocadoFeaturedTags');
+    return new Set((raw ? JSON.parse(raw) : []).map(String));
+  } catch (_) {
+    return new Set();
+  }
+};
+
+// ─── Skeleton cards ───────────────────────────────────────────────────────────
+
+export const renderThreadSkeleton = (count = 3) =>
+  Array.from({ length: count }, (_, i) =>
+    m('div', { key: i, className: 'AvocadoHome-skeletonCard' }, [
+      m('div', { className: 'AvocadoHome-skeletonAvatar' }),
+      m('div', { className: 'AvocadoHome-skeletonBody' }, [
+        m('div', { className: 'AvocadoHome-skeletonLine AvocadoHome-skeletonLine--sm' }),
+        m('div', { className: 'AvocadoHome-skeletonLine AvocadoHome-skeletonLine--lg' }),
+        m('div', { className: 'AvocadoHome-skeletonLine AvocadoHome-skeletonLine--md' }),
+      ]),
+    ])
+  );
+
+export const renderPostSkeleton = (count = 3) =>
+  Array.from({ length: count }, (_, i) =>
+    m('div', { key: i, className: 'AvocadoSearch-postSkeleton' }, [
+      m('div', { className: 'AvocadoHome-skeletonAvatar' }),
+      m('div', { className: 'AvocadoHome-skeletonBody' }, [
+        m('div', { className: 'AvocadoHome-skeletonLine AvocadoHome-skeletonLine--sm' }),
+        m('div', { className: 'AvocadoHome-skeletonLine AvocadoHome-skeletonLine--lg' }),
+        m('div', { className: 'AvocadoHome-skeletonLine AvocadoHome-skeletonLine--md' }),
+        m('div', { className: 'AvocadoHome-skeletonLine AvocadoHome-skeletonLine--sm', style: 'width:28%' }),
+      ]),
+    ])
+  );
+
+// ─── Icon/category style helpers ─────────────────────────────────────────────
+
+export const iconPillStyle = (hex, alpha = 0.12) => {
+  if (!hex) return {};
+  const { bg, color } = iconColors(hex, alpha);
+  return { '--icon-bg': bg, '--icon-color': color };
+};
+
+export const categoryCardStyle = (hex, alpha = 0.12) => {
+  if (!hex) return {};
+  const { bg, color } = iconColors(hex, alpha);
+  return { '--cat-bg': bg, '--cat-color': color };
+};
+
+// ─── Load-more button ─────────────────────────────────────────────────────────
+
+export const renderLoadMore = (label, onclick) =>
+  m('div', { className: 'AvocadoDiscussions-loadMore' }, [
+    m('button', { className: 'Button AvocadoDiscussions-loadMoreBtn', onclick }, label),
+  ]);
+
+// ─── Empty state ──────────────────────────────────────────────────────────────
+
+export const renderEmpty = (label) =>
+  m('div', { className: 'AvocadoDiscussions-empty' }, label);

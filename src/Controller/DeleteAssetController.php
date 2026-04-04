@@ -14,8 +14,7 @@ use Psr\Http\Message\ServerRequestInterface;
 abstract class DeleteAssetController extends AbstractDeleteController
 {
     protected Filesystem $uploadDir;
-
-    abstract protected string $filePathSettingKey;
+    protected string $filePathSettingKey = '';
 
     public function __construct(
         protected SettingsRepositoryInterface $settings,
@@ -30,7 +29,7 @@ abstract class DeleteAssetController extends AbstractDeleteController
         RequestUtil::getActor($request)->assertAdmin();
 
         $path = $this->settings->get($this->filePathSettingKey);
-        $this->settings->set($this->filePathSettingKey, null);
+        $this->settings->delete($this->filePathSettingKey);
 
         if ($path && $this->uploadDir->exists($path)) {
             $this->uploadDir->delete($path);

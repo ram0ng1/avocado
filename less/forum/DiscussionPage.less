@@ -202,22 +202,11 @@
 
 
 // ── Page container ─────────────────────────────────────────────────────────────
-.Page.DiscussionPage .Page-container.container {
-  max-width: 1280px;
-  padding-left: 48px;
-  padding-right: 48px;
-  padding-top: 0;
-  padding-bottom: 64px;
-}
 
 // ── CommentPost: clean feed row — .Page.DiscussionPage .CommentPost has 0,3,0 vs Flarum's 0,1,0
 .Page.DiscussionPage .CommentPost {
   background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--disc-border);
-  border-radius: 0;
-  padding: 32px 0;
-  margin: 0;
+  overflow: visible;
   box-shadow: none;
 
   &:hover { box-shadow: none; }
@@ -226,9 +215,6 @@
 // ── Tablet+: two-column layout (avatar column | content column) ───────────────
 @media @tablet-up {
   .Page.DiscussionPage {
-    .CommentPost {
-      padding-left: 0;
-    }
 
     .CommentPost .Post-container {
       display: grid;
@@ -286,14 +272,6 @@
     --disc-avatar: 40px;
     --disc-gap:    18px;
   }
-  .Page.DiscussionPage .CommentPost {
-    padding: 24px 0;
-    margin: 0;
-  }
-  .Page.DiscussionPage .Page-container.container {
-    padding-left: 20px;
-    padding-right: 20px;
-  }
 }
 
 // ── Phone: compact layout ──────────────────────────────────────────────────────
@@ -302,37 +280,14 @@
     --disc-avatar: 34px;
     --disc-gap:    12px;
   }
-
-  // Keep avatar column on phone — just smaller tokens
-  .Page.DiscussionPage .CommentPost {
-    padding: 18px 0;
-    margin: 0;
-  }
-  .Page.DiscussionPage .CommentPost .Post-container {
-    display: grid;
-    grid-template-columns: var(--disc-avatar) 1fr;
-    gap: var(--disc-gap);
-    align-items: start;
-    padding: 0;
-
-    > *:nth-child(n+3) {
-      grid-column: 2;
-    }
-  }
+  // Mobile: no grid — Flarum's original block layout. Post-side hides its avatar
+  // via Flarum's own @phone rule; hide the side entirely so sideClone badges
+  // don't render as a stray block before Post-main.
   .Page.DiscussionPage .CommentPost .Post-side {
-    position: relative;
-    width: var(--disc-avatar);
-    flex-shrink: 0;
-    top: auto;
-    left: auto;
+    display: none;
   }
   .Page.DiscussionPage .CommentPost .Post-main {
     min-width: 0;
-  }
-  .Page.DiscussionPage .Page-container.container {
-    padding-left: 14px;
-    padding-right: 14px;
-    padding-bottom: 40px;
   }
 
   // DiscussionHero on phone — centered, title as focal point
@@ -377,14 +332,14 @@
   text-decoration: none;
 }
 
-// ── Avatar inside PostUser-name link: hidden (real avatar lives in Post-side) ─
-// In Flarum 2.0 the avatar has class "Post-avatar" (not "PostUser-avatar") and
-// sits inside the <a> link in <h3.PostUser-name>. Belt-and-suspenders: CSS hides
-// it; JS (removePostUserAvatar) also removes it to prevent any flash.
-.Page.DiscussionPage .PostUser-name .Avatar,
-.Page.DiscussionPage .PostUser-name .Post-avatar,
-.Page.DiscussionPage .Post-header .PostUser-name .Avatar {
-  display: none !important;
+// ── Avatar inside PostUser-name link: hidden on desktop (real avatar is in Post-side)
+// On mobile, Post-side is hidden so this inline avatar IS the user's avatar — keep it visible.
+@media @tablet-up {
+  .Page.DiscussionPage .PostUser-name .Avatar,
+  .Page.DiscussionPage .PostUser-name .Post-avatar,
+  .Page.DiscussionPage .Post-header .PostUser-name .Avatar {
+    display: none !important;
+  }
 }
 
 // ── UserOnline: shown as green border on the avatar ──────────────────────────
@@ -400,49 +355,99 @@
   display: none !important;
 }
 
-// Hide UserOnline everywhere (it is detected by JS for the border, not shown as a dot)
+// Hide UserOnline dot (detected by JS for the avatar border, not shown as a dot)
 .Page.DiscussionPage .PostUser .UserOnline,
-.Page.DiscussionPage .Post-header .UserOnline,
-.Page.DiscussionPage .CommentPost .Post-side .PostUser-badges .UserOnline {
+.Page.DiscussionPage .Post-header .UserOnline {
   display: none !important;
 }
 
-// ── PostUser-badges — displayed in Post-side after JS moves them there ─────────
-// syncFixedAvatarBadges() appends .PostUser-badges as a child of .Post-side.
-// Override Flarum core's float + negative-margin defaults; render as centered
-// icon row beneath the avatar.
-.Page.DiscussionPage .CommentPost .Post-side .PostUser-badges {
-  float: none;
-  margin-left: 0;
-  margin-top: 4px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 2px;
-  padding: 0;
-  list-style: none;
-  width: var(--disc-avatar);
+// ── PostUser-badges — desktop/tablet ─────────────────────────────────────────
+// fixedAvatar OFF: absolute, negative left pulls badge into the avatar column.
+// fixedAvatar ON : same approach as .Post-side — position:sticky, same top,
+//   align-self:start, z-index:3. margin-left keeps it in the avatar column.
+@media @tablet-up {
+  .Page.DiscussionPage .PostUser-badges {
+    position: absolute;
+    left: calc(5px - var(--disc-avatar) - var(--disc-gap));
+    top: -3px;
+    width: var(--disc-avatar);
+    z-index: 3;
+    text-align: right;
+    white-space: nowrap;
+    pointer-events: none;
+  }
 
-  .Badge { --size: 18px; }
+  .Page.DiscussionPage .CommentPost--fixedAvatar .PostUser-badges {
+    position: sticky;
+    top: var(--avocado-avatar-sticky-top);
+    left: auto;
+    margin-left: calc(5px - var(--disc-avatar) - var(--disc-gap));
+    align-self: start;
+    z-index: 3;
+  }
 }
 
+// ── PostUser-badges — mobile ──────────────────────────────────────────────────
+// Post-side is hidden on mobile; the avatar is inside PostUser-name > a.
+// PostUser-name has position:relative so the badge overlays its corner.
 @media @phone {
-  .Page.DiscussionPage .CommentPost .Post-side .PostUser-badges {
-    .Badge { --size: 14px; }
+  .Page.DiscussionPage .PostUser-name {
+    position: relative;
+  }
+
+  .Page.DiscussionPage .PostUser .PostUser-badges {
+    position: absolute;
+    top: -12px;
+    left: 6px;
+    width: 32px;
+    z-index: 3;
+    pointer-events: none;
   }
 }
 
 // ── Post header — .Page.DiscussionPage .Post-header has 0,3,0 vs Flarum's 0,1,0
 .Page.DiscussionPage .Post-header {
-  padding: 0;
   margin-bottom: 10px;
   border-bottom: none;
   display: flex;
-  align-items: center;
+  align-items: baseline;
   flex-wrap: wrap;
-  gap: 4px 8px;
   position: relative;
   overflow: visible;
+}
+
+// On mobile: force the header ul itself to be a flex row so li.item-user and
+// li.item-meta are proper flex children. Without this, only the <ul> is a flex
+// item of Post-header — the lis inside flow as inline and wrap freely.
+@media @phone {
+  .Page.DiscussionPage .Post-header {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0;
+  }
+
+  .Page.DiscussionPage .Post-header > ul {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  // item-user contains avatar + username (and absolute badge — no flex impact)
+  .Page.DiscussionPage .Post-header > ul > li.item-user {
+    flex-shrink: 0;
+  }
+
+  // item-meta (date) shrinks and truncates if needed, never pushes to next line
+  .Page.DiscussionPage .Post-header > ul > li.item-meta {
+    flex-shrink: 1;
+    min-width: 0;
+    white-space: nowrap;
+  }
 }
 
 // PostUser is a <div> in Flarum 2.0 — display:contents makes its children
@@ -487,9 +492,27 @@
   text-decoration: underline;
 }
 
-// Hide UserOnline inside the username link (we use border on Post-side avatar instead)
+// Hide UserOnline dot inside the username link on desktop/tablet — the green border
+// on the Post-side avatar is used instead. On mobile, Post-side is hidden so we
+// show the online indicator as a green border on the inline avatar via sibling CSS.
 .Page.DiscussionPage .PostUser-name .UserOnline {
   display: none !important;
+}
+
+// Mobile: green border on the inline avatar when the user is online.
+// UserOnline sits as a sibling span inside the <a> tag, right after the Avatar.
+// Use the adjacent sibling combinator to style the Avatar when UserOnline is present.
+@media @phone {
+  .Page.DiscussionPage .PostUser-name a .Avatar + .UserOnline + .username,
+  .Page.DiscussionPage .PostUser-name a .UserOnline {
+    // UserOnline itself stays hidden — we style the avatar via :has()
+  }
+
+  // When UserOnline exists inside the link, add green border to the Avatar
+  .Page.DiscussionPage .PostUser-name a:has(.UserOnline) .Avatar {
+    border: 2.5px solid #4ec46a;
+    box-shadow: 0 0 0 2px var(--body-bg, #fff);
+  }
 }
 
 // Dot separator between name and timestamp
@@ -500,18 +523,13 @@
   margin-right: 2px;
 }
 
-// Badges while still inside PostUser (before JS moves them to Post-side):
-// Hide to avoid a flash of misplaced badges during initial render.
-.Page.DiscussionPage .PostUser .PostUser-badges {
-  display: none !important;
-}
 
 // .Page.DiscussionPage .PostMeta has specificity 0,3,0 vs Flarum's .PostMeta 0,1,0
 .Page.DiscussionPage .PostMeta {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-left: auto;
+  margin-left: auto;  // pushes date to right on desktop; overridden on phone below
   font-size: 12px;
   font-weight: 600;
   font-family: "DM Sans Variable", "DM Sans", sans-serif;
@@ -533,13 +551,18 @@
   a:hover { color: var(--primary-color); }
 }
 
+// On mobile, date flows inline after name (no auto-push to right)
+@media @phone {
+  .Page.DiscussionPage .PostMeta {
+    margin-left: 0;
+  }
+}
+
 // ── Post body — specificity 0,3,0 vs Flarum's .Post-body 0,1,0
 .Page.DiscussionPage .Post-body {
   background: transparent;
   border: none;
-  border-radius: 0;
-  padding: 0;
-  font-size: 15px;
+  padding-bottom: 15px;;
   line-height: 1.72;
   font-family: "DM Sans Variable", "DM Sans", sans-serif;
   color: var(--disc-text);
@@ -599,16 +622,48 @@
   }
 
   blockquote {
-    border-left: 3px solid color-mix(in srgb, var(--primary-color) 40%, #e0e0e8);
-    padding: 8px 14px;
-    color: #7a7c88;
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0 0 0 2.8em;
+    margin: 0.8em 0;
+    color: var(--muted-color);
     font-style: italic;
-    margin: 12px 0;
-    background: rgba(0, 0, 0, 0.025);
-    border-radius: 0 8px 8px 0;
+    position: relative;
 
-    p { margin: 0; }
+    // fa-quote-right icon, grey, top-left
+    &::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.1em;
+      width: 1.6em;
+      height: 1.6em;
+      background-color: var(--muted-color);
+      opacity: 0.35;
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 448 512'%3E%3Cpath d='M448 296c0 66.3-53.7 120-120 120h-8c-17.7 0-32-14.3-32-32s14.3-32 32-32h8c30.9 0 56-25.1 56-56v-8H320c-35.3 0-64-28.7-64-64V160c0-35.3 28.7-64 64-64h64c35.3 0 64 28.7 64 64v32 32 12zm-256 0c0 66.3-53.7 120-120 120H64c-35.3 0-64-28.7-64-64V288v-32V224C0 157.7 53.7 104 120 104h8c17.7 0 32 14.3 32 32s-14.3 32-32 32h-8c-30.9 0-56 25.1-56 56v8h64c35.3 0 64 28.7 64 64v8z'/%3E%3C/svg%3E");
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 448 512'%3E%3Cpath d='M448 296c0 66.3-53.7 120-120 120h-8c-17.7 0-32-14.3-32-32s14.3-32 32-32h8c30.9 0 56-25.1 56-56v-8H320c-35.3 0-64-28.7-64-64V160c0-35.3 28.7-64 64-64h64c35.3 0 64 28.7 64 64v32 32 12zm-256 0c0 66.3-53.7 120-120 120H64c-35.3 0-64-28.7-64-64V288v-32V224C0 157.7 53.7 104 120 104h8c17.7 0 32 14.3 32 32s-14.3 32-32 32h-8c-30.9 0-56 25.1-56 56v8h64c35.3 0 64 28.7 64 64v8z'/%3E%3C/svg%3E");
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-size: contain;
+      mask-size: contain;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    p { margin-bottom: 0.4em; }
     & > *:last-child { margin-bottom: 0; }
+
+    // PostMention (quoted username) — italic, slightly primary-tinted
+    .PostMention {
+      font-style: italic;
+      font-weight: 600;
+      color: var(--primary-color);
+      opacity: 0.75;
+      background: none;
+      border: none;
+      padding: 0;
+    }
   }
 
   a {
@@ -681,39 +736,32 @@
   }
 }
 
-// ── Post footer — specificity 0,3,0 vs Flarum's 0,1,0
-.Page.DiscussionPage .Post-footer {
-  margin-top: 16px;
-  padding-top: 0;
-  border-top: none;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
+// ── Post footer — desktop/tablet: keep Flarum's native inline-block layout ───
+// Flarum core: Post-actions { float: right } + Post-footer { display: inline-block; height: 0 }
+// The inline-block footer sits to the LEFT of the floated actions — do not change display.
+// Only adjust margins to position it relative to Post-body.
+@media @tablet-up {
+  .Page.DiscussionPage .Post-footer {
+    margin-top: 8px;
+    margin-bottom: 0;
+  }
+}
 
-  // Ensure the ul added by Flarum/extensions also wraps and doesn't overflow
-  > ul {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 4px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
+// ── Post footer — mobile: Flarum original inline-block next to floated actions
+@media @phone {
+  .Page.DiscussionPage .Post-footer {
+    display: inline-block;
+    height: auto;        // Flarum uses height:0 which causes overflow; auto fixes it
+    margin-top: 5px;     // Flarum default
+    margin-bottom: 20px; // Flarum default
 
-    > li {
-      display: flex;
-      align-items: center;
+    .Post-likedBy {
+      overflow-wrap: break-word;
+      word-break: break-word;
     }
   }
 }
 
-// Ensure the post bottom padding grows with the footer (no overlap on next post)
-.Page.DiscussionPage .CommentPost {
-  padding-bottom: 24px;
-  // overflow:visible so a tall footer is never clipped
-  overflow: visible;
-}
 
 .Page.DiscussionPage .Post-footer .Button.Button--link,
 .Page.DiscussionPage .Post-footer .avocado-action-btn {
@@ -836,12 +884,6 @@
   }
 }
 
-// ReplyPlaceholder — add breathing room below the typing indicator
-@media @desktop-up {
-  .ReplyPlaceholder {
-    margin-top: 16px;
-  }
-}
 
 // ── PostStream load-more button — specificity 0,4,0 vs Flarum's .Button 0,1,0
 .Page.DiscussionPage .PostStream-loadMore {
@@ -983,6 +1025,131 @@
   flex-shrink: 0;
 }
 
+// ── TypingUsersContainer → ReplyPlaceholder spacing ──────────────────────────
+.TypingUsersContainer {
+  margin-bottom: 8px;
+
+  @media @phone {
+    margin-bottom: 6px;
+  }
+}
+
+// ── Guest CTA between post #1 and post #2 ─────────────────────────────────────
+// Injected as a sibling DOM node (not inside the post footer) via m.render().
+.AvocadoPostCta-wrapper {
+  margin: -8px 0 16px;
+
+  @media @tablet-up {
+    // Align CTA with Post-main: offset by the avatar column so left edge
+    // matches the post content, not the avatar.
+    padding-left: var(--avatar-column-width);
+    padding-right: var(--post-padding);
+  }
+}
+
+.AvocadoPostCta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding: 16px 24px;
+  text-align: center;
+  background: color-mix(in srgb, var(--primary-color) 6%, transparent);
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--primary-color) 15%, transparent);
+}
+
+.AvocadoPostCta-text {
+  font-size: 14px;
+  font-weight: 600;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  color: var(--disc-title);
+}
+
+.AvocadoPostCta-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.AvocadoPostCta-or {
+  font-size: 12px;
+  color: var(--disc-muted);
+}
+
+.AvocadoPostCta-btn {
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s;
+
+  &--login {
+    background: var(--primary-color);
+    color: #fff;
+
+    &:hover { background: color-mix(in srgb, var(--primary-color) 85%, #000); }
+  }
+
+  &--signup {
+    background: transparent;
+    color: var(--primary-color);
+    border: 1.5px solid var(--primary-color);
+
+    &:hover { background: color-mix(in srgb, var(--primary-color) 8%, transparent); }
+  }
+}
+
+@media @phone {
+  .AvocadoPostCta {
+    flex-direction: column;
+  }
+
+  .AvocadoPostCta-buttons {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+// ── Guest link gating ──────────────────────────────────────────────────────────
+// External links replaced by a lock-icon + label pill; clicking opens login modal.
+.AvocadoGuestLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  vertical-align: middle;
+  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary-color) 25%, transparent);
+  border-radius: 4px;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: 0.85em;
+  font-weight: 600;
+  line-height: 1;
+  padding: 2px 7px 2px 5px;
+  transition: background 0.12s;
+  white-space: nowrap;
+
+  &:hover {
+    background: color-mix(in srgb, var(--primary-color) 20%, transparent);
+  }
+
+  .fa-lock { font-size: 0.8em; }
+}
+
+.AvocadoGuestLink-label {
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+}
+
 // ── Sidebar stats card — hidden (kept in JS for data access, not shown in UI)
 .AvocadoSidebar-stats {
   display: none;
@@ -1107,13 +1274,29 @@
     padding-top: 2px;
   }
 
+  // Mobile-only header row (avatar + username inline) — hidden on desktop/tablet
+  .AvocadoSkeleton-postHeader {
+    display: none;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .AvocadoSkeleton-postAvatarSm {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    flex-shrink: 0;
+    background: #e8e8f0;
+  }
+
   .AvocadoSkeleton-line {
     border-radius: 6px;
     background: #e8e8f0;
 
-    &--sm  { height: 12px; width: 36%; }
-    &--md  { height: 12px; width: 65%; }
-    &--lg  { height: 80px; width: 100%; border-radius: 8px; }
+    &--sm   { height: 12px; width: 36%; }
+    &--md   { height: 12px; width: 65%; }
+    &--lg   { height: 80px; width: 100%; border-radius: 8px; }
+    &--user { /* desktop-only username line — hidden on mobile */ }
   }
 }
 
@@ -1143,22 +1326,21 @@
     .AvocadoSkeleton-title { width: 85%; text-align: center; }
     .AvocadoSkeleton-meta { justify-content: center; }
     .AvocadoSkeleton-stream { padding: 0 14px; }
-    .AvocadoSkeleton-post { padding: 18px 0; }
     .AvocadoSkeleton-line--lg { height: 56px; }
+
+    // Post skeleton: match Flarum's mobile layout — no side avatar column,
+    // inline avatar + username in a header row, then content block.
+    .AvocadoSkeleton-post {
+      display: block;
+      padding: 18px 0;
+    }
+    .AvocadoSkeleton-postAvatar  { display: none; }
+    .AvocadoSkeleton-postBody    { padding-top: 0; }
+    .AvocadoSkeleton-line--user  { display: none; }
+    .AvocadoSkeleton-postHeader  { display: flex; }
   }
 }
 
-@media @phone {
-  .Page.DiscussionPage .CommentPost {
-    position: relative;
-    padding-bottom: 10% !important;
-  }
-
-  .Post-actions {
-    position: relative;
-    padding-top: 3% !important;
-  }
-}
 
 // ── DiscussionList sidebar inside DiscussionPage — Avocado design ──────────────
 // Applies to the sliding panel (App-drawer) that shows the discussion list

@@ -9,6 +9,9 @@ import {
   formatTimeLabel,
   truncate,
   highlight,
+  navigate,
+  userRoute,
+  renderPostSkeleton,
 } from '../utils';
 
 const SORT_LABELS = {
@@ -48,24 +51,9 @@ export default class AvocadoPostsSearchPage extends Page {
     app.setTitleCount(0);
   }
 
-  navigate(e, href) {
-    e.preventDefault();
-    m.route.set(href);
-  }
 
-  renderSkeleton() {
-    return [0, 1, 2].map((i) => (
-      <div key={String(i)} className="AvocadoSearch-postSkeleton">
-        <div className="AvocadoHome-skeletonAvatar" />
-        <div className="AvocadoHome-skeletonBody">
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--sm" />
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--lg" />
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--md" />
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--sm" style="width:28%" />
-        </div>
-      </div>
-    ));
-  }
+
+
 
   renderPostCard(post) {
     const q          = app.search.state.params().q || '';
@@ -73,9 +61,7 @@ export default class AvocadoPostsSearchPage extends Page {
     const user       = post.user?.();
     const content    = post.contentPlain?.() || '';
     const href       = app.route.post(post);
-    const userHref   = user
-      ? (() => { try { return app.route('user', { username: user.username?.() || '' }); } catch (_) { return '#'; } })()
-      : '#';
+    const userHref   = userRoute(user);
     const timeLabel  = formatTimeLabel(post.createdAt?.());
 
     // highlight() truncates around the first match — ideal for post excerpts.
@@ -95,7 +81,7 @@ export default class AvocadoPostsSearchPage extends Page {
             <a
               href={userHref}
               className="AvocadoSearch-postAuthor"
-              onclick={(e) => { e.stopPropagation(); this.navigate(e, userHref); }}
+              onclick={(e) => { e.stopPropagation(); navigate(e, userHref); }}
             >
               {displayName(user)}
             </a>
@@ -106,7 +92,7 @@ export default class AvocadoPostsSearchPage extends Page {
           <a
             href={href}
             className="AvocadoSearch-postDiscussion"
-            onclick={(e) => this.navigate(e, href)}
+            onclick={(e) => navigate(e, href)}
           >
             <i className="far fa-comments" aria-hidden="true" />
             {discussionNode}
@@ -203,7 +189,7 @@ export default class AvocadoPostsSearchPage extends Page {
         </div>
 
         {isLoading && allPosts.length === 0 ? (
-          <div className="AvocadoSearch-postStack">{this.renderSkeleton()}</div>
+          <div className="AvocadoSearch-postStack">{renderPostSkeleton()}</div>
         ) : allPosts.length === 0 ? (
           <div className="AvocadoSearch-empty">
             <i className="far fa-frown-open" aria-hidden="true" />
@@ -212,7 +198,7 @@ export default class AvocadoPostsSearchPage extends Page {
         ) : (
           <div className="AvocadoSearch-postStack">
             {allPosts.map((post) => this.renderPostCard(post))}
-            {isLoading && this.renderSkeleton()}
+            {isLoading && renderPostSkeleton()}
             {!isLoading && state.hasNext() && (
               <div className="AvocadoDiscussions-loadMore">
                 <button

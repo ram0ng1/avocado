@@ -1,5 +1,5 @@
 import app from 'flarum/forum/app';
-import Page from 'flarum/common/components/Page';
+import UserPage from 'flarum/forum/components/UserPage';
 import Avatar from 'flarum/common/components/Avatar';
 import AvatarEditor from 'flarum/forum/components/AvatarEditor';
 import Dropdown from 'flarum/common/components/Dropdown';
@@ -11,9 +11,7 @@ import LinkButton from 'flarum/common/components/LinkButton';
 
 import {
   trans,
-  safeRoute,
   displayName,
-  hexToRgba,
   tagPillStyle,
   FALLBACK_COLORS,
   discussionRoute,
@@ -21,6 +19,11 @@ import {
   formatTimeLabel,
   truncate,
   postPreview as postExcerpt,
+  navigate,
+  userRoute,
+  renderThreadSkeleton,
+  renderLoadMore,
+  renderEmpty,
 } from '../utils';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -32,23 +35,11 @@ const findBySlug = (slug) => {
   ) || null;
 };
 
-const tabHref = (route, user) => {
-  if (route === 'settings') return safeRoute('settings');
-  return safeRoute(route, { username: user.slug?.() || user.username?.() });
-};
-
-const routeExists = (name) => !!app.routes[name];
-
-const userRoute = (user) => {
-  if (!user) return '#';
-  try { return app.route('user', { username: user.username?.() || '' }); } catch (e) { return '#'; }
-};
-
 const PAGE_SIZE = 20;
 
 // ─── Thread card (same visual as AllDiscussionsPage) ──────────────────────────
 
-function renderThreadCard(discussion, likingIds, toggleLike, navigate) {
+function renderThreadCard(discussion, likingIds, toggleLike) {
   if (!discussion) return null;
   const id        = discussion.id?.();
   const user      = discussion.user?.();
@@ -71,7 +62,7 @@ function renderThreadCard(discussion, likingIds, toggleLike, navigate) {
   const replyCard  = (() => {
     if (!replies || (!lastPoster && !lastPost)) return null;
     const rawText   = lastPost?.contentPlain?.() || '';
-    const preview   = rawText ? rawText.slice(0, 100) + (rawText.length > 100 ? '…' : '') : '';
+    const preview   = truncate(rawText, 100);
     const otherCount = replies - 1;
     const lastPostHref = (() => {
       try { const n = discussion.lastPostNumber?.(); return n ? app.route.discussion(discussion, n) : href; }
@@ -183,7 +174,7 @@ function renderThreadCard(discussion, likingIds, toggleLike, navigate) {
 
 // ─── Post card (user's comment within a discussion) ───────────────────────────
 
-function renderPostCard(post, navigate) {
+function renderPostCard(post) {
   if (!post) return null;
   const id         = post.id?.();
   const discussion = post.discussion?.();
@@ -247,32 +238,7 @@ function renderPostCard(post, navigate) {
   );
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
 
-function renderSkeleton() {
-  return [0, 1, 2].map((i) => (
-    <div key={String(i)} className="AvocadoHome-skeletonCard">
-      <div className="AvocadoHome-skeletonAvatar" />
-      <div className="AvocadoHome-skeletonBody">
-        <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--sm" />
-        <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--lg" />
-        <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--md" />
-      </div>
-    </div>
-  ));
-}
-
-function renderLoadMore(label, onclick) {
-  return (
-    <div className="AvocadoDiscussions-loadMore">
-      <button className="AvocadoDiscussions-loadMoreBtn" onclick={onclick}>{label}</button>
-    </div>
-  );
-}
-
-function renderEmpty(label) {
-  return <div className="AvocadoDiscussions-empty">{label}</div>;
-}
 
 // ─── Shared: hero ─────────────────────────────────────────────────────────────
 
@@ -363,11 +329,13 @@ export function buildHero(user, isEditable, controls = []) {
   );
 }
 
-// ─── Shared: sidebar nav ──────────────────────────────────────────────────────
+// ─── Shared: sticky horizontal nav tabs ──────────────────────────────────────
+// Accepts a page instance (AvocadoUserBase or UserPage subclass) so that
+// navItems() is called on the real instance, picking up any extension that
+// used extend(UserPage.prototype, 'navItems', …).
 
-// ─── Shared: sticky horizontal nav tabs (replaces sidebar) ───────────────────
-
-export function buildSidebar(user, activeKey) {
+export function buildSidebar(page) {
+  const user = page?.user;
   if (!user) {
     return (
       <div className="AvocadoUserPage-nav">
@@ -380,91 +348,31 @@ export function buildSidebar(user, activeKey) {
     );
   }
 
-  const isActor = app.session.user === user;
-  const isMod   = app.forum.attribute('canModerateAccessTokens');
-  const commentCount    = user.commentCount?.();
-  const discussionCount = user.discussionCount?.();
-
-  const mainTabs = [
-    { key: 'posts',       label: 'Posts',       route: 'user',             icon: 'far fa-comment',  count: commentCount    },
-    { key: 'discussions', label: 'Discussions',  route: 'user.discussions', icon: 'far fa-comments', count: discussionCount },
-  ];
-  if (routeExists('user.likes'))    mainTabs.push({ key: 'likes',    label: 'Likes',    route: 'user.likes',    icon: 'far fa-thumbs-up' });
-  if (routeExists('user.mentions')) mainTabs.push({ key: 'mentions', label: 'Mentions', route: 'user.mentions', icon: 'fas fa-at'         });
-
-  const settingsTabs = [];
-  if (isActor || isMod) settingsTabs.push({ key: 'security', label: 'Security', route: 'user.security', icon: 'fas fa-shield-halved' });
-  if (isActor)          settingsTabs.push({ key: 'settings', label: 'Settings', route: 'settings',      icon: 'fas fa-gear'          });
-
-  const renderTab = ({ key, label, route, icon, count }) => {
-    const href = tabHref(route, user);
-    if (!href) return null;
-    return (
-      <a key={key}
-         className={`AvocadoUserPage-navItem${key === activeKey ? ' is-active' : ''}`}
-         href={href}
-         onclick={(e) => { e.preventDefault(); m.route.set(href); }}>
-        <i className={icon} aria-hidden="true" />
-        <span>{label}</span>
-        {count != null && <span className="AvocadoUserPage-navCount">{count}</span>}
-      </a>
-    );
-  };
-
   return (
     <div className="AvocadoUserPage-nav">
-      <div className="AvocadoUserPage-navInner">
-        {mainTabs.map(renderTab)}
-        {settingsTabs.length > 0 && (
-          <>
-            <div className="AvocadoUserPage-navDivider" />
-            {settingsTabs.map(renderTab)}
-          </>
-        )}
-      </div>
+      <ul className="AvocadoUserPage-navInner">
+        {listItems(page.navItems().toArray())}
+      </ul>
     </div>
   );
 }
 
-// ─── Profile mobile nav (phone header SelectDropdown with profile tabs) ───────
-// Mirrors native Flarum UserPage.sidebarItems() / navItems() for our custom layout.
+// ─── Profile mobile nav ───────────────────────────────────────────────────────
+// Always renders App-titleControl so it is in the DOM from the very first render
+// (even before user data loads). This prevents the race condition where the
+// absolutely-positioned SelectDropdown misses the phone header on first paint.
 
-export function buildUserPhoneNav(user, activeKey) {
-  if (!user) return null;
+export function buildUserPhoneNav(page) {
+  // navItems() requires this.user — only call it when user is ready.
+  const user = page?.user;
+  const items = user ? page.navItems().toArray() : [];
 
-  const isActor = app.session.user === user;
-  const isMod   = app.forum.attribute('canModerateAccessTokens');
-  const commentCount    = user.commentCount?.();
-  const discussionCount = user.discussionCount?.();
-
-  const tabs = [
-    { key: 'posts',       label: 'Posts',       route: 'user',             icon: 'far fa-comment',        count: commentCount    },
-    { key: 'discussions', label: 'Discussions',  route: 'user.discussions', icon: 'far fa-comments',       count: discussionCount },
-  ];
-  if (routeExists('user.likes'))    tabs.push({ key: 'likes',    label: 'Likes',    route: 'user.likes',    icon: 'far fa-thumbs-up'    });
-  if (routeExists('user.mentions')) tabs.push({ key: 'mentions', label: 'Mentions', route: 'user.mentions', icon: 'fas fa-at'            });
-  if ((isActor || isMod) && routeExists('user.security')) tabs.push({ key: 'security', label: 'Security', route: 'user.security', icon: 'fas fa-shield-halved' });
-  if (isActor) tabs.push({ key: 'settings', label: 'Settings', route: 'settings', icon: 'fas fa-gear' });
-
-  const links = tabs.map(({ key, label, route, icon, count }) => {
-    const href = tabHref(route, user);
-    if (!href) return null;
-    // Let LinkButton auto-detect active state via route matching (same as native Flarum)
-    return (
-      <LinkButton key={key} href={href} icon={icon}>
-        {count != null ? `${label} ${count}` : label}
-      </LinkButton>
-    );
-  }).filter(Boolean);
-
-  // Match native Flarum UserPage.sidebarItems() structure exactly:
-  // SelectDropdown with className="App-titleControl" inside IndexPage-nav sideNav
   return (
     <nav className="IndexPage-nav sideNav">
       <ul>
         <li className="item item-nav">
           <SelectDropdown className="App-titleControl" buttonClassName="Button">
-            {links}
+            {items}
           </SelectDropdown>
         </li>
       </ul>
@@ -473,14 +381,14 @@ export function buildUserPhoneNav(user, activeKey) {
 }
 
 // ─── Base page ────────────────────────────────────────────────────────────────
+// Extends native UserPage so that navItems() picks up every extension that calls
+// extend(UserPage.prototype, 'navItems', …) — e.g. fof/badges, fof/user-bio, etc.
 
-class AvocadoUserBase extends Page {
+class AvocadoUserBase extends UserPage {
 
   oninit(vnode) {
-    super.oninit(vnode);
-    this.user = null;
+    super.oninit(vnode); // sets this.bodyClass = 'App--user'
     this.userLoading = true;
-    this.bodyClass = 'App--user';
     this.loadUser(m.route.param('username'));
   }
 
@@ -489,6 +397,7 @@ class AvocadoUserBase extends Page {
     const cached = findBySlug(slug);
     if (cached?.joinTime?.()) {
       this.user = cached;
+      app.current.set('user', cached);
       this.userLoading = false;
       this.onUserLoaded(cached);
       return;
@@ -496,6 +405,7 @@ class AvocadoUserBase extends Page {
     app.store.find('users', slug, { bySlug: true })
       .then((user) => {
         this.user = user;
+        app.current.set('user', user);
         this.userLoading = false;
         this.onUserLoaded(user);
         m.redraw();
@@ -504,10 +414,6 @@ class AvocadoUserBase extends Page {
   }
 
   onUserLoaded(user) {}
-
-  navigate(event, href) { event.preventDefault(); m.route.set(href); }
-
-  activeKey() { return 'posts'; }
 
   content() { return null; }
 
@@ -518,13 +424,13 @@ class AvocadoUserBase extends Page {
 
     return (
       <div className="AvocadoUserPage">
-        <div className="AvocadoNav-helper">{buildUserPhoneNav(user, this.activeKey())}</div>
+        <div className="AvocadoNav-helper">{buildUserPhoneNav(this)}</div>
         {buildHero(user, isEditable, controls)}
-        {buildSidebar(user, this.activeKey())}
+        {buildSidebar(this)}
         <div className="AvocadoUserPage-body">
           <div className="AvocadoUserPage-bodyInner">
             {this.userLoading
-              ? <div className="AvocadoHome-threadStack">{renderSkeleton()}</div>
+              ? <div className="AvocadoHome-threadStack">{renderThreadSkeleton()}</div>
               : this.content()
             }
           </div>
@@ -574,8 +480,8 @@ export class AvocadoUserPostsPage extends AvocadoUserBase {
   content() {
     return (
       <div className="AvocadoHome-threadStack">
-        {this.posts.map((p) => renderPostCard(p, (e, h) => this.navigate(e, h)))}
-        {this.loading && renderSkeleton()}
+        {this.posts.map((p) => renderPostCard(p))}
+        {this.loading && renderThreadSkeleton()}
         {!this.loading && this.posts.length === 0 && renderEmpty('No posts yet.')}
         {this.hasMore && !this.loading && renderLoadMore('Load more', () => this.loadPosts(false))}
       </div>
@@ -637,9 +543,9 @@ export class AvocadoUserDiscussionsPage extends AvocadoUserBase {
     return (
       <div className="AvocadoHome-threadStack">
         {this.discussions.map((d) =>
-          renderThreadCard(d, this.likingIds, (d) => this.toggleLike(d), (e, h) => this.navigate(e, h))
+          renderThreadCard(d, this.likingIds, (d) => this.toggleLike(d))
         )}
-        {this.loading && renderSkeleton()}
+        {this.loading && renderThreadSkeleton()}
         {!this.loading && this.discussions.length === 0 && renderEmpty('No discussions yet.')}
         {this.hasMore && !this.loading && renderLoadMore('Load more', () => this.loadDiscussions(false))}
       </div>
@@ -686,8 +592,8 @@ export class AvocadoUserLikesPage extends AvocadoUserBase {
   content() {
     return (
       <div className="AvocadoHome-threadStack">
-        {this.posts.map((p) => renderPostCard(p, (e, h) => this.navigate(e, h)))}
-        {this.loading && renderSkeleton()}
+        {this.posts.map((p) => renderPostCard(p))}
+        {this.loading && renderThreadSkeleton()}
         {!this.loading && this.posts.length === 0 && renderEmpty('No liked posts yet.')}
         {this.hasMore && !this.loading && renderLoadMore('Load more', () => this.loadPosts(false))}
       </div>
@@ -734,8 +640,8 @@ export class AvocadoUserMentionsPage extends AvocadoUserBase {
   content() {
     return (
       <div className="AvocadoHome-threadStack">
-        {this.posts.map((p) => renderPostCard(p, (e, h) => this.navigate(e, h)))}
-        {this.loading && renderSkeleton()}
+        {this.posts.map((p) => renderPostCard(p))}
+        {this.loading && renderThreadSkeleton()}
         {!this.loading && this.posts.length === 0 && renderEmpty('No mentions yet.')}
         {this.hasMore && !this.loading && renderLoadMore('Load more', () => this.loadPosts(false))}
       </div>

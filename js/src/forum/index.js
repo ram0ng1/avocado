@@ -10,19 +10,19 @@ import HeaderSecondary from 'flarum/forum/components/HeaderSecondary';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import IndexPage from 'flarum/forum/components/IndexPage';
 import CommentPost from 'flarum/forum/components/CommentPost';
+import PostEdited from 'flarum/forum/components/PostEdited';
 import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
 import WelcomeHero from 'flarum/forum/components/WelcomeHero';
 import TagsPage from 'ext:flarum/tags/forum/components/TagsPage';
 import UserPage from 'flarum/forum/components/UserPage';
 import UserControls from 'flarum/forum/utils/UserControls';
-import LoadingIndicator from 'flarum/common/components/LoadingIndicator';
 import DiscussionHero from 'flarum/forum/components/DiscussionHero';
 import DiscussionPage from 'flarum/forum/components/DiscussionPage';
+import PageStructure from 'flarum/forum/components/PageStructure';
 import { tagPageView } from './components/TagsPage';
 import AvocadoTagPage from './components/TagPage';
 import HomePage from './components/HomePage';
 import AllDiscussionsPage from './components/AllDiscussionsPage';
-import AvocadoDiscussionsSearchPage from './components/AvocadoDiscussionsSearchPage';
 import AvocadoPostsSearchPage from './components/AvocadoPostsSearchPage';
 import AvocadoSearchPage from './components/AvocadoSearchPage';
 import {
@@ -36,18 +36,20 @@ import {
 } from './components/UserProfilePage';
 import AvocadoDiscussionStats from './components/AvocadoDiscussionStats';
 import Footer from 'flarum/forum/components/Footer';
-import MessagesPage from 'ext:flarum/messages/forum/components/MessagesPage';
 // FIX: utils centralises helpers that were duplicated in every component file
 import {
   trans,
-  hexToRgba,
+  hexLuminance,
   iconColors,
   tagPillStyle,
   resolveAssetUrl,
   copyTextToClipboard,
+  truncate,
+  safeCssUrl,
+  renderThreadSkeleton,
 } from './utils';
-import { truncate } from 'flarum/common/utils/string';
 import TextEditor from 'flarum/common/components/TextEditor';
+import listItems from 'flarum/common/helpers/listItems';
 
 // ─── Settings helpers ─────────────────────────────────────────────────────────
 
@@ -113,48 +115,73 @@ const getPostPermalink = (post) => {
 
 // ─── Fixed-avatar badge sync ──────────────────────────────────────────────────
 
-const syncFixedAvatarBadges = (component) => {
+const syncUserOnline = (component) => {
   const root = component.element;
   if (!root) return;
-
   const side = root.querySelector('.Post-side');
   if (!side) return;
-
-  // Detect UserOnline and mark Post-side via classList (safe — doesn't affect Mithril vdom children)
   side.classList.remove('Post-side--online');
   const userOnlineEl =
     root.querySelector('.PostUser-name .UserOnline') ||
     root.querySelector('.Post-header .UserOnline');
   if (userOnlineEl) side.classList.add('Post-side--online');
-
-  // Badges: DO NOT move the Mithril-managed .PostUser-badges node (causes removeChild errors).
-  // Instead, maintain a non-Mithril clone inside Post-side so badges appear near the avatar.
-  const origBadges = root.querySelector('.PostUser-badges:not(.PostUser-badges--sideClone)');
-  if (!origBadges) return;
-
-  let clone = side.querySelector('.PostUser-badges--sideClone');
-  if (!clone) {
-    clone = origBadges.cloneNode(true);
-    clone.classList.add('PostUser-badges--sideClone');
-    clone.classList.remove('PostUser-badges--inPostHeader');
-    side.appendChild(clone);
-  } else {
-    // Sync badge content on updates (subscription changes, etc.)
-    clone.innerHTML = origBadges.innerHTML;
-  }
-  clone.querySelectorAll('.Badge').forEach((b) => b.removeAttribute('data-placement'));
 };
 
-// FIX: removed queueSyncFixedAvatarBadges (had redundant RAF + unguarded setTimeout).
-// syncFixedAvatarBadges is called directly; onupdate now has a DOM-presence guard.
+
+
+const isExternalLink = (link) => {
+  try {
+    const url = new URL(link.href, window.location.href);
+    return url.hostname !== window.location.hostname;
+  } catch (_) {
+    return false;
+  }
+};
+
+const gateGuestLinks = (component) => {
+  if (app.session.user) return;
+  if (!settingEnabled('avocadoHideLinksForGuests', false)) return;
+  const root = component.element;
+  if (!root) return;
+  const body = root.querySelector('.Post-body');
+  if (!body) return;
+
+  // Only external links are replaced. Internal links (mentions, discussion links, etc.) are left untouched.
+  // Post-body HTML is rendered via m.trust() — safe to mutate directly.
+  // data-avocado-gated prevents double-processing on onupdate.
+  const label = app.translator.trans('ramon-avocado.forum.link_cta.placeholder');
+
+  body.querySelectorAll('a[href]:not([data-avocado-gated])').forEach((link) => {
+    if (!isExternalLink(link)) return;
+
+    const placeholder = document.createElement('span');
+    placeholder.className = 'AvocadoGuestLink';
+    placeholder.setAttribute('data-avocado-gated', '1');
+    placeholder.setAttribute('role', 'button');
+    placeholder.tabIndex = 0;
+
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-lock';
+    icon.setAttribute('aria-hidden', 'true');
+
+    const text = document.createElement('span');
+    text.className = 'AvocadoGuestLink-label';
+    text.textContent = typeof label === 'string' ? label : 'Login to view link';
+
+    placeholder.appendChild(icon);
+    placeholder.appendChild(text);
+
+    const handler = () => import('flarum/forum/components/LogInModal').then(({ default: M }) => app.modal.show(M));
+    placeholder.addEventListener('click', handler);
+    placeholder.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') handler(); });
+    link.parentNode.replaceChild(placeholder, link);
+  });
+};
 
 
 app.initializers.add(
   'ramon-avocado',
   () => {
-    // V2 is always active — there is no admin toggle.
-    const v2Enabled = true;
-
     // ── 0. Register custom routes ─────────────────────────────────────────────
     // The /discussions page is always registered so direct links keep working.
     app.routes['avocado-discussions'] = { path: '/discussions', component: AllDiscussionsPage };
@@ -163,28 +190,24 @@ app.initializers.add(
     // Unified search page — Discussions / Posts / Users tabs.
     app.routes['avocado-search'] = { path: '/search', component: AvocadoSearchPage };
 
-    if (v2Enabled) {
-      // Override the tags extension's individual tag route with our custom page.
-      app.routes['tag'] = { path: '/t/:tags', component: AvocadoTagPage };
-      // User profile pages — standalone Avocado components
-      // 'user.posts' has the same path as 'user' and is processed after it by mapRoutes,
-      // so it overwrites 'user' in the mithril route map. Override both to ensure our
-      // component wins for /u/:username.
-      app.routes['user']             = { path: '/u/:username',             component: AvocadoUserPostsPage        };
-      app.routes['user.posts']       = { path: '/u/:username',             component: AvocadoUserPostsPage        };
-      app.routes['user.discussions'] = { path: '/u/:username/discussions', component: AvocadoUserDiscussionsPage  };
-      app.routes['user.likes']       = { path: '/u/:username/likes',       component: AvocadoUserLikesPage        };
-      app.routes['user.mentions']    = { path: '/u/:username/mentions',    component: AvocadoUserMentionsPage     };
-    }
+    // Override the tags extension's individual tag route with our custom page.
+    app.routes['tag'] = { path: '/t/:tags', component: AvocadoTagPage };
+    // User profile pages — standalone Avocado components
+    // 'user.posts' has the same path as 'user' and is processed after it by mapRoutes,
+    // so it overwrites 'user' in the mithril route map. Override both to ensure our
+    // component wins for /u/:username.
+    app.routes['user']             = { path: '/u/:username',             component: AvocadoUserPostsPage        };
+    app.routes['user.posts']       = { path: '/u/:username',             component: AvocadoUserPostsPage        };
+    app.routes['user.discussions'] = { path: '/u/:username/discussions', component: AvocadoUserDiscussionsPage  };
+    app.routes['user.likes']       = { path: '/u/:username/likes',       component: AvocadoUserLikesPage        };
+    app.routes['user.mentions']    = { path: '/u/:username/mentions',    component: AvocadoUserMentionsPage     };
 
     // ── 1. Theme class + logo override (needs app.forum — use beforeMount) ──────
     // initialize() runs before store.pushPayload() and before app.forum is set.
     // app.beforeMount() callbacks run after app.forum is set, before Mithril mounts.
     app.beforeMount(() => {
       // Theme class on <html> — added whenever V2 is active
-      if (v2Enabled) {
-        document.documentElement.classList.add('avocado-theme');
-      }
+      document.documentElement.classList.add('avocado-theme');
 
       // Detect mobile-tab extension and add class if present
       if (app.extensions && app.extensions['android-com-pl/mobile-tab']) {
@@ -251,8 +274,8 @@ app.initializers.add(
               if (tightViewBox) out.setAttribute('viewBox', tightViewBox);
 
               // Compute explicit width so the SVG doesn't collapse in flex containers.
-              // height is fixed at 35px; width = 35 * (viewBox-width / viewBox-height).
-              const LOGO_H = 35;
+              // height is fixed at 50px for better visibility; width = 50 * (viewBox-width / viewBox-height).
+              const LOGO_H = 50;
               let logoW = LOGO_H; // fallback: square
               if (tightViewBox) {
                 const vbParts = tightViewBox.split(' ');
@@ -262,11 +285,16 @@ app.initializers.add(
               }
               out.setAttribute('width', String(logoW));
               out.setAttribute('height', String(LOGO_H));
-              out.setAttribute('class', 'Header-logo');
+              out.setAttribute('class', 'Header-logo AvocadoLogoSvg');
               out.setAttribute('role', 'img');
               out.setAttribute('aria-label', app.forum.attribute('title') || '');
+              out.style.display = 'block';
+              out.style.margin = '0 auto';
 
               homeLink.textContent = '';
+              homeLink.style.display = 'flex';
+              homeLink.style.alignItems = 'center';
+              homeLink.style.justifyContent = 'center';
               homeLink.appendChild(out);
               restoreVisibility();
             })
@@ -288,7 +316,7 @@ app.initializers.add(
 
     // ── 1b. Global Avatar override — person silhouette for users without a photo
     override(Avatar.prototype, 'view', function (original, vnode) {
-      if (!v2Enabled || !settingEnabled('avocadoCustomDefaultAvatar', true)) return original(vnode);
+      if (!settingEnabled('avocadoCustomDefaultAvatar', true)) return original(vnode);
       const user = this.attrs?.user;
       if (!user || user.avatarUrl?.()) return original(vnode);
 
@@ -306,23 +334,18 @@ app.initializers.add(
     // ── 2. UserPage (base for Security + Settings): Avocado layout ───────────
     // UserSecurityPage and SettingsPage are code-split chunks; override their
     // shared base (UserPage) which IS in the main bundle.
-    override(UserPage.prototype, 'view', function (original, vnode) {
-      if (!v2Enabled) return original(vnode);
+    override(UserPage.prototype, 'view', function () {
       const user       = this.user;
       const isEditable = user && (user.canEdit?.() || user === app.session.user);
       const controls   = user ? UserControls.controls(user, this).toArray() : [];
-      const route      = m.route.get?.() || '';
-      const activeKey  = route === '/settings' ? 'settings'
-                       : /\/security$/.test(route) ? 'security'
-                       : 'posts';
       return (
         <div className="AvocadoUserPage">
-          <div className="AvocadoNav-helper">{buildUserPhoneNav(user, activeKey)}</div>
+          <div className="AvocadoNav-helper">{buildUserPhoneNav(this)}</div>
           {buildHero(user, isEditable, controls)}
-          {buildSidebar(user, activeKey)}
+          {buildSidebar(this)}
           <div className="AvocadoUserPage-body">
             <div className="AvocadoUserPage-bodyInner">
-              {user ? this.content() : <LoadingIndicator />}
+              {user ? this.content() : <div className="AvocadoHome-threadStack">{renderThreadSkeleton()}</div>}
             </div>
           </div>
         </div>
@@ -331,7 +354,6 @@ app.initializers.add(
 
     // ── 4. DiscussionHero: colored hero, white title, tag pills, state badges ────
     override(DiscussionHero.prototype, 'view', function (original, vnode) {
-      if (!v2Enabled) return original(vnode);
       const discussion = this.attrs.discussion;
       if (!discussion) return original(vnode);
 
@@ -341,16 +363,9 @@ app.initializers.add(
       const color = tagColor || 'var(--primary-color)';
 
       // WCAG relative-luminance text contrast for hero
-      const heroTextColor = (() => {
-        if (!tagColor || !tagColor.startsWith('#') || tagColor.replace('#', '').length !== 6) return '#ffffff';
-        const hex = tagColor.replace('#', '');
-        const r = parseInt(hex.slice(0, 2), 16) / 255;
-        const g = parseInt(hex.slice(2, 4), 16) / 255;
-        const b = parseInt(hex.slice(4, 6), 16) / 255;
-        const toLinear = (c) => c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-        const L = 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
-        return L > 0.35 ? '#202126' : '#ffffff';
-      })();
+      const heroTextColor = (tagColor && tagColor.startsWith('#') && tagColor.replace('#', '').length === 6)
+        ? (hexLuminance(tagColor) > 0.35 ? '#202126' : '#ffffff')
+        : '#ffffff';
       const heroTextMuted = heroTextColor === '#ffffff' ? 'rgba(255,255,255,0.78)' : 'rgba(0,0,0,0.55)';
       const heroSurface   = heroTextColor === '#ffffff' ? 'rgba(255,255,255,0.20)' : 'rgba(0,0,0,0.10)';
 
@@ -386,9 +401,12 @@ app.initializers.add(
 
       const MAX_PARTICIPANT_AVATARS = 6;
       const displayParticipants = participants.slice(0, MAX_PARTICIPANT_AVATARS);
-      const extraParticipants = participants.length > MAX_PARTICIPANT_AVATARS
-        ? participants.length - MAX_PARTICIPANT_AVATARS
-        : 0;
+      // participants only contains author + lastPoster (≤2 users loaded client-side).
+      // Use the API participantCount as the authoritative total so "+N" reflects
+      // the real number of people who participated, not just loaded avatars.
+      const extraParticipants = participantCount > displayParticipants.length
+        ? participantCount - displayParticipants.length
+        : (participants.length > MAX_PARTICIPANT_AVATARS ? participants.length - MAX_PARTICIPANT_AVATARS : 0);
 
       const renderParticipantAvatar = (user) => {
         if (!user) return null;
@@ -516,7 +534,7 @@ app.initializers.add(
 
     // ── 5. DiscussionPage skeleton override ───────────────────────────────────
     override(DiscussionPage.prototype, 'view', function (original, vnode) {
-      if (!v2Enabled || this.discussion) return original(vnode);
+      if (this.discussion) return original(vnode);
 
       return (
         <div className="Page DiscussionPage DiscussionPage--skeleton">
@@ -545,7 +563,13 @@ app.initializers.add(
                 <div key={String(i)} className="AvocadoSkeleton-post">
                   <div className="AvocadoSkeleton-postAvatar" />
                   <div className="AvocadoSkeleton-postBody">
-                    <div className="AvocadoSkeleton-line AvocadoSkeleton-line--sm" />
+                    {/* Desktop/tablet: username line above content */}
+                    <div className="AvocadoSkeleton-line AvocadoSkeleton-line--sm AvocadoSkeleton-line--user" />
+                    {/* Mobile: inline avatar + username row (hidden on desktop via CSS) */}
+                    <div className="AvocadoSkeleton-postHeader">
+                      <div className="AvocadoSkeleton-postAvatarSm" />
+                      <div className="AvocadoSkeleton-line AvocadoSkeleton-line--sm" />
+                    </div>
                     <div className="AvocadoSkeleton-line AvocadoSkeleton-line--lg" />
                     <div className="AvocadoSkeleton-line AvocadoSkeleton-line--md" />
                     <div className="AvocadoSkeleton-line AvocadoSkeleton-line--sm" />
@@ -572,7 +596,7 @@ app.initializers.add(
           </div>
           <div
             className="AvocadoAuth-panel"
-            style={heroUrl ? { backgroundImage: `url(${heroUrl})`, backgroundSize: 'cover', backgroundPosition: 'center top' } : {}}
+            style={heroUrl ? { backgroundImage: safeCssUrl(heroUrl), backgroundSize: 'cover', backgroundPosition: 'center top' } : {}}
             oncreate={(vnode) => {
               // CSS :has() can lose to Flarum's inline max-width on .Modal-dialog.
               // Use setProperty('…', 'important') so our inline style beats everything,
@@ -602,7 +626,6 @@ app.initializers.add(
     // the dynamic imports until the current synchronous boot stack is finished.
     // setTimeout(fn, 0) guarantees we run in the next event-loop tick — after boot().
     setTimeout(() => {
-      if (!v2Enabled) return;
       Promise.all([
         import('flarum/forum/components/LogInModal'),
         import('flarum/forum/components/SignUpModal'),
@@ -618,7 +641,7 @@ app.initializers.add(
 
     // ── 7. HeaderSecondary auth buttons for guest users ───────────────────────
     extend(HeaderSecondary.prototype, 'items', function (items) {
-      if (!v2Enabled || !settingEnabled('avocadoShowAuthButtons', false) || app.session.user) return;
+      if (!settingEnabled('avocadoShowAuthButtons', false) || app.session.user) return;
 
       // Flarum 2.0 ItemList uses setContent() — replace() does not exist.
       // Keys: 'signUp' (capital U) and 'logIn'.
@@ -657,7 +680,6 @@ app.initializers.add(
 
     // ── 9. IndexPage contentItems: swap to HomePage or custom search ──────────
     extend(IndexPage.prototype, 'contentItems', function (items) {
-      if (!v2Enabled) return;
       if (customHomeEnabled()) {
         items.remove('discussionList');
         items.remove('toolbar');
@@ -674,7 +696,11 @@ app.initializers.add(
 
     // ── 10. IndexPage view: setClassName for avocadoHome / avocadoSearch ──────
     extend(IndexPage.prototype, 'view', function (vdom) {
-      if (!v2Enabled || !vdom) return;
+      if (!vdom) return;
+      // IndexPage--avocadoRoot marks the REAL home/index page so PageStructure guards can
+      // distinguish it from extension pages that also carry 'IndexPage' in their className
+      // (e.g. LeaderboardPage uses className="IndexPage LeaderboardPage").
+      setClassName(vdom, 'IndexPage--avocadoRoot', true);
       setClassName(vdom, 'IndexPage--avocadoHome', customHomeEnabled());
       setClassName(vdom, 'IndexPage--avocadoSearch', false);
     });
@@ -683,6 +709,71 @@ app.initializers.add(
     if (app.tagList?.load) {
       app.tagList.load(['children', 'parent']).catch(() => {});
     }
+
+    // ── PageStructure: replace sidebar + strip hero for non-Discussion pages ──────
+    // sidebar() → always AvocadoNav-helper so there is no visible Page-sidebar anywhere.
+    //   On phone  : height:0 overflow:hidden — App-titleControl/App-primaryControl
+    //               escape via position:absolute to the phone header.
+    //   On tablet+: display:none — completely invisible.
+    // mainItems() → remove the 'hero' slot for extension standalone pages;
+    //   DiscussionPage keeps its custom hero; IndexPage handles WelcomeHero itself.
+    override(PageStructure.prototype, 'sidebar', function (original) {
+      if (this.attrs.className?.includes('DiscussionPage')) return original();
+      return <div className="AvocadoNav-helper"><IndexSidebar key={m.route.get()} /></div>;
+    });
+
+    // ── PageStructure hero suppression + extension page header ─────────────────
+    // Guard: extension pages are anything that is NOT DiscussionPage and NOT the
+    // real IndexPage (home). The real IndexPage always carries 'IndexPage--avocadoRoot'
+    // (stamped above). Extension pages that piggyback the 'IndexPage' class
+    // (e.g. LeaderboardPage uses className="IndexPage LeaderboardPage") do NOT have
+    // 'IndexPage--avocadoRoot', so they are correctly treated as extension pages.
+    const isExtensionPage = (cls) =>
+      !cls.includes('DiscussionPage') && !cls.includes('IndexPage--avocadoRoot');
+
+    // Layer 1: remove the 'hero' item from the layout list.
+    extend(PageStructure.prototype, 'mainItems', function (items) {
+      if (isExtensionPage(this.attrs.className || '')) items.remove('hero');
+    });
+
+    // Layer 2: make providedHero() return null so that even if another extension's
+    // extend() re-adds the 'hero' item after ours, it renders nothing.
+    override(PageStructure.prototype, 'providedHero', function (original) {
+      if (isExtensionPage(this.attrs.className || '')) return null;
+      return original();
+    });
+
+    // Extension page header: replaces the hero with a title + back-to-home link
+    // injected at the top of .Page-content#main-content.
+    // app.title is set by each page's oncreate via app.setTitle(); it holds the
+    // page-specific title string (without the forum name suffix).
+    override(PageStructure.prototype, 'providedContent', function (original) {
+      if (!isExtensionPage(this.attrs.className || '')) return original();
+      return (
+        <div className="Page-content" id="main-content">
+          <div className="AvocadoExtensionPage-header">
+            {app.title ? <h1 className="AvocadoExtensionPage-title">{app.title}</h1> : null}
+            <a className="AvocadoExtensionPage-homeLink" href={app.route('index')}
+               onclick={(e) => { e.preventDefault(); m.route.set(app.route('index')); }}>
+              <i className="fas fa-arrow-left" aria-hidden="true" />
+              {trans('ramon-avocado.forum.header.back_home', 'Back to Home')}
+            </a>
+          </div>
+          {this.content}
+        </div>
+      );
+    });
+
+    // IndexSidebar.view: strip Flarum's IndexPage-nav / sideNav classes.
+    // All content lives inside AvocadoNav-helper so the class name is irrelevant
+    // visually, but removing it prevents Flarum's sideNav CSS from leaking in.
+    override(IndexSidebar.prototype, 'view', function () {
+      return (
+        <nav className="AvocadoExtensionNav">
+          <ul>{listItems(this.items().toArray())}</ul>
+        </nav>
+      );
+    });
 
     extend(IndexSidebar.prototype, 'items', function (items) {
       const nav = items.get('nav');
@@ -693,7 +784,6 @@ app.initializers.add(
     });
 
     extend(IndexSidebar.prototype, 'navItems', function (items) {
-      if (!v2Enabled) return;
       if (items.has('loading')) {
         items.remove('loading');
       }
@@ -736,7 +826,6 @@ app.initializers.add(
 
     // ── 13. WelcomeHero isHidden + view overrides ──────────────────────────────
     override(WelcomeHero.prototype, 'isHidden', function (original) {
-      if (!v2Enabled) return original();
       if (customHomeEnabled()) return true;  // V2 home has its own banner
       if (hasSearchQuery()) return true;     // Search results have no hero
       if (app.forum?.attribute('avocadoHeroImage')) return false;
@@ -744,7 +833,6 @@ app.initializers.add(
     });
 
     override(WelcomeHero.prototype, 'view', function (original, vnode) {
-      if (!v2Enabled) return original(vnode);
       const heroImage = app.forum?.attribute('avocadoHeroImage');
 
       if (!heroImage) return original(vnode);
@@ -782,15 +870,13 @@ app.initializers.add(
     });
 
     // ── 14. TagsPage: completely replace view ────────────────────────────────
-    if (v2Enabled) {
-      override(TagsPage.prototype, 'view', tagPageView);
-    }
+    override(TagsPage.prototype, 'view', tagPageView);
 
     // ── 14b. DiscussionsSearchSource: point "see all" link to /search ─────────
     // The default points to app.route('index', {q}) → /all?q=...
     // We redirect that to the unified /search page.
     import('flarum/forum/components/DiscussionsSearchSource').then(({ default: DiscussionsSearchSource }) => {
-      extend(DiscussionsSearchSource.prototype, 'view', function (vnode, query) {
+      extend(DiscussionsSearchSource.prototype, 'view', function (vnode) {
         if (!vnode || !Array.isArray(vnode)) return;
         // Walk the vnode tree to update any href pointing to /all
         const patchNode = (node) => {
@@ -890,6 +976,33 @@ app.initializers.add(
       attrs.className = `${attrs.className || ''} CommentPost--fixedAvatar`;
     });
 
+    // ── 18b. CommentPost sideItems: wrap avatar + badges in position:relative div ─
+    // position:sticky does NOT create a containing block for position:absolute
+    // children. So we wrap both avatar and badges in a single div with
+    // position:relative, then absolutely-position the badge inside that wrapper.
+    // This guarantees the badge always overlaps the top corner of the avatar,
+    // regardless of where the sticky Post-side is on screen.
+    extend(CommentPost.prototype, 'sideItems', function (items) {
+      if (!settingEnabled('avocadoFixedAvatarEffect')) return;
+      const user = this.attrs.post.user();
+      if (!user) return;
+      const badges = user.badges?.().toArray?.() ?? [];
+      if (!badges.length) return;
+
+      const avatarNode = items.get('avatar');
+      items.remove('avatar');
+      items.add(
+        'avatar',
+        <div className="Post-side-inner">
+          {avatarNode}
+          <ul className="PostUser-badges badges badges--packed PostUser-badges--inSide">
+            {listItems(badges)}
+          </ul>
+        </div>,
+        100
+      );
+    });
+
     // ── 19. CommentPost oncreate/onupdate (badges + duplicate avatar fix) ────────
     // Avatar duplicate: CSS in DiscussionPage.less already hides .PostUser-name .Avatar
     // via display:none !important — no JS removal needed (avatar.remove() caused removeChild
@@ -897,13 +1010,61 @@ app.initializers.add(
     //
     // Badges: instead of moving Mithril-managed nodes (which causes removeChild errors on
     // redraw), we keep the original in place and maintain a non-Mithril clone in Post-side.
+    //
+    // CTA: injected as a sibling DOM node between post #1 and post #2, not inside
+    // the post footer. Uses m.render() to render into a wrapper div we insert imperatively.
     extend(CommentPost.prototype, 'oncreate', function () {
-      syncFixedAvatarBadges(this);
+      syncUserOnline(this);
+      gateGuestLinks(this);
+
+      const post = this.attrs?.post;
+      const ctaPosition = parseInt(app.forum?.attribute('avocadoPostCtaPosition') ?? '1', 10) || 1;
+      if (post?.number?.() === ctaPosition && !app.session.user && settingEnabled('avocadoShowPostCta', false)) {
+        const el = this.element;
+        if (!el?.parentNode) return;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'AvocadoPostCta-wrapper';
+        el.parentNode.insertBefore(wrapper, el.nextSibling);
+        this._ctaBetweenEl = wrapper;
+        m.render(wrapper, (
+          <div className="AvocadoPostCta">
+            <span className="AvocadoPostCta-text">
+              {app.translator.trans('ramon-avocado.forum.post_cta.text')}
+            </span>
+            <span className="AvocadoPostCta-buttons">
+              <Button
+                className="Button Button--primary AvocadoPostCta-btn AvocadoPostCta-btn--login"
+                icon="fas fa-sign-in-alt"
+                onclick={() => import('flarum/forum/components/LogInModal').then(({ default: M }) => app.modal.show(M))}
+              >
+                {app.translator.trans('core.forum.header.log_in_link')}
+              </Button>
+              <span className="AvocadoPostCta-or">ou</span>
+              <Button
+                className="Button AvocadoPostCta-btn AvocadoPostCta-btn--signup"
+                icon="fas fa-user-plus"
+                onclick={() => import('flarum/forum/components/SignUpModal').then(({ default: M }) => app.modal.show(M))}
+              >
+                {app.translator.trans('core.forum.header.sign_up_link')}
+              </Button>
+            </span>
+          </div>
+        ));
+      }
+    });
+
+    extend(CommentPost.prototype, 'onremove', function () {
+      if (this._ctaBetweenEl) {
+        m.render(this._ctaBetweenEl, null);
+        this._ctaBetweenEl.remove();
+        this._ctaBetweenEl = null;
+      }
     });
 
     // FIX: guard before DOM ops — onupdate fires on every parent redraw.
     extend(CommentPost.prototype, 'onupdate', function () {
-      syncFixedAvatarBadges(this);
+      syncUserOnline(this);
+      gateGuestLinks(this);
     });
 
     // ── 20. CommentPost actionItems (share button) ────────────────────────────
@@ -938,7 +1099,21 @@ app.initializers.add(
       );
     });
 
-    // ── 21. DiscussionControls userControls (reply icon) ──────────────────────
+    // ── 21. PostEdited: show pencil icon instead of text ─────────────────────
+    override(PostEdited.prototype, 'view', function () {
+      const post = this.attrs.post;
+      const editedUser = post.editedUser?.();
+      const editedInfo = app.translator.trans('core.forum.post.edited_tooltip', { user: editedUser, ago: '' });
+      return (
+        <Tooltip text={editedInfo}>
+          <span className="PostEdited">
+            <i className="fas fa-pencil-alt" aria-hidden="true" />
+          </span>
+        </Tooltip>
+      );
+    });
+
+    // ── 21b. DiscussionControls userControls (reply icon) ─────────────────────
     extend(DiscussionControls, 'userControls', function (items) {
       if (!items.has('reply')) return;
       const reply = items.get('reply');
@@ -971,16 +1146,14 @@ app.initializers.add(
     // headerItems() priorities: 'user'@100, 'meta'@0 — badge at 50 lands
     // between username and timestamp in the Post-header flex row.
     extend(CommentPost.prototype, 'headerItems', function (items) {
-      if (!v2Enabled) return;
       const post = this.attrs?.post;
       if (post?.number?.() !== 1) return;
       items.add('avocado-op', <span className="AvocadoPost-opBadge">OP</span>, 50);
     });
 
-    // ── 19c. DiscussionPage sidebarItems: stats card ──────────────────────────
+    // ── 19e. DiscussionPage sidebarItems: stats card ──────────────────────────
     // 'controls'@100, 'scrubber'@-100 — stats at 0 sits between them.
     extend(DiscussionPage.prototype, 'sidebarItems', function (items) {
-      if (!v2Enabled) return;
       const discussion = this.discussion;
       if (!discussion) return;
       items.add('avocado-stats', <AvocadoDiscussionStats discussion={discussion} />, 0);
@@ -993,7 +1166,6 @@ app.initializers.add(
     // after the emoji extension's listener and re-positions using
     // getBoundingClientRect() to obtain true viewport coordinates.
     extend(TextEditor.prototype, 'buildEditorParams', function (params) {
-      if (!v2Enabled) return;
       params.inputListeners.push(() => {
         if (!this.emojiDropdown?.active) return;
         const composerBody = this.element?.closest?.('.AvocadoHome-composerBody');
@@ -1036,6 +1208,10 @@ app.initializers.add(
       return null;
     });
 
+    // ── Guest link gating ─────────────────────────────────────────────────────
+    // When avocadoHideLinksForGuests is enabled, links inside post bodies are
+    // replaced with a lock-icon placeholder. Clicking opens the login modal.
+
     // ── 26. MessagesPage: Avocado design integration ──────────────────────────
     // MessagesPage lives in a lazy webpack chunk (chunk 301 of flarum-messages).
     // At initializer time flarum.reg.get() returns undefined because the chunk
@@ -1046,7 +1222,7 @@ app.initializers.add(
     // ── Inline reply component ───────────────────────────────────────────────
     // Replaces the ReplyPlaceholder+Composer combo with a real in-place textarea.
     class AvocadoInlineReply {
-      oninit(vnode) {
+      oninit() {
         this.value   = '';
         this.sending = false;
       }
@@ -1401,9 +1577,8 @@ app.initializers.add(
         );
       });
 
-      override(MsgPage.prototype, 'view', function (original) {
+      override(MsgPage.prototype, 'view', function () {
         patchMessageClass();
-        if (!v2Enabled) return original();
 
         // Show full skeleton only on very first load (before any dialog has been fetched)
         const isLoading = app.dialogs.isLoading() && !_msgPageFullyLoaded;
@@ -1471,7 +1646,7 @@ app.initializers.add(
 
       // ── Guard and verify realtime listeners are active (fallback) ────────────
       // If for some reason oncreate is not called, this ensures channels exist
-      extend(MsgPage.prototype, 'onupdate', function (vnode) {
+      extend(MsgPage.prototype, 'onupdate', function () {
         if (!app.websocket || !app.session.user) return;
         if (!app.websocket_channels) app.websocket_channels = {};
         if (!app.websocket_channels.user) {
