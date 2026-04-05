@@ -1857,6 +1857,7 @@
   // Dynamic columns: 1 item = full width, 2 = halves, 5 = fifths, etc.
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-auto-rows: minmax(280px, auto); // minimum height for cards
   align-items: stretch; // all cells in a row match tallest card
   gap: 12px;
 
@@ -2098,6 +2099,129 @@
   flex-wrap: wrap;
   gap: 4px;
   margin-top: 6px;
+}
+
+// ── Full image variant ───────────────────────────────────────────────────────
+
+.AvocadoHome-showcaseCard--full {
+  grid-row: span 1; // ensure it takes full cell height
+
+  .AvocadoHome-showcaseCard-link {
+    padding: 0;
+    display: block; // instead of flex, use block for absolute positioning
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 100%;
+
+    &::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 200px;
+      background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.75) 100%);
+      z-index: 2;
+      border-radius: 0 0 16px 16px;
+    }
+  }
+
+  .AvocadoHome-showcaseCard-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 16px;
+    -webkit-mask-image: none;
+    mask-image: none;
+    opacity: 1;
+    z-index: 1;
+
+    &:hover { opacity: 0.88; }
+  }
+
+  .AvocadoHome-showcaseCard-noImg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 16px;
+    -webkit-mask-image: none;
+    mask-image: none;
+    z-index: 1;
+
+    .fas, .far, .fab { opacity: 0.2; }
+  }
+
+  .AvocadoHome-showcaseCard-colorOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    opacity: 0.15;
+    z-index: 4;
+    border-radius: 16px;
+    pointer-events: none;
+  }
+
+  .AvocadoHome-showcaseCard-body {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 3;
+    padding: 20px 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .AvocadoHome-showcaseCard-title {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 15px;
+
+    &:hover { color: #ffffff; }
+  }
+
+  .AvocadoHome-showcaseCard-excerpt {
+    color: rgba(255,255,255,0.9);
+    font-size: 12px;
+  }
+
+  .AvocadoHome-showcaseCard-date {
+    color: rgba(255,255,255,0.7);
+    font-size: 11px;
+    position: relative;
+    z-index: 5;
+  }
+
+  .AvocadoHome-showcaseCard-authorName {
+    color: rgba(255,255,255,0.85);
+    font-size: 12px;
+  }
+
+  .AvocadoHome-showcaseCard-arrow {
+    stroke: rgba(255,255,255,0.7);
+
+    &:hover { stroke: #ffffff; }
+  }
+
+  .AvocadoHome-showcaseCard-titleRow {
+    gap: 8px;
+  }
 }
 
 // ── Skeleton — mirrors card proportions ───────────────────────────────────────

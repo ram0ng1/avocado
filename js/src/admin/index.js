@@ -304,6 +304,31 @@ app.initializers.add(
       }, 110)
 
       .registerSetting({
+        setting: 'avocado.showcase_count',
+        type: 'select',
+        label: trans('ramon-avocado.admin.settings.showcase_count_label', 'Number of Showcase Items'),
+        help: trans('ramon-avocado.admin.settings.showcase_count_help', 'Display 1 to 5 discussion cards in the showcase section (default: 5).'),
+        options: {
+          '1': '1',
+          '2': '2',
+          '3': '3',
+          '4': '4',
+          '5': '5',
+        },
+      }, 109)
+
+      .registerSetting({
+        setting: 'avocado.showcase_image_style',
+        type: 'select',
+        label: trans('ramon-avocado.admin.settings.showcase_image_style_label', 'Showcase Card Image Style'),
+        help: trans('ramon-avocado.admin.settings.showcase_image_style_help', 'Choose between compact or full-height image display.'),
+        options: {
+          'default': trans('ramon-avocado.admin.settings.showcase_image_style_default', 'Default (Compact)'),
+          'full': trans('ramon-avocado.admin.settings.showcase_image_style_full', 'Full Image'),
+        },
+      }, 108)
+
+      .registerSetting({
         setting: 'avocado.show_online_users',
         type: 'boolean',
         label: trans('ramon-avocado.admin.settings.show_online_users_label', 'Show Online Users section on homepage'),

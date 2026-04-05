@@ -738,6 +738,7 @@ export default class HomePage extends Component {
     const firstPost     = discussion.firstPost?.();
     const isSticky      = discussion.isSticky?.() || false;
     const showcaseTagId = this._showcaseTagId();
+    const imageStyle    = app.forum?.attribute('avocadoShowcaseImageStyle') || 'default';
 
     const allTags    = (discussion.tags?.() || []).filter(Boolean);
     const otherTags  = allTags.filter((t) => String(t.id?.()) !== showcaseTagId);
@@ -757,9 +758,14 @@ export default class HomePage extends Component {
 
     const user = discussion.user?.();
 
+    const cardClass = [
+      'AvocadoHome-showcaseCard',
+      imageStyle === 'full' && 'AvocadoHome-showcaseCard--full'
+    ].filter(Boolean).join(' ');
+
     return (
       // article: position:relative, NO overflow:hidden — badges anchor here & tooltip never clips
-      <article key={id} className="AvocadoHome-showcaseCard">
+      <article key={id} className={cardClass}>
 
         {/* ── Badge — top-left, absolute above image ───────────────────── */}
         {isSticky && (
@@ -802,6 +808,11 @@ export default class HomePage extends Component {
                 )}
               </div>
           }
+
+          {/* ── Full image color overlay ─────────────────────────────── */}
+          {imageStyle === 'full' && (
+            <div className="AvocadoHome-showcaseCard-colorOverlay" />
+          )}
 
           {/* ── Content body ─────────────────────────────────────────── */}
           <div className="AvocadoHome-showcaseCard-body">
@@ -854,12 +865,26 @@ export default class HomePage extends Component {
     if (isFollowingPage) return null;
 
     const tag     = app.store.getById('tags', String(tagId));
+    const showcaseCount = Math.max(1, Math.min(5, parseInt(app.forum?.attribute('avocadoShowcaseCount')) || 5));
     const items   = [...this.showcaseItems]
       .sort((a, b) => (b.isSticky?.() ? 1 : 0) - (a.isSticky?.() ? 1 : 0))
-      .slice(0, 5);
+      .slice(0, showcaseCount);
     const tagHref = tag ? tagRoute(tag) : null;
 
-    if (items.length === 0) return null;
+    if (this.showcaseLoading && items.length === 0) {
+      return (
+        <section className="AvocadoHome-section AvocadoHome-section--showcase">
+          <div className="AvocadoHome-sectionHead">
+            <h2>{app.forum?.attribute('avocadoShowcaseHeading') || tag?.name?.() || trans('ramon-avocado.forum.home.showcase_heading', 'Showcase')}</h2>
+          </div>
+          <div className="AvocadoHome-showcaseGrid">
+            {[...Array(showcaseCount)].map((_, i) => <div key={i} className="AvocadoHome-showcaseSkeleton" />)}
+          </div>
+        </section>
+      );
+    }
+
+    if (!this.showcaseLoading && items.length === 0) return null;
 
     return (
       <section className="AvocadoHome-section AvocadoHome-section--showcase">

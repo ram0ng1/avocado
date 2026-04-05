@@ -923,6 +923,33 @@ body.dark-mode {
     }
   }
 
+  // Full image variant
+  .AvocadoHome-showcaseCard--full {
+    .AvocadoHome-showcaseCard-link {
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.08);
+
+      &:hover {
+        background: transparent;
+        border-color: rgba(255, 255, 255, 0.15);
+      }
+
+      &::before {
+        background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%);
+      }
+    }
+
+    .AvocadoHome-showcaseCard-img {
+      opacity: 0.92;
+
+      &:hover { opacity: 0.82; }
+    }
+
+    .AvocadoHome-showcaseCard-colorOverlay {
+      opacity: 0.12;
+    }
+  }
+
   .AvocadoHome-tagPill {
     background: color-mix(in srgb, var(--tag-color, #3f88f6) 8%, var(--body-bg));
     color: var(--tag-color, #3f88f6);
