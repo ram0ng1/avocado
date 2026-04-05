@@ -859,20 +859,7 @@ export default class HomePage extends Component {
       .slice(0, 5);
     const tagHref = tag ? tagRoute(tag) : null;
 
-    if (this.showcaseLoading && items.length === 0) {
-      return (
-        <section className="AvocadoHome-section AvocadoHome-section--showcase">
-          <div className="AvocadoHome-sectionHead">
-            <h2>{app.forum?.attribute('avocadoShowcaseHeading') || tag?.name?.() || trans('ramon-avocado.forum.home.showcase_heading', 'Showcase')}</h2>
-          </div>
-          <div className="AvocadoHome-showcaseGrid">
-            {[0,1,2,3,4].map((i) => <div key={i} className="AvocadoHome-showcaseSkeleton" />)}
-          </div>
-        </section>
-      );
-    }
-
-    if (!this.showcaseLoading && items.length === 0) return null;
+    if (items.length === 0) return null;
 
     return (
       <section className="AvocadoHome-section AvocadoHome-section--showcase">
