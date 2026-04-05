@@ -297,6 +297,13 @@ app.initializers.add(
       .registerSetting(() => <ShowcaseTagSelector />, 111)
 
       .registerSetting({
+        setting: 'avocado.showcase_heading',
+        type: 'text',
+        label: trans('ramon-avocado.admin.settings.showcase_heading_label', 'Showcase Section Title'),
+        help: trans('ramon-avocado.admin.settings.showcase_heading_help', 'Custom title for the showcase section. Leave empty to use the tag name.'),
+      }, 110)
+
+      .registerSetting({
         setting: 'avocado.show_online_users',
         type: 'boolean',
         label: trans('ramon-avocado.admin.settings.show_online_users_label', 'Show Online Users section on homepage'),

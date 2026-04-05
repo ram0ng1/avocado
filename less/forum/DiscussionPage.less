@@ -48,7 +48,7 @@
 // Centered inner container — wider padding for breathing room
 .DiscussionHero-inner {
   position: relative;
-  max-width: var(--home-max-width, 1036px);
+  max-width: var(--home-max-width, 1320px);
   margin: 0 auto;
   padding: 48px 20px 52px;
 }
@@ -323,7 +323,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 2px solid #fff;
+  border: 2px solid var(--avocado-online-ring);
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.10);
 }
 
@@ -346,8 +346,7 @@
 // Same specificity as base rule but comes later in file — cascade wins, no !important needed
 .Page.DiscussionPage .CommentPost .Post-side--online .Avatar,
 .Page.DiscussionPage .CommentPost .Post-side--online a .Avatar {
-  border: 2.5px solid #4ec46a;
-  box-shadow: 0 0 0 2px #fff;
+  .avocado-online-ring(2.5px);
 }
 
 // Keep the moved UserOnline element hidden (it exists only for the class trigger)
@@ -452,8 +451,9 @@
 
 // PostUser is a <div> in Flarum 2.0 — display:contents makes its children
 // (h3.PostUser-name and ul.PostUser-badges) flex items in Post-header.
+// Specificity 0,3,0 beats Flarum's .PostUser 0,1,0 — no !important needed.
 .Page.DiscussionPage .PostUser {
-  display: contents !important;
+  display: contents;
 }
 
 // PostUser-name is an <h3> in Flarum 2.0.
@@ -510,8 +510,7 @@
 
   // When UserOnline exists inside the link, add green border to the Avatar
   .Page.DiscussionPage .PostUser-name a:has(.UserOnline) .Avatar {
-    border: 2.5px solid #4ec46a;
-    box-shadow: 0 0 0 2px var(--body-bg, #fff);
+    .avocado-online-ring(2.5px);
   }
 }
 
@@ -596,7 +595,7 @@
   code {
     font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
     font-size: 13px;
-    background: #f0f0f4;
+    background: var(--avocado-surface-1);
     border-radius: 4px;
     padding: 2px 6px;
     color: var(--disc-title);
@@ -1166,8 +1165,8 @@
   .Page-main { display: block; }
 
   .AvocadoSkeleton-discussionHero {
-    background: #f4f4f7;
-    border-bottom: 1px solid #eaeaf0;
+    background: transparent;
+    border-bottom: 1px solid var(--avocado-border-subtle);
 
     .container {
       max-width: 1280px;
@@ -1441,15 +1440,12 @@
       font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
       font-size: 13.5px;
       font-weight: 700;
-      color: #1a1b21 !important;
+      color: var(--heading-color, var(--home-title)) !important;
       line-height: 1.35;
       margin: 0 0 5px;
       white-space: normal;
-      overflow: hidden;
       text-align: left;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
+      .avocado-line-clamp(2);
     }
 
     // Unread dot

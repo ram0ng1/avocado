@@ -329,6 +329,109 @@ export function buildHero(user, isEditable, controls = []) {
   );
 }
 
+// ─── Scrollable nav wrapper ───────────────────────────────────────────────────
+// Wraps AvocadoUserPage-navInner with left/right arrow buttons that appear
+// when nav items overflow the available width. Also supports drag-to-scroll.
+
+class ScrollableNav {
+  oninit() {
+    this._el          = null;
+    this._canLeft     = false;
+    this._canRight    = false;
+    this._dragging    = false;
+    this._startX      = 0;
+    this._scrollLeft0 = 0;
+    this._ro          = null;
+  }
+
+  _check() {
+    const el = this._el;
+    if (!el) return;
+    const l = el.scrollLeft > 1;
+    const r = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+    if (l !== this._canLeft || r !== this._canRight) {
+      this._canLeft  = l;
+      this._canRight = r;
+      m.redraw();
+    }
+  }
+
+  _scroll(dir) {
+    this._el && this._el.scrollBy({ left: dir * 160, behavior: 'smooth' });
+  }
+
+  oncreate(vnode) {
+    const el = vnode.dom.querySelector('.AvocadoUserPage-navInner');
+    this._el = el;
+    if (!el) return;
+
+    this._handleScroll    = () => this._check();
+    this._handleMouseDown = (e) => {
+      this._dragging    = true;
+      this._startX      = e.pageX - el.offsetLeft;
+      this._scrollLeft0 = el.scrollLeft;
+      document.documentElement.style.cursor     = 'grabbing';
+      document.documentElement.style.userSelect = 'none';
+    };
+    this._handleMouseMove = (e) => {
+      if (!this._dragging) return;
+      e.preventDefault();
+      el.scrollLeft = this._scrollLeft0 - (e.pageX - el.offsetLeft - this._startX);
+    };
+    this._handleMouseUp = () => {
+      if (!this._dragging) return;
+      this._dragging = false;
+      document.documentElement.style.cursor     = '';
+      document.documentElement.style.userSelect = '';
+    };
+
+    el.addEventListener('scroll', this._handleScroll, { passive: true });
+    el.addEventListener('mousedown', this._handleMouseDown);
+    window.addEventListener('mousemove', this._handleMouseMove);
+    window.addEventListener('mouseup', this._handleMouseUp);
+
+    this._ro = new ResizeObserver(() => this._check());
+    this._ro.observe(el);
+    this._check();
+  }
+
+  onremove() {
+    const el = this._el;
+    if (el) {
+      el.removeEventListener('scroll', this._handleScroll);
+      el.removeEventListener('mousedown', this._handleMouseDown);
+    }
+    window.removeEventListener('mousemove', this._handleMouseMove);
+    window.removeEventListener('mouseup', this._handleMouseUp);
+    this._ro && this._ro.disconnect();
+    this._el = null;
+  }
+
+  view(vnode) {
+    return (
+      <div className="AvocadoUserPage-nav">
+        <button
+          className={`AvocadoUserPage-navArrow AvocadoUserPage-navArrow--left${this._canLeft ? ' is-visible' : ''}`}
+          onclick={() => this._scroll(-1)}
+          aria-label="Scroll left"
+          tabindex="-1"
+        >
+          <i className="fas fa-chevron-left" aria-hidden="true" />
+        </button>
+        {vnode.children}
+        <button
+          className={`AvocadoUserPage-navArrow AvocadoUserPage-navArrow--right${this._canRight ? ' is-visible' : ''}`}
+          onclick={() => this._scroll(1)}
+          aria-label="Scroll right"
+          tabindex="-1"
+        >
+          <i className="fas fa-chevron-right" aria-hidden="true" />
+        </button>
+      </div>
+    );
+  }
+}
+
 // ─── Shared: sticky horizontal nav tabs ──────────────────────────────────────
 // Accepts a page instance (AvocadoUserBase or UserPage subclass) so that
 // navItems() is called on the real instance, picking up any extension that
@@ -349,11 +452,11 @@ export function buildSidebar(page) {
   }
 
   return (
-    <div className="AvocadoUserPage-nav">
+    <ScrollableNav>
       <ul className="AvocadoUserPage-navInner">
         {listItems(page.navItems().toArray())}
       </ul>
-    </div>
+    </ScrollableNav>
   );
 }
 

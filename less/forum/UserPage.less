@@ -4,7 +4,7 @@
 
 .AvocadoUserPage {
   min-height: 100vh;
-  background: #fff;
+  background: var(--body-bg);
   font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   color: var(--home-title, #202126);
 }
@@ -32,7 +32,7 @@
 
 .AvocadoUserPage-hero-inner {
   position: relative;
-  max-width: var(--home-max-width, 1036px);
+  max-width: var(--home-max-width, 1320px);
   margin: 0 auto;
   padding: 22px 20px 24px;
 }
@@ -77,16 +77,13 @@
     position: relative;
     display: block;
 
-    // Avatar image/span inside editor — specificity 0,3,0
+    // Avatar image/span inside editor — inherits sizing from > .Avatar above (0,2,0)
+    // AvatarEditor wrapper adds one extra class, raising specificity to 0,3,0 — no need to repeat.
     .Avatar {
       width: 72px;
       height: 72px;
       border-radius: 50%;
       object-fit: cover;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 26px;
     }
 
     // Pencil overlay button — covers full circle, invisible until hover
@@ -126,7 +123,7 @@
       left: 0;
       min-width: 160px;
       z-index: 500;
-      background: #fff;
+      background: var(--body-bg);
       border-radius: 12px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
       border: 1px solid rgba(0, 0, 0, 0.06);
@@ -161,7 +158,7 @@
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  background: #22c55e;
+  background: var(--avocado-online);
   border: 2.5px solid var(--user-color, #5a6480);
   z-index: 2;
 }
@@ -230,7 +227,7 @@
     border-color: rgba(34, 197, 94, 0.35);
     color: #a7f3c0;
 
-    .fa-circle { font-size: 7px; color: #22c55e; }
+    .fa-circle { font-size: 7px; color: var(--avocado-online); }
   }
 }
 
@@ -282,12 +279,52 @@
 // ── Sticky horizontal nav tabs ─────────────────────────────────────────────────
 
 .AvocadoUserPage-nav {
-  background: #fff;
+  background: var(--body-bg);
   border-bottom: 1px solid var(--home-border, #eaeaf0);
   position: sticky;
   top: 0;
   z-index: 40;
   width: 100%;
+}
+
+// ── Nav scroll arrows — shown when items overflow ──────────────────────────────
+// position: sticky acts as containing block for absolute children.
+
+.AvocadoUserPage-navArrow {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 48px;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--home-muted, #8f8f95);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, color 0.15s ease;
+  z-index: 3;
+
+  &.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  &:hover { color: var(--avocado-text-dark); }
+
+  &--left {
+    left: 0;
+    background: linear-gradient(to right, var(--body-bg) 50%, transparent);
+  }
+
+  &--right {
+    right: 0;
+    background: linear-gradient(to left, var(--body-bg) 50%, transparent);
+  }
 }
 
 // Back-to-home link — hidden on phone (phone uses the SelectDropdown nav)
@@ -314,7 +351,7 @@
 }
 
 .AvocadoUserPage-navInner {
-  max-width: var(--home-max-width, 1036px);
+  max-width: var(--home-max-width, 1320px);
   margin: 0 auto;
   padding: 0 20px;
   display: flex;
@@ -461,12 +498,12 @@
 // ── Body / Content area ────────────────────────────────────────────────────────
 
 .AvocadoUserPage-body {
-  background: #fff;
+  background: var(--body-bg);
   min-height: 60vh;
 }
 
 .AvocadoUserPage-bodyInner {
-  max-width: var(--home-max-width, 1036px);
+  max-width: var(--home-max-width, 1320px);
   margin: 0 auto;
   padding: 28px 20px 56px;
 }
@@ -505,18 +542,18 @@
     box-shadow: none;
     font-size: 14px;
     font-weight: 500;
-    color: #2a2b30;
+    color: var(--avocado-text-dark);
     padding: 9px 14px;
-    transition: border-color 0.15s ease, background 0.15s ease;
+    transition: border-color var(--avocado-t-fast), background var(--avocado-t-fast);
 
     &:focus {
-      background: #fff;
+      background: var(--body-bg);
       border-color: var(--primary-color);
       box-shadow: none;
       outline: none;
     }
 
-    &::placeholder { color: #b2b2bb; font-weight: 500; }
+    &::placeholder { color: var(--avocado-muted-placeholder); font-weight: 500; }
   }
 
   // Switch toggle — .AvocadoUserPage .Switch has 0,2,0 specificity vs Flarum's 0,1,0

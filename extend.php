@@ -101,6 +101,7 @@ return [
         ->serializeToForum('avocadoPostCtaPosition', 'avocado.post_cta_position')
         ->serializeToForum('avocadoHideLinksForGuests', 'avocado.hide_links_for_guests', 'boolval')
         ->serializeToForum('avocadoShowcaseTag', 'avocado.showcase_tag')
+        ->serializeToForum('avocadoShowcaseHeading', 'avocado.showcase_heading')
         ->default('avocado.hero_image_position', 'center top')
         ->default('avocado.show_online_users', true)
         ->default('avocado.show_auth_buttons', false)
@@ -115,5 +116,6 @@ return [
         ->default('avocado.show_post_cta', false)
         ->default('avocado.post_cta_position', '1')
         ->default('avocado.hide_links_for_guests', false)
-        ->default('avocado.showcase_tag', ''),
+        ->default('avocado.showcase_tag', '')
+        ->default('avocado.showcase_heading', ''),
 ];

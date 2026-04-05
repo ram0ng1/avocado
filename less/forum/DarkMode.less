@@ -60,6 +60,9 @@ body.dark-mode {
   }
 
   // ── 4. Topbar ─────────────────────────────────────────────────────────────────
+  // Note: --avocado-brand-dark, --avocado-muted-icon, --avocado-surface-1/2,
+  // --avocado-border-*, --avocado-muted-*, --avocado-online-ring are already
+  // overridden in [data-theme^=dark] inside variables.less — no element rules needed.
 
   .AvocadoHome-topbar {
     background: color-mix(in srgb, var(--body-bg) 93%, transparent);
@@ -67,56 +70,8 @@ body.dark-mode {
     backdrop-filter: blur(6px);
   }
 
-  .AvocadoHome-brand {
-    color: #e8e9f2;
-  }
-
-  // ── 5. Search bar (inside topbar) ─────────────────────────────────────────────
-
-  .AvocadoHome-search {
-    > i { color: #555668; }
-
-    > input {
-      background: var(--control-bg);
-      color: var(--text-color);
-
-      &::placeholder { color: var(--muted-color); }
-      &:focus { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.07); }
-    }
-  }
-
-  // ── 6. User chip (avatar in topbar) ──────────────────────────────────────────
-
   .AvocadoHome-userChip {
     border-color: rgba(255, 255, 255, 0.1);
-  }
-
-  // ── 7. Online avatars ─────────────────────────────────────────────────────────
-
-  .AvocadoHome-onlineAvatars-item > .Avatar {
-    box-shadow: 0 0 0 2px var(--body-bg) !important;
-  }
-
-  .AvocadoHome-onlineAvatars-more {
-    background: var(--control-bg);
-    border-color: var(--body-bg);
-    color: var(--muted-color);
-  }
-
-  // ── 8. Post input (composer trigger row) ──────────────────────────────────────
-
-  .AvocadoHome-postInput {
-    background: var(--control-bg);
-    border-color: rgba(255, 255, 255, 0.07);
-
-    &:hover {
-      background: color-mix(in srgb, var(--control-bg) 85%, #fff);
-      border-color: rgba(255, 255, 255, 0.15);
-    }
-  }
-
-  .AvocadoHome-postInput-placeholder {
-    color: var(--muted-color);
   }
 
   // ── 9. Section headings ───────────────────────────────────────────────────────
@@ -140,42 +95,29 @@ body.dark-mode {
     color: var(--heading-color, #e4e5f0);
   }
 
-  .AvocadoHome-categoryCard--all > i {
-    color: #555668;
-  }
-
   // ── 11. Thread cards ──────────────────────────────────────────────────────────
+  // threadCard bg, threadExcerpt, threadTime, threadReplyGroup, replyCard-*,
+  // seeReplies, yesterday-label: now use CSS vars that adapt automatically.
 
-  .AvocadoHome-threadCard {
-    background: var(--control-bg);
-  }
-
+  // threadUser/Author/Title need explicit override: --home-title → heading-color
+  // but display color should be text-color (less contrast than heading on dark bg)
   .AvocadoHome-threadUser,
   .AvocadoHome-threadAuthor {
     color: var(--text-color);
   }
 
-  .AvocadoHome-threadTime {
-    color: var(--muted-color);
-  }
-
   .AvocadoHome-threadTitle {
     color: var(--text-color);
 
-    &:hover {
-      color: var(--text-color);
-    }
+    &:hover { color: var(--text-color); }
   }
 
   .AvocadoHome-threadCard--unread .AvocadoHome-threadTitle {
     color: var(--heading-color, #f0f1fa);
   }
 
-  .AvocadoHome-threadExcerpt {
-    color: var(--muted-color);
-  }
-
   // ── 12. Reply button ──────────────────────────────────────────────────────────
+  // Uses semi-transparent overlay (not --avocado-surface-1) for dark mode
 
   .AvocadoHome-replyBtn {
     background: rgba(255, 255, 255, 0.07);
@@ -198,42 +140,16 @@ body.dark-mode {
     &:hover { background: rgba(255, 255, 255, 0.07); }
   }
 
-  // ── 14. Reply group (inline thread replies) ───────────────────────────────────
-
-  .AvocadoHome-threadReplyGroup {
-    border-left-color: rgba(255, 255, 255, 0.08);
-  }
+  // ── 14. Reply group ───────────────────────────────────────────────────────────
 
   .AvocadoHome-replyCard-line:hover {
     background: rgba(255, 255, 255, 0.04);
   }
 
-  .AvocadoHome-replyCard-name {
-    color: var(--text-color);
-  }
-
-  .AvocadoHome-replyCard-text {
-    color: var(--muted-color);
-  }
-
-  .AvocadoHome-replyCard-seeMore {
-    color: var(--muted-color);
-
-    &:hover { color: var(--primary-color); }
-  }
-
-  // ── 15. "See replies" button ──────────────────────────────────────────────────
+  // ── 15. See replies hover ─────────────────────────────────────────────────────
 
   .AvocadoHome-seeReplies {
-    color: var(--muted-color);
-
     &:hover { color: var(--text-color); }
-  }
-
-  // ── 16. Yesterday / date section label ───────────────────────────────────────
-
-  .AvocadoHome-section--yesterday > h2 {
-    color: var(--muted-color);
   }
 
   // ── 17. Empty state ───────────────────────────────────────────────────────────
@@ -501,10 +417,8 @@ body.dark-mode {
     &.is-active:hover { opacity: 0.88; color: #fff; }
   }
 
-  // User cards
+  // User cards — body-bg (transparent-feel) in dark mode, hover lifts
   .AvocadoSearch-userCard {
-    background: var(--control-bg);
-
     &:hover {
       border-color: rgba(255, 255, 255, 0.14);
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
@@ -758,6 +672,7 @@ body.dark-mode {
 
   .Page.DiscussionPage .CommentPost .Post-side--online .Avatar,
   .Page.DiscussionPage .CommentPost .Post-side--online a .Avatar {
+    border-color: var(--avocado-online); // restaura o verde (regra acima seta body-bg em todos)
     box-shadow: 0 0 0 2px var(--body-bg);
   }
 
@@ -768,7 +683,7 @@ body.dark-mode {
     background: var(--body-bg);
 
     .AvocadoSkeleton-discussionHero {
-      background: var(--control-bg);
+      background: transparent;
       border-bottom-color: rgba(255, 255, 255, 0.07);
     }
 

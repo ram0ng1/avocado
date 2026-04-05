@@ -11,15 +11,64 @@
 
 // Extension-specific theme-sensitive CSS variables
 :root {
+  // ── Core theme tokens ────────────────────────────────────────────────────────
   --avocado-primary-bg:           lighten(@primary-color, 40%);
   --avocado-unapproved-bg:        #fdddc2;
   --text-on-dark:                 rgba(255, 255, 255, 0.92);
   --text-on-dark-muted:           rgba(255, 255, 255, 0.58);
   --text-on-light:                rgba(0,   0,   0,   0.80);
   --text-on-light-muted:          rgba(0,   0,   0,   0.48);
+
+  // ── Brand palette (dark brand / button colors) ───────────────────────────────
+  --avocado-brand-dark:           #121317;       // brand logotype text
+  --avocado-btn-dark:             #0d0d10;       // dark CTA button bg
+  --avocado-btn-dark-hover:       #23252b;       // dark CTA button hover
+
+  // ── Online / presence ────────────────────────────────────────────────────────
+  --avocado-online:               #4ec46a;       // online indicator ring
+  --avocado-online-ring:          #fff;          // ring separator against card bg
+
+  // ── Neutral surfaces (light mode) ────────────────────────────────────────────
+  --avocado-surface-1:            #f4f4f7;       // input / search background
+  --avocado-surface-2:            #f8f8fa;       // composer / post-input bg
+  --avocado-border-subtle:        #eaeaf0;       // default card borders
+  --avocado-border-soft:          #efeff4;       // topbar / divider borders
+  --avocado-border-chip:          #e7e7ed;       // chip / userChip border
+
+  // ── Muted text (light mode) ───────────────────────────────────────────────────
+  --avocado-muted-icon:           #afafb8;       // icons, placeholders
+  --avocado-muted-placeholder:    #b2b2bb;       // input placeholders
+  --avocado-muted-label:          #a0a0a8;       // post-input placeholder text
+  --avocado-text-dark:            #2a2b30;       // input text / primary content
+
+  // ── Transitions ──────────────────────────────────────────────────────────────
+  --avocado-t-fast:               0.15s ease;
+  --avocado-t-normal:             0.16s ease;
+  --avocado-t-medium:             0.2s ease;
+
+  // ── Z-index scale ────────────────────────────────────────────────────────────
+  --avocado-z-post-side:          2;
+  --avocado-z-sidebar:            10;
+  --avocado-z-topbar:             60;
+  --avocado-z-modal-backdrop:     500;
 }
 
 [data-theme^=dark] {
   --avocado-primary-bg:           mix(@body-bg-dark, @primary-color, 90%);
   --avocado-unapproved-bg:        #1f1914;
+
+  // ── Dark-mode overrides for custom tokens ────────────────────────────────────
+  --avocado-brand-dark:           #e8e9f2;
+  --avocado-btn-dark:             rgba(255, 255, 255, 0.10);
+  --avocado-btn-dark-hover:       rgba(255, 255, 255, 0.16);
+  --avocado-online-ring:          var(--body-bg);
+  --avocado-surface-1:            var(--control-bg);
+  --avocado-surface-2:            var(--control-bg);
+  --avocado-border-subtle:        rgba(255, 255, 255, 0.08);
+  --avocado-border-soft:          rgba(255, 255, 255, 0.07);
+  --avocado-border-chip:          rgba(255, 255, 255, 0.10);
+  --avocado-muted-icon:           #555668;
+  --avocado-muted-placeholder:    var(--muted-color);
+  --avocado-muted-label:          var(--muted-color);
+  --avocado-text-dark:            var(--text-color);
 }

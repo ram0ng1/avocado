@@ -86,12 +86,13 @@
 
 
 // Search result item layout
-.Search-results .DiscussionSearchResult {
+// Override Flarum core overflow:hidden + white header text on .Dropdown-menu > li > a
+.App-header .Search-results .DiscussionSearchResult {
   > a {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    overflow: visible !important;  // override Flarum core overflow:hidden on Dropdown-menu > li > a
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    overflow: visible;
     padding: 8px 15px;
 
     &:hover,
@@ -102,13 +103,11 @@
   }
 
   .DiscussionSearchResult-title {
-    display: block !important;
+    display: block;
     width: 100%;
     font-weight: bold;
-    color: var(--text-color) !important;  // override gen-*-App-header white on desktop
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    color: var(--text-color);
+    .avocado-truncate();
 
     mark {
       background: transparent;
@@ -119,13 +118,10 @@
   }
 
   .DiscussionSearchResult-excerpt {
-    display: -webkit-box !important;
+    .avocado-line-clamp(2);
     width: 100%;
     font-size: 12px;
-    color: var(--muted-color) !important;  // override gen-*-App-header white on desktop
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    color: var(--muted-color);
     margin-top: 3px;
     margin-bottom: 4px;
 
@@ -276,15 +272,13 @@ svg.Header-logo {
 
 // ─── Online avatars "+N more" badge ───────────────────────────────────────────
 .AvocadoHome-onlineAvatars-more {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  .avocado-flex-center();
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: #f0f0f4;
-  border: 2px solid #fff;
-  color: #6b6c78;
+  background: var(--avocado-surface-1);
+  border: 2px solid var(--avocado-online-ring);
+  color: var(--avocado-muted-icon);
   font-size: 10px;
   font-weight: 800;
   margin-left: -7px;
@@ -293,17 +287,9 @@ svg.Header-logo {
 }
 
 // ─── Header auth buttons (Log In / Sign Up) ───────────────────────────────────
+// !important needed to override Flarum's .Button base styles injected via JS
 .AvocadoHeader-authBtn {
-  height: 34px;
-  padding: 0 16px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: opacity 0.15s, background 0.15s;
-  cursor: pointer;
+  .avocado-pill-btn(34px; 16px; 13px);
 
   &--login {
     border: 1.5px solid var(--primary-color) !important;
@@ -322,7 +308,6 @@ svg.Header-logo {
 
     &:hover {
       opacity: 0.88 !important;
-      background: var(--primary-color) !important;
     }
   }
 }
@@ -411,9 +396,9 @@ svg.Header-logo {
     border-radius: 18px;
     margin: 0;
     padding: 0;
-    background: #fff;
+    background: var(--control-bg);
     overflow: hidden;
-    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    transition: box-shadow var(--avocado-t-medium), border-color var(--avocado-t-medium);
 
     &:hover {
       border-color: #dfdfe6;

@@ -1,0 +1,83 @@
+// ── Avocado Utility Mixins ─────────────────────────────────────────────────────
+// Reusable patterns to avoid copy-paste throughout the theme.
+// Import via: @import "mixins/avocado-utils";
+// ──────────────────────────────────────────────────────────────────────────────
+
+// Flex row centered on both axes
+.avocado-flex-center() {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Flex row centered on cross-axis only (horizontal layouts), with optional gap
+.avocado-flex-row(@gap: 0) {
+  display: flex;
+  align-items: center;
+  gap: @gap;
+}
+
+// Pill / rounded button base — override colors at call site
+.avocado-pill-btn(@height: 36px; @h-padding: 16px; @font-size: 13px) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: @height;
+  padding: 0 @h-padding;
+  border-radius: 999px;
+  border: none;
+  font-size: @font-size;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--avocado-t-fast), color var(--avocado-t-fast), opacity var(--avocado-t-fast);
+}
+
+// Single-line text truncation with ellipsis
+.avocado-truncate() {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Multi-line text clamp
+.avocado-line-clamp(@lines) {
+  display: -webkit-box;
+  -webkit-line-clamp: @lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// Avatar online ring — green border + white separator shadow
+// @ring-color defaults to the CSS variable; override for dark mode via the variable itself.
+.avocado-online-ring(@size: 2.5px) {
+  border: @size solid var(--avocado-online);
+  box-shadow: 0 0 0 2px var(--avocado-online-ring);
+}
+
+// Icon circle (fixed-size circle with centered icon)
+.avocado-icon-circle(@size: 28px; @bg: var(--control-bg)) {
+  width: @size;
+  height: @size;
+  border-radius: 50%;
+  background: @bg;
+  .avocado-flex-center();
+  flex-shrink: 0;
+}
+
+// Card base — used for thread cards, category cards, fieldsets
+// Uses --control-bg which Flarum already adapts for dark mode
+.avocado-card(@radius: 18px) {
+  border: 1px solid var(--avocado-border-subtle);
+  border-radius: @radius;
+  background: var(--control-bg);
+  transition: box-shadow var(--avocado-t-medium), border-color var(--avocado-t-medium);
+}
+
+// Card hover lift
+.avocado-card-hover() {
+  &:hover {
+    border-color: #dfdfe6;
+    box-shadow: 0 8px 24px rgba(26, 26, 36, 0.06);
+  }
+}

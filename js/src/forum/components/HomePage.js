@@ -269,12 +269,25 @@ export default class HomePage extends Component {
     }
   }
 
+  // Returns the showcase tag ID as a string, or null
+  _showcaseTagId() {
+    return String(app.forum?.attribute('avocadoShowcaseTag') || '') || null;
+  }
+
+  // Returns true if discussion belongs to the showcase tag
+  _isShowcaseDiscussion(discussion) {
+    const tagId = this._showcaseTagId();
+    if (!tagId) return false;
+    return (discussion.tags?.() || []).some((t) => String(t?.id?.()) === tagId);
+  }
+
   popularDiscussions(limit = 5) {
     this._invalidateIfStoreChanged();
     // NOTE: do NOT cache empty results — discussions may not yet be loaded from
     // app.discussions.getPages(). An empty [] is truthy and would stick forever.
     if (this._cachedPopular?.length > 0) return this._cachedPopular;
     const result = [...this.allDiscussions()]
+      .filter((d) => !this._isShowcaseDiscussion(d))
       .sort((a, b) => {
         const aSticky = a.isSticky?.() ? 1 : 0;
         const bSticky = b.isSticky?.() ? 1 : 0;
@@ -509,7 +522,9 @@ export default class HomePage extends Component {
     const user = discussion.user?.();
     const title = discussion.title?.() || trans('ramon-avocado.forum.home.untitled', 'Untitled');
     const href = discussionRoute(discussion);
-    const tags = (discussion.tags?.() || []).filter(Boolean);
+    // Exclude the showcase tag from thread card pills (it's shown in the showcase section)
+    const showcaseTagId = this._showcaseTagId();
+    const tags = (discussion.tags?.() || []).filter((t) => t && String(t.id?.()) !== showcaseTagId);
     const isSticky = discussion.isSticky?.() || false;
     const isFollowing = discussion.subscription?.() === 'follow';
     const isUnread = discussion.isUnread?.() || false;
@@ -671,7 +686,7 @@ export default class HomePage extends Component {
         filter: { tag: slug },
         include: 'user,firstPost,lastPostedUser,lastPost,tags',
         sort: '-createdAt',
-        'page[limit]': 3,
+        'page[limit]': 5,
       })
       .then((results) => {
         this.showcaseItems   = Array.isArray(results) ? results.filter(Boolean) : [];
@@ -681,108 +696,152 @@ export default class HomePage extends Component {
       .catch(() => { this.showcaseLoading = false; m.redraw(); });
   }
 
-  // Extract first <img src> from a post. Tries content() (HTML), then contentHtml().
+  // Extract first <img src> from a post's rendered HTML.
   _extractFirstImage(post) {
     if (!post) return null;
-    // In Flarum, `content()` on a CommentPost returns the rendered HTML.
-    // `contentHtml()` is a fallback for some setups.
-    const html = post.content?.() || post.contentHtml?.() || '';
-    if (!html || typeof html !== 'string') return null;
-    try {
-      const div = document.createElement('div');
-      div.innerHTML = html;
-      const img = div.querySelector('img[src]');
-      if (!img) return null;
-      const src = img.getAttribute('src') || '';
-      if (!src || /^javascript:/i.test(src)) return null;
-      return src;
-    } catch (e) {
-      return null;
+    // contentHtml is the server-rendered HTML; content() is raw markdown (no <img>).
+    const html = post.data?.attributes?.contentHtml
+      || post.attribute?.('contentHtml')
+      || (typeof post.contentHtml === 'function' ? post.contentHtml() : null)
+      || '';
+    if (html && typeof html === 'string') {
+      try {
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        const imgs = div.querySelectorAll('img[src]');
+        for (const img of imgs) {
+          const src = img.getAttribute('src') || '';
+          if (!src || /^javascript:/i.test(src)) continue;
+          const w = parseInt(img.getAttribute('width') || '999', 10);
+          const h = parseInt(img.getAttribute('height') || '999', 10);
+          if (w <= 32 && h <= 32) continue;
+          return src;
+        }
+      } catch (e) {}
     }
+    // Fallback: markdown image syntax or bare URL
+    const raw = post.data?.attributes?.content || post.attribute?.('content') || '';
+    if (raw && typeof raw === 'string') {
+      const mdMatch = raw.match(/!\[[^\]]*\]\(([^)\s]+)\)/);
+      if (mdMatch) return mdMatch[1].trim();
+      const urlMatch = raw.match(/https?:\/\/\S+\.(?:png|jpe?g|gif|webp|avif|svg)(?:[?#][^\s]*)?/i);
+      if (urlMatch) return urlMatch[0];
+    }
+    return null;
   }
 
   renderShowcaseCard(discussion) {
     if (!discussion) return null;
-    const id         = discussion.id?.();
-    const title      = discussion.title?.() || trans('ramon-avocado.forum.home.untitled', 'Untitled');
-    const href       = discussionRoute(discussion);
-    const user       = discussion.user?.();
-    const lastPoster = discussion.lastPostedUser?.();
-    const firstPost  = discussion.firstPost?.();
-    const timeLabel  = formatTimeLabel(discussion.lastPostedAt?.());
-    const tags       = (discussion.tags?.() || []).filter(Boolean);
-    const primaryTag = tags[0] || null;
+    const id            = discussion.id?.();
+    const title         = discussion.title?.() || trans('ramon-avocado.forum.home.untitled', 'Untitled');
+    const href          = discussionRoute(discussion);
+    const firstPost     = discussion.firstPost?.();
+    const isSticky      = discussion.isSticky?.() || false;
+    const showcaseTagId = this._showcaseTagId();
+
+    const allTags    = (discussion.tags?.() || []).filter(Boolean);
+    const otherTags  = allTags.filter((t) => String(t.id?.()) !== showcaseTagId);
+    const primaryTag = allTags.find((t) => String(t.id?.()) === showcaseTagId) || allTags[0] || null;
     const tagColor   = primaryTag?.color?.() || null;
 
-    const imageUrl    = this._extractFirstImage(firstPost);
-    const answeredBy  = lastPoster || user;
-    const authorHref  = userRoute(answeredBy);
+    const imageUrl = this._extractFirstImage(firstPost);
+    const excerpt  = postPreview(discussion, 140);
 
-    // Fallback bg tint from tag color (same pale blue feel as reference)
-    const noImgBg = tagColor ? `rgba(${_hexToRgb(tagColor)}, 0.10)` : '#e8f4f8';
+    const noImgBg = tagColor
+      ? `linear-gradient(135deg,rgba(${_hexToRgb(tagColor)},0.18),rgba(${_hexToRgb(tagColor)},0.06))`
+      : 'linear-gradient(135deg,var(--avocado-surface-1),var(--control-bg))';
+
+    const rawDate  = discussion.createdAt?.();
+    const dateStr  = formatTimeLabel(rawDate);
+    const dateIso  = rawDate ? new Date(rawDate).toISOString() : '';
+
+    const user = discussion.user?.();
 
     return (
+      // article: position:relative, NO overflow:hidden — badges anchor here & tooltip never clips
       <article key={id} className="AvocadoHome-showcaseCard">
 
-        {/* ── Image area ──────────────────────────────────────────────── */}
-        <a
-          className="AvocadoHome-showcaseCard-imgWrap"
-          href={href}
-          onclick={(e) => navigate(e, href)}
-          tabIndex={-1}
-          aria-hidden="true"
-        >
+        {/* ── Badge — top-left, absolute above image ───────────────────── */}
+        {isSticky && (
+          <div className="AvocadoHome-showcaseCard-badges">
+            <Tooltip text={trans('ramon-avocado.forum.home.badge_sticky', 'Pinned')} position="bottom">
+              <span className="AvocadoHome-badge AvocadoHome-badge--sticky"
+                    role="img" aria-label={trans('ramon-avocado.forum.home.badge_sticky', 'Pinned')}>
+                <i className="fas fa-thumbtack" aria-hidden="true" />
+              </span>
+            </Tooltip>
+          </div>
+        )}
+
+        {/* ── Tag pills — top-right, decorative only (no navigation) ── */}
+        {otherTags.length > 0 && (
+          <div className="AvocadoHome-showcaseCard-topTags">
+            {otherTags.slice(0, 2).map((tag) => {
+              const c = tag.color?.() || null;
+              return (
+                <span key={tag.id?.()}
+                      className="AvocadoHome-tagPill"
+                      style={c ? { '--tag-bg': '#ffffff', '--tag-color': c } : { '--tag-bg': '#ffffff' }}>
+                  {tag.icon?.() && <i className={tag.icon()} aria-hidden="true" />}
+                  {tag.name?.()}
+                </span>
+              );
+            })}
+          </div>
+        )}
+
+        <a className="AvocadoHome-showcaseCard-link" href={href} onclick={(e) => navigate(e, href)}>
+
+          {/* ── Cover image ──────────────────────────────────────────── */}
           {imageUrl
-            ? <img
-                className="AvocadoHome-showcaseCard-img"
-                src={imageUrl}
-                alt={title}
-                loading="lazy"
-              />
+            ? <img className="AvocadoHome-showcaseCard-img" src={imageUrl} alt={title} loading="lazy" />
             : <div className="AvocadoHome-showcaseCard-noImg" style={{ background: noImgBg }}>
                 {primaryTag?.icon?.() && (
-                  <i
-                    className={primaryTag.icon()}
-                    aria-hidden="true"
-                    style={tagColor ? { color: tagColor } : {}}
-                  />
+                  <i className={primaryTag.icon()} aria-hidden="true"
+                     style={tagColor ? { color: tagColor } : {}} />
                 )}
               </div>
           }
-        </a>
 
-        {/* ── Info area ───────────────────────────────────────────────── */}
-        <div className="AvocadoHome-showcaseCard-info">
-          <div className="AvocadoHome-showcaseCard-row">
-            <div className="AvocadoHome-showcaseCard-avatarWrap">
-              {this.renderAvatar(user)}
+          {/* ── Content body ─────────────────────────────────────────── */}
+          <div className="AvocadoHome-showcaseCard-body">
+
+            {/* Date */}
+            {dateStr && (
+              <span className="AvocadoHome-showcaseCard-date">
+                <time datetime={dateIso}>{dateStr}</time>
+              </span>
+            )}
+
+            {/* Title + arrow */}
+            <div className="AvocadoHome-showcaseCard-titleRow">
+              <span className="AvocadoHome-showcaseCard-title">{title}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+                   fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                   className="AvocadoHome-showcaseCard-arrow" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"
+                      className="AvocadoHome-showcaseCard-arrow-line" />
+                <polyline points="12 5 19 12 12 19"
+                          className="AvocadoHome-showcaseCard-arrow-head" />
+              </svg>
             </div>
-            <a
-              className="AvocadoHome-showcaseCard-title"
-              href={href}
-              onclick={(e) => navigate(e, href)}
-            >
-              {title}
-            </a>
+
+            {/* Excerpt */}
+            {excerpt && (
+              <p className="AvocadoHome-showcaseCard-excerpt">{excerpt}</p>
+            )}
+
+            {/* Author */}
+            {user && (
+              <div className="AvocadoHome-showcaseCard-author">
+                <Avatar user={user} />
+                <span className="AvocadoHome-showcaseCard-authorName">{displayName(user)}</span>
+              </div>
+            )}
+
           </div>
-          {(timeLabel || answeredBy) && (
-            <p className="AvocadoHome-showcaseCard-meta">
-              {timeLabel && <span>{timeLabel}</span>}
-              {answeredBy && (
-                <span>
-                  {' · '}
-                  <a
-                    className="AvocadoHome-showcaseCard-metaAuthor"
-                    href={authorHref}
-                    onclick={(e) => { e.stopPropagation(); navigate(e, authorHref); }}
-                  >
-                    {displayName(answeredBy)}
-                  </a>
-                </span>
-              )}
-            </p>
-          )}
-        </div>
+
+        </a>
       </article>
     );
   }
@@ -795,22 +854,19 @@ export default class HomePage extends Component {
     if (isFollowingPage) return null;
 
     const tag     = app.store.getById('tags', String(tagId));
-    const items   = this.showcaseItems.slice(0, 3);
+    const items   = [...this.showcaseItems]
+      .sort((a, b) => (b.isSticky?.() ? 1 : 0) - (a.isSticky?.() ? 1 : 0))
+      .slice(0, 5);
     const tagHref = tag ? tagRoute(tag) : null;
 
     if (this.showcaseLoading && items.length === 0) {
       return (
         <section className="AvocadoHome-section AvocadoHome-section--showcase">
+          <div className="AvocadoHome-sectionHead">
+            <h2>{app.forum?.attribute('avocadoShowcaseHeading') || tag?.name?.() || trans('ramon-avocado.forum.home.showcase_heading', 'Showcase')}</h2>
+          </div>
           <div className="AvocadoHome-showcaseGrid">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="AvocadoHome-showcaseSkeleton">
-                <div className="AvocadoHome-showcaseSkeleton-top" />
-                <div className="AvocadoHome-showcaseSkeleton-bottom">
-                  <div className="AvocadoHome-skeletonLine" />
-                  <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--md" />
-                </div>
-              </div>
-            ))}
+            {[0,1,2,3,4].map((i) => <div key={i} className="AvocadoHome-showcaseSkeleton" />)}
           </div>
         </section>
       );
@@ -821,21 +877,8 @@ export default class HomePage extends Component {
     return (
       <section className="AvocadoHome-section AvocadoHome-section--showcase">
         <div className="AvocadoHome-sectionHead">
-          <h2>{tag?.name?.() || trans('ramon-avocado.forum.home.showcase_heading', 'Showcase')}</h2>
-          <div className="AvocadoHome-sectionHead-right">
-            {tagHref && (
-              <a
-                className="AvocadoHome-seeAll"
-                href={tagHref}
-                onclick={(e) => navigate(e, tagHref)}
-              >
-                {trans('ramon-avocado.forum.home.see_all', 'See all')}{' '}
-                <i className="fas fa-arrow-right" aria-hidden="true" />
-              </a>
-            )}
-          </div>
+          <h2>{app.forum?.attribute('avocadoShowcaseHeading') || tag?.name?.() || trans('ramon-avocado.forum.home.showcase_heading', 'Showcase')}</h2>
         </div>
-
         <div className="AvocadoHome-showcaseGrid">
           {items.map((d) => this.renderShowcaseCard(d))}
         </div>
