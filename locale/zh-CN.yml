@@ -1,113 +1,114 @@
 ramon-avocado:
   admin:
     settings:
-      section_homepage: Homepage
-      featured_tags_label: Featured Categories
-      featured_tags_help: Selected categories appear highlighted with a star badge on the homepage and categories page.
-      featured_tags_empty: No tags found.
-      section_auth: Login & Registration
-      auth_image_label: Auth Modal Image
-      auth_image_help: Background image shown in the right panel of the login, sign up, and forgot password modals.
-      section_search: Search
-      section_posts: Posts
-      banner_image_label: Banner Image
-      banner_image_help: Upload the hero banner image displayed at the top of the forum.
-      show_auth_buttons_label: Show Login / Sign Up buttons in header for guests
-      show_auth_buttons_help: Display Log In and Sign Up pill buttons in the header secondary nav for guests.
-      hero_image_position_label: Hero Image Position
-      hero_image_position_help: "CSS background-position value, e.g. 'center top' or '50% 20%'."
-      search_v1_label: Enable V1 search bar style
-      search_v1_help: Show the inline search dropdown instead of the V2 modal.
-      show_share_label: Show Share button on posts
-      show_share_help: Add a Share action button to each post.
-      show_action_icons_label: Show icons on Like and Reply buttons
-      show_action_icons_help: Display Font Awesome icons on the Like and Reply action buttons.
-      fixed_avatar_effect_label: Enable fixed avatar effect
-      fixed_avatar_effect_help: Keep the post avatar sticky while reading long comments on desktop.
-      section_logo: Logo
-      logo_svg_label: Logo SVG
-      logo_svg_help: Upload a custom SVG logo for your forum.
-      logo_enabled_label: Enable Custom Logo
-      logo_enabled_help: Display the custom logo in the header.
-      show_online_users_label: Show online users count
-      show_online_users_help: Display the number of currently online users.
-      show_guest_cta_label: Show guest call-to-action
-      show_guest_cta_help: Display a call-to-action message for guests.
-      show_post_cta_label: Show Join CTA after first post for guests
-      show_post_cta_help: Display a Log In / Sign Up card after the first post in a discussion, visible only to guests.
-      hide_links_for_guests_label: Hide links for guests
-      hide_links_for_guests_help: Prevent guests from following links in posts. Clicking a link shows a Login / Sign Up prompt instead.
-      custom_default_avatar_label: Custom Default Avatar
-      custom_default_avatar_help: Upload a custom default avatar image for users without an avatar.
-      section_footer: Footer
+      section_homepage: 首页
+      featured_tags_label: 推荐分类
+      featured_tags_help: 选中的分类会在首页和分类页面以星标徽章高亮显示。
+      featured_tags_empty: 未找到标签。
+      section_auth: 登录与注册
+      auth_image_label: 认证弹窗图片
+      auth_image_help: 登录、注册和找回密码弹窗右侧面板显示的背景图片。
+      section_search: 搜索
+      section_posts: 帖子
+      banner_image_label: 横幅图片
+      banner_image_help: 上传显示在论坛顶部的主横幅图片。
+      show_auth_buttons_label: 为访客在页头显示登录/注册按钮
+      show_auth_buttons_help: 在页头次级导航中为访客显示登录和注册胶囊按钮。
+      hero_image_position_label: 主图位置
+      hero_image_position_help: "CSS background-position 值，例如 'center top' 或 '50% 20%'。"
+      search_v1_label: 启用V1搜索栏样式
+      search_v1_help: 显示内联搜索下拉框，而不是V2弹窗搜索。
+      show_share_label: 在帖子中显示分享按钮
+      show_share_help: 为每个帖子添加一个分享操作按钮。
+      show_action_icons_label: 在点赞和回复按钮上显示图标
+      show_action_icons_help: 在点赞和回复操作按钮上显示Font Awesome图标。
+      fixed_avatar_effect_label: 启用固定头像效果
+      fixed_avatar_effect_help: 在桌面端阅读长评论时保持帖子头像固定显示。
+      section_logo: 站点Logo
+      logo_svg_label: 站点Logo SVG
+      logo_svg_help: 为你的论坛上传自定义站点Logo SVG。
+      logo_enabled_label: 启用自定义Logo
+      logo_enabled_help: 在页头显示自定义Logo。
+      show_online_users_label: 显示在线用户数量
+      show_online_users_help: 显示当前在线用户数量。
+      show_guest_cta_label: 显示访客行动提示
+      show_guest_cta_help: 为访客显示行动提示信息。
+      show_post_cta_label: 为访客在首帖后显示加入提示
+      show_post_cta_help: 在讨论的第一条帖子后显示登录/注册提示卡片，仅访客可见。
+      hide_links_for_guests_label: 对访客隐藏链接
+      hide_links_for_guests_help: 阻止访客点击帖子中的链接，点击链接时会显示登录/注册提示。
+      custom_default_avatar_label: 自定义默认头像
+      custom_default_avatar_help: 为没有头像的用户上传自定义默认头像图片。
+      section_footer: 页脚
     footer_settings:
-      footer_enabled: Enable Custom Footer
-      footer_company: Company Information
-      footer_company_name: Company Name
-      footer_company_description: Company Description
-      footer_company_description_placeholder: "Brief description about your company or forum..."
-      footer_company_logo_url: Company Logo URL
-      footer_links_config: Footer Links Configuration
-      footer_links_help_json: "Configure the footer link columns in JSON format. Each column should have a title and a list of links with label and url."
-      footer_footer_bottom: Footer Bottom
-      footer_copyright_text: Copyright Text
-      footer_social: Social Links
-      footer_show_social: Show Social Media Links
-      footer_social_help_json: "Configure social media links in JSON format. Use keys: facebook, twitter, linkedin, instagram, youtube."
+      footer_enabled: 启用自定义页脚
+      footer_company: 公司信息
+      footer_company_name: 公司名称
+      footer_company_description: 公司描述
+      footer_company_description_placeholder: "关于你的公司或论坛的简短描述……"
+      footer_company_logo_url: 公司Logo URL
+      footer_links_config: 页脚链接配置
+      footer_links_help_json: "以 JSON 格式配置页脚链接列，每列应包含标题和链接列表（带标签和 URL）"
+      footer_footer_bottom: 页脚底部
+      footer_copyright_text: 版权文本
+      footer_social: 社交链接
+      footer_show_social: 显示社交媒体链接
+      footer_social_help_json: "以 JSON 格式配置社交媒体链接，使用键：facebook、twitter、linkedin、instagram、youtube"
+
   forum:
     actions:
-      share: Share
+      share: 分享
     post_cta:
-      text: "Like what you see? Join the discussion!"
+      text: "喜欢你看到的内容吗？加入讨论吧！"
     link_cta:
-      placeholder: "Login to view link"
+      placeholder: "登录以查看链接"
     header:
-      back_home: Back to Home
+      back_home: 返回首页
     user:
     tag:
     discussion:
     home:
-      all_categories: All categories
-      all_title: All discussions
-      back_home: Home
-      badge_following: Following
-      badge_sticky: Pinned
-      categories_heading: Categories
-      choose_tags: Choose tags
-      composer_body_placeholder: "Share your thoughts…"
-      composer_close: Close
-      composer_post: Post Discussion
-      composer_submitting: "Posting…"
-      composer_title_placeholder: "Discussion title…"
-      discussions: discussions
-      filter_tags: Filter tags
-      following_heading: Following
-      like: Like
-      like_count_plural: "{count} likes"
-      like_count_singular: "1 like"
-      log_in: Log In
-      more: more
-      new_discussion: New Discussion
-      no_tags_found: No tags found
-      popular_heading: Popular discussions
-      replies: Replies
-      reply_count_plural: "{count} replies"
-      reply_count_singular: "1 reply"
-      reply_label: Reply
-      see_all: See all
-      see_other_replies: See other {count} replies
-      see_other_reply_singular: See other {count} reply
-      sign_up: Sign Up
-      start_discussion: "Tell everyone what are you working on..."
-      today_time: "Today, {time}"
-      untitled: Untitled
-      yesterday_time: "Yesterday, {time}"
+      all_categories: 所有分类
+      all_title: 所有讨论
+      back_home: 首页
+      badge_following: 关注中
+      badge_sticky: 置顶
+      categories_heading: 分类
+      choose_tags: 选择标签
+      composer_body_placeholder: "分享你的想法……"
+      composer_close: 关闭
+      composer_post: 发布讨论
+      composer_submitting: "正在发布……"
+      composer_title_placeholder: "讨论标题……"
+      discussions: 讨论
+      filter_tags: 筛选标签
+      following_heading: 关注
+      like: 赞
+      like_count_plural: "{count} 个赞"
+      like_count_singular: "1 like" "1 个赞"
+      log_in: 登录
+      more: 更多
+      new_discussion: 新讨论
+      no_tags_found: 未找到标签
+      popular_heading: 热门讨论
+      replies: 回复
+      reply_count_plural: "{count} 条回复"
+      reply_count_singular: "1 条回复"
+      reply_label: 回复
+      see_all: 查看全部
+      see_other_replies: 查看其它 {count} 条回复
+      see_other_reply_singular: 查看其它 {count} 条回复
+      sign_up: 注册
+      start_discussion: "告诉大家你正在做什么……"
+      today_time: "今天，{time}"
+      untitled: 未命名
+      yesterday_time: "昨天，{time}"
     discussions:
-      title: All discussions
-      home: Back to Home
+      title: 所有讨论
+      home: 返回首页
     tags:
-      title: Categories
-      discussion_singular: discussion
-      discussion_plural: discussions
-      other_tags_label: Other Tags
-      featured: Featured
+      title: 分类
+      discussion_singular: 讨论
+      discussion_plural: 讨论
+      other_tags_label: 其它标签
+      featured: 推荐
