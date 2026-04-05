@@ -879,6 +879,69 @@ body.dark-mode {
     color: #fff !important;
   }
 
+  // ── 26. Showcase grid (home feed cards) ──────────────────────────────────────
+
+  .AvocadoHome-showcaseCard-link {
+    background: var(--body-bg);
+    border-color: rgba(255, 255, 255, 0.06);
+    color: var(--text-color);
+
+    &:hover {
+      background: color-mix(in srgb, var(--body-bg) 90%, #fff);
+      border-color: rgba(255, 255, 255, 0.16);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+      transform: translateY(-2px);
+      color: var(--primary-color);
+    }
+  }
+
+  .AvocadoHome-showcaseCard-title {
+    color: var(--text-color);
+
+    .AvocadoHome-showcaseCard-link:hover & { color: var(--primary-color); }
+  }
+
+  .AvocadoHome-showcaseCard-excerpt {
+    color: var(--muted-color);
+  }
+
+  .AvocadoHome-showcaseCard-arrow {
+    stroke: var(--muted-color);
+
+    .AvocadoHome-showcaseCard-link:hover & {
+      stroke: var(--primary-color);
+    }
+  }
+
+  .AvocadoHome-showcaseCard-badges {
+    .AvocadoHome-badge--sticky {
+      background: rgba(251, 146, 60, 0.25);
+      color: #fb923c;
+    }
+    .AvocadoHome-badge--locked,
+    .AvocadoHome-badge--following {
+      background: rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.8);
+    }
+  }
+
+  .AvocadoHome-tagPill {
+    background: color-mix(in srgb, var(--tag-color, #3f88f6) 8%, var(--body-bg));
+    color: var(--tag-color, #3f88f6);
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  .AvocadoHome-showcaseCard-date {
+    color: var(--muted-color);
+  }
+
+  .AvocadoHome-showcaseCard-authorName {
+    color: var(--muted-color);
+  }
+
   // Reply placeholder input area
   .MessagesPage .MessageStream .ReplyPlaceholder .Post-header,
   .AvocadoMessages .MessageStream .ReplyPlaceholder .Post-header {
