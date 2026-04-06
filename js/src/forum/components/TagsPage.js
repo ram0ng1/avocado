@@ -24,7 +24,7 @@ import {
 // ─── Tag card (primary tag) ───────────────────────────────────────────────────
 
 function renderTagCard(tag, featured = false, fireUrl = '') {
-  const color   = tag.color?.() || '#3f88f6';
+  const color   = tag.color?.();
   const { bg: iconBg, color: iconColor } = iconColors(color, 0.12);
   const href    = tagRoute(tag);
   const lastDisc = tag.lastPostedDiscussion?.();
@@ -180,7 +180,7 @@ export function tagPageView(original) {
           <p className="AvocadoTagsPage-cloud-label">{trans('ramon-avocado.forum.tags.other_tags_label', 'Other Tags')}</p>
           <div className="AvocadoTagsPage-cloud-pills">
             {cloudTags.map((tag) => {
-              const color = tag.color?.() || '#3f88f6';
+              const color = tag.color?.();
               const href  = tagRoute(tag);
               const count = tag.discussionCount?.() || 0;
               return (

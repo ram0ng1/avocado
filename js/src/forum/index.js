@@ -427,10 +427,28 @@ app.initializers.add(
       const isHidden = !!(discussion.hiddenAt?.());
       const subscription = discussion.subscription?.();
 
+      // Decoration icon: secondary tag icon on hero right side
+      const showDecorationIcon = !!app.forum.attribute('avocadoHeroDecorationIcon');
+      const decorationOpacity = app.forum.attribute('avocadoHeroDecorationIconOpacity');
+      const opacityValue = decorationOpacity ? Math.min(Math.max(parseInt(decorationOpacity) / 100, 0), 1) : 0.15;
+      const secondaryTag = tags[1] || null;
+      const decorationIconClass = secondaryTag?.icon?.() || null;
+      const decorationTagColor = secondaryTag?.color?.() || null;
+      const decorationIconStyle = {
+        ...(decorationTagColor ? { '--tag-color-secondary': decorationTagColor } : {}),
+        ...(decorationOpacity ? { '--decoration-opacity': opacityValue } : {}),
+      };
+
       return (
         <header className="DiscussionHero" style={{ '--discussion-color': color, '--disc-hero-text': heroTextColor, '--disc-hero-text-muted': heroTextMuted, '--disc-hero-surface': heroSurface }}>
           <div className="container">
-            <div className="DiscussionHero-inner">
+            <div className="DiscussionHero-inner" style={decorationIconStyle}>
+              {/* Decoration icon: secondary tag icon on the right */}
+              {showDecorationIcon && decorationIconClass && (
+                <div className="DiscussionHero-decorationIcon is-visible">
+                  <i className={decorationIconClass} aria-hidden="true" />
+                </div>
+              )}
               {/* Nav row: back button + badges + tag pills */}
               <nav className="DiscussionHero-nav">
                 <button

@@ -114,7 +114,6 @@
 .DiscussionHero .AvocadoHome-tagPill {
   background: rgba(255, 255, 255, 0.92);
   color: var(--tag-color, #b22244);
-  border: 1px solid rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   font-size: 11px;
@@ -132,7 +131,6 @@
   line-height: 1.12;
   margin: 0 0 10px;
   word-break: break-word;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.15);
 }
 
 // Meta row (participants + post count)
@@ -198,6 +196,31 @@
   align-items: center;
   gap: 6px;
   i { font-size: 13px; }
+}
+
+// Decorative secondary tag icon on the right side of the hero
+.DiscussionHero-decorationIcon {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 120px;
+  line-height: 1;
+  color: var(--tag-color-secondary, rgba(255,255,255,0.12));
+  opacity: var(--decoration-opacity, 0.15);
+  pointer-events: none;
+  display: none;
+
+  &.is-visible {
+    display: block;
+  }
+}
+
+// Hide decoration icon on tablet and phone
+@media @phone, @tablet {
+  .DiscussionHero-decorationIcon {
+    display: none !important;
+  }
 }
 
 
@@ -361,30 +384,34 @@
 }
 
 // ── PostUser-badges — desktop/tablet ─────────────────────────────────────────
-// fixedAvatar OFF: absolute, negative left pulls badge into the avatar column.
-// fixedAvatar ON : same approach as .Post-side — position:sticky, same top,
-//   align-self:start, z-index:3. margin-left keeps it in the avatar column.
+// fixedAvatar OFF: badges no Post-header vão direto no flow
+// fixedAvatar ON : badges do Post-header ficam ocultas, JS cria um clone em Post-side
 @media @tablet-up {
   .Page.DiscussionPage .PostUser-badges {
     position: absolute;
     left: calc(5px - var(--disc-avatar) - var(--disc-gap));
-    top: -3px;
-    width: var(--disc-avatar);
-    z-index: 3;
-    text-align: right;
     white-space: nowrap;
     pointer-events: none;
   }
 
-  .Page.DiscussionPage .CommentPost--fixedAvatar .PostUser-badges {
+  // Quando fixed avatar está ativo, esconde o badges original do Post-header
+  .Page.DiscussionPage .CommentPost--fixedAvatar .Post-header .PostUser-badges {
+    display: none !important;
+  }
+
+  // Mostra apenas o clone dos badges que está em Post-side
+  .Page.DiscussionPage .CommentPost--fixedAvatar .PostUser-badges--inSide {
+    display: block !important;
     position: sticky;
     top: var(--avocado-avatar-sticky-top);
     left: auto;
     margin-left: calc(5px - var(--disc-avatar) - var(--disc-gap));
     align-self: start;
-    z-index: 3;
+    white-space: nowrap;
+    pointer-events: none;
   }
 }
+
 
 // ── PostUser-badges — mobile ──────────────────────────────────────────────────
 // Post-side is hidden on mobile; the avatar is inside PostUser-name > a.
@@ -399,7 +426,6 @@
     top: -12px;
     left: 6px;
     width: 32px;
-    z-index: 3;
     pointer-events: none;
   }
 }

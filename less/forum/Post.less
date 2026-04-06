@@ -8,11 +8,6 @@
   font-size: 10px;
 }
 
-.CommentPost.editing .PostUser-badges--inSide,
-.CommentPost.editing .Post-header .PostUser > .PostUser-badges {
-  display: none !important;
-}
-
 @media @phone, @tablet {
   .Post {
     padding-left: var(--post-padding);
@@ -23,7 +18,6 @@
 // .ReplyPlaceholder is excluded — it uses Flarum's own native layout unchanged.
 @media @desktop-up {
   .CommentPost:not(.ReplyPlaceholder) {
-    padding-left: 105px;
 
     .Post-container {
       display: block;
@@ -59,7 +53,6 @@
       justify-content: center;
       align-items: flex-start;
       overflow: visible;
-      z-index: 2;
     }
 
     &.Post--by-start-user {
@@ -80,12 +73,6 @@
     .Post-header,
     .Post-header > ul {
       display: contents;
-    }
-
-    // Hide the original PostUser-badges in Post-header — badges are injected
-    // into Post-side via sideItems() instead, so they stick with the avatar.
-    .Post-header .PostUser > .PostUser-badges {
-      display: none !important;
     }
 
     // .Post-side-inner is a normal in-flow child of the sticky Post-side.

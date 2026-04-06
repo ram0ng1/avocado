@@ -504,7 +504,7 @@ export default class AvocadoTagPage extends Page {
     }
 
     const tag     = this.tag;
-    const color   = tag.color?.()       || '#3f88f6';
+    const color   = tag.color?.()       || '';
     const tagName = tag.name?.()        || '';
     const tagDesc = tag.description?.() || '';
     const tagIcon = tag.icon?.()        || null;

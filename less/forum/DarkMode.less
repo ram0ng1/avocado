@@ -951,20 +951,12 @@ body.dark-mode {
   }
 
   .AvocadoHome-tagPill {
-    background: color-mix(in srgb, var(--tag-color, #3f88f6) 8%, var(--body-bg));
-    color: var(--tag-color, #3f88f6);
+    background: color-mix(in srgb, var(--tag-color) 8%, var(--body-bg));
+    color: var(--tag-color);
 
     &:hover {
       opacity: 0.8;
     }
-  }
-
-  .AvocadoHome-showcaseCard-date {
-    color: var(--muted-color);
-  }
-
-  .AvocadoHome-showcaseCard-authorName {
-    color: var(--muted-color);
   }
 
   // Reply placeholder input area
@@ -993,6 +985,89 @@ body.dark-mode {
     }
 
     .TextEditor-editor { color: var(--text-color) !important; }
+  }
+
+  // ── 30. Discussion Hero — Page Header ──────────────────────────────────────────
+
+  // Page container tokens for discussion
+  .Page.DiscussionPage {
+    --disc-bg:      var(--body-bg);
+    --disc-border:  rgba(255, 255, 255, 0.08);
+    --disc-text:    var(--text-color);
+    --disc-title:   var(--heading-color, #e8e9f2);
+    --disc-muted:   var(--muted-color);
+  }
+
+  // DiscussionHero overlay — adjust for dark backgrounds
+  .DiscussionHero::before {
+    background: linear-gradient(135deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 60%);
+  }
+
+  // Back button — semi-transparent dark surface in dark mode
+  .DiscussionHero-back {
+    background: var(--disc-hero-surface, rgba(0,0,0,0.25));
+    color: var(--text-on-light);
+    
+    &:hover { 
+      background: var(--disc-hero-surface, rgba(0,0,0,0.35));
+    }
+  }
+
+  // Discussion title — adaptive color
+  .DiscussionHero-title {
+    color: var(--text-on-light);
+  }
+
+  // Meta row (participants + post count) — muted text for dark mode
+  .DiscussionHero-meta {
+    color: var(--text-on-light);
+  }
+
+  // Meta items icons and text — ensure visibility
+  .DiscussionHero-metaItem {
+    color: var(--text-on-light);
+    
+    i { color: inherit; }
+  }
+
+  // Decoration icon on hero
+  .DiscussionHero-decorationIcon {
+    opacity: calc(var(--decoration-opacity, 0.15) * 0.5);
+  }
+
+  // Badges inside hero — themed to stand out on any background
+  .DiscussionHero .AvocadoHome-badge {
+    &--sticky    { background: rgba(251, 146, 60, 0.90); color: var(--text-on-light); }
+    &--locked    { background: rgba(239, 68, 68, 0.90); color: var(--text-on-light); }
+    &--hidden    { background: rgba(107, 114, 128, 0.90); color: var(--text-on-light); }
+    &--following { background: rgba(217, 119, 6, 0.90); color: var(--text-on-light); }
+    &--ignoring  { background: rgba(107, 114, 128, 0.70); color: var(--text-on-light); }
+  }
+
+  // Tag pills inside hero — dark mode variant
+  .DiscussionHero .AvocadoHome-tagPill {
+    background: color-mix(in srgb, var(--tag-color) 8%, var(--body-bg));
+    color: var(--tag-color);
+
+    &:hover { 
+      opacity: 0.88;
+    }
+  }
+
+  // Participant avatar borders — dark mode contrast
+  .DiscussionHero-participantAvatar {
+    border-color: rgba(255, 255, 255, 0.2);
+
+    .Avatar {
+      box-shadow: none;
+    }
+  }
+
+  // +X participants badge — dark mode variant
+  .DiscussionHero-participantsMore {
+    background: var(--disc-hero-surface, rgba(255,255,255,0.12));
+    border-color: rgba(255, 255, 255, 0.15);
+    color: var(--text-on-light);
   }
 
 }

@@ -49,25 +49,9 @@ export const hexLuminance = (hex) => {
 };
 
 // Returns { bg, color } for tag-icon / category-icon elements.
-// In dark mode, colors with luminance below the threshold are inverted so
-// they remain visible on dark backgrounds (e.g. a "Preto"/Black tag).
+// Colors remain faithful regardless of dark mode - no inversion applied.
 export const iconColors = (hex, bgAlpha = 0.12) => {
-  const fallback = '#3f88f6';
-  const color = hex || fallback;
-  const isDark = typeof document !== 'undefined' &&
-    document.documentElement.dataset.theme?.startsWith('dark');
-
-  if (isDark && hexLuminance(color) < 0.08) {
-    // Invert the hex so very-dark colours flip to a light equivalent
-    const h = color.replace('#', '');
-    const ri = (255 - parseInt(h.substring(0, 2), 16)).toString(16).padStart(2, '0');
-    const gi = (255 - parseInt(h.substring(2, 4), 16)).toString(16).padStart(2, '0');
-    const bi = (255 - parseInt(h.substring(4, 6), 16)).toString(16).padStart(2, '0');
-    const inv = `#${ri}${gi}${bi}`;
-    return { bg: hexToRgba(inv, bgAlpha), color: inv };
-  }
-
-  return { bg: hexToRgba(color, bgAlpha), color };
+  return { bg: hexToRgba(hex, bgAlpha), color: hex };
 };
 
 // Convenience wrapper — returns the inline style object for tag pill elements.
@@ -201,8 +185,7 @@ export const copyTextToClipboard = async (text) => {
 // ─── Design constants ─────────────────────────────────────────────────────────
 
 export const FALLBACK_COLORS = [
-  '#f0b213', '#3f88f6', '#4ec46a', '#e84393', '#9b59b6',
-  '#e67e22', '#1abc9c', '#e74c3c', '#2ecc71', '#3498db',
+  '#f0b213',
 ];
 
 export const FALLBACK_ICONS = [

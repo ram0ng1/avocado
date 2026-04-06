@@ -24,6 +24,10 @@ ramon-avocado:
       show_action_icons_help: Exibir ícones do Font Awesome nas ações de Curtir e Responder.
       fixed_avatar_effect_label: Ativar efeito de avatar fixo
       fixed_avatar_effect_help: Manter o avatar do post fixo ao ler comentários longos no desktop.
+      hero_decoration_icon_label: Mostrar ícone de tag secundária no hero da discussão
+      hero_decoration_icon_help: Exibir o ícone da tag secundária como um elemento decorativo grande no lado direito do cabeçalho da discussão.
+      hero_decoration_icon_opacity_label: Opacidade do ícone (0-100)
+      hero_decoration_icon_opacity_help: Define a opacidade do ícone decorativo como uma porcentagem. 100 = totalmente opaco, 0 = invisível.
       section_logo: Logotipo
       logo_svg_label: Logotipo SVG
       logo_svg_help: Envie um logotipo SVG personalizado para seu fórum.

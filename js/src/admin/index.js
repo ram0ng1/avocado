@@ -476,11 +476,24 @@ app.initializers.add(
       }, 30)
 
       .registerSetting({
+        setting: 'avocado.hero_decoration_icon',
+        type: 'boolean',
+        label: trans('ramon-avocado.admin.settings.hero_decoration_icon_label', 'Show secondary tag icon on discussion hero'),
+        help: trans('ramon-avocado.admin.settings.hero_decoration_icon_help', 'Display the secondary tag icon as a large decorative element on the right side of the discussion header.'),
+      }, 28)
+
+      .registerSetting({
+        setting: 'avocado.hero_decoration_icon_opacity',
+        type: 'text',
+        label: trans('ramon-avocado.admin.settings.hero_decoration_icon_opacity_label', 'Icon opacity (0-100)'),
+        help: trans('ramon-avocado.admin.settings.hero_decoration_icon_opacity_help', 'Set the opacity of the decoration icon as a percentage. 100 = fully opaque, 0 = invisible.'),
+      }, 27)
+
+      .registerSetting({
         setting: 'avocado.hide_links_for_guests',
         type: 'boolean',
         label: trans('ramon-avocado.admin.settings.hide_links_for_guests_label', 'Hide links for guests'),
         help: trans('ramon-avocado.admin.settings.hide_links_for_guests_help', 'Prevent guests from following links in posts. Clicking a link shows a Login / Sign Up prompt instead.'),
       }, 25);
   },
-  -999999
 );

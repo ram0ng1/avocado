@@ -11,9 +11,15 @@
 // ─── Modal backdrop: align to top on short viewports so modal never clips ─────
 // Flarum's default is align-items:center which cuts off tall modals.
 // align-items:flex-start + padding lets the ModalManager (overflow-y:auto) scroll.
-.Modal-backdrop:has(.AvocadoAuth-panel) {
-  align-items: flex-start !important;
-  padding: 20px 0 !important;
+// When modal is closed (no .Modal-content), disable pointer-events and z-index
+.Modal-backdrop {
+  pointer-events: none;
+}
+
+// Only when modal is actually open with content, remove all overrides
+// Let Flarum handle z-index and pointer-events natively
+.Modal-backdrop:has(.Modal-content) {
+  pointer-events: auto;
 }
 
 @media @phone {
