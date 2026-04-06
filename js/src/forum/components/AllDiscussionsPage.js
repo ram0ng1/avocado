@@ -353,13 +353,9 @@ export default class AllDiscussionsPage extends Page {
                 app.modal.show(() => import('flarum/forum/components/LogInModal').then((m) => m.default));
                 return;
               }
-              import('flarum/forum/components/ReplyComposer').then(({ default: ReplyComposer }) => {
-                if (app.composer) {
-                  app.composer.load(ReplyComposer, { user: app.session.user, discussion });
-                  app.composer.show();
-                }
-                m.route.set(href);
-              });
+              app.composer
+                .load(() => import('flarum/forum/components/ReplyComposer'), { user: app.session.user, discussion })
+                .then(() => { app.composer.show(); m.route.set(href); });
             }}
           >
             <i className="fas fa-reply" aria-hidden="true" />

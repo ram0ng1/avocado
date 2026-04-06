@@ -2250,6 +2250,18 @@
   .AvocadoHome-showcaseCard-titleRow {
     gap: 8px;
   }
+
+  // Mobile: override grid layout with flexbox sizing
+  @media @phone {
+    flex: 0 0 72vw;
+    max-width: 240px;
+    scroll-snap-align: start;
+    grid-row: auto; // reset grid-row for flexbox
+
+    .AvocadoHome-showcaseCard-link {
+      height: 200px; // fixed height on mobile
+    }
+  }
 }
 
 // ── Skeleton — mirrors card proportions ───────────────────────────────────────
