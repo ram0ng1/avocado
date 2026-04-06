@@ -14,6 +14,7 @@
   "compilerOptions": {
     // This will output typings to `dist-typings`
     "declarationDir": "./dist-typings",
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "flarum/*": ["../vendor/flarum/core/js/dist-typings/*"],

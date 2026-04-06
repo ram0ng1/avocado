@@ -428,10 +428,15 @@ app.initializers.add(
       const subscription = discussion.subscription?.();
 
       // Decoration icon: secondary tag icon on hero right side
+      // Finds first child tag (tag with parent) regardless of position
+      // Ignores parent tags, maintains original tag order
       const showDecorationIcon = !!app.forum.attribute('avocadoHeroDecorationIcon');
       const decorationOpacity = app.forum.attribute('avocadoHeroDecorationIconOpacity');
       const opacityValue = decorationOpacity ? Math.min(Math.max(parseInt(decorationOpacity) / 100, 0), 1) : 0.15;
-      const secondaryTag = tags[1] || null;
+      
+      // Find first child tag (has parent) - ignore parent tags
+      let secondaryTag = tags.find(t => t.parent?.()) || null;
+      
       const decorationIconClass = secondaryTag?.icon?.() || null;
       const decorationTagColor = secondaryTag?.color?.() || null;
       const decorationIconStyle = {

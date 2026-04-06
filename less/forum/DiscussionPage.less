@@ -529,11 +529,6 @@
 // UserOnline sits as a sibling span inside the <a> tag, right after the Avatar.
 // Use the adjacent sibling combinator to style the Avatar when UserOnline is present.
 @media @phone {
-  .Page.DiscussionPage .PostUser-name a .Avatar + .UserOnline + .username,
-  .Page.DiscussionPage .PostUser-name a .UserOnline {
-    // UserOnline itself stays hidden — we style the avatar via :has()
-  }
-
   // When UserOnline exists inside the link, add green border to the Avatar
   .Page.DiscussionPage .PostUser-name a:has(.UserOnline) .Avatar {
     .avocado-online-ring(2.5px);
@@ -1321,7 +1316,6 @@
     &--sm   { height: 12px; width: 36%; }
     &--md   { height: 12px; width: 65%; }
     &--lg   { height: 80px; width: 100%; border-radius: 8px; }
-    &--user { /* desktop-only username line — hidden on mobile */ }
   }
 }
 
@@ -1555,6 +1549,7 @@
       line-height: 1.45;
       display: -webkit-box;
       -webkit-line-clamp: 2;
+      line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
       margin: 0;
