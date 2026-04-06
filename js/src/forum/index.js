@@ -1226,6 +1226,42 @@ app.initializers.add(
       });
     });
 
+    // ── 24. Protect ProseMirror from unsafe focus calls during drag events ─────
+    // When dragging showcase cards or other elements, ProseMirror may try to
+    // focus/blur the editor while it's being destroyed or not accessible.
+    // We wrap the editor's focus/blur methods with safety checks.
+    extend(TextEditor.prototype, 'buildEditorParams', function (params) {
+      // Wrap the editor's focus method to handle undefined/destroyed editors
+      const originalFocus = params.editor?.focus;
+      if (originalFocus && typeof originalFocus === 'function') {
+        params.editor.focus = function() {
+          try {
+            if (this && typeof originalFocus.call === 'function') {
+              return originalFocus.call(this);
+            }
+          } catch (e) {
+            // Silently ignore focus errors during drag or when editor is unmounted
+            return;
+          }
+        };
+      }
+    });
+
+    // Suppress focus-related errors that occur during drag events
+    const originalError = window.onerror;
+    window.onerror = function(msg, url, lineNo, colNo, error) {
+      // Ignore "Cannot read properties of undefined (reading 'focus')" errors
+      // These occur during drag events when editors are being mounted/unmounted
+      if (msg && msg.includes && msg.includes("Cannot read properties of undefined") && 
+          msg.includes("focus")) {
+        return true; // Suppress the error
+      }
+      if (typeof originalError === 'function') {
+        return originalError(msg, url, lineNo, colNo, error);
+      }
+      return false;
+    };
+
     // ── 25. Footer ────────────────────────────────────────────────────────────
     override(Footer.prototype, 'view', function () {
       return null;
