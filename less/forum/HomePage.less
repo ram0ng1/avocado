@@ -1337,18 +1337,46 @@
     white-space: normal !important;  // permite quebra
     border-bottom-left-radius: 16px !important;
     border-bottom-right-radius: 16px !important;
+    min-height: auto !important;
 
     // li items se comportam como flex items
     > li {
       display: inline-flex !important;
       align-items: center !important;
       margin: 0 !important;
+      padding: 0 !important;
       flex-shrink: 0;
+      visibility: visible !important;
+      opacity: 1 !important;
+      width: auto !important;
+      height: auto !important;
     }
 
     // Hide the paper-plane submit button
     li.App-primaryControl {
       display: none !important;
+    }
+
+    // Ensure all extensions' icons are visible
+    > li > * {
+      visibility: visible !important;
+      opacity: 1 !important;
+      display: inline-flex !important;
+    }
+
+    // Ensure buttons and their contents are visible
+    .Button {
+      visibility: visible !important;
+      opacity: 1 !important;
+      display: inline-flex !important;
+    }
+
+    // Ensure icon buttons are not hidden
+    .Button--icon {
+      visibility: visible !important;
+      opacity: 1 !important;
+      width: auto !important;
+      height: auto !important;
     }
   }
 
