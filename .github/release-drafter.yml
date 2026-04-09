@@ -12,7 +12,7 @@ categories:
   - title: '🐞 Correções de Erros'
     labels:
       - 'correcao'
-  - title: '🏎 Performance'
+  - title: '🚀 Performance'
     labels:
       - 'performance'
   - title: '📖 Documentação'
@@ -24,6 +24,9 @@ categories:
   - title: '📦 Dependências'
     labels:
       - 'dependencias'
+  - title: '🌍 Traduções'
+    labels:
+      - 'traducao'
   - title: '🔧 Manutenção'
     labels:
       - 'manutencao'
@@ -40,7 +43,7 @@ version-resolver:
   default: patch
 change-template: '- $TITLE (PR #$NUMBER) por @$AUTHOR'
 template: |
-  ## O que mudou no Avocado Theme 🌟
+  ## O que mudou no Tema Avocado 🌟
   $CHANGES
 
   ## 📦 Como atualizar
