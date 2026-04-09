@@ -1,0 +1,20 @@
+name: PR Labeler
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  label_pr:
+    name: Aplicar Labels no PR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Aplicar label baseada na branch
+        uses: TimonVS/pr-labeler-action@v5
+        with:
+          configuration-path: .github/pr-labeler.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
