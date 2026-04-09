@@ -24,6 +24,10 @@ ramon-avocado:
       show_action_icons_help: 在点赞和回复操作按钮上显示Font Awesome图标。
       fixed_avatar_effect_label: 启用固定头像效果
       fixed_avatar_effect_help: 在桌面端阅读长评论时保持帖子头像固定显示。
+      hero_decoration_icon_label: 在讨论区页头展示次级标签图标
+      hero_decoration_icon_help: 在讨论区页头右侧将次级标签图标作为大型装饰元素显示。
+      hero_decoration_icon_opacity_label: 图标透明度（0-100）
+      hero_decoration_icon_opacity_help: 设置装饰图标的透明度百分比。100 为完全不透明，0 为不可见。
       section_logo: 站点Logo
       logo_svg_label: 站点Logo SVG
       logo_svg_help: 为你的论坛上传自定义站点Logo SVG。
