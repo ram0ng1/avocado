@@ -42,3 +42,10 @@ change-template: '- $TITLE (PR #$NUMBER) por @$AUTHOR'
 template: |
   ## O que mudou no Avocado Theme 🌟
   $CHANGES
+
+  ## 📦 Como atualizar
+
+  ```bash
+  composer update ramon/avocado:$RESOLVED_VERSION
+  php flarum cache:clear
+  ```
