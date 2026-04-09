@@ -1,0 +1,55 @@
+name: Release Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_and_release:
+    name: Build e Publicação Automática
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: js/package-lock.json
+
+      - name: Instalar Dependências JS
+        run: |
+          cd js
+          npm ci
+
+      - name: Build JS (Flarum)
+        run: |
+          cd js
+          npm run build
+
+      - name: Verificar versão no composer.json
+        id: check_version
+        uses: EndBug/version-check@v2
+        with:
+          file-url: https://raw.githubusercontent.com/${{ github.repository }}/main/composer.json
+          static-checking: local
+
+      - name: Publicar Release em Português
+        if: steps.check_version.outputs.changed == 'true'
+        uses: release-drafter/release-drafter@v6
+        with:
+          publish: true
+          tag: v${{ steps.check_version.outputs.version }}
+          name: v${{ steps.check_version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log de Status
+        run: |
+          echo "Versão alterada: ${{ steps.check_version.outputs.changed }}"
+          echo "Nova versão: ${{ steps.check_version.outputs.version }}"
