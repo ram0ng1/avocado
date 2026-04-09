@@ -3,7 +3,7 @@ name: Release Workflow
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   build_and_release:
@@ -36,8 +36,7 @@ jobs:
         id: check_version
         uses: EndBug/version-check@v2
         with:
-          file-url: https://raw.githubusercontent.com/${{ github.repository }}/main/composer.json
-          static-checking: local
+          file-name: composer.json
 
       - name: Publicar Release em Português
         if: steps.check_version.outputs.changed == 'true'
