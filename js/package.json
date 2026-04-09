@@ -1,6 +1,6 @@
 {
     "name": "@ramon/avocado",
-    "version": "2.0.27-beta",
+    "version": "0.1.0",
     "private": true,
     "prettier": "@flarum/prettier-config",
     "dependencies": {},
