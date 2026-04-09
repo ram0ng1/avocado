@@ -37,6 +37,7 @@ jobs:
         uses: EndBug/version-check@v2
         with:
           file-name: composer.json
+          diff-search: true
 
       - name: Publicar Release em Português
         if: steps.check_version.outputs.changed == 'true'
