@@ -5,9 +5,21 @@
 
 <p align="center">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square">
-  <a href="https://packagist.org/packages/ramon/avocado"><img alt="Latest Stable Version" src="https://img.shields.io/packagist/v/ramon/avocado.svg?style=flat-square"></a>
-  <a href="https://packagist.org/packages/ramon/avocado"><img alt="Total Downloads" src="https://img.shields.io/packagist/dt/ramon/avocado.svg?style=flat-square"></a>
-  <a href="https://donate.stripe.com/fZe5o66nebkf39S28a"><img alt="Donate" src="https://img.shields.io/badge/donate-stripe-%236772E5?style=flat-square"></a>
+  <a href="https://packagist.org/packages/ramon/avocado">
+    <img alt="Latest Stable Version" src="https://img.shields.io/packagist/v/ramon/avocado.svg?style=flat-square">
+  </a>
+  <a href="https://packagist.org/packages/ramon/avocado">
+    <img alt="Total Downloads" src="https://img.shields.io/packagist/dt/ramon/avocado.svg?style=flat-square">
+  </a>
+  <a href="https://github.com/ram0ng1/avocado/actions/workflows/release-management.yml">
+    <img alt="Release Workflow" src="https://github.com/ram0ng1/avocado/actions/workflows/release-management.yml/badge.svg?style=flat-square">
+  </a>
+  <a href="https://github.com/ram0ng1/avocado/releases/latest">
+    <img alt="GitHub Release" src="https://img.shields.io/github/v/release/ram0ng1/avocado?style=flat-square&label=release&color=success">
+  </a>
+  <a href="https://donate.stripe.com/fZe5o66nebkf39S28a">
+    <img alt="Donate" src="https://img.shields.io/badge/donate-stripe-%236772E5?style=flat-square">
+  </a>
 </p>
 
 <p align="center">
