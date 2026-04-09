@@ -6,6 +6,10 @@ on:
       - master
   workflow_dispatch:
 
+concurrency:
+  group: sync-branches
+  cancel-in-progress: false
+
 jobs:
   sync:
     name: Sincronizar branches com master
