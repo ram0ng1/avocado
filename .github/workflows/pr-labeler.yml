@@ -13,7 +13,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Aplicar label baseada na branch
-        uses: release-drafter/pr-labeler@v5
+        uses: TimonVS/pr-labeler-action@v5
         with:
           configuration-path: .github/pr-labeler.yml
         env:
