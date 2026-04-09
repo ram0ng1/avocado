@@ -1,0 +1,44 @@
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+exclude-labels:
+  - 'pular changelog'
+categories:
+  - title: '⚠️ Alterações Críticas (Breaking Changes)'
+    labels:
+      - 'BC'
+  - title: '🚀 Novas Funcionalidades'
+    labels:
+      - 'melhoria'
+  - title: '🐞 Correções de Erros'
+    labels:
+      - 'correcao'
+  - title: '🏎 Performance'
+    labels:
+      - 'performance'
+  - title: '📖 Documentação'
+    labels:
+      - 'documentacao'
+  - title: '♻️ Refatoração'
+    labels:
+      - 'refatoracao'
+  - title: '📦 Dependências'
+    labels:
+      - 'dependencias'
+  - title: '🔧 Manutenção'
+    labels:
+      - 'manutencao'
+version-resolver:
+  major:
+    labels:
+      - 'BC'
+  minor:
+    labels:
+      - 'melhoria'
+  patch:
+    labels:
+      - 'correcao'
+  default: patch
+change-template: '- $TITLE (PR #$NUMBER) por @$AUTHOR'
+template: |
+  ## O que mudou no Avocado Theme 🌟
+  $CHANGES
