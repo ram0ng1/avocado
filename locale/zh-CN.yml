@@ -141,6 +141,7 @@ ramon-avocado:
       discussion_singular_card: "1 条讨论"
       discussion_plural_card: "{count} 条讨论"
       yesterday_time: "昨天，{time}"
+      showcase_heading: "精选讨论"
     discussions:
       title: 所有讨论
       home: 返回首页

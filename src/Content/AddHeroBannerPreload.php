@@ -50,7 +50,17 @@ class AddHeroBannerPreload
             return;
         }
 
+        // Validate that URL is a valid absolute or relative URL
+        if (!preg_match('/^(https?:\/\/|\/)/', $heroUrl)) {
+            return;
+        }
+
         $escapedUrl = htmlspecialchars($heroUrl, ENT_QUOTES, 'UTF-8');
+
+        // Only output if escapedUrl is not empty
+        if (empty($escapedUrl)) {
+            return;
+        }
 
         $document->head[] = '<link rel="preload" as="image" href="' . $escapedUrl . '" fetchpriority="high">';
     }

@@ -94,6 +94,8 @@ export default class HomePage extends Component {
     // Showcase grid state
     this.showcaseItems   = [];
     this.showcaseLoading = false;
+    this._showcaseCached = false;  // Track if we've attempted to load showcase
+    this._showcaseCache  = {};     // Cache results per slug to avoid duplicate API calls
 
     // Preload tags
     if (app.tagList?.load) {
@@ -103,8 +105,9 @@ export default class HomePage extends Component {
     // Load online users
     this.loadOnlineUsers();
 
-    // Load showcase discussions (if tag is configured)
-    this.loadShowcaseDiscussions();
+    // Load showcase discussions asynchronously (non-blocking)
+    // Use setTimeout to ensure UI renders first before loading showcase
+    setTimeout(() => this.loadShowcaseDiscussions(), 0);
 
     // For logged-in users the discussion store is not pre-populated server-side,
     // so we fetch explicitly. This ensures isSticky is available for the sort.
@@ -693,8 +696,14 @@ export default class HomePage extends Component {
   // ── Showcase Grid ────────────────────────────────────────────────────────
 
   loadShowcaseDiscussions() {
+    // Skip if already cached or loading
+    if (this._showcaseCached || this.showcaseLoading) return;
+    
     const raw = app.forum?.attribute('avocadoShowcaseTag');
-    if (!raw) return;
+    if (!raw) {
+      this._showcaseCached = true;
+      return;
+    }
 
     // Parse JSON array or legacy plain-string ID
     let tagIds = [];
@@ -705,27 +714,37 @@ export default class HomePage extends Component {
       const s = String(raw).trim();
       if (s) tagIds = [s];
     }
-    if (!tagIds.length) return;
+    if (!tagIds.length) {
+      this._showcaseCached = true;
+      return;
+    }
 
     this.showcaseLoading = true;
     m.redraw();
 
-    // Resolve IDs → slugs (use store cache first, fall back to API)
+    // Resolve IDs → slugs quickly using store cache + minimal API calls
     const resolveSlug = (id) => {
-      const cached = app.store.getById('tags', id);
+      // Check all() cache first (faster than find)
+      const allTags = app.store.all('tags') || [];
+      const cached = allTags.find((t) => String(t.id?.()) === id);
       if (cached) return Promise.resolve(cached.slug?.());
-      return app.store.find('tags').then((tags) => {
-        const found = (Array.isArray(tags) ? tags : [])
-          .find((t) => String(t.id?.()) === id);
-        return found?.slug?.() || null;
-      });
+      
+      // Fall back to API only if not in store
+      return app.store.find('tags', id)
+        .then((tag) => tag?.slug?.() || null)
+        .catch(() => null);
     };
 
     Promise.all(tagIds.map(resolveSlug))
       .then((slugs) => slugs.filter(Boolean))
       .then((slugs) => {
-        if (!slugs.length) { this.showcaseLoading = false; m.redraw(); return; }
-        // Fetch from each tag in parallel, merge + sort + deduplicate
+        if (!slugs.length) {
+          this.showcaseLoading = false;
+          this._showcaseCached = true;
+          m.redraw();
+          return Promise.resolve([]);
+        }
+        // Batch fetch all discussions in parallel, max 1 API call per slug
         return Promise.all(slugs.map((slug) => this._fetchShowcaseBySlug(slug)));
       })
       .then((batches) => {
@@ -739,13 +758,23 @@ export default class HomePage extends Component {
           .sort((a, b) => new Date(b.createdAt?.()) - new Date(a.createdAt?.()))
           .slice(0, limit);
         this.showcaseLoading = false;
+        this._showcaseCached = true;
         m.redraw();
       })
-      .catch(() => { this.showcaseLoading = false; m.redraw(); });
+      .catch(() => {
+        this.showcaseLoading = false;
+        this._showcaseCached = true;
+        m.redraw();
+      });
   }
 
   _fetchShowcaseBySlug(slug) {
     if (!slug) return Promise.resolve([]);
+    
+    // Use local cache if available to avoid duplicate API calls
+    if (!this._showcaseCache) this._showcaseCache = {};
+    if (this._showcaseCache[slug]) return Promise.resolve(this._showcaseCache[slug]);
+    
     return app.store
       .find('discussions', {
         filter: { tag: slug },
@@ -753,7 +782,11 @@ export default class HomePage extends Component {
         sort: '-createdAt',
         'page[limit]': 5,
       })
-      .then((results) => (Array.isArray(results) ? results.filter(Boolean) : []))
+      .then((results) => {
+        const filtered = Array.isArray(results) ? results.filter(Boolean) : [];
+        this._showcaseCache[slug] = filtered; // Cache results
+        return filtered;
+      })
       .catch(() => []);
   }
 
