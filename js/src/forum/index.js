@@ -471,30 +471,35 @@ app.initializers.add(
         <header className="DiscussionHero" style={{ '--discussion-color': color, '--disc-hero-text': heroTextColor, '--disc-hero-text-muted': heroTextMuted, '--disc-hero-surface': heroSurface }}>
           <div className="container">
             <div className={innerClass} style={decorationIconStyle}>
-              {/* Decoration icon: first child tag icon */}
-              {showDecorationIcon && decorationIconClass && (
-                <div
-                  className="DiscussionHero-decorationIcon is-visible"
-                  style={decorationTagColor ? { '--tag-color-secondary': decorationTagColor } : {}}
-                >
-                  <i className={decorationIconClass} aria-hidden="true" />
+              {/* Decoration icons wrapper — flexbox container for dynamic sizing */}
+              {(showDecorationIcon && decorationIconClass) || showDecoDivider || (showDecorationIcon && iconCount >= 2 && decorationIconClass2) ? (
+                <div className="DiscussionHero-decorationsContainer">
+                  {/* Decoration icon: first child tag icon */}
+                  {showDecorationIcon && decorationIconClass && (
+                    <div
+                      className="DiscussionHero-decorationIcon is-visible"
+                      style={decorationTagColor ? { '--tag-color-secondary': decorationTagColor } : {}}
+                    >
+                      <i className={decorationIconClass} aria-hidden="true" />
+                    </div>
+                  )}
+                  {/* Divider icon between decoration icons */}
+                  {showDecoDivider && (
+                    <div className="DiscussionHero-decoSeparator" aria-hidden="true">
+                      <i className={decoDividerIcon} />
+                    </div>
+                  )}
+                  {/* Decoration icon: second child tag icon (optional) */}
+                  {showDecorationIcon && iconCount >= 2 && decorationIconClass2 && (
+                    <div
+                      className="DiscussionHero-decorationIcon DiscussionHero-decorationIcon--second is-visible"
+                      style={decorationTagColor2 ? { '--tag-color-secondary': decorationTagColor2 } : {}}
+                    >
+                      <i className={decorationIconClass2} aria-hidden="true" />
+                    </div>
+                  )}
                 </div>
-              )}
-              {/* Divider icon between decoration icons */}
-              {showDecoDivider && (
-                <div className="DiscussionHero-decoSeparator" aria-hidden="true">
-                  <i className={decoDividerIcon} />
-                </div>
-              )}
-              {/* Decoration icon: second child tag icon (optional) */}
-              {showDecorationIcon && iconCount >= 2 && decorationIconClass2 && (
-                <div
-                  className="DiscussionHero-decorationIcon DiscussionHero-decorationIcon--second is-visible"
-                  style={decorationTagColor2 ? { '--tag-color-secondary': decorationTagColor2 } : {}}
-                >
-                  <i className={decorationIconClass2} aria-hidden="true" />
-                </div>
-              )}
+              ) : null}
               {/* Nav row: back button + badges + tag pills */}
               <nav className="DiscussionHero-nav">
                 <button
