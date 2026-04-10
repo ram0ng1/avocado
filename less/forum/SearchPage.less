@@ -325,6 +325,16 @@
   border-top: 1px solid #f0f0f4;
 }
 
+.AvocadoSearch-postControls {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+
+  .AvocadoSearch-postCard:hover &,
+  &.open {
+    opacity: 1;
+  }
+}
+
 .AvocadoSearch-postViewBtn {
   display: inline-flex;
   align-items: center;

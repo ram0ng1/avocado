@@ -145,6 +145,8 @@ ramon-avocado:
       title: 所有讨论
       home: 返回首页
       load_more: 加载更多
+    post:
+      op_badge: OP
     tags:
       title: 分类
       discussion_singular: 讨论

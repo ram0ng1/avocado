@@ -1,8 +1,10 @@
 import app from 'flarum/forum/app';
 import Page from 'flarum/common/components/Page';
 import Avatar from 'flarum/common/components/Avatar';
+import Dropdown from 'flarum/common/components/Dropdown';
 import PostListState from 'flarum/forum/states/PostListState';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
+import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
 import extractText from 'flarum/common/utils/extractText';
 import {
   displayName,
@@ -100,6 +102,20 @@ export default class AvocadoPostsSearchPage extends Page {
         )}
         {excerptNode && <p className="AvocadoSearch-postExcerpt">{excerptNode}</p>}
         <div className="AvocadoSearch-postFooter">
+          {discussion && (() => {
+            const controls = DiscussionControls.controls(discussion, this).toArray();
+            if (!controls.length) return null;
+            return (
+              <Dropdown
+                className="AvocadoHome-threadControls AvocadoSearch-postControls"
+                icon="fas fa-ellipsis-v"
+                buttonClassName="Button Button--icon Button--flat AvocadoHome-threadControls-toggle"
+                accessibleToggleLabel={app.translator.trans('core.forum.discussion_controls.toggle_dropdown_accessible_label')}
+              >
+                {controls}
+              </Dropdown>
+            );
+          })()}
           <a
             href={href}
             className="AvocadoSearch-postViewBtn"

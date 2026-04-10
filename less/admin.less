@@ -1,28 +1,123 @@
-// Banner/auth image preview — keep it small
+// ─── Upload image preview ─────────────────────────────────────────────────────
 .UploadImageButton-image img {
   max-height: 60px;
   max-width: 240px;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: 8px;
   display: block;
+  margin-top: 8px;
 }
 
-// ─── Featured Tags Selector ───────────────────────────────────────────────────
+// ─── Settings cards ───────────────────────────────────────────────────────────
+// Each section is wrapped in a card that matches the avocado forum design system.
 
-.AvocadoAdmin-featuredTags-label {
+.AvocadoAdmin-card {
+  border: 1px solid var(--control-bg-dark, #e8e8ed);
+  border-radius: 16px;
+  background: var(--body-bg, #fff);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.AvocadoAdmin-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px 12px;
+  border-bottom: 1px solid var(--control-bg-dark, #f0f0f5);
+  background: var(--control-bg, #f8f8fc);
+}
+
+.AvocadoAdmin-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+
+  i {
+    font-size: 13px;
+    color: var(--primary-color);
+  }
+}
+
+.AvocadoAdmin-card-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-color);
+}
+
+.AvocadoAdmin-card-body {
+  padding: 16px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+
+  // Override Flarum default Form-group bottom margin so we control spacing
+  > .Form-group,
+  > .AvocadoAdmin-toggle,
+  > .AvocadoAdmin-subGroup {
+    margin-bottom: 0;
+  }
+}
+
+// ─── Sub-divider between logical groups within a card ─────────────────────────
+.AvocadoAdmin-subDivider {
+  height: 1px;
+  background: var(--control-bg-dark, #f0f0f5);
+  margin: 14px -20px;
+}
+
+// ─── Sub-group: indented dependent settings ───────────────────────────────────
+.AvocadoAdmin-subGroup {
+  margin-top: 10px;
+  padding: 14px 16px;
+  background: var(--control-bg, #f8f8fc);
+  border-radius: 10px;
+  border: 1px solid var(--control-bg-dark, #eaeaf0);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  > .Form-group {
+    margin-bottom: 0;
+  }
+
+  // Ensure form controls have white bg so they don't look disabled against the grey subGroup
+  .FormControl {
+    background: var(--body-bg, #fff) !important;
+  }
+}
+
+// ─── Labels ───────────────────────────────────────────────────────────────────
+.AvocadoAdmin-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 6px;
+}
+
+.AvocadoAdmin-label--saving {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 4px;
 }
 
-.AvocadoAdmin-featuredTags-saving {
+// ─── Saving dot animation ─────────────────────────────────────────────────────
+.AvocadoAdmin-savingDot {
   display: inline-block;
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: var(--primary-color);
   animation: avocadoPulse 1s ease-in-out infinite;
+  flex-shrink: 0;
 }
 
 @keyframes avocadoPulse {
@@ -30,73 +125,232 @@
   50%       { opacity: 0.35; transform: scale(0.75); }
 }
 
-.AvocadoAdmin-tagPills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  margin: 6px 0 4px;
-}
-
-.AvocadoAdmin-tagPills-placeholder {
-  font-size: 13px;
-  color: var(--muted-color);
-  padding: 4px 0;
-}
-
-.AvocadoAdmin-tagPill {
+// ─── Custom Select ────────────────────────────────────────────────────────────
+.AvocadoAdmin-select-wrap {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 11px;
-  border-radius: 999px;
-  border: 1.5px solid var(--control-bg-dark, #e0e0e8);
-  background: var(--body-bg, #fff);
-  color: var(--text-muted-color);
-  font-size: 13px;
-  font-weight: 500;
+  max-width: 320px;
+  width: 100%;
+}
+
+.AvocadoAdmin-select {
+  width: 100%;
+  padding-right: 32px !important; // room for chevron
+  appearance: none;
+  -webkit-appearance: none;
   cursor: pointer;
-  transition: border-color 0.14s, color 0.14s, background 0.14s;
+}
 
-  .AvocadoAdmin-tagPill-icon {
-    font-size: 11px;
-    color: var(--pill-color, #8f9097);
+.AvocadoAdmin-select-chevron {
+  position: absolute;
+  right: 11px;
+  font-size: 11px;
+  color: var(--muted-color);
+  pointer-events: none;
+}
+
+// ─── Toggle row spacing ───────────────────────────────────────────────────────
+.AvocadoAdmin-toggle {
+  padding: 10px 0;
+
+  // Flarum Switch base layout
+  .Switch {
+    gap: 10px;
+    align-items: flex-start;
   }
 
-  .AvocadoAdmin-tagPill-star {
-    font-size: 9px;
-    color: var(--control-bg-dark, #c0c0c8);
-    transition: color 0.14s, opacity 0.14s;
-  }
-
-  &:hover {
-    border-color: var(--pill-color, #8f9097);
+  .Switch-label {
+    font-size: 13.5px;
+    font-weight: 500;
+    line-height: 1.4;
     color: var(--text-color);
   }
 
-  &.is-active {
-    border-color: var(--pill-color, #8f9097);
-    background: transparent;
-    color: var(--pill-color, #8f9097);
-
-    .AvocadoAdmin-tagPill-icon { color: var(--pill-color, #8f9097); }
-    .AvocadoAdmin-tagPill-star { color: var(--pill-color, #8f9097); }
+  .helpText {
+    margin-top: 4px;
+    margin-left: 44px; // align under the label (past the toggle knob)
+    font-size: 12px;
+    color: var(--muted-color);
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Tag picker (matches AvocadoHome-tagPickerTrigger from the forum composer) ─
 
-// Section headings inside the extension settings page
-.AvocadoAdmin-section {
-  padding: 16px 0 4px;
-  border-top: 1px solid var(--control-bg-dark, #e8e8ed);
-  margin-top: 8px;
+.AvocadoAdmin-tagPicker {
+  position: relative;
+  max-width: 480px;
+}
 
-  h3 {
-    margin: 0;
+// Trigger button — pill when empty, rounded-rect when chips are present
+.AvocadoAdmin-tagPickerTrigger {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 36px;
+  width: 100%;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--control-bg-dark, #e3e4ea);
+  background: var(--body-bg, #f7f7fa);
+  color: var(--muted-color);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, border-radius 0.15s ease;
+
+  // Switches to rounded-rect when tag chips are present
+  &:has(.AvocadoAdmin-tagChip) { border-radius: 14px; }
+
+  &:hover,
+  &.is-open { border-color: var(--primary-color); }
+
+  > .fas.fa-tag {
     font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
     color: var(--muted-color);
+    flex-shrink: 0;
   }
+}
+
+.AvocadoAdmin-tagPickerPlaceholder {
+  color: var(--muted-color);
+  font-weight: 500;
+}
+
+.AvocadoAdmin-tagPickerChevron {
+  font-size: 10px;
+  color: var(--muted-color);
+  margin-left: auto;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+// Tag chip inside the trigger
+.AvocadoAdmin-tagChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--tag-color, var(--primary-color));
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.12s ease;
+  white-space: nowrap;
+
+  &:hover { opacity: 0.8; }
+}
+
+.AvocadoAdmin-tagChipRemove {
+  font-size: 9px;
+  opacity: 0.75;
+  margin-left: 2px;
+}
+
+// Dropdown panel
+.AvocadoAdmin-tagPickerDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 500;
+  background: var(--body-bg, #fff);
+  border: 1px solid var(--control-bg-dark, #e8e9ef);
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  max-height: 280px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+// Search bar inside dropdown
+.AvocadoAdmin-tagPickerSearch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  background: var(--control-bg, #f4f4f8);
+
+  > i {
+    font-size: 12px;
+    color: var(--muted-color);
+    flex-shrink: 0;
+  }
+
+  > input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 13px;
+    color: var(--text-color);
+    font-family: inherit;
+
+    &::placeholder { color: var(--muted-color); }
+  }
+}
+
+// Tag list
+.AvocadoAdmin-tagPickerList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.AvocadoAdmin-tagPickerItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color);
+  transition: background 0.1s ease;
+
+  &:hover    { background: var(--control-bg, #f3f4f8); }
+  &.is-selected { background: color-mix(in srgb, var(--primary-color) 10%, transparent); }
+}
+
+.AvocadoAdmin-tagPickerItem-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.AvocadoAdmin-tagPickerItem-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.AvocadoAdmin-tagPickerItem-check {
+  font-size: 11px;
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.AvocadoAdmin-tagPickerEmpty {
+  display: block;
+  padding: 10px;
+  font-size: 13px;
+  color: var(--muted-color);
+  text-align: center;
 }

@@ -3,7 +3,9 @@ import UserPage from 'flarum/forum/components/UserPage';
 import Avatar from 'flarum/common/components/Avatar';
 import AvatarEditor from 'flarum/forum/components/AvatarEditor';
 import Dropdown from 'flarum/common/components/Dropdown';
+import Tooltip from 'flarum/common/components/Tooltip';
 import UserControls from 'flarum/forum/utils/UserControls';
+import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
 import listItems from 'flarum/common/helpers/listItems';
 import LoadingIndicator from 'flarum/common/components/LoadingIndicator';
 import SelectDropdown from 'flarum/common/components/SelectDropdown';
@@ -39,7 +41,7 @@ const PAGE_SIZE = 20;
 
 // ─── Thread card (same visual as AllDiscussionsPage) ──────────────────────────
 
-function renderThreadCard(discussion, likingIds, toggleLike) {
+function renderThreadCard(discussion, likingIds, toggleLike, context = null) {
   if (!discussion) return null;
   const id        = discussion.id?.();
   const user      = discussion.user?.();
@@ -47,6 +49,7 @@ function renderThreadCard(discussion, likingIds, toggleLike) {
   const href      = discussionRoute(discussion);
   const tags      = (discussion.tags?.() || []).filter(Boolean);
   const isSticky  = discussion.isSticky?.() || false;
+  const isLocked  = discussion.isLocked?.() || false;
   const isFollowing = discussion.subscription?.() === 'follow';
   const isUnread  = discussion.isUnread?.() || false;
   const replies   = Number(discussion.replyCount?.()) || 0;
@@ -101,20 +104,31 @@ function renderThreadCard(discussion, likingIds, toggleLike) {
             </a>
             {timeLabel && <span className="AvocadoHome-threadTime">{timeLabel}</span>}
             {isSticky && (
-              <span className="AvocadoHome-badge AvocadoHome-badge--sticky">
-                <i className="fas fa-thumbtack" aria-hidden="true" />
-              </span>
+              <Tooltip text={trans('ramon-avocado.forum.home.badge_sticky', 'Pinned')} position="top">
+                <span className="AvocadoHome-badge AvocadoHome-badge--sticky" role="img" aria-label={trans('ramon-avocado.forum.home.badge_sticky', 'Pinned')}>
+                  <i className="fas fa-thumbtack" aria-hidden="true" />
+                </span>
+              </Tooltip>
+            )}
+            {isLocked && (
+              <Tooltip text={app.translator.trans('flarum-lock.forum.badge.locked_tooltip')} position="top">
+                <span className="AvocadoHome-badge AvocadoHome-badge--locked" role="img" aria-label={app.translator.trans('flarum-lock.forum.badge.locked_tooltip')}>
+                  <i className="fas fa-lock" aria-hidden="true" />
+                </span>
+              </Tooltip>
             )}
             {isFollowing && (
-              <span className="AvocadoHome-badge AvocadoHome-badge--following">
-                <i className="fas fa-star" aria-hidden="true" />
-              </span>
+              <Tooltip text={app.translator.trans('flarum-subscriptions.forum.discussion.following_badge_tooltip')} position="top">
+                <span className="AvocadoHome-badge AvocadoHome-badge--following" role="img" aria-label={app.translator.trans('flarum-subscriptions.forum.discussion.following_badge_tooltip')}>
+                  <i className="fas fa-star" aria-hidden="true" />
+                </span>
+              </Tooltip>
             )}
             {tags.slice(0, 3).map((tag) => {
               const c = tag.color?.() || FALLBACK_COLORS[0];
               const href2 = tagRoute(tag);
               return (
-                <a key={tag.id?.()} className="AvocadoHome-tagPill"
+                <a className="AvocadoHome-tagPill"
                    href={href2}
                    onclick={(e) => { e.stopPropagation(); navigate(e, href2); }}
                    style={tagPillStyle(c)}>
@@ -129,23 +143,39 @@ function renderThreadCard(discussion, likingIds, toggleLike) {
           </a>
           {excerpt && <p className="AvocadoHome-threadExcerpt">{excerpt}</p>}
         </div>
-        <button className="AvocadoHome-replyBtn"
-          onclick={(e) => {
-            e.stopPropagation();
-            if (!app.session.user) {
-              app.modal.show(() => import('flarum/forum/components/LogInModal').then((m) => m.default));
-              return;
-            }
-            import('flarum/forum/components/ReplyComposer').then(({ default: ReplyComposer }) => {
-              if (app.composer) {
-                app.composer.load(ReplyComposer, { user: app.session.user, discussion });
-                app.composer.show();
+        <div className="AvocadoHome-threadActions">
+          {(() => {
+            const controls = DiscussionControls.controls(discussion, context).toArray();
+            if (!controls.length) return null;
+            return (
+              <Dropdown
+                className="AvocadoHome-threadControls"
+                icon="fas fa-ellipsis-v"
+                buttonClassName="Button Button--icon Button--flat AvocadoHome-threadControls-toggle"
+                accessibleToggleLabel={app.translator.trans('core.forum.discussion_controls.toggle_dropdown_accessible_label')}
+              >
+                {controls}
+              </Dropdown>
+            );
+          })()}
+          <button className="AvocadoHome-replyBtn"
+            onclick={(e) => {
+              e.stopPropagation();
+              if (!app.session.user) {
+                app.modal.show(() => import('flarum/forum/components/LogInModal').then((m) => m.default));
+                return;
               }
-              m.route.set(href);
-            });
-          }}>
-          <i className="fas fa-reply" aria-hidden="true" />{trans('ramon-avocado.forum.home.reply_label', 'Reply')}
-        </button>
+              import('flarum/forum/components/ReplyComposer').then(({ default: ReplyComposer }) => {
+                if (app.composer) {
+                  app.composer.load(ReplyComposer, { user: app.session.user, discussion });
+                  app.composer.show();
+                }
+                m.route.set(href);
+              });
+            }}>
+            <i className="fas fa-reply" aria-hidden="true" />{trans('ramon-avocado.forum.home.reply_label', 'Reply')}
+          </button>
+        </div>
       </div>
       {replies > 0 && <div className="AvocadoHome-threadReplyGroup">{replyCard}</div>}
       <div className="AvocadoHome-threadStats">
@@ -174,7 +204,7 @@ function renderThreadCard(discussion, likingIds, toggleLike) {
 
 // ─── Post card (user's comment within a discussion) ───────────────────────────
 
-function renderPostCard(post) {
+function renderPostCard(post, context = null) {
   if (!post) return null;
   const id         = post.id?.();
   const discussion = post.discussion?.();
@@ -192,6 +222,8 @@ function renderPostCard(post) {
   const plain     = post.contentPlain?.() || '';
   const excerpt   = plain ? truncate(plain, 200) : '';
   const replies   = Number(discussion.replyCount?.()) || 0;
+  const isLocked  = discussion.isLocked?.() || false;
+  const isSticky  = discussion.isSticky?.() || false;
 
   return (
     <article key={id} className="AvocadoHome-threadCard">
@@ -204,10 +236,24 @@ function renderPostCard(post) {
               {displayName(user)}
             </a>
             {timeLabel && <span className="AvocadoHome-threadTime">{timeLabel}</span>}
+            {isSticky && (
+              <Tooltip text={trans('ramon-avocado.forum.home.badge_sticky', 'Pinned')} position="top">
+                <span className="AvocadoHome-badge AvocadoHome-badge--sticky" role="img" aria-label={trans('ramon-avocado.forum.home.badge_sticky', 'Pinned')}>
+                  <i className="fas fa-thumbtack" aria-hidden="true" />
+                </span>
+              </Tooltip>
+            )}
+            {isLocked && (
+              <Tooltip text={app.translator.trans('flarum-lock.forum.badge.locked_tooltip')} position="top">
+                <span className="AvocadoHome-badge AvocadoHome-badge--locked" role="img" aria-label={app.translator.trans('flarum-lock.forum.badge.locked_tooltip')}>
+                  <i className="fas fa-lock" aria-hidden="true" />
+                </span>
+              </Tooltip>
+            )}
             {tags.slice(0, 2).map((tag) => {
               const c = tag.color?.() || FALLBACK_COLORS[0];
               return (
-                <a key={tag.id?.()} className="AvocadoHome-tagPill"
+                <a className="AvocadoHome-tagPill"
                    href={tagRoute(tag)}
                    onclick={(e) => { e.stopPropagation(); navigate(e, tagRoute(tag)); }}
                    style={tagPillStyle(c)}>
@@ -222,10 +268,26 @@ function renderPostCard(post) {
           </a>
           {excerpt && <p className="AvocadoHome-threadExcerpt AvocadoUserPage-postExcerpt">{excerpt}</p>}
         </div>
-        <a className="AvocadoHome-replyBtn" href={href}
-           onclick={(e) => { e.stopPropagation(); navigate(e, href); }}>
-          <i className="fas fa-arrow-right" aria-hidden="true" />{trans('ramon-avocado.forum.home.view', 'View')}
-        </a>
+        <div className="AvocadoHome-threadActions">
+          {(() => {
+            const controls = DiscussionControls.controls(discussion, context).toArray();
+            if (!controls.length) return null;
+            return (
+              <Dropdown
+                className="AvocadoHome-threadControls"
+                icon="fas fa-ellipsis-v"
+                buttonClassName="Button Button--icon Button--flat AvocadoHome-threadControls-toggle"
+                accessibleToggleLabel={app.translator.trans('core.forum.discussion_controls.toggle_dropdown_accessible_label')}
+              >
+                {controls}
+              </Dropdown>
+            );
+          })()}
+          <a className="AvocadoHome-replyBtn" href={href}
+             onclick={(e) => { e.stopPropagation(); navigate(e, href); }}>
+            <i className="fas fa-arrow-right" aria-hidden="true" />{trans('ramon-avocado.forum.home.view', 'View')}
+          </a>
+        </div>
       </div>
       <div className="AvocadoHome-threadStats">
         <span className="AvocadoHome-statBtn AvocadoHome-statBtn--replies"
@@ -583,7 +645,7 @@ export class AvocadoUserPostsPage extends AvocadoUserBase {
   content() {
     return (
       <div className="AvocadoHome-threadStack">
-        {this.posts.map((p) => renderPostCard(p))}
+        {this.posts.map((p) => renderPostCard(p, this))}
         {this.loading && renderThreadSkeleton()}
         {!this.loading && this.posts.length === 0 && renderEmpty('No posts yet.')}
         {this.hasMore && !this.loading && renderLoadMore('Load more', () => this.loadPosts(false))}
@@ -646,7 +708,7 @@ export class AvocadoUserDiscussionsPage extends AvocadoUserBase {
     return (
       <div className="AvocadoHome-threadStack">
         {this.discussions.map((d) =>
-          renderThreadCard(d, this.likingIds, (d) => this.toggleLike(d))
+          renderThreadCard(d, this.likingIds, (d) => this.toggleLike(d), this)
         )}
         {this.loading && renderThreadSkeleton()}
         {!this.loading && this.discussions.length === 0 && renderEmpty('No discussions yet.')}
@@ -695,7 +757,7 @@ export class AvocadoUserLikesPage extends AvocadoUserBase {
   content() {
     return (
       <div className="AvocadoHome-threadStack">
-        {this.posts.map((p) => renderPostCard(p))}
+        {this.posts.map((p) => renderPostCard(p, this))}
         {this.loading && renderThreadSkeleton()}
         {!this.loading && this.posts.length === 0 && renderEmpty('No liked posts yet.')}
         {this.hasMore && !this.loading && renderLoadMore('Load more', () => this.loadPosts(false))}
@@ -743,7 +805,7 @@ export class AvocadoUserMentionsPage extends AvocadoUserBase {
   content() {
     return (
       <div className="AvocadoHome-threadStack">
-        {this.posts.map((p) => renderPostCard(p))}
+        {this.posts.map((p) => renderPostCard(p, this))}
         {this.loading && renderThreadSkeleton()}
         {!this.loading && this.posts.length === 0 && renderEmpty('No mentions yet.')}
         {this.hasMore && !this.loading && renderLoadMore('Load more', () => this.loadPosts(false))}

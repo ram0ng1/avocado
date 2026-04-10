@@ -144,6 +144,8 @@ ramon-avocado:
       title: Todas as discussões
       home: Voltar para o Início
       load_more: Carregar mais
+    post:
+      op_badge: OP
     tags:
       title: Categorias
       discussion_singular: discussão

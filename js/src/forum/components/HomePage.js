@@ -3,8 +3,10 @@ import Component from 'flarum/common/Component';
 import TextEditor from 'flarum/common/components/TextEditor';
 import Tooltip from 'flarum/common/components/Tooltip';
 import Avatar from 'flarum/common/components/Avatar';
+import Dropdown from 'flarum/common/components/Dropdown';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import abbreviateNumber from 'flarum/common/utils/abbreviateNumber';
+import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
 // FIX: import shared utilities — removes all local duplicates
 import {
   trans,
@@ -270,15 +272,23 @@ export default class HomePage extends Component {
   }
 
   // Returns the showcase tag ID as a string, or null
-  _showcaseTagId() {
-    return String(app.forum?.attribute('avocadoShowcaseTag') || '') || null;
+  _showcaseTagIds() {
+    const raw = app.forum?.attribute('avocadoShowcaseTag') || '';
+    if (!raw) return new Set();
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return new Set(parsed.map(String).filter(Boolean));
+    } catch (_) {}
+    // Legacy: plain string ID
+    const s = String(raw).trim();
+    return s ? new Set([s]) : new Set();
   }
 
-  // Returns true if discussion belongs to the showcase tag
+  // Returns true if discussion belongs to any showcase tag
   _isShowcaseDiscussion(discussion) {
-    const tagId = this._showcaseTagId();
-    if (!tagId) return false;
-    return (discussion.tags?.() || []).some((t) => String(t?.id?.()) === tagId);
+    const ids = this._showcaseTagIds();
+    if (!ids.size) return false;
+    return (discussion.tags?.() || []).some((t) => ids.has(String(t?.id?.())));
   }
 
   popularDiscussions(limit = 5) {
@@ -522,10 +532,12 @@ export default class HomePage extends Component {
     const user = discussion.user?.();
     const title = discussion.title?.() || trans('ramon-avocado.forum.home.untitled', 'Untitled');
     const href = discussionRoute(discussion);
-    // Exclude the showcase tag from thread card pills (it's shown in the showcase section)
-    const showcaseTagId = this._showcaseTagId();
-    const tags = (discussion.tags?.() || []).filter((t) => t && String(t.id?.()) !== showcaseTagId);
+    // Exclude showcase tags from thread card pills (shown in showcase section)
+    const showcaseTagIds = this._showcaseTagIds();
+    const tags = (discussion.tags?.() || []).filter((t) => t && !showcaseTagIds.has(String(t.id?.())));
+
     const isSticky = discussion.isSticky?.() || false;
+    const isLocked = discussion.isLocked?.() || false;
     const isFollowing = discussion.subscription?.() === 'follow';
     const isUnread = discussion.isUnread?.() || false;
     const replies = this.replyCount(discussion);
@@ -563,6 +575,13 @@ export default class HomePage extends Component {
                   </span>
                 </Tooltip>
               )}
+              {isLocked && (
+                <Tooltip text={trans('flarum-lock.forum.badge.locked_tooltip', 'Locked')} position="top">
+                  <span className="AvocadoHome-badge AvocadoHome-badge--locked" role="img" aria-label={trans('flarum-lock.forum.badge.locked_tooltip', 'Locked')}>
+                    <i className="fas fa-lock" aria-hidden="true" />
+                  </span>
+                </Tooltip>
+              )}
               {isFollowing && (
                 <Tooltip text={trans('ramon-avocado.forum.home.badge_following', 'Following')} position="top">
                   <span className="AvocadoHome-badge AvocadoHome-badge--following" role="img" aria-label={trans('ramon-avocado.forum.home.badge_following', 'Following')}>
@@ -576,7 +595,6 @@ export default class HomePage extends Component {
                 const tagStyle = tagPillStyle(tagColor);
                 return (
                   <a
-                    key={tag.id?.()}
                     className={`AvocadoHome-tagPill${extraClass}`}
                     href={tagRoute(tag)}
                     onclick={(e) => { e.stopPropagation(); navigate(e, tagRoute(tag)); }}
@@ -600,27 +618,43 @@ export default class HomePage extends Component {
             </a>
             {excerpt && <p className="AvocadoHome-threadExcerpt">{excerpt}</p>}
           </div>
-          <button
-            className="AvocadoHome-replyBtn"
-            aria-label={trans('ramon-avocado.forum.home.reply_label', 'Reply')}
-            onclick={(e) => {
-              e.stopPropagation();
-              if (!app.session.user) {
-                app.modal.show(() => import('flarum/forum/components/LogInModal').then((m) => m.default));
-                return;
-              }
-              import('flarum/forum/components/ReplyComposer').then(({ default: ReplyComposer }) => {
-                if (app.composer) {
-                  app.composer.load(ReplyComposer, { user: app.session.user, discussion });
-                  app.composer.show();
+          <div className="AvocadoHome-threadActions">
+            {(() => {
+              const controls = DiscussionControls.controls(discussion, this).toArray();
+              if (!controls.length) return null;
+              return (
+                <Dropdown
+                  className="AvocadoHome-threadControls"
+                  icon="fas fa-ellipsis-v"
+                  buttonClassName="Button Button--icon Button--flat AvocadoHome-threadControls-toggle"
+                  accessibleToggleLabel={app.translator.trans('core.forum.discussion_controls.toggle_dropdown_accessible_label')}
+                >
+                  {controls}
+                </Dropdown>
+              );
+            })()}
+            <button
+              className="AvocadoHome-replyBtn"
+              aria-label={trans('ramon-avocado.forum.home.reply_label', 'Reply')}
+              onclick={(e) => {
+                e.stopPropagation();
+                if (!app.session.user) {
+                  app.modal.show(() => import('flarum/forum/components/LogInModal').then((m) => m.default));
+                  return;
                 }
-                m.route.set(href);
-              });
-            }}
-          >
-            <i className="fas fa-reply" aria-hidden="true" />
-            {trans('ramon-avocado.forum.home.reply_label', 'Reply')}
-          </button>
+                import('flarum/forum/components/ReplyComposer').then(({ default: ReplyComposer }) => {
+                  if (app.composer) {
+                    app.composer.load(ReplyComposer, { user: app.session.user, discussion });
+                    app.composer.show();
+                  }
+                  m.route.set(href);
+                });
+              }}
+            >
+              <i className="fas fa-reply" aria-hidden="true" />
+              {trans('ramon-avocado.forum.home.reply_label', 'Reply')}
+            </button>
+          </div>
         </div>
         {replies > 0 && (
           <div className="AvocadoHome-threadReplyGroup">
@@ -659,41 +693,68 @@ export default class HomePage extends Component {
   // ── Showcase Grid ────────────────────────────────────────────────────────
 
   loadShowcaseDiscussions() {
-    const tagId = app.forum?.attribute('avocadoShowcaseTag');
-    if (!tagId) return;
+    const raw = app.forum?.attribute('avocadoShowcaseTag');
+    if (!raw) return;
+
+    // Parse JSON array or legacy plain-string ID
+    let tagIds = [];
+    try {
+      const parsed = JSON.parse(raw);
+      tagIds = (Array.isArray(parsed) ? parsed : [parsed]).map(String).filter(Boolean);
+    } catch (_) {
+      const s = String(raw).trim();
+      if (s) tagIds = [s];
+    }
+    if (!tagIds.length) return;
 
     this.showcaseLoading = true;
     m.redraw();
 
-    // Flarum's discussion filter expects the tag SLUG, not the ID.
-    const tag = app.store.getById('tags', String(tagId));
-    if (tag) {
-      this._fetchShowcaseBySlug(tag.slug?.());
-    } else {
-      app.store.find('tags').then((tags) => {
+    // Resolve IDs → slugs (use store cache first, fall back to API)
+    const resolveSlug = (id) => {
+      const cached = app.store.getById('tags', id);
+      if (cached) return Promise.resolve(cached.slug?.());
+      return app.store.find('tags').then((tags) => {
         const found = (Array.isArray(tags) ? tags : [])
-          .find((t) => String(t.id?.()) === String(tagId));
-        if (found) this._fetchShowcaseBySlug(found.slug?.());
-        else { this.showcaseLoading = false; m.redraw(); }
-      }).catch(() => { this.showcaseLoading = false; m.redraw(); });
-    }
+          .find((t) => String(t.id?.()) === id);
+        return found?.slug?.() || null;
+      });
+    };
+
+    Promise.all(tagIds.map(resolveSlug))
+      .then((slugs) => slugs.filter(Boolean))
+      .then((slugs) => {
+        if (!slugs.length) { this.showcaseLoading = false; m.redraw(); return; }
+        // Fetch from each tag in parallel, merge + sort + deduplicate
+        return Promise.all(slugs.map((slug) => this._fetchShowcaseBySlug(slug)));
+      })
+      .then((batches) => {
+        if (!batches) return;
+        const seen  = new Set();
+        const limit = Number(app.forum?.attribute('avocadoShowcaseCount') || 5);
+        this.showcaseItems = batches
+          .flat()
+          .filter(Boolean)
+          .filter((d) => { const id = d.id?.(); if (!id || seen.has(id)) return false; seen.add(id); return true; })
+          .sort((a, b) => new Date(b.createdAt?.()) - new Date(a.createdAt?.()))
+          .slice(0, limit);
+        this.showcaseLoading = false;
+        m.redraw();
+      })
+      .catch(() => { this.showcaseLoading = false; m.redraw(); });
   }
 
   _fetchShowcaseBySlug(slug) {
-    if (!slug) { this.showcaseLoading = false; m.redraw(); return; }
-    app.store
+    if (!slug) return Promise.resolve([]);
+    return app.store
       .find('discussions', {
         filter: { tag: slug },
         include: 'user,firstPost,lastPostedUser,lastPost,tags',
         sort: '-createdAt',
         'page[limit]': 5,
       })
-      .then((results) => {
-        this.showcaseItems   = Array.isArray(results) ? results.filter(Boolean) : [];
-        this.showcaseLoading = false;
-        m.redraw();
-      })
-      .catch(() => { this.showcaseLoading = false; m.redraw(); });
+      .then((results) => (Array.isArray(results) ? results.filter(Boolean) : []))
+      .catch(() => []);
   }
 
   // Extract first <img src> from a post's rendered HTML.
@@ -737,12 +798,12 @@ export default class HomePage extends Component {
     const href          = discussionRoute(discussion);
     const firstPost     = discussion.firstPost?.();
     const isSticky      = discussion.isSticky?.() || false;
-    const showcaseTagId = this._showcaseTagId();
-    const imageStyle    = app.forum?.attribute('avocadoShowcaseImageStyle') || 'default';
+    const showcaseTagIds = this._showcaseTagIds();
+    const imageStyle     = app.forum?.attribute('avocadoShowcaseImageStyle') || 'default';
 
     const allTags    = (discussion.tags?.() || []).filter(Boolean);
-    const otherTags  = allTags.filter((t) => String(t.id?.()) !== showcaseTagId);
-    const primaryTag = allTags.find((t) => String(t.id?.()) === showcaseTagId) || allTags[0] || null;
+    const otherTags  = allTags.filter((t) => !showcaseTagIds.has(String(t.id?.())));
+    const primaryTag = allTags.find((t) => showcaseTagIds.has(String(t.id?.()))) || allTags[0] || null;
     const tagColor   = primaryTag?.color?.() || null;
 
     const imageUrl = this._extractFirstImage(firstPost);

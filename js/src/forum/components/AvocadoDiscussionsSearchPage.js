@@ -2,6 +2,8 @@ import app from 'flarum/forum/app';
 import Component from 'flarum/common/Component';
 import Avatar from 'flarum/common/components/Avatar';
 import Tooltip from 'flarum/common/components/Tooltip';
+import Dropdown from 'flarum/common/components/Dropdown';
+import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
 import {
   tagPillStyle,
   discussionRoute,
@@ -76,6 +78,7 @@ export default class AvocadoDiscussionsSearchPage extends Component {
     const href     = discussionRoute(discussion);
     const tags     = (discussion.tags?.() || []).filter(Boolean);
     const isSticky = discussion.isSticky?.() || false;
+    const isLocked = discussion.isLocked?.() || false;
     const isFollowing = discussion.subscription?.() === 'follow';
     const isUnread = discussion.isUnread?.() || false;
     const replies  = numberOr(discussion.replyCount?.(), 0);
@@ -107,6 +110,13 @@ export default class AvocadoDiscussionsSearchPage extends Component {
                   </span>
                 </Tooltip>
               )}
+              {isLocked && (
+                <Tooltip text={app.translator.trans('flarum-lock.forum.badge.locked_tooltip')} position="top">
+                  <span className="AvocadoHome-badge AvocadoHome-badge--locked" aria-label="Locked">
+                    <i className="fas fa-lock" aria-hidden="true" />
+                  </span>
+                </Tooltip>
+              )}
               {isFollowing && (
                 <Tooltip text="Following" position="top">
                   <span className="AvocadoHome-badge AvocadoHome-badge--following" aria-label="Following">
@@ -120,7 +130,6 @@ export default class AvocadoDiscussionsSearchPage extends Component {
                 const tagStyle   = tagPillStyle(tagColor);
                 return (
                   <a
-                    key={tag.id?.()}
                     className={`AvocadoHome-tagPill${extraClass}`}
                     href={tagRoute(tag)}
                     onclick={(e) => { e.stopPropagation(); navigate(e, tagRoute(tag)); }}
@@ -151,6 +160,20 @@ export default class AvocadoDiscussionsSearchPage extends Component {
               </span>
             </div>
           </div>
+          {(() => {
+            const controls = DiscussionControls.controls(discussion, this).toArray();
+            if (!controls.length) return null;
+            return (
+              <Dropdown
+                className="AvocadoHome-threadControls"
+                icon="fas fa-ellipsis-v"
+                buttonClassName="Button Button--icon Button--flat AvocadoHome-threadControls-toggle"
+                accessibleToggleLabel={app.translator.trans('core.forum.discussion_controls.toggle_dropdown_accessible_label')}
+              >
+                {controls}
+              </Dropdown>
+            );
+          })()}
         </div>
       </article>
     );

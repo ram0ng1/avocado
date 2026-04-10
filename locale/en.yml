@@ -146,6 +146,8 @@ ramon-avocado:
       title: All discussions
       home: Back to Home
       load_more: Load more
+    post:
+      op_badge: OP
     tags:
       title: Categories
       discussion_singular: discussion
