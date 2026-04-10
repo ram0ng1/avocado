@@ -21,6 +21,7 @@ import DiscussionPage from 'flarum/forum/components/DiscussionPage';
 import PageStructure from 'flarum/forum/components/PageStructure';
 import { tagPageView } from './components/TagsPage';
 import HomePage from './components/HomePage';
+import { buildUserPhoneNav } from './components/UserProfilePage';
 
 // ─── Lazy route components ────────────────────────────────────────────────────
 // Flarum's DefaultResolver.onmatch expects either:
@@ -454,14 +455,22 @@ app.initializers.add(
       const decorationTagColor   = firstChildTag?.color?.() || null;
       const decorationTagColor2  = secondChildTag?.color?.() || null;
       const hasTwoDecoIcons = showDecorationIcon && iconCount >= 2 && !!decorationIconClass && !!decorationIconClass2;
+      const showDecoDivider = hasTwoDecoIcons && !!app.forum.attribute('avocadoHeroDecoDivider');
+      const decoDividerIcon = app.forum.attribute('avocadoHeroDecoDividerIcon') || 'fas fa-times';
       const decorationIconStyle = {
         ...(decorationOpacity ? { '--decoration-opacity': opacityValue } : {}),
       };
 
+      const innerClass = [
+        'DiscussionHero-inner',
+        hasTwoDecoIcons ? 'has-two-deco-icons' : '',
+        showDecoDivider  ? 'has-deco-divider'   : '',
+      ].filter(Boolean).join(' ');
+
       return (
         <header className="DiscussionHero" style={{ '--discussion-color': color, '--disc-hero-text': heroTextColor, '--disc-hero-text-muted': heroTextMuted, '--disc-hero-surface': heroSurface }}>
           <div className="container">
-            <div className={`DiscussionHero-inner${hasTwoDecoIcons ? ' has-two-deco-icons' : ''}`} style={decorationIconStyle}>
+            <div className={innerClass} style={decorationIconStyle}>
               {/* Decoration icon: first child tag icon */}
               {showDecorationIcon && decorationIconClass && (
                 <div
@@ -469,6 +478,12 @@ app.initializers.add(
                   style={decorationTagColor ? { '--tag-color-secondary': decorationTagColor } : {}}
                 >
                   <i className={decorationIconClass} aria-hidden="true" />
+                </div>
+              )}
+              {/* Divider icon between decoration icons */}
+              {showDecoDivider && (
+                <div className="DiscussionHero-decoSeparator" aria-hidden="true">
+                  <i className={decoDividerIcon} />
                 </div>
               )}
               {/* Decoration icon: second child tag icon (optional) */}

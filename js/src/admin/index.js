@@ -580,6 +580,23 @@ app.initializers.add('ramon-avocado', (app) => {
             help={trans('ramon-avocado.admin.settings.hero_decoration_icon_opacity_help', 'Opacity of the decoration icon as a percentage. 100 = fully opaque.')}
             placeholder="15"
           />
+          {getStr('avocado.hero_decoration_icon_count', '1') === '2' && (
+            <>
+              <AdminToggle
+                settingKey="avocado.hero_deco_divider"
+                label={trans('ramon-avocado.admin.settings.hero_deco_divider_label', 'Show divider between decoration icons')}
+                help={trans('ramon-avocado.admin.settings.hero_deco_divider_help', 'Display an icon in the gap between the two decoration icons (e.g. a "vs" symbol for sport sites).')}
+              />
+              {getBool('avocado.hero_deco_divider') && (
+                <AdminText
+                  settingKey="avocado.hero_deco_divider_icon"
+                  label={trans('ramon-avocado.admin.settings.hero_deco_divider_icon_label', 'Divider icon class')}
+                  help={trans('ramon-avocado.admin.settings.hero_deco_divider_icon_help', 'Font Awesome class for the divider icon, e.g. "fas fa-times" or "fas fa-circle".')}
+                  placeholder="fas fa-times"
+                />
+              )}
+            </>
+          )}
         </div>
       )}
 
