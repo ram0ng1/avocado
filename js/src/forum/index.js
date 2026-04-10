@@ -531,7 +531,7 @@ app.initializers.add(
                   <div className="DiscussionHero-participants">
                     {displayParticipants.map(renderParticipantAvatar)}
                     {extraParticipants > 0 && (
-                      <span className="DiscussionHero-participantsMore" title={`${participants.length} participants`}>
+                      <span className="DiscussionHero-participantsMore" title={`${participants.length} ${trans('ramon-avocado.forum.discussion.participant_plural', 'participants')}`}>
                         +{extraParticipants}
                       </span>
                     )}
@@ -539,13 +539,13 @@ app.initializers.add(
                 )}
                 <span className="DiscussionHero-metaItem">
                   <i className="far fa-comment" aria-hidden="true" />
-                  {postCount} {postCount === 1 ? 'post' : 'posts'}
+                  {postCount} {postCount === 1 ? trans('ramon-avocado.forum.discussion.post_singular', 'post') : trans('ramon-avocado.forum.discussion.post_plural', 'posts')}
                 </span>
                 {participantCount > 0 && (
                   <span className="DiscussionHero-metaItem">
                     <i className="fas fa-users" aria-hidden="true" />
                     {participantCount}{' '}
-                    {participantCount === 1 ? 'participant' : 'participants'}
+                    {participantCount === 1 ? trans('ramon-avocado.forum.discussion.participant_singular', 'participant') : trans('ramon-avocado.forum.discussion.participant_plural', 'participants')}
                   </span>
                 )}
               </div>
@@ -839,7 +839,7 @@ app.initializers.add(
         items.add(
           'avocadoSearch',
           <LinkButton href={app.route('avocado-search')} icon="fas fa-search">
-            Search
+            {trans('ramon-avocado.forum.header.search', 'Search')}
           </LinkButton>,
           95
         );

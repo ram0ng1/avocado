@@ -144,7 +144,7 @@ function renderThreadCard(discussion, likingIds, toggleLike) {
               m.route.set(href);
             });
           }}>
-          <i className="fas fa-reply" aria-hidden="true" />Reply
+          <i className="fas fa-reply" aria-hidden="true" />{trans('ramon-avocado.forum.home.reply_label', 'Reply')}
         </button>
       </div>
       {replies > 0 && <div className="AvocadoHome-threadReplyGroup">{replyCard}</div>}
@@ -224,14 +224,14 @@ function renderPostCard(post) {
         </div>
         <a className="AvocadoHome-replyBtn" href={href}
            onclick={(e) => { e.stopPropagation(); navigate(e, href); }}>
-          <i className="fas fa-arrow-right" aria-hidden="true" />View
+          <i className="fas fa-arrow-right" aria-hidden="true" />{trans('ramon-avocado.forum.home.view', 'View')}
         </a>
       </div>
       <div className="AvocadoHome-threadStats">
         <span className="AvocadoHome-statBtn AvocadoHome-statBtn--replies"
               onclick={(e) => { e.stopPropagation(); m.route.set(href); }}>
           <i className="far fa-comment" aria-hidden="true" />
-          <span>{replies === 1 ? `${replies} reply` : `${replies} replies`}</span>
+          <span>{replies === 1 ? trans('ramon-avocado.forum.home.reply_singular', '1 reply') : trans('ramon-avocado.forum.home.reply_plural', '{count} replies', { count: replies })}</span>
         </span>
       </div>
     </article>
