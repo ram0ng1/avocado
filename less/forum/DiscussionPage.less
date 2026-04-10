@@ -206,13 +206,33 @@
   transform: translateY(-50%);
   font-size: 120px;
   line-height: 1;
-  color: var(--tag-color-secondary, rgba(255,255,255,0.12));
-  opacity: var(--decoration-opacity, 0.15);
+  // color-mix bakes the opacity into the color itself — the tag hue is always
+  // preserved regardless of transparency level.
+  color: color-mix(
+    in srgb,
+    var(--tag-color-secondary, var(--discussion-color, white))
+      calc(var(--decoration-opacity, 0.15) * 100%),
+    transparent
+  );
   pointer-events: none;
   display: none;
 
   &.is-visible {
     display: block;
+  }
+}
+
+// Two-icon layout: same size, side by side — first tag on left, second on right.
+// Gap between icons is 12px; each icon is ~1em (120px) wide.
+.has-two-deco-icons {
+  .DiscussionHero-decorationIcon:not(.DiscussionHero-decorationIcon--second) {
+    right: calc(20px + 120px + 12px); // second icon width + gap
+  }
+
+  .DiscussionHero-decorationIcon--second {
+    right: 20px;
+    font-size: 120px; // same size as first
+    top: 50%;
   }
 }
 
