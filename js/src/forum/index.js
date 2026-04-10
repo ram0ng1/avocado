@@ -320,9 +320,10 @@ app.initializers.add(
       const user = this.attrs?.user;
       if (!user || user.avatarUrl?.()) return original(vnode);
 
+      const extraClass = this.attrs.className ? ` ${this.attrs.className}` : '';
       return (
         <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg"
-          className="Avatar AvocadoDefaultAvatar" aria-hidden="true">
+          className={`Avatar AvocadoDefaultAvatar${extraClass}`} aria-hidden="true">
           <circle cx="64" cy="64" r="64" className="AvocadoDefaultAvatar-bg" />
           <circle cx="64" cy="46" r="18" className="AvocadoDefaultAvatar-fg" />
           <path d="M64 70C42 70 24 82 24 96V128H104V96C104 82 86 70 64 70Z"
