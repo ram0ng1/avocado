@@ -861,15 +861,32 @@ export default class HomePage extends Component {
 
           {/* ── Cover image ──────────────────────────────────────────── */}
           {imageUrl
-            ? <img
-                className="AvocadoHome-showcaseCard-img"
-                src={imageUrl}
-                alt={title}
-                width="400"
-                height="150"
-                loading={isFirst ? 'eager' : 'lazy'}
-                fetchpriority={isFirst ? 'high' : undefined}
-              />
+            ? (isFirst
+              ? <img
+                  className="AvocadoHome-showcaseCard-img"
+                  src={imageUrl}
+                  alt={title}
+                  width="400"
+                  height="150"
+                  loading="eager"
+                  fetchpriority="high"
+                />
+              : <img
+                  className="AvocadoHome-showcaseCard-img"
+                  alt={title}
+                  width="400"
+                  height="150"
+                  oncreate={(vnode) => {
+                    const io = new IntersectionObserver(([entry]) => {
+                      if (entry.isIntersecting) {
+                        vnode.dom.src = imageUrl;
+                        io.disconnect();
+                      }
+                    }, { rootMargin: '200px' });
+                    io.observe(vnode.dom);
+                  }}
+                />
+            )
             : <div className="AvocadoHome-showcaseCard-noImg" style={{ background: noImgBg }}>
                 {primaryTag?.icon?.() && (
                   <i className={primaryTag.icon()} aria-hidden="true"

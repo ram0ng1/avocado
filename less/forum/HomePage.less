@@ -2016,6 +2016,16 @@
   transition: opacity 0.3s ease;
 
   .AvocadoHome-showcaseCard-link:hover & { opacity: 0.72; }
+
+  // While waiting for IntersectionObserver to assign src: reserve space,
+  // suppress the broken-image icon, show a shimmer placeholder.
+  &:not([src]) {
+    opacity: 0;
+    background: var(--avocado-surface-1);
+    // mask must be removed or the shimmer below won't show through
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
 }
 
 .AvocadoHome-showcaseCard-noImg {
