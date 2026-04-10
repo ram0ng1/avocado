@@ -31,17 +31,18 @@ import {
 } from '../utils';
 
 const DISC_SORT_LABELS = {
-  relevance: 'Relevance',
-  latest:    'Latest',
-  top:       'Top',
-  newest:    'Newest',
-  oldest:    'Oldest',
+  relevance: () => trans('ramon-avocado.forum.search.sort_relevance', 'Relevance'),
+  latest:    () => trans('ramon-avocado.forum.search.sort_latest', 'Latest'),
+  top:       () => trans('ramon-avocado.forum.search.sort_top', 'Top'),
+  newest:    () => trans('ramon-avocado.forum.search.sort_newest', 'Newest'),
+  oldest:    () => trans('ramon-avocado.forum.search.sort_oldest', 'Oldest'),
+  trending:  () => trans('ramon-avocado.forum.home.sort_trending', 'Trending'),
 };
 
 const POST_SORT_LABELS = {
-  relevance: 'Relevance',
-  newest:    'Newest',
-  oldest:    'Oldest',
+  relevance: () => trans('ramon-avocado.forum.search.sort_relevance', 'Relevance'),
+  newest:    () => trans('ramon-avocado.forum.search.sort_newest', 'Newest'),
+  oldest:    () => trans('ramon-avocado.forum.search.sort_oldest', 'Oldest'),
 };
 
 const TABS = ['discussions', 'posts', 'users'];
@@ -100,7 +101,7 @@ export default class AvocadoSearchPage extends Page {
   oncreate(vnode) {
     super.oncreate(vnode);
     const q = app.search.state.params().q || '';
-    app.setTitle(q ? `"${q}"` : 'Search');
+    app.setTitle(q ? `"${q}"` : trans('ramon-avocado.forum.search.title', 'Search'));
     app.setTitleCount(0);
   }
 
@@ -451,7 +452,7 @@ export default class AvocadoSearchPage extends Page {
             onclick={(e) => { e.stopPropagation(); navigate(e, href); }}
           >
             <i className="fas fa-arrow-right" aria-hidden="true" />
-            View
+            {trans('ramon-avocado.forum.home.view', 'View')}
           </a>
         </div>
         <div className="AvocadoHome-threadStats">
@@ -460,7 +461,7 @@ export default class AvocadoSearchPage extends Page {
             onclick={(e) => { e.stopPropagation(); m.route.set(href); }}
           >
             <i className="far fa-comment" aria-hidden="true" />
-            <span>{replies === 1 ? '1 reply' : `${replies} replies`}</span>
+            <span>{replies === 1 ? trans('ramon-avocado.forum.home.reply_singular', '1 reply') : trans('ramon-avocado.forum.home.reply_plural', '{count} replies', { count: replies })}</span>
           </span>
         </div>
       </article>
@@ -516,7 +517,7 @@ export default class AvocadoSearchPage extends Page {
             onclick={(e) => { e.stopPropagation(); this.navigate(e, href); }}
           >
             <i className="fas fa-arrow-right" aria-hidden="true" />
-            View
+            {trans('ramon-avocado.forum.home.view', 'View')}
           </a>
         </div>
         {bio && (
@@ -525,11 +526,11 @@ export default class AvocadoSearchPage extends Page {
         <div className="AvocadoSearch-userCard-stats">
           <span className="AvocadoSearch-userCard-stat">
             <i className="far fa-comment" aria-hidden="true" />
-            {postCount === 1 ? '1 post' : `${postCount} posts`}
+            {postCount === 1 ? trans('ramon-avocado.forum.home.post_singular', '1 post') : trans('ramon-avocado.forum.home.post_plural', '{count} posts', { count: postCount })}
           </span>
           <span className="AvocadoSearch-userCard-stat">
             <i className="far fa-comments" aria-hidden="true" />
-            {discussionCount === 1 ? '1 discussion' : `${discussionCount} discussions`}
+            {discussionCount === 1 ? trans('ramon-avocado.forum.home.discussion_singular_card', '1 discussion') : trans('ramon-avocado.forum.home.discussion_plural_card', '{count} discussions', { count: discussionCount })}
           </span>
           {joinLabel && (
             <span className="AvocadoSearch-userCard-stat">
@@ -562,7 +563,7 @@ export default class AvocadoSearchPage extends Page {
     if (keys.length <= 1) return null;
 
     const currentSort = m.route.param('sort') || keys[0];
-    const currentLabel = labels[currentSort] || currentSort;
+    const currentLabel = typeof labels[currentSort] === 'function' ? labels[currentSort]() : labels[currentSort];
 
     const setSort = (key) => {
       this.sortOpen = false;
@@ -595,7 +596,7 @@ export default class AvocadoSearchPage extends Page {
                 <span className="AvocadoDiscussions-sortOption-check">
                   {currentSort === key && <i className="fas fa-check" aria-hidden="true" />}
                 </span>
-                {labels[key] || key}
+                {typeof labels[key] === 'function' ? labels[key]() : (labels[key] || key)}
               </button>
             ))}
           </div>
@@ -621,7 +622,7 @@ export default class AvocadoSearchPage extends Page {
           <input
             className="AvocadoSearch-barInput"
             type="search"
-            placeholder={hero ? 'Search the forum…' : 'Search…'}
+            placeholder={hero ? trans('ramon-avocado.forum.search.placeholder_hero', 'Search the forum…') : trans('ramon-avocado.forum.search.placeholder', 'Search…')}
             value={this.searchInputValue}
             oninput={(e) => { this.searchInputValue = e.target.value; m.redraw(); }}
             onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } }}
@@ -630,7 +631,8 @@ export default class AvocadoSearchPage extends Page {
           {this.searchInputValue && (
             <button
               className="AvocadoSearch-barClear"
-              aria-label="Clear"
+              aria-label={trans('ramon-avocado.forum.search.clear', 'Clear')}
+              title={trans('ramon-avocado.forum.search.clear', 'Clear')}
               onclick={() => {
                 this.searchInputValue = '';
                 m.route.set(app.route('avocado-search'));
@@ -644,7 +646,7 @@ export default class AvocadoSearchPage extends Page {
             disabled={!this.searchInputValue}
             onclick={submit}
           >
-            Search
+            {trans('ramon-avocado.forum.search.search_button', 'Search')}
           </button>
         </div>
       </div>
@@ -694,7 +696,7 @@ export default class AvocadoSearchPage extends Page {
                   </span>
                   <div className="AvocadoHome-categoryBody">
                     <h3>{tag.name?.()}</h3>
-                    <p>{numberOr(tag.discussionCount?.(), 0)} {trans('ramon-avocado.forum.home.discussions', 'discussions')}</p>
+                    <p>{numberOr(tag.discussionCount?.(), 0)} {tag.discussionCount?.() === 1 ? trans('ramon-avocado.forum.home.discussion_singular', 'discussion') : trans('ramon-avocado.forum.home.discussions', 'discussions')}</p>
                   </div>
                 </a>
               );
@@ -746,7 +748,7 @@ export default class AvocadoSearchPage extends Page {
               className="AvocadoDiscussions-loadMoreBtn"
               onclick={() => state.loadNext()}
             >
-              Load more
+              {trans('ramon-avocado.forum.discussions.load_more', 'Load more')}
             </button>
           </div>
         )}
@@ -767,7 +769,7 @@ export default class AvocadoSearchPage extends Page {
       return (
         <div className="AvocadoSearch-empty">
           <i className="far fa-frown-open" aria-hidden="true" />
-          <p>{q ? `No posts found for "${q}".` : 'No posts match these filters.'}</p>
+          <p>{q ? trans('ramon-avocado.forum.search.no_posts_found', `No posts found for "${q}".`, { q }) : trans('ramon-avocado.forum.search.no_posts_match', 'No posts match these filters.')}</p>
         </div>
       );
     }
@@ -781,7 +783,7 @@ export default class AvocadoSearchPage extends Page {
               className="AvocadoDiscussions-loadMoreBtn"
               onclick={() => state.loadNext()}
             >
-              Load more
+              {trans('ramon-avocado.forum.discussions.load_more', 'Load more')}
             </button>
           </div>
         )}
@@ -799,7 +801,7 @@ export default class AvocadoSearchPage extends Page {
       return (
         <div className="AvocadoSearch-empty">
           <i className="far fa-frown-open" aria-hidden="true" />
-          <p>{q ? `No users found for "${q}".` : 'Enter a search term to find users.'}</p>
+          <p>{q ? trans('ramon-avocado.forum.search.no_users_found', `No users found for "${q}".`, { q }) : trans('ramon-avocado.forum.search.enter_search_term', 'Enter a search term to find users.')}</p>
         </div>
       );
     }
@@ -813,7 +815,7 @@ export default class AvocadoSearchPage extends Page {
               className="AvocadoDiscussions-loadMoreBtn"
               onclick={() => this._loadUsers(q, this.usersPage + 1)}
             >
-              Load more
+              {trans('ramon-avocado.forum.discussions.load_more', 'Load more')}
             </button>
           </div>
         )}
@@ -858,7 +860,9 @@ export default class AvocadoSearchPage extends Page {
                     {t === 'discussions' ? <i className="far fa-comments" aria-hidden="true" />
                     : t === 'posts'       ? <i className="far fa-file-alt" aria-hidden="true" />
                     :                      <i className="fas fa-users" aria-hidden="true" />}
-                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                    {t === 'discussions' ? trans('ramon-avocado.forum.search.tab_discussions', 'Discussions')
+                    : t === 'posts'       ? trans('ramon-avocado.forum.search.tab_posts', 'Posts')
+                    :                      trans('ramon-avocado.forum.search.tab_users', 'Users')}
                   </button>
                 ))}
               </div>

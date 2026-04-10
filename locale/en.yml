@@ -1,5 +1,6 @@
 ramon-avocado:
   admin:
+    loading: "Loading…"
     settings:
       section_homepage: Homepage
       featured_tags_label: Featured Categories
@@ -65,11 +66,36 @@ ramon-avocado:
       text: "Like what you see? Join the discussion!"
     link_cta:
       placeholder: "Login to view link"
+    search:
+      title: "Search"
+      placeholder: "Search…"
+      placeholder_hero: "Search the forum…"
+      hero_title: "What are you looking for?"
+      hero_sub: "Search discussions, posts and members"
+      tab_discussions: Discussions
+      tab_posts: Posts
+      tab_users: Users
+      search_button: Search
+      clear: Clear
+      sort_relevance: Relevance
+      sort_latest: Latest
+      sort_top: Top
+      sort_newest: Newest
+      sort_oldest: Oldest
+      no_posts_found: "No posts found for \"{q}\"."
+      no_posts_match: "No posts match these filters."
+      no_users_found: "No users found for \"{q}\"."
+      enter_search_term: "Enter a search term to find users."
     header:
       back_home: Back to Home
+      search: Search
     user:
     tag:
     discussion:
+      post_singular: post
+      post_plural: posts
+      participant_singular: participant
+      participant_plural: participants
     home:
       all_categories: All categories
       all_title: All discussions
@@ -83,6 +109,7 @@ ramon-avocado:
       composer_post: Post Discussion
       composer_submitting: "Posting…"
       composer_title_placeholder: "Discussion title…"
+      discussion_singular: discussion
       discussions: discussions
       filter_tags: Filter tags
       following_heading: Following
@@ -98,20 +125,31 @@ ramon-avocado:
       reply_count_plural: "{count} replies"
       reply_count_singular: "1 reply"
       reply_label: Reply
+      reply_singular: "1 reply"
+      reply_plural: "{count} replies"
       see_all: See all
       see_other_replies: See other {count} replies
       see_other_reply_singular: See other {count} reply
       sign_up: Sign Up
+      sort_trending: Trending
       start_discussion: "Tell everyone what are you working on..."
       today_time: "Today, {time}"
       untitled: Untitled
+      view: View
+      view_post: View post
+      post_singular: "1 post"
+      post_plural: "{count} posts"
+      discussion_singular_card: "1 discussion"
+      discussion_plural_card: "{count} discussions"
       yesterday_time: "Yesterday, {time}"
     discussions:
       title: All discussions
       home: Back to Home
+      load_more: Load more
     tags:
       title: Categories
       discussion_singular: discussion
       discussion_plural: discussions
       other_tags_label: Other Tags
       featured: Featured
+      all_discussions: All discussions

@@ -25,7 +25,7 @@ const SORT_OPTIONS = [
   { key: 'top',      label: 'Top',      sort: '-commentCount' },
   { key: 'newest',   label: 'Newest',   sort: '-createdAt'    },
   { key: 'oldest',   label: 'Oldest',   sort: 'createdAt'     },
-  { key: 'trending', label: 'Trending', sort: '-lastPostedAt' },
+  { key: 'trending', label: () => trans('ramon-avocado.forum.home.sort_trending', 'Trending'), sort: '-lastPostedAt' },
 ];
 
 const PAGE_SIZE = 20;
@@ -417,7 +417,7 @@ export default class AllDiscussionsPage extends Page {
                 className={`AvocadoDiscussions-sortTrigger${this.sortOpen ? ' is-open' : ''}`}
                 onclick={() => { this.sortOpen = !this.sortOpen; m.redraw(); }}
               >
-                {currentSort.label}
+                {typeof currentSort.label === 'function' ? currentSort.label() : currentSort.label}
                 <i className={`fas fa-chevron-${this.sortOpen ? 'up' : 'down'}`} aria-hidden="true" />
               </button>
               {this.sortOpen && (
@@ -435,7 +435,7 @@ export default class AllDiscussionsPage extends Page {
                       <span className="AvocadoDiscussions-sortOption-check">
                         {this.sort === option.key && <i className="fas fa-check" aria-hidden="true" />}
                       </span>
-                      {option.label}
+                      {typeof option.label === 'function' ? option.label() : option.label}
                     </button>
                   ))}
                 </div>

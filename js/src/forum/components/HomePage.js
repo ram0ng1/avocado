@@ -1439,7 +1439,7 @@ export default class HomePage extends Component {
                       </span>
                       <div className="AvocadoHome-categoryBody">
                         <h3>{cat.name?.()}</h3>
-                        <p>{abbreviateNumber(numberOr(count, 0))} {trans('ramon-avocado.forum.home.discussions', 'discussions')}</p>
+                        <p>{abbreviateNumber(numberOr(count, 0))} {count === 1 ? trans('ramon-avocado.forum.home.discussion_singular', 'discussion') : trans('ramon-avocado.forum.home.discussions', 'discussions')}</p>
                       </div>
                     </a>
                   );

@@ -105,7 +105,7 @@ export default class AvocadoPostsSearchPage extends Page {
             className="AvocadoSearch-postViewBtn"
             onclick={(e) => this.navigate(e, href)}
           >
-            View post
+            {trans('ramon-avocado.forum.home.view_post', 'View post')}
             <i className="fas fa-arrow-right" aria-hidden="true" />
           </a>
         </div>
@@ -205,7 +205,7 @@ export default class AvocadoPostsSearchPage extends Page {
                   className="AvocadoDiscussions-loadMoreBtn"
                   onclick={() => state.loadNext()}
                 >
-                  Load more
+                  {trans('ramon-avocado.forum.discussions.load_more', 'Load more')}
                 </button>
               </div>
             )}

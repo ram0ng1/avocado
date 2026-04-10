@@ -147,7 +147,7 @@ export default class AvocadoDiscussionsSearchPage extends Component {
             <div className="AvocadoSearch-threadFooter">
               <span className="AvocadoSearch-threadReplies">
                 <i className="far fa-comment" aria-hidden="true" />
-                {replies === 1 ? '1 reply' : `${replies} replies`}
+                {replies === 1 ? trans('ramon-avocado.forum.home.reply_singular', '1 reply') : trans('ramon-avocado.forum.home.reply_plural', '{count} replies', { count: replies })}
               </span>
             </div>
           </div>
@@ -244,7 +244,7 @@ export default class AvocadoDiscussionsSearchPage extends Component {
                   className="AvocadoDiscussions-loadMoreBtn"
                   onclick={() => state.loadNext()}
                 >
-                  Load more
+                  {trans('ramon-avocado.forum.discussions.load_more', 'Load more')}
                 </button>
               </div>
             )}
