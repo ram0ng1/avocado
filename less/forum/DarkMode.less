@@ -1004,6 +1004,41 @@ body.dark-mode {
     --disc-muted:   var(--muted-color);
   }
 
+  // LeaderboardHero — dark mode (scoped to .LeaderboardPage for specificity)
+  .LeaderboardPage .LeaderboardHero::before {
+    background: linear-gradient(135deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 60%);
+  }
+
+  // Leaderboard cards — dark surface
+  .LeaderboardPage .LeaderboardPodium-place,
+  .LeaderboardPage .LeaderboardContenders-card,
+  .LeaderboardPage .LeaderboardItem {
+    background: var(--control-bg);
+    border-color: var(--avocado-border-subtle);
+
+    &:hover {
+      background: var(--control-bg);
+    }
+  }
+
+  // Leaderboard pills + refresh
+  .LeaderboardPage .LeaderboardPage-filterBtn {
+    border-color: var(--avocado-border-chip);
+
+    &:hover {
+      background: var(--avocado-surface-1);
+      border-color: var(--avocado-border-chip);
+    }
+  }
+
+  .LeaderboardPage .LeaderboardPage-refreshBtn {
+    border-color: var(--avocado-border-chip);
+
+    &:hover {
+      background: var(--avocado-surface-1);
+    }
+  }
+
   // DiscussionHero overlay — adjust for dark backgrounds
   .DiscussionHero::before {
     background: linear-gradient(135deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 60%);
