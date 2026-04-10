@@ -390,7 +390,7 @@ app.initializers.add('ramon-avocado', (app) => {
             <AdminText
               settingKey="avocado.showcase_heading"
               label={trans('ramon-avocado.admin.settings.showcase_heading_label', 'Showcase Section Title')}
-              help={trans('ramon-avocado.admin.settings.showcase_heading_help', 'Custom title for the showcase section. Leave empty to use the tag name.')}
+              help={trans('ramon-avocado.admin.settings.showcase_heading_help', 'Custom title for the showcase section. Leave empty to use default.')}
             />
             <AdminSelect
               settingKey="avocado.showcase_count"
