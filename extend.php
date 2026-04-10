@@ -104,6 +104,8 @@ return [
         ->serializeToForum('avocadoHeroDecorationIcon', 'avocado.hero_decoration_icon', 'boolval')
         ->serializeToForum('avocadoHeroDecorationIconCount', 'avocado.hero_decoration_icon_count')
         ->serializeToForum('avocadoHeroDecorationIconOpacity', 'avocado.hero_decoration_icon_opacity')
+        ->serializeToForum('avocadoHeroDecoDivider', 'avocado.hero_deco_divider', 'boolval')
+        ->serializeToForum('avocadoHeroDecoDividerIcon', 'avocado.hero_deco_divider_icon')
         ->serializeToForum('avocadoFeaturedTags', 'avocado.featured_tags')
         ->serializeToForum('avocadoLogoSvg', 'avocado.logo_svg')
         ->serializeToForum('avocadoLogoEnabled', 'avocado.logo_enabled', 'boolval')
