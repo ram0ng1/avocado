@@ -1,6 +1,8 @@
 import UploadImageButton from 'flarum/common/components/UploadImageButton';
 import Component from 'flarum/common/Component';
 import Switch from 'flarum/common/components/Switch';
+import ExtensionPage from 'flarum/admin/components/ExtensionPage';
+import { override } from 'flarum/common/extend';
 
 // ─── Translation helper ───────────────────────────────────────────────────────
 const trans = (key, fallback) => {
@@ -329,6 +331,13 @@ class AdminTagPicker extends Component {
 // Registration
 // ─────────────────────────────────────────────────────────────────────────────
 
+// All settings use auto-saving components — the native Save button is unnecessary
+// and confusing, so suppress it for this extension page only.
+override(ExtensionPage.prototype, 'submitButton', function (original) {
+  if (this.extension?.id === 'ramon-avocado') return null;
+  return original();
+});
+
 app.initializers.add('ramon-avocado', (app) => {
   const reg = app.registry.for('ramon-avocado');
 
@@ -376,39 +385,48 @@ app.initializers.add('ramon-avocado', (app) => {
 
         <SubDivider />
 
-        {/* Showcase / portfolio tags */}
-        <AdminTagPicker
-          settingKey="avocado.showcase_tag"
-          label={trans('ramon-avocado.admin.settings.showcase_tag_label', 'Showcase / Portfolio Tags')}
-          help={trans('ramon-avocado.admin.settings.showcase_tag_help', 'Discussions from these tags appear in the showcase slider on the homepage.')}
-          placeholder={trans('ramon-avocado.admin.settings.tag_picker_placeholder', 'Select tags…')}
+        {/* Showcase / portfolio — master toggle */}
+        <AdminToggle
+          settingKey="avocado.showcase_enabled"
+          label={trans('ramon-avocado.admin.settings.showcase_enabled_label', 'Enable Showcase / Portfolio section')}
+          help={trans('ramon-avocado.admin.settings.showcase_enabled_help', 'Show a showcase slider on the homepage with discussions from selected tags.')}
         />
 
-        {/* Showcase sub-settings — only when a tag is selected */}
-        {showcaseSelected && (
+        {/* All showcase settings — only visible when enabled */}
+        {getBool('avocado.showcase_enabled') && (
           <div className="AvocadoAdmin-subGroup">
-            <AdminText
-              settingKey="avocado.showcase_heading"
-              label={trans('ramon-avocado.admin.settings.showcase_heading_label', 'Showcase Section Title')}
-              help={trans('ramon-avocado.admin.settings.showcase_heading_help', 'Custom title for the showcase section. Leave empty to use default.')}
+            <AdminTagPicker
+              settingKey="avocado.showcase_tag"
+              label={trans('ramon-avocado.admin.settings.showcase_tag_label', 'Showcase / Portfolio Tags')}
+              help={trans('ramon-avocado.admin.settings.showcase_tag_help', 'Discussions from these tags appear in the showcase slider on the homepage.')}
+              placeholder={trans('ramon-avocado.admin.settings.tag_picker_placeholder', 'Select tags…')}
             />
-            <AdminSelect
-              settingKey="avocado.showcase_count"
-              label={trans('ramon-avocado.admin.settings.showcase_count_label', 'Number of Showcase Items')}
-              help={trans('ramon-avocado.admin.settings.showcase_count_help', 'Display 1 to 5 discussion cards in the showcase section.')}
-              options={{ '1': '1', '2': '2', '3': '3', '4': '4', '5': '5' }}
-              default="5"
-            />
-            <AdminSelect
-              settingKey="avocado.showcase_image_style"
-              label={trans('ramon-avocado.admin.settings.showcase_image_style_label', 'Card Image Style')}
-              help={trans('ramon-avocado.admin.settings.showcase_image_style_help', 'Choose between compact or full-height image display.')}
-              options={{
-                'default': trans('ramon-avocado.admin.settings.showcase_image_style_default', 'Default (Compact)'),
-                'full':    trans('ramon-avocado.admin.settings.showcase_image_style_full', 'Full Image'),
-              }}
-              default="default"
-            />
+            {showcaseSelected && (
+              <>
+                <AdminText
+                  settingKey="avocado.showcase_heading"
+                  label={trans('ramon-avocado.admin.settings.showcase_heading_label', 'Showcase Section Title')}
+                  help={trans('ramon-avocado.admin.settings.showcase_heading_help', 'Custom title for the showcase section. Leave empty to use default.')}
+                />
+                <AdminSelect
+                  settingKey="avocado.showcase_count"
+                  label={trans('ramon-avocado.admin.settings.showcase_count_label', 'Number of Showcase Items')}
+                  help={trans('ramon-avocado.admin.settings.showcase_count_help', 'Display 1 to 5 discussion cards in the showcase section.')}
+                  options={{ '1': '1', '2': '2', '3': '3', '4': '4', '5': '5' }}
+                  default="5"
+                />
+                <AdminSelect
+                  settingKey="avocado.showcase_image_style"
+                  label={trans('ramon-avocado.admin.settings.showcase_image_style_label', 'Card Image Style')}
+                  help={trans('ramon-avocado.admin.settings.showcase_image_style_help', 'Choose between compact or full-height image display.')}
+                  options={{
+                    'default': trans('ramon-avocado.admin.settings.showcase_image_style_default', 'Default (Compact)'),
+                    'full':    trans('ramon-avocado.admin.settings.showcase_image_style_full', 'Full Image'),
+                  }}
+                  default="default"
+                />
+              </>
+            )}
           </div>
         )}
 
@@ -546,6 +564,16 @@ app.initializers.add('ramon-avocado', (app) => {
       />
       {getBool('avocado.hero_decoration_icon') && (
         <div className="AvocadoAdmin-subGroup">
+          <AdminSelect
+            settingKey="avocado.hero_decoration_icon_count"
+            label={trans('ramon-avocado.admin.settings.hero_decoration_icon_count_label', 'Number of decoration icons')}
+            help={trans('ramon-avocado.admin.settings.hero_decoration_icon_count_help', '1 icon uses the first child tag. 2 icons also shows the second child tag icon, offset to the left.')}
+            options={{
+              '1': trans('ramon-avocado.admin.settings.hero_decoration_icon_count_one', '1 icon (first child tag)'),
+              '2': trans('ramon-avocado.admin.settings.hero_decoration_icon_count_two', '2 icons (first and second child tag)'),
+            }}
+            default="1"
+          />
           <AdminText
             settingKey="avocado.hero_decoration_icon_opacity"
             label={trans('ramon-avocado.admin.settings.hero_decoration_icon_opacity_label', 'Icon opacity (0–100)')}

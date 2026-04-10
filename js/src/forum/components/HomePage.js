@@ -276,6 +276,7 @@ export default class HomePage extends Component {
 
   // Returns the showcase tag ID as a string, or null
   _showcaseTagIds() {
+    if (!app.forum?.attribute('avocadoShowcaseEnabled')) return new Set();
     const raw = app.forum?.attribute('avocadoShowcaseTag') || '';
     if (!raw) return new Set();
     try {
@@ -698,7 +699,12 @@ export default class HomePage extends Component {
   loadShowcaseDiscussions() {
     // Skip if already cached or loading
     if (this._showcaseCached || this.showcaseLoading) return;
-    
+
+    if (!app.forum?.attribute('avocadoShowcaseEnabled')) {
+      this._showcaseCached = true;
+      return;
+    }
+
     const raw = app.forum?.attribute('avocadoShowcaseTag');
     if (!raw) {
       this._showcaseCached = true;
@@ -977,6 +983,8 @@ export default class HomePage extends Component {
   }
 
   renderShowcaseSlider() {
+    if (!app.forum?.attribute('avocadoShowcaseEnabled')) return null;
+
     const tagId = app.forum?.attribute('avocadoShowcaseTag');
     if (!tagId) return null;
 
