@@ -13,9 +13,13 @@ namespace Ramon\Avocado;
 
 use Flarum\Extend;
 use Flarum\Messages\DialogMessage;
+use Ramon\Avocado\AvocadoServiceProvider;
 use Ramon\Avocado\Middleware\RemoveSkipLink;
 
 return [
+    (new Extend\ServiceProvider())
+        ->register(AvocadoServiceProvider::class),
+
     (new Extend\Frontend('forum'))
         ->js(__DIR__.'/js/dist/forum.js')
         ->css(__DIR__.'/less/forum.less')
