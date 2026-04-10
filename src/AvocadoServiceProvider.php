@@ -27,7 +27,10 @@ class AvocadoServiceProvider extends AbstractServiceProvider
      * Whole directories: [ src dir relative to extension root => dest dir relative to public/assets ]
      */
     private const BUNDLED_DIRS = [
-        'resources/assets/fonts' => 'fonts',
+        'resources/assets/fonts'         => 'fonts',
+        // Async JS chunks — must be served from assets/js/{namespace}/{urlPath}.js
+        // so that flarum.reg.chunkUrl() can locate them at runtime.
+        'js/dist/forum/components'       => 'js/ramon-avocado/forum/components',
     ];
 
     public function boot(): void

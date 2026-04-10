@@ -20,20 +20,28 @@ import DiscussionHero from 'flarum/forum/components/DiscussionHero';
 import DiscussionPage from 'flarum/forum/components/DiscussionPage';
 import PageStructure from 'flarum/forum/components/PageStructure';
 import { tagPageView } from './components/TagsPage';
-import AvocadoTagPage from './components/TagPage';
 import HomePage from './components/HomePage';
-import AllDiscussionsPage from './components/AllDiscussionsPage';
-import AvocadoPostsSearchPage from './components/AvocadoPostsSearchPage';
-import AvocadoSearchPage from './components/AvocadoSearchPage';
-import {
-  AvocadoUserPostsPage,
-  AvocadoUserDiscussionsPage,
-  AvocadoUserLikesPage,
-  AvocadoUserMentionsPage,
-  buildHero,
-  buildSidebar,
-  buildUserPhoneNav,
-} from './components/UserProfilePage';
+
+// ─── Lazy route components ────────────────────────────────────────────────────
+// Flarum's DefaultResolver.onmatch expects either:
+//   a) component.prototype instanceof Component  → used directly as a class
+//   b) an async function () → Promise<{ default: Comp }>  → called and .default used
+// Pattern (b) is the "AsyncNewComponent" type in Flarum's typings.
+// autoChunkNameLoader (flarum-webpack-config) automatically injects
+// webpackChunkName comments so each import() becomes its own JS chunk
+// registered with flarum.reg.addChunkModule().
+
+const AllDiscussionsPage     = () => import('./components/AllDiscussionsPage');
+const AvocadoPostsSearchPage = () => import('./components/AvocadoPostsSearchPage');
+const AvocadoSearchPage      = () => import('./components/AvocadoSearchPage');
+const AvocadoTagPage         = () => import('./components/TagPage');
+
+// UserProfilePage uses named exports — wrap each into { default: Comp } shape.
+// All four share the same webpack chunk so the module is only fetched once.
+const AvocadoUserPostsPage       = () => import('./components/UserProfilePage').then((m) => ({ default: m.AvocadoUserPostsPage }));
+const AvocadoUserDiscussionsPage = () => import('./components/UserProfilePage').then((m) => ({ default: m.AvocadoUserDiscussionsPage }));
+const AvocadoUserLikesPage       = () => import('./components/UserProfilePage').then((m) => ({ default: m.AvocadoUserLikesPage }));
+const AvocadoUserMentionsPage    = () => import('./components/UserProfilePage').then((m) => ({ default: m.AvocadoUserMentionsPage }));
 import AvocadoDiscussionStats from './components/AvocadoDiscussionStats';
 import Footer from 'flarum/forum/components/Footer';
 // FIX: utils centralises helpers that were duplicated in every component file
@@ -702,6 +710,21 @@ app.initializers.add(
 
 
 
+    // ── 8b. IndexPage-newDiscussion: add aria-label (Flarum core renders it
+    // as icon-only on mobile without an accessible name) ─────────────────────
+    extend(IndexPage.prototype, 'oncreate', function () {
+      const btn = this.element?.querySelector('.IndexPage-newDiscussion');
+      if (btn && !btn.getAttribute('aria-label')) {
+        btn.setAttribute('aria-label', app.translator.trans('core.forum.index.start_discussion_button'));
+      }
+    });
+    extend(IndexPage.prototype, 'onupdate', function () {
+      const btn = this.element?.querySelector('.IndexPage-newDiscussion');
+      if (btn && !btn.getAttribute('aria-label')) {
+        btn.setAttribute('aria-label', app.translator.trans('core.forum.index.start_discussion_button'));
+      }
+    });
+
     // ── 9. IndexPage contentItems: swap to HomePage or custom search ──────────
     extend(IndexPage.prototype, 'contentItems', function (items) {
       if (customHomeEnabled()) {
@@ -1316,9 +1339,9 @@ app.initializers.add(
                 className={'AvocadoMessages-inlineReply-send' + (disabled ? ' disabled' : '')}
                 disabled={disabled}
                 onclick={() => this._send(dialog, onSent)}
-                title="Send"
+                aria-label={app.translator.trans('flarum-messages.forum.messages_page.send_message_button')}
               >
-                <i className="fas fa-paper-plane" />
+                <i className="fas fa-paper-plane" aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -1620,6 +1643,7 @@ app.initializers.add(
           <button
             type="button"
             className="Button Button--icon AvocadoMessages-composeBtn"
+            aria-label={app.translator.trans('flarum-messages.forum.messages_page.send_message_button')}
             title={app.translator.trans('flarum-messages.forum.messages_page.send_message_button')}
             onclick={() => {
               const SidebarClass = flarum.reg.get('flarum-messages', 'forum/components/MessagesSidebar');
@@ -1631,7 +1655,7 @@ app.initializers.add(
             }}
           >
             <i className="icon fas fa-edit Button-icon" aria-hidden="true" />
-            <span className="Button-label" aria-hidden="true" />
+            <span className="Button-label" />
           </button>,
           30
         );
