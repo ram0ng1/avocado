@@ -146,7 +146,7 @@ ramon-avocado:
       home: Voltar para o Início
       load_more: Carregar mais
     post:
-      op_badge: OP
+      op_badge: POST ORIGINAL
     tags:
       title: Categorias
       discussion_singular: discussão

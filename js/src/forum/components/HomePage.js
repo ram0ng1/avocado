@@ -879,18 +879,22 @@ export default class HomePage extends Component {
           </div>
         )}
 
-        {/* ── Tag pills — top-right, decorative only (no navigation) ── */}
+        {/* ── Tag pills — top-right, navigate to tag page on click ── */}
         {otherTags.length > 0 && (
           <div className="AvocadoHome-showcaseCard-topTags">
             {otherTags.slice(0, 2).map((tag) => {
-              const c = tag.color?.() || null;
+              const c    = tag.color?.() || null;
+              const slug = tag.slug?.();
+              const tagHref = slug ? app.route('tag', { tags: slug }) : null;
               return (
-                <span key={tag.id?.()}
-                      className="AvocadoHome-tagPill"
-                      style={c ? { '--tag-bg': '#ffffff', '--tag-color': c } : { '--tag-bg': '#ffffff' }}>
+                <a key={tag.id?.()}
+                   className="AvocadoHome-tagPill"
+                   style={c ? { '--tag-bg': '#ffffff', '--tag-color': c } : { '--tag-bg': '#ffffff' }}
+                   href={tagHref}
+                   onclick={tagHref ? (e) => { e.preventDefault(); e.stopPropagation(); m.route.set(tagHref); } : undefined}>
                   {tag.icon?.() && <i className={tag.icon()} aria-hidden="true" />}
                   {tag.name?.()}
-                </span>
+                </a>
               );
             })}
           </div>
