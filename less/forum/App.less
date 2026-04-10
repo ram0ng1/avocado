@@ -238,6 +238,13 @@ svg.Header-logo {
   line-height: 1;
 }
 
+// Frosted-glass effect on header icon buttons (flags, notifications, user menu toggle)
+// backdrop-filter blurs the hero/content behind them, improving legibility on any bg
+.App-header .Button--flat {
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
 // ─── DiscussionPage sidebar (scrubber/stream pane) ───────────────────────────
 // All other pages get AvocadoNav-helper instead of Page-sidebar via the
 // PageStructure.prototype.sidebar() override in JS — no CSS hiding needed.
@@ -276,7 +283,9 @@ svg.Header-logo {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: var(--avocado-surface-1);
+  background: color-mix(in srgb, var(--avocado-surface-1) 82%, transparent);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   border: 2px solid var(--avocado-online-ring);
   color: var(--avocado-muted-icon);
   font-size: 10px;
