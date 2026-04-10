@@ -639,12 +639,21 @@
   .avocado-line-clamp(2);
 }
 
+// ─── Thread card: actions (controls ⋮ + reply btn) ───────────────────────────
+// Wrapper keeps the two buttons vertically centered relative to each other
+.AvocadoHome-threadActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
 .AvocadoHome-replyBtn {
   .avocado-pill-btn(34px; 13px; 12px);
   font-weight: 800;
   background: var(--avocado-surface-1);
   color: var(--avocado-text-dark);
-  flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
 
   &:hover {
@@ -657,6 +666,51 @@
     transform: scale(0.94);
     transition: background 0.05s ease, transform 0.05s ease;
   }
+}
+
+// ─── Thread card: controls dropdown (three-dot) ───────────────────────────────
+.AvocadoHome-threadControls {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+
+  .AvocadoHome-threadCard:hover &,
+  &.open {
+    opacity: 1;
+  }
+
+  &-toggle {
+    width: 30px;
+    height: 30px;
+    border-radius: 999px !important;
+    padding: 0;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted-color);
+    transition: background 0.15s ease, color 0.15s ease;
+
+    .Button-caret { display: none; }
+    .Button-icon  { font-size: 14px; }
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.07);
+      color: var(--heading-color);
+    }
+  }
+
+  .Dropdown-menu {
+    right: 0;
+    left: auto;
+    border: 1px solid var(--home-border, #eaeaf0);
+    box-shadow: var(--home-shadow, 0 8px 30px rgba(0, 0, 0, 0.1));
+    min-width: 180px;
+  }
+}
+
+// ─── Badge: discussão trancada ────────────────────────────────────────────────
+.AvocadoHome-badge--locked {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
 }
 
 .AvocadoHome-threadStats {
@@ -2113,25 +2167,26 @@
     background-repeat: no-repeat;
     height: 100%;
 
+    // Scrim layer 1: full-card gradient — strong at bottom, fades out ¾ up
     &::before {
       content: '';
       position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 200px;
-      background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.75) 100%);
+      inset: 0;
+      background: linear-gradient(to top,
+        rgba(0,0,0,0.90) 0%,
+        rgba(0,0,0,0.70) 25%,
+        rgba(0,0,0,0.30) 55%,
+        rgba(0,0,0,0)    75%
+      );
       z-index: 2;
-      border-radius: 0 0 16px 16px;
+      border-radius: 16px;
+      pointer-events: none;
     }
   }
 
   .AvocadoHome-showcaseCard-img {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -2146,10 +2201,7 @@
 
   .AvocadoHome-showcaseCard-noImg {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     width: 100%;
     height: 100%;
     border-radius: 16px;
@@ -2160,31 +2212,31 @@
     .fas, .far, .fab { opacity: 0.2; }
   }
 
+  // colorOverlay moved BELOW body text (z-index 2) and changed to a very
+  // subtle dark tint — the white overlay was sitting on top of the text (z-index 4)
+  // and washing out contrast.
   .AvocadoHome-showcaseCard-colorOverlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
-    background: #ffffff;
-    opacity: 0.15;
-    z-index: 4;
+    inset: 0;
+    background: rgba(0,0,0,0.08);
+    z-index: 2;
     border-radius: 16px;
     pointer-events: none;
   }
 
+  // Scrim layer 2: body-level gradient so text is always readable regardless of image
   .AvocadoHome-showcaseCard-body {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
     z-index: 3;
-    padding: 20px 14px 16px;
+    padding: 40px 14px 16px;
     display: flex;
     flex-direction: column;
     gap: 4px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.45) 100%);
+    border-radius: 0 0 16px 16px;
   }
 
   .AvocadoHome-showcaseCard-title {

@@ -327,6 +327,20 @@ svg.Header-logo {
   }
 }
 
+// ─── Composer: hide default avatar SVG where Flarum hides the real avatar ────
+// The core .ComposerBody-avatar { display: none } rules don't use !important,
+// so they are overridden by .AvocadoDefaultAvatar { display: block !important }.
+// We restore the expected hidden behaviour for each context Flarum targets.
+@media @phone {
+  .ComposerBody-avatar.AvocadoDefaultAvatar {
+    display: none !important;
+  }
+}
+.minimized .ComposerBody-avatar.AvocadoDefaultAvatar,
+.fullScreen .ComposerBody-avatar.AvocadoDefaultAvatar {
+  display: none !important;
+}
+
 // ─── Header auth separator ("or" between Log In / Sign Up) ───────────────────
 .AvocadoHeader-authSep {
   font-size: 11px;
