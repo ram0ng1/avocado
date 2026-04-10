@@ -107,7 +107,7 @@ class ShowcaseTagSelector extends Component {
         </label>
         <div className="AvocadoAdmin-tagPills">
           {!this.tagsLoaded && (
-            <span className="AvocadoAdmin-tagPills-placeholder">Loading…</span>
+            <span className="AvocadoAdmin-tagPills-placeholder">{trans('ramon-avocado.admin.loading', 'Loading…')}</span>
           )}
           {this.tagsLoaded && this.tags.length === 0 && (
             <span className="AvocadoAdmin-tagPills-placeholder">
@@ -207,7 +207,7 @@ class FeaturedTagsSelector extends Component {
         </label>
         <div className="AvocadoAdmin-tagPills">
           {!this.tagsLoaded && (
-            <span className="AvocadoAdmin-tagPills-placeholder">Loading…</span>
+            <span className="AvocadoAdmin-tagPills-placeholder">{trans('ramon-avocado.admin.loading', 'Loading…')}</span>
           )}
           {this.tagsLoaded && this.tags.length === 0 && (
             <span className="AvocadoAdmin-tagPills-placeholder">

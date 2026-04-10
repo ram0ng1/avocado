@@ -23,7 +23,7 @@
 </p>
 
 <p align="center">
-  A custom <a href="https://flarum.org">Flarum</a> theme with hero banners, tag colors, share buttons, and more. Forked from <a href="https://github.com/afrux/asirem">Asirem</a> by <a href="https://github.com/afrux">Afrux</a>.
+  A modern, feature-rich <a href="https://flarum.org">Flarum</a> theme featuring advanced search capabilities, real-time messaging integration, comprehensive multi-language support, hero banners, tag colors, social sharing, and more. Originally forked from <a href="https://github.com/afrux/asirem">Asirem</a> by <a href="https://github.com/afrux">Afrux</a>, now significantly enhanced with new features and improvements.
 </p>
 
 ---

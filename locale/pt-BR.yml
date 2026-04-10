@@ -1,5 +1,6 @@
 ramon-avocado:
   admin:
+    loading: "Carregando…"
     settings:
       section_homepage: Página Inicial
       featured_tags_label: Categorias em destaque
@@ -41,6 +42,7 @@ ramon-avocado:
       custom_default_avatar_help: Envie uma imagem de avatar padrão personalizada para usuários sem foto.
       hide_links_for_guests_label: Ocultar links para visitantes
       hide_links_for_guests_help: Impedir que visitantes acessem links nos posts. Ao clicar em um link, é exibido um botão de Login / Cadastro.
+      section_footer: Rodapé
     footer_settings:
       footer_enabled: Ativar rodapé personalizado
       footer_company: Informações da empresa
@@ -62,11 +64,36 @@ ramon-avocado:
       text: "Gostou? Participe da discussão!"
     link_cta:
       placeholder: "Faça login para ver o link"
+    search:
+      title: "Pesquisar"
+      placeholder: "Pesquisar…"
+      placeholder_hero: "Pesquisar no fórum…"
+      hero_title: "O que você está procurando?"
+      hero_sub: "Pesquisar discussões, posts e membros"
+      tab_discussions: Discussões
+      tab_posts: Posts
+      tab_users: Usuários
+      search_button: Pesquisar
+      clear: Limpar
+      sort_relevance: Relevância
+      sort_latest: Recente
+      sort_top: Principal
+      sort_newest: Mais Recente
+      sort_oldest: Mais Antigo
+      no_posts_found: "Nenhum post encontrado para \"{q}\"."
+      no_posts_match: "Nenhum post corresponde a esses filtros."
+      no_users_found: "Nenhum usuário encontrado para \"{q}\"."
+      enter_search_term: "Digite um termo de busca para encontrar usuários."
     header:
       back_home: Voltar para o Início
+      search: Pesquisar
     user:
     tag:
     discussion:
+      post_singular: post
+      post_plural: posts
+      participant_singular: participante
+      participant_plural: participantes
     home:
       all_categories: Todas as categorias
       all_title: Todas as discussões
@@ -80,6 +107,7 @@ ramon-avocado:
       composer_post: Publicar discussão
       composer_submitting: "Publicando..."
       composer_title_placeholder: "Título da discussão..."
+      discussion_singular: discussão
       discussions: discussões
       filter_tags: Filtrar tags
       following_heading: Seguindo
@@ -95,20 +123,31 @@ ramon-avocado:
       reply_count_plural: "{count} respostas"
       reply_count_singular: "1 resposta"
       reply_label: Responder
+      reply_singular: "1 resposta"
+      reply_plural: "{count} respostas"
       see_all: Ver tudo
       see_other_replies: Ver outras {count} respostas
       see_other_reply_singular: Ver outra {count} resposta
       sign_up: Cadastrar
+      sort_trending: Tendência
       start_discussion: "O que está pensando?"
       today_time: "Hoje, {time}"
       untitled: Sem título
+      view: Visualizar
+      view_post: Ver post
+      post_singular: "1 post"
+      post_plural: "{count} posts"
+      discussion_singular_card: "1 discussão"
+      discussion_plural_card: "{count} discussões"
       yesterday_time: "Ontem, {time}"
     discussions:
       title: Todas as discussões
       home: Voltar para o Início
+      load_more: Carregar mais
     tags:
       title: Categorias
       discussion_singular: discussão
       discussion_plural: discussões
       other_tags_label: Outras tags
       featured: Destaque
+      all_discussions: Todas as discussões
