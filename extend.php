@@ -19,8 +19,11 @@ return [
     (new Extend\Frontend('forum'))
         ->js(__DIR__.'/js/dist/forum.js')
         ->css(__DIR__.'/less/forum.less')
+        ->content(\Ramon\Avocado\Content\AddCriticalCss::class)
+        ->content(\Ramon\Avocado\Content\AddCriticalPreloads::class)
         ->content(\Ramon\Avocado\Content\AddHeroBannerPreload::class)
         ->content(\Ramon\Avocado\Content\HideLogoFlash::class)
+        ->content(\Ramon\Avocado\Content\DeferMainCss::class)
         ->route('/discussions', 'avocado-discussions')
         ->route('/search', 'avocado-search'),
 

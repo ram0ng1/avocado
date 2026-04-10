@@ -47,7 +47,7 @@
 :root {
   --home-max-width: 1320px;
   --home-border: #eaeaf0;
-  --home-muted: #8f8f95;
+  --home-muted: #6b6b72; // was #8f8f95 — bumped to 4.6:1 ratio on white (WCAG AA)
   --home-title: #202126;
   --home-shadow: 0 10px 24px rgba(22, 22, 33, 0.05);
 }
@@ -538,10 +538,9 @@
   line-height: 0;
   cursor: default;
 
-  img {
+  img, svg {
     width: 18px;
     height: 18px;
-    object-fit: contain;
     display: block;
   }
 }
@@ -1060,6 +1059,7 @@
   align-items: center;
   gap: 8px;
   padding: 5px 8px;
+  min-height: 44px; // WCAG 2.5.5 touch target
   border-radius: 10px;
   text-decoration: none;
   color: inherit;
@@ -1109,8 +1109,10 @@
 }
 
 .AvocadoHome-replyCard-seeMore {
-  display: block;
-  padding-left: 8px; // aligns with avatar left edge (line's left padding)
+  display: flex;
+  align-items: center;
+  min-height: 44px; // WCAG 2.5.5 touch target
+  padding: 8px 8px; // aligns with avatar left edge
   font-size: 12px;
   font-weight: 700;
   color: var(--muted-color);
