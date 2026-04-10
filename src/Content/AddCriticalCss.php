@@ -49,7 +49,7 @@ class AddCriticalCss
         @font-face{font-family:'DM Sans Variable';font-weight:100 900;font-style:italic;font-display:swap;src:url('{$italicFont}') format('woff2-variations')}
         @font-face{font-family:'DM Sans';font-weight:100 900;font-style:normal;font-display:swap;src:url('{$normalFont}') format('woff2-variations')}
         body{font-family:'DM Sans Variable','DM Sans','Segoe UI',sans-serif;overflow-x:hidden}
-        .App-header{height:52px;min-height:52px;contain:strict}
+        .App-header{height:52px;min-height:52px;contain:layout size}
         {$heroReservation}
         CSS;
 
