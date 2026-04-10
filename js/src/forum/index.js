@@ -437,30 +437,47 @@ app.initializers.add(
       const subscription = discussion.subscription?.();
 
       // Decoration icon: secondary tag icon on hero right side
-      // Finds first child tag (tag with parent) regardless of position
+      // Finds child tags (tags with parent) regardless of position
       // Ignores parent tags, maintains original tag order
       const showDecorationIcon = !!app.forum.attribute('avocadoHeroDecorationIcon');
       const decorationOpacity = app.forum.attribute('avocadoHeroDecorationIconOpacity');
       const opacityValue = decorationOpacity ? Math.min(Math.max(parseInt(decorationOpacity) / 100, 0), 1) : 0.15;
-      
-      // Find first child tag (has parent) - ignore parent tags
-      let secondaryTag = tags.find(t => t.parent?.()) || null;
-      
-      const decorationIconClass = secondaryTag?.icon?.() || null;
-      const decorationTagColor = secondaryTag?.color?.() || null;
+      const iconCount = parseInt(app.forum.attribute('avocadoHeroDecorationIconCount') || '1');
+
+      // Collect child tags (have parent) - up to 2
+      const childTags = tags.filter(t => t.parent?.());
+      const firstChildTag  = childTags[0] || null;
+      const secondChildTag = iconCount >= 2 ? (childTags[1] || null) : null;
+
+      const decorationIconClass  = firstChildTag?.icon?.()  || null;
+      const decorationIconClass2 = secondChildTag?.icon?.() || null;
+      const decorationTagColor   = firstChildTag?.color?.() || null;
+      const decorationTagColor2  = secondChildTag?.color?.() || null;
+      const hasTwoDecoIcons = showDecorationIcon && iconCount >= 2 && !!decorationIconClass && !!decorationIconClass2;
       const decorationIconStyle = {
-        ...(decorationTagColor ? { '--tag-color-secondary': decorationTagColor } : {}),
         ...(decorationOpacity ? { '--decoration-opacity': opacityValue } : {}),
       };
 
       return (
         <header className="DiscussionHero" style={{ '--discussion-color': color, '--disc-hero-text': heroTextColor, '--disc-hero-text-muted': heroTextMuted, '--disc-hero-surface': heroSurface }}>
           <div className="container">
-            <div className="DiscussionHero-inner" style={decorationIconStyle}>
-              {/* Decoration icon: secondary tag icon on the right */}
+            <div className={`DiscussionHero-inner${hasTwoDecoIcons ? ' has-two-deco-icons' : ''}`} style={decorationIconStyle}>
+              {/* Decoration icon: first child tag icon */}
               {showDecorationIcon && decorationIconClass && (
-                <div className="DiscussionHero-decorationIcon is-visible">
+                <div
+                  className="DiscussionHero-decorationIcon is-visible"
+                  style={decorationTagColor ? { '--tag-color-secondary': decorationTagColor } : {}}
+                >
                   <i className={decorationIconClass} aria-hidden="true" />
+                </div>
+              )}
+              {/* Decoration icon: second child tag icon (optional) */}
+              {showDecorationIcon && iconCount >= 2 && decorationIconClass2 && (
+                <div
+                  className="DiscussionHero-decorationIcon DiscussionHero-decorationIcon--second is-visible"
+                  style={decorationTagColor2 ? { '--tag-color-secondary': decorationTagColor2 } : {}}
+                >
+                  <i className={decorationIconClass2} aria-hidden="true" />
                 </div>
               )}
               {/* Nav row: back button + badges + tag pills */}
