@@ -6,7 +6,7 @@ categories:
   - title: '⚠️ Alterações Críticas (Breaking Changes)'
     labels:
       - 'BC'
-  - title: '🚀 Novas Funcionalidades'
+  - title: '🔨 Melhoria'
     labels:
       - 'melhoria'
   - title: '🐞 Correções de Erros'
