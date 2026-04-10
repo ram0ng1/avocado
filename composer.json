@@ -1,7 +1,7 @@
 {
     "name": "ramon/avocado",
-    "version": "2.1.0-beta",
-    "description": "The weird Flarum theme made with potatoes as fuel, by Afrux.",
+    "version": "2.1.1-beta",
+    "description": "A modern, feature-rich Flarum theme with advanced search, real-time messaging, and comprehensive multi-language support. Built on the Avocado foundation with significant enhancements.",
     "keywords": [
         "flarum",
         "theme"

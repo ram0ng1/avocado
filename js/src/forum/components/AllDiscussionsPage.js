@@ -21,10 +21,10 @@ import {
 } from '../utils';
 
 const SORT_OPTIONS = [
-  { key: 'latest',   label: 'Latest',   sort: '-lastPostedAt' },
-  { key: 'top',      label: 'Top',      sort: '-commentCount' },
-  { key: 'newest',   label: 'Newest',   sort: '-createdAt'    },
-  { key: 'oldest',   label: 'Oldest',   sort: 'createdAt'     },
+  { key: 'latest',   label: () => trans('ramon-avocado.forum.search.sort_latest', 'Latest'),   sort: '-lastPostedAt' },
+  { key: 'top',      label: () => trans('ramon-avocado.forum.search.sort_top', 'Top'),      sort: '-commentCount' },
+  { key: 'newest',   label: () => trans('ramon-avocado.forum.search.sort_newest', 'Newest'),   sort: '-createdAt'    },
+  { key: 'oldest',   label: () => trans('ramon-avocado.forum.search.sort_oldest', 'Oldest'),   sort: 'createdAt'     },
   { key: 'trending', label: () => trans('ramon-avocado.forum.home.sort_trending', 'Trending'), sort: '-lastPostedAt' },
 ];
 
