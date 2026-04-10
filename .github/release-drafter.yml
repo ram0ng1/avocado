@@ -49,6 +49,6 @@ template: |
   ## 📦 Como atualizar
 
   ```bash
-  composer update ramon/avocado:$RESOLVED_VERSION
+  composer require ramon/avocado:$RESOLVED_VERSION
   php flarum cache:clear
   ```
