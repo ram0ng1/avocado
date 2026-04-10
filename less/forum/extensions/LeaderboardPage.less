@@ -1,0 +1,179 @@
+// ── Leaderboard Extension — Avocado Design System Override ──────────────────
+// Extension: huseyinfiliz/leaderboard
+// All selectors are scoped to .LeaderboardPage so specificity (0,2,0) beats
+// the extension's own CSS (0,1,0) regardless of load order in forum.css.
+
+// ─── 1. Hero ─────────────────────────────────────────────────────────────────
+// The App.less safety net hides .Page-hero for all non-root IndexPages.
+// LeaderboardPage shares the IndexPage class, so we re-enable it explicitly.
+
+.LeaderboardPage .Page-hero {
+  display: block !important;
+}
+
+// Reset .Hero base styles (margin/max-width/border-radius) so the hero
+// spans full-width like DiscussionHero.
+.LeaderboardPage .LeaderboardHero.Hero {
+  margin: 0;
+  max-width: 100%;
+  border-radius: 0;
+}
+
+// Hero surface — matches DiscussionHero / AvocadoTagPage-hero pattern
+.LeaderboardPage .LeaderboardHero {
+  position: relative;
+  background: var(--primary-color);
+  overflow: hidden;
+
+  // Diagonal depth overlay — identical to DiscussionHero::before
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.04) 60%);
+    pointer-events: none;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    padding: 36px 20px 40px;
+    text-align: center;
+  }
+
+  .Hero-title .icon {
+    display: block;
+    font-size: 26px;
+    margin-bottom: 10px;
+    opacity: 0.85;
+  }
+
+  .Hero-title {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    color: #fff;
+    margin: 0;
+    line-height: 1.15;
+  }
+}
+
+// ─── 2. Filter pills ─────────────────────────────────────────────────────────
+
+.LeaderboardPage .LeaderboardPage-filterBtn {
+  padding: 5px 14px;
+  border-radius: @border-radius;
+  border: 1px solid var(--avocado-border-chip);
+  background: transparent;
+  color: var(--muted-color);
+  font-size: 13px;
+  font-weight: 500;
+  transition:
+    background var(--avocado-t-fast),
+    border-color var(--avocado-t-fast),
+    color var(--avocado-t-fast);
+
+  &:hover {
+    background: var(--avocado-surface-1);
+    border-color: var(--avocado-border-subtle);
+    color: var(--text-color);
+  }
+
+  &.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+  }
+}
+
+// ─── 3. Refresh button ───────────────────────────────────────────────────────
+
+.LeaderboardPage .LeaderboardPage-refreshBtn {
+  border: 1px solid var(--avocado-border-chip);
+  background: transparent;
+  color: var(--avocado-muted-icon);
+  transition:
+    background var(--avocado-t-fast),
+    color var(--avocado-t-fast);
+
+  &:hover {
+    background: var(--avocado-surface-1);
+    color: var(--text-color);
+  }
+}
+
+// ─── 4. Podium cards ─────────────────────────────────────────────────────────
+
+.LeaderboardPage .LeaderboardPodium-place {
+  background: var(--body-bg);
+  border: 1px solid var(--avocado-border-subtle);
+  border-radius: @border-radius;
+  transition:
+    transform var(--avocado-t-medium),
+    box-shadow var(--avocado-t-medium);
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: @avocado-box-shadow;
+  }
+}
+
+.LeaderboardPage .LeaderboardPodium-place--1 { border-top: 3px solid #d4a730; }
+.LeaderboardPage .LeaderboardPodium-place--2 { border-top: 3px solid #a0a0a0; }
+.LeaderboardPage .LeaderboardPodium-place--3 { border-top: 3px solid #b87333; }
+
+.LeaderboardPage .LeaderboardPodium-stats {
+  border-top-color: var(--avocado-border-subtle);
+}
+
+// ─── 5. Top contender cards ──────────────────────────────────────────────────
+
+.LeaderboardPage .LeaderboardContenders-card {
+  background: var(--body-bg);
+  border: 1px solid var(--avocado-border-subtle);
+  border-radius: @border-radius;
+  transition:
+    transform var(--avocado-t-fast),
+    box-shadow var(--avocado-t-fast);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: @avocado-box-shadow;
+  }
+}
+
+// ─── 6. Section titles ───────────────────────────────────────────────────────
+
+.LeaderboardPage .LeaderboardContenders-title,
+.LeaderboardPage .LeaderboardHonorable-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+}
+
+// ─── 7. Honorable mention rows ───────────────────────────────────────────────
+
+.LeaderboardPage .LeaderboardItem {
+  background: var(--body-bg);
+  border: 1px solid var(--avocado-border-subtle);
+  border-radius: @border-radius;
+  transition:
+    background var(--avocado-t-fast),
+    box-shadow var(--avocado-t-fast);
+
+  &:hover {
+    background: var(--avocado-surface-1);
+    opacity: 1;
+    box-shadow: none;
+  }
+}
+
+// ─── 8. Skeleton shapes ──────────────────────────────────────────────────────
+
+.LeaderboardPage .LeaderboardSkeleton-badge,
+.LeaderboardPage .LeaderboardSkeleton-text,
+.LeaderboardPage .LeaderboardSkeleton-textSm,
+.LeaderboardPage .LeaderboardSkeleton-rank,
+.LeaderboardPage .LeaderboardSkeleton-sectionTitle {
+  border-radius: 6px;
+}
