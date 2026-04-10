@@ -15,8 +15,26 @@
     border-radius: @border-radius;
     transition: background 0.1s ease !important;
 
-    &-controls .Dropdown-toggle {
-      border-radius: 0;
+    &-controls {
+      .Dropdown-toggle {
+        width: 30px;
+        height: 30px;
+        border-radius: 999px !important;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted-color);
+        transition: background 0.15s ease, color 0.15s ease;
+
+        .Button-caret { display: none; }
+        .Button-icon  { font-size: 14px; }
+
+        &:hover {
+          background: rgba(0, 0, 0, 0.07);
+          color: var(--heading-color);
+        }
+      }
     }
 
     &-info {
@@ -181,6 +199,19 @@
     .item-excerpt {
       margin-right: 0;
       width: 100%;
+    }
+  }
+
+  // ─── Controls: centralizado verticalmente, dropdown com borda avocado ──────
+  .App .DiscussionListItem-controls {
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+
+    .Dropdown-menu {
+      border: 1px solid var(--home-border, #eaeaf0);
+      box-shadow: var(--home-shadow, 0 8px 30px rgba(0, 0, 0, 0.1));
+      min-width: 180px;
     }
   }
 }

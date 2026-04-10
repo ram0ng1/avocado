@@ -2,7 +2,9 @@ import app from 'flarum/forum/app';
 import Page from 'flarum/common/components/Page';
 import Tooltip from 'flarum/common/components/Tooltip';
 import Avatar from 'flarum/common/components/Avatar';
+import Dropdown from 'flarum/common/components/Dropdown';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
+import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
 import {
   trans,
   numberOr,
@@ -333,6 +335,7 @@ export default class AvocadoTagPage extends Page {
     const href      = discussionRoute(discussion);
     const tags      = (discussion.tags?.() || []).filter(Boolean);
     const isSticky  = discussion.isSticky?.() || false;
+    const isLocked  = discussion.isLocked?.() || false;
     const isFollowing = discussion.subscription?.() === 'follow';
     const isUnread  = discussion.isUnread?.() || false;
     const replies   = numberOr(discussion.replyCount?.(), 0);
@@ -365,6 +368,13 @@ export default class AvocadoTagPage extends Page {
                   </span>
                 </Tooltip>
               )}
+              {isLocked && (
+                <Tooltip text={trans('flarum-lock.forum.badge.locked_tooltip', 'Locked')} position="top">
+                  <span className="AvocadoHome-badge AvocadoHome-badge--locked">
+                    <i className="fas fa-lock" aria-hidden="true" />
+                  </span>
+                </Tooltip>
+              )}
               {isFollowing && (
                 <Tooltip text={trans('ramon-avocado.forum.home.badge_following', 'Following discussions')} position="top">
                   <span className="AvocadoHome-badge AvocadoHome-badge--following">
@@ -380,7 +390,6 @@ export default class AvocadoTagPage extends Page {
                 if (isCurrentTag) {
                   return (
                     <span
-                      key={tag.id?.()}
                       className={`AvocadoHome-tagPill${extraClass}`}
                       style={{ ...tagStyle, cursor: 'default' }}
                     >
@@ -391,7 +400,6 @@ export default class AvocadoTagPage extends Page {
                 }
                 return (
                   <a
-                    key={tag.id?.()}
                     className={`AvocadoHome-tagPill${extraClass}`}
                     href={tagRoute(tag)}
                     onclick={(e) => { e.stopPropagation(); navigate(e, tagRoute(tag)); }}
@@ -415,22 +423,38 @@ export default class AvocadoTagPage extends Page {
             </a>
             {excerpt && <p className="AvocadoHome-threadExcerpt">{excerpt}</p>}
           </div>
-          <button
-            className="AvocadoHome-replyBtn"
-            onclick={(e) => {
-              e.stopPropagation();
-              if (!app.session.user) {
-                app.modal.show(() => import('flarum/forum/components/LogInModal').then((m) => m.default));
-                return;
-              }
-              app.composer
-                .load(() => import('flarum/forum/components/ReplyComposer'), { user: app.session.user, discussion })
-                .then(() => { app.composer.show(); m.route.set(href); });
-            }}
-          >
-            <i className="fas fa-reply" aria-hidden="true" />
-            {trans('ramon-avocado.forum.home.reply_label', 'Reply')}
-          </button>
+          <div className="AvocadoHome-threadActions">
+            {(() => {
+              const controls = DiscussionControls.controls(discussion, this).toArray();
+              if (!controls.length) return null;
+              return (
+                <Dropdown
+                  className="AvocadoHome-threadControls"
+                  icon="fas fa-ellipsis-v"
+                  buttonClassName="Button Button--icon Button--flat AvocadoHome-threadControls-toggle"
+                  accessibleToggleLabel={app.translator.trans('core.forum.discussion_controls.toggle_dropdown_accessible_label')}
+                >
+                  {controls}
+                </Dropdown>
+              );
+            })()}
+            <button
+              className="AvocadoHome-replyBtn"
+              onclick={(e) => {
+                e.stopPropagation();
+                if (!app.session.user) {
+                  app.modal.show(() => import('flarum/forum/components/LogInModal').then((m) => m.default));
+                  return;
+                }
+                app.composer
+                  .load(() => import('flarum/forum/components/ReplyComposer'), { user: app.session.user, discussion })
+                  .then(() => { app.composer.show(); m.route.set(href); });
+              }}
+            >
+              <i className="fas fa-reply" aria-hidden="true" />
+              {trans('ramon-avocado.forum.home.reply_label', 'Reply')}
+            </button>
+          </div>
         </div>
         {replies > 0 && (
           <div className="AvocadoHome-threadReplyGroup">

@@ -1172,7 +1172,7 @@ app.initializers.add(
     extend(CommentPost.prototype, 'headerItems', function (items) {
       const post = this.attrs?.post;
       if (post?.number?.() !== 1) return;
-      items.add('avocado-op', <span className="AvocadoPost-opBadge">OP</span>, 50);
+      items.add('avocado-op', <span className="AvocadoPost-opBadge">{trans('ramon-avocado.forum.post.op_badge', 'OP')}</span>, 50);
     });
 
     // ── 19e. DiscussionPage sidebarItems: stats card ──────────────────────────

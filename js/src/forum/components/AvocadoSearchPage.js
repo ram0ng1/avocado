@@ -2,10 +2,12 @@ import app from 'flarum/forum/app';
 import Page from 'flarum/common/components/Page';
 import Avatar from 'flarum/common/components/Avatar';
 import Tooltip from 'flarum/common/components/Tooltip';
+import Dropdown from 'flarum/common/components/Dropdown';
 import listItems from 'flarum/common/helpers/listItems';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import DiscussionListState from 'flarum/forum/states/DiscussionListState';
 import PostListState from 'flarum/forum/states/PostListState';
+import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
 import extractText from 'flarum/common/utils/extractText';
 import {
   iconColors,
@@ -257,6 +259,7 @@ export default class AvocadoSearchPage extends Page {
     const href        = discussionRoute(discussion);
     const tags        = (discussion.tags?.() || []).filter(Boolean);
     const isSticky    = discussion.isSticky?.() || false;
+    const isLocked    = discussion.isLocked?.() || false;
     const isFollowing = discussion.subscription?.() === 'follow';
     const isUnread    = discussion.isUnread?.() || false;
     const replies     = this.replyCount(discussion);
@@ -286,6 +289,13 @@ export default class AvocadoSearchPage extends Page {
                 <Tooltip text={trans('ramon-avocado.forum.home.badge_sticky', 'Pinned')} position="top">
                   <span className="AvocadoHome-badge AvocadoHome-badge--sticky" role="img" aria-label={trans('ramon-avocado.forum.home.badge_sticky', 'Pinned')}>
                     <i className="fas fa-thumbtack" aria-hidden="true" />
+                  </span>
+                </Tooltip>
+              )}
+              {isLocked && (
+                <Tooltip text={app.translator.trans('flarum-lock.forum.badge.locked_tooltip')} position="top">
+                  <span className="AvocadoHome-badge AvocadoHome-badge--locked" role="img" aria-label={app.translator.trans('flarum-lock.forum.badge.locked_tooltip')}>
+                    <i className="fas fa-lock" aria-hidden="true" />
                   </span>
                 </Tooltip>
               )}
@@ -329,23 +339,39 @@ export default class AvocadoSearchPage extends Page {
               </p>
             )}
           </div>
-          <button
-            className="AvocadoHome-replyBtn"
-            aria-label={trans('ramon-avocado.forum.home.reply_label', 'Reply')}
-            onclick={(e) => {
-              e.stopPropagation();
-              if (!app.session.user) {
-                app.modal.show(() => import('flarum/forum/components/LogInModal').then((m) => m.default));
-                return;
-              }
-              app.composer
-                .load(() => import('flarum/forum/components/ReplyComposer'), { user: app.session.user, discussion })
-                .then(() => { app.composer.show(); m.route.set(href); });
-            }}
-          >
-            <i className="fas fa-reply" aria-hidden="true" />
-            {trans('ramon-avocado.forum.home.reply_label', 'Reply')}
-          </button>
+          <div className="AvocadoHome-threadActions">
+            {(() => {
+              const controls = DiscussionControls.controls(discussion, this).toArray();
+              if (!controls.length) return null;
+              return (
+                <Dropdown
+                  className="AvocadoHome-threadControls"
+                  icon="fas fa-ellipsis-v"
+                  buttonClassName="Button Button--icon Button--flat AvocadoHome-threadControls-toggle"
+                  accessibleToggleLabel={app.translator.trans('core.forum.discussion_controls.toggle_dropdown_accessible_label')}
+                >
+                  {controls}
+                </Dropdown>
+              );
+            })()}
+            <button
+              className="AvocadoHome-replyBtn"
+              aria-label={trans('ramon-avocado.forum.home.reply_label', 'Reply')}
+              onclick={(e) => {
+                e.stopPropagation();
+                if (!app.session.user) {
+                  app.modal.show(() => import('flarum/forum/components/LogInModal').then((m) => m.default));
+                  return;
+                }
+                app.composer
+                  .load(() => import('flarum/forum/components/ReplyComposer'), { user: app.session.user, discussion })
+                  .then(() => { app.composer.show(); m.route.set(href); });
+              }}
+            >
+              <i className="fas fa-reply" aria-hidden="true" />
+              {trans('ramon-avocado.forum.home.reply_label', 'Reply')}
+            </button>
+          </div>
         </div>
         {replies > 0 && (
           <div className="AvocadoHome-threadReplyGroup">
@@ -654,7 +680,7 @@ export default class AvocadoSearchPage extends Page {
   }
 
   renderEmptyState() {
-    const tags = app.store.all('tags').filter((t) => t && !t.parent?.()).slice(0, 8);
+    const tags = app.store.all('tags').filter((t) => t && t.id?.() && !t.parent?.()).slice(0, 8);
     const featuredIds = getFeaturedTagIds();
     const fireUrl = resolveAssetUrl('extensions/ramon-avocado/fire.webp');
 
@@ -671,47 +697,50 @@ export default class AvocadoSearchPage extends Page {
 
         {tags.length > 0 && (
           <div className="AvocadoSearch-heroTags">
-            {tags.map((tag, idx) => {
-              const color = tag.color?.() || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
-              const icon  = tag.icon?.() || FALLBACK_ICONS[idx % FALLBACK_ICONS.length];
-              const href  = tagRoute(tag);
-              const isFeatured = featuredIds.has(String(tag.id?.()));
-              return (
-                <a
-                  key={tag.id?.()}
-                  className={`AvocadoHome-categoryCard${isFeatured ? ' AvocadoHome-categoryCard--featured' : ''}`}
-                  href={href}
-                  onclick={(e) => this.navigate(e, href)}
-                  style={(() => { const ic = iconColors(color, 0.12); return { '--cat-color': ic.color, '--cat-bg': ic.bg }; })()}
-                >
-                  {isFeatured && (
-                    <Tooltip text={trans('ramon-avocado.forum.tags.featured', 'Featured')} position="top">
-                      <span className="AvocadoHome-featuredBadge">
-                        <img src={fireUrl} alt="" aria-hidden="true" />
-                      </span>
-                    </Tooltip>
-                  )}
-                  <span className="AvocadoHome-categoryIcon">
-                    <i className={icon} aria-hidden="true" />
-                  </span>
-                  <div className="AvocadoHome-categoryBody">
-                    <h3>{tag.name?.()}</h3>
-                    <p>{numberOr(tag.discussionCount?.(), 0)} {tag.discussionCount?.() === 1 ? trans('ramon-avocado.forum.home.discussion_singular', 'discussion') : trans('ramon-avocado.forum.home.discussions', 'discussions')}</p>
-                  </div>
-                </a>
-              );
-            })}
-            <a
-              className="AvocadoHome-categoryCard AvocadoHome-categoryCard--all"
-              href={safeRoute('tags')}
-              onclick={(e) => this.navigate(e, safeRoute('tags'))}
-            >
-              <div className="AvocadoHome-categoryBody">
-                <h3>{trans('ramon-avocado.forum.home.all_categories', 'All categories')}</h3>
-                <p>{Math.max(0, app.store.all('tags').filter((t) => t && !t.parent?.()).length - tags.length)} {trans('ramon-avocado.forum.home.more', 'more')}</p>
-              </div>
-              <i className="fas fa-arrow-right" aria-hidden="true" />
-            </a>
+            {[
+              ...tags.map((tag, idx) => {
+                const color = tag.color?.() || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
+                const icon  = tag.icon?.() || FALLBACK_ICONS[idx % FALLBACK_ICONS.length];
+                const href  = tagRoute(tag);
+                const isFeatured = featuredIds.has(String(tag.id?.()));
+                return (
+                  <a
+                    key={tag.id?.()}
+                    className={`AvocadoHome-categoryCard${isFeatured ? ' AvocadoHome-categoryCard--featured' : ''}`}
+                    href={href}
+                    onclick={(e) => this.navigate(e, href)}
+                    style={(() => { const ic = iconColors(color, 0.12); return { '--cat-color': ic.color, '--cat-bg': ic.bg }; })()}
+                  >
+                    {isFeatured && (
+                      <Tooltip text={trans('ramon-avocado.forum.tags.featured', 'Featured')} position="top">
+                        <span className="AvocadoHome-featuredBadge">
+                          <img src={fireUrl} alt="" aria-hidden="true" />
+                        </span>
+                      </Tooltip>
+                    )}
+                    <span className="AvocadoHome-categoryIcon">
+                      <i className={icon} aria-hidden="true" />
+                    </span>
+                    <div className="AvocadoHome-categoryBody">
+                      <h3>{tag.name?.()}</h3>
+                      <p>{numberOr(tag.discussionCount?.(), 0)} {tag.discussionCount?.() === 1 ? trans('ramon-avocado.forum.home.discussion_singular', 'discussion') : trans('ramon-avocado.forum.home.discussions', 'discussions')}</p>
+                    </div>
+                  </a>
+                );
+              }),
+              <a
+                key="--all"
+                className="AvocadoHome-categoryCard AvocadoHome-categoryCard--all"
+                href={safeRoute('tags')}
+                onclick={(e) => this.navigate(e, safeRoute('tags'))}
+              >
+                <div className="AvocadoHome-categoryBody">
+                  <h3>{trans('ramon-avocado.forum.home.all_categories', 'All categories')}</h3>
+                  <p>{Math.max(0, app.store.all('tags').filter((t) => t && !t.parent?.()).length - tags.length)} {trans('ramon-avocado.forum.home.more', 'more')}</p>
+                </div>
+                <i className="fas fa-arrow-right" aria-hidden="true" />
+              </a>,
+            ]}
           </div>
         )}
 
@@ -724,7 +753,7 @@ export default class AvocadoSearchPage extends Page {
   renderDiscussionsTab() {
     const state     = this.discussionsState;
     const isLoading = state.isInitialLoading() || state.isLoadingNext();
-    const items     = state.getPages().flatMap((pg) => pg.items);
+    const items     = state.getPages().flatMap((pg) => pg.items).filter((d) => d.id?.());
     const q         = app.search.state.params().q || '';
 
     if (isLoading && items.length === 0) {
@@ -740,18 +769,17 @@ export default class AvocadoSearchPage extends Page {
     }
     return (
       <div className="AvocadoSearch-stack">
-        {items.map((d) => this.renderDiscussionCard(d))}
-        {isLoading && renderDiscSkeleton()}
-        {!isLoading && state.hasNext() && (
-          <div key="load-more" className="AvocadoDiscussions-loadMore">
-            <button
-              className="AvocadoDiscussions-loadMoreBtn"
-              onclick={() => state.loadNext()}
-            >
-              {trans('ramon-avocado.forum.discussions.load_more', 'Load more')}
-            </button>
-          </div>
-        )}
+        {[
+          ...items.map((d) => this.renderDiscussionCard(d)),
+          ...(isLoading ? renderDiscSkeleton() : []),
+          ...(!isLoading && state.hasNext() ? [
+            <div key="--load-more" className="AvocadoDiscussions-loadMore">
+              <button className="AvocadoDiscussions-loadMoreBtn" onclick={() => state.loadNext()}>
+                {trans('ramon-avocado.forum.discussions.load_more', 'Load more')}
+              </button>
+            </div>,
+          ] : []),
+        ]}
       </div>
     );
   }
@@ -759,7 +787,7 @@ export default class AvocadoSearchPage extends Page {
   renderPostsTab() {
     const state     = this.postsState;
     const isLoading = state.isInitialLoading() || state.isLoadingNext();
-    const allPosts  = state.getPages().flatMap((pg) => pg.items);
+    const allPosts  = state.getPages().flatMap((pg) => pg.items).filter((p) => p.id?.());
     const q         = app.search.state.params().q || '';
 
     if (isLoading && allPosts.length === 0) {
@@ -775,18 +803,17 @@ export default class AvocadoSearchPage extends Page {
     }
     return (
       <div className="AvocadoSearch-stack">
-        {allPosts.map((post) => this.renderPostCard(post))}
-        {isLoading && renderDiscSkeleton()}
-        {!isLoading && state.hasNext() && (
-          <div key="load-more" className="AvocadoDiscussions-loadMore">
-            <button
-              className="AvocadoDiscussions-loadMoreBtn"
-              onclick={() => state.loadNext()}
-            >
-              {trans('ramon-avocado.forum.discussions.load_more', 'Load more')}
-            </button>
-          </div>
-        )}
+        {[
+          ...allPosts.map((post) => this.renderPostCard(post)),
+          ...(isLoading ? renderDiscSkeleton() : []),
+          ...(!isLoading && state.hasNext() ? [
+            <div key="--load-more" className="AvocadoDiscussions-loadMore">
+              <button className="AvocadoDiscussions-loadMoreBtn" onclick={() => state.loadNext()}>
+                {trans('ramon-avocado.forum.discussions.load_more', 'Load more')}
+              </button>
+            </div>,
+          ] : []),
+        ]}
       </div>
     );
   }
