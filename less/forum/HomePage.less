@@ -1002,7 +1002,7 @@
 .AvocadoHome-tagPill {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   padding: 2px 9px;
   border-radius: 999px;
   font-size: 12px;
@@ -1027,6 +1027,11 @@
     font-size: 11px;
     line-height: 1;
     flex-shrink: 0;
+  }
+
+  // Reset global .fa-kit padding (App.less applies 0 10px globally)
+  .fa-kit {
+    padding: 0 !important;
   }
 
   svg {

@@ -51,6 +51,8 @@
   max-width: var(--home-max-width, 1320px);
   margin: 0 auto;
   padding: 48px 20px 52px;
+  // Decoration icons use position: absolute + right: 20px
+  // They don't participate in text flow, so no padding needed
 }
 
 // Nav row: back circle + pills on same line
@@ -60,6 +62,9 @@
   gap: 10px;
   flex-wrap: wrap;
   margin-bottom: 18px;
+  flex: 1; // Allow to expand
+  max-width: 100%; // Don't constrain width
+  z-index: 1; // Above the decorations
 }
 
 // Back button — identical to .AvocadoTagPage-back
@@ -70,6 +75,7 @@
   border-radius: 50%;
   border: none;
   background: var(--disc-hero-surface, rgba(255,255,255,0.18));
+  backdrop-filter: blur(3px);
   color: var(--disc-hero-text, #fff);
   display: inline-flex;
   align-items: center;
@@ -88,6 +94,8 @@
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+  flex: 1; // Allow to expand and wrap unlimited tags
+  max-width: 100%;
 }
 
 // ── AvocadoHome-badge inside hero — icon-only circle, same logic as homepage badges ─
@@ -182,6 +190,7 @@
   height: 26px;
   border-radius: 999px;
   background: var(--disc-hero-surface, rgba(255,255,255,0.28));
+  backdrop-filter: blur(3px);
   border: 2px solid rgba(255,255,255,0.6);
   color: var(--disc-hero-text, #fff);
   font-size: 9px;
@@ -207,12 +216,12 @@
   width: fit-content;
   height: auto;
   
-  // Constrain to reasonable dimensions but allow flexibility
-  max-width: 160px;
-  min-width: 80px;
+  // Much smaller to not cover content
+  max-width: 100px;
+  min-width: 30px;
   
-  // Default-ish size (adjusts for custom icons)
-  font-size: clamp(80px, 12vw, 140px);
+  // Significantly reduced font size
+  font-size: clamp(45px, 11vw, 100px);
   line-height: 1;
   text-align: center;
   
@@ -226,106 +235,104 @@
   
   pointer-events: none;
   display: none;
-  overflow: visible;
-  padding: 0 8px; // Breathing room around icon
-  flex-shrink: 0;
+  overflow: visible; // Allow icons to show
+  padding: 0 1px;
+  flex-shrink: 1;
+  z-index: 2; // Visible above most content
 
   &.is-visible {
     display: flex;
-    align-items: center;
+    align-items: center;   // centers icon vertically within the stretched height
     justify-content: center;
-    min-height: 1em;
   }
 
-  // Fallback for custom icons that don't render properly
-  i {
+  // Undo .fa-kit global overrides that break sizing inside the decoration icons.
+  // .fa-kit has max-height:44px and padding:0 10px globally — both must be reset
+  // so the icon fills the decoration box at the intended font-size.
+  .fa-kit {
+    max-height: none !important;
+    padding: 0 !important;
+    width: auto !important;
+    height: 1em;
     display: block;
-    width: 100%;
-    height: 100%;
+    line-height: 1;
+  }
+
+  // Standard FA glyphs
+  i:not(.fa-kit) {
+    display: block;
     line-height: 1;
   }
 }
 
-// ── Centered decoration container ────────────────────────────────────────────
-// Uses flexbox for natural responsive alignment instead of absolute positioning
+// Centered decoration container ────────────────────────────────────────────
+// Positioned absolutely on the right side, vertically centered in the hero.
+// align-items: stretch so all children share the same height — each child
+// then uses flex internally to center its own icon vertically.
 .DiscussionHero-decorationsContainer {
   position: absolute;
   right: 20px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--deco-pair-gap, 12px);
-  height: auto;
+  flex-direction: row;
+  align-items: stretch;
+  gap: var(--deco-pair-gap, 0);
   pointer-events: none;
   white-space: nowrap;
-  
-  // Ensure icons don't overlap in any scenario
-  > div {
-    flex: 0 1 auto;
-  }
+  max-width: 75vw;
+  z-index: 2;
+  overflow: visible;
 }
 
-// ── Separator icon: scales with gap, always centered
+// When there are two decoration icons, adjust positioning
+.has-two-deco-icons .DiscussionHero-decorationsContainer {
+  right: 25px;
+}
+
+// ── Separator icon: flex item between the two decoration icons
+// Uses align-items: center so its icon is centered within the stretched height
+// that it inherits from the container (align-items: stretch on parent).
 .DiscussionHero-decoSeparator {
   display: flex;
-  align-items: center;
+  align-items: center;     // vertical center within the shared row height
   justify-content: center;
-  font-size: clamp(32px, 8vw, 48px); // Responsive separator size
-  line-height: 1;
+  flex-shrink: 0;
+  font-size: clamp(32px, 8vw, 52px);
   color: var(--deco-sep-color, rgba(255, 255, 255, 0.5));
   pointer-events: none;
-  z-index: 1;
-  transform: rotate(15deg);
-  flex-shrink: 0;
-  width: auto;
-  height: 1em;
-  
-  i {
+  z-index: 0;
+  padding: 0 12px;
+
+  i,
+  .fa-kit {
     display: block;
+    max-height: none !important;
+    padding: 0 !important;
     line-height: 1;
   }
 }
 
-// ── Two-icon layout: responsive spacing that adapts to icon sizes
+// ── Two-icon layout: gap between icons (no divider = small gap; divider = none, its own padding handles it)
 .has-two-deco-icons {
-  --deco-pair-gap: 12px;
+  --deco-pair-gap: 16px;
 
   &.has-deco-divider {
-    --deco-pair-gap: 20px; // Flexible gap for divider
+    --deco-pair-gap: 0px; // .DiscussionHero-decoSeparator padding: 0 12px handles spacing
   }
 }
 
-// ── Responsive behavior for decoration icons ──────────────────────────────────
-// Adjust sizing on smaller viewports
-@media (max-width: 768px) {
-  .DiscussionHero-decorationIcon {
-    font-size: clamp(60px, 10vw, 100px);
-    min-width: 60px;
-    max-width: 120px;
-  }
-
+// ── Decoration icons: desktop only ───────────────────────────────────────────
+@media @phone, @tablet {
   .DiscussionHero-decorationsContainer {
-    right: 10px;
+    display: none !important;
   }
 }
 
-@media (max-width: 480px) {
-  .DiscussionHero-decorationIcon {
-    font-size: clamp(48px, 8vw, 80px);
-    min-width: 48px;
-    max-width: 90px;
-    padding: 0 6px;
-  }
-
-  .DiscussionHero-decorationsContainer {
-    right: 8px;
-    gap: var(--deco-pair-gap, 8px);
-  }
-
-  .DiscussionHero-decoSeparator {
-    font-size: clamp(24px, 5vw, 32px) !important;
+// 2-icon layout is too wide for @desktop (992–1099px) — hide it there, single icon is fine
+@media @desktop {
+  .has-two-deco-icons .DiscussionHero-decorationsContainer {
+    display: none !important;
   }
 }
 

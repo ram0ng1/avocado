@@ -21,7 +21,7 @@ import DiscussionPage from 'flarum/forum/components/DiscussionPage';
 import PageStructure from 'flarum/forum/components/PageStructure';
 import { tagPageView } from './components/TagsPage';
 import HomePage from './components/HomePage';
-import { buildUserPhoneNav } from './components/UserProfilePage';
+import { buildUserPhoneNav, buildHero, buildSidebar } from './components/UserProfilePage';
 
 // ─── Lazy route components ────────────────────────────────────────────────────
 // Flarum's DefaultResolver.onmatch expects either:
@@ -59,6 +59,7 @@ import {
 } from './utils';
 import TextEditor from 'flarum/common/components/TextEditor';
 import listItems from 'flarum/common/helpers/listItems';
+import humanTime from 'flarum/common/utils/humanTime';
 
 // ─── Settings helpers ─────────────────────────────────────────────────────────
 
@@ -473,7 +474,31 @@ app.initializers.add(
             <div className={innerClass} style={decorationIconStyle}>
               {/* Decoration icons wrapper — flexbox container for dynamic sizing */}
               {(showDecorationIcon && decorationIconClass) || showDecoDivider || (showDecorationIcon && iconCount >= 2 && decorationIconClass2) ? (
-                <div className="DiscussionHero-decorationsContainer">
+                <div 
+                  className="DiscussionHero-decorationsContainer"
+                  oncreate={(vnode) => {
+                    // ResizeObserver to ensure icons render properly
+                    const container = vnode.dom;
+                    const observer = new ResizeObserver(() => {
+                      // Just observe - don't modify layout to avoid conflicts with CSS padding
+                      // This ensures icons render at their true size
+                    });
+                    
+                    // Observe container and all icons
+                    observer.observe(container);
+                    container.querySelectorAll('.DiscussionHero-decorationIcon, .DiscussionHero-decoSeparator').forEach(el => {
+                      observer.observe(el);
+                    });
+                    
+                    // Cleanup
+                    vnode.dom._iconObserver = observer;
+                  }}
+                  onremove={(vnode) => {
+                    if (vnode.dom._iconObserver) {
+                      vnode.dom._iconObserver.disconnect();
+                    }
+                  }}
+                >
                   {/* Decoration icon: first child tag icon */}
                   {showDecorationIcon && decorationIconClass && (
                     <div
@@ -549,7 +574,7 @@ app.initializers.add(
                       </span>
                     </Tooltip>
                   )}
-                  {tags.slice(0, 3).map((tag) => {
+                  {tags.map((tag) => {
                     const tagColor = tag.color?.() || null;
                     const tagStyle = tagPillStyle(tagColor, 0.12);
                     return (
@@ -1187,7 +1212,7 @@ app.initializers.add(
     override(PostEdited.prototype, 'view', function () {
       const post = this.attrs.post;
       const editedUser = post.editedUser?.();
-      const editedInfo = app.translator.trans('core.forum.post.edited_tooltip', { user: editedUser, ago: '' });
+      const editedInfo = app.translator.trans('core.forum.post.edited_tooltip', { user: editedUser, ago: humanTime(post.editedAt?.()) });
       return (
         <Tooltip text={editedInfo}>
           <span className="PostEdited">
