@@ -198,77 +198,134 @@
   i { font-size: 13px; }
 }
 
-// Decorative secondary tag icon on the right side of the hero
+// ── Dynamic decoration icons system ────────────────────────────────────────────
+// Responsive, flexible sizing that adapts to custom icon sizes automatically
+// No hardcoded dimensions — everything scales based on actual icon content width
+
 .DiscussionHero-decorationIcon {
-  position: absolute;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 120px;
+  // Use automatic sizing based on content width
+  width: fit-content;
+  height: auto;
+  
+  // Constrain to reasonable dimensions but allow flexibility
+  max-width: 160px;
+  min-width: 80px;
+  
+  // Default-ish size (adjusts for custom icons)
+  font-size: clamp(80px, 12vw, 140px);
   line-height: 1;
-  // Fixed width = exactly 1em (120px) — makes the box predictable for gap
-  // calculations and custom CSS dividers that rely on left: 0 as reference.
-  width: 1em;
   text-align: center;
-  overflow: visible;
-  // color-mix bakes the opacity into the color itself — the tag hue is always
-  // preserved regardless of transparency level.
+  
+  // Adaptive color with opacity blending
   color: color-mix(
     in srgb,
     var(--tag-color-secondary, var(--discussion-color, white))
       calc(var(--decoration-opacity, 0.15) * 100%),
     transparent
   );
+  
   pointer-events: none;
   display: none;
+  overflow: visible;
+  padding: 0 8px; // Breathing room around icon
+  flex-shrink: 0;
 
   &.is-visible {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1em;
+  }
+
+  // Fallback for custom icons that don't render properly
+  i {
     display: block;
+    width: 100%;
+    height: 100%;
+    line-height: 1;
   }
 }
 
-// Two-icon layout: same size, side by side — first tag on left, second on right.
-// --deco-pair-gap controls the space between them; grows when the divider is on.
+// ── Centered decoration container ────────────────────────────────────────────
+// Uses flexbox for natural responsive alignment instead of absolute positioning
+.DiscussionHero-decorationsContainer {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--deco-pair-gap, 12px);
+  height: auto;
+  pointer-events: none;
+  white-space: nowrap;
+  
+  // Ensure icons don't overlap in any scenario
+  > div {
+    flex: 0 1 auto;
+  }
+}
+
+// ── Separator icon: scales with gap, always centered
+.DiscussionHero-decoSeparator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(32px, 8vw, 48px); // Responsive separator size
+  line-height: 1;
+  color: var(--deco-sep-color, rgba(255, 255, 255, 0.5));
+  pointer-events: none;
+  z-index: 1;
+  transform: rotate(15deg);
+  flex-shrink: 0;
+  width: auto;
+  height: 1em;
+  
+  i {
+    display: block;
+    line-height: 1;
+  }
+}
+
+// ── Two-icon layout: responsive spacing that adapts to icon sizes
 .has-two-deco-icons {
   --deco-pair-gap: 12px;
 
   &.has-deco-divider {
-    --deco-pair-gap: 64px; // room for ~40px divider icon + 12px padding each side
-  }
-
-  .DiscussionHero-decorationIcon:not(.DiscussionHero-decorationIcon--second) {
-    right: calc(20px + 1em + var(--deco-pair-gap));
-  }
-
-  .DiscussionHero-decorationIcon--second {
-    right: 20px;
-    font-size: 120px;
-    top: 50%;
-  }
-
-  // Separator icon: centered in the gap between the two decoration icons.
-  // Uses 120px (the fixed icon size) explicitly — 1em would resolve to 40px
-  // (the separator's own font-size) and break the calculation.
-  // right: gap midpoint from container right;
-  // translateX(50%) shifts element right so its CENTER lands on that point.
-  .DiscussionHero-decoSeparator {
-    position: absolute;
-    right: calc(0px + 120px + var(--deco-pair-gap) / 2);
-    top: 50%;
-    transform: translate(50%, -50%) rotate(15deg);
-    font-size: 40px;
-    line-height: 1;
-    --deco-sep-color: rgba(255, 255, 255, 0.5); // light mode: white
-    color: var(--deco-sep-color);
-    pointer-events: none;
-    z-index: 1;
+    --deco-pair-gap: 20px; // Flexible gap for divider
   }
 }
 
-// Hide decoration icon on tablet and phone
-@media @phone, @tablet {
+// ── Responsive behavior for decoration icons ──────────────────────────────────
+// Adjust sizing on smaller viewports
+@media (max-width: 768px) {
   .DiscussionHero-decorationIcon {
-    display: none !important;
+    font-size: clamp(60px, 10vw, 100px);
+    min-width: 60px;
+    max-width: 120px;
+  }
+
+  .DiscussionHero-decorationsContainer {
+    right: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .DiscussionHero-decorationIcon {
+    font-size: clamp(48px, 8vw, 80px);
+    min-width: 48px;
+    max-width: 90px;
+    padding: 0 6px;
+  }
+
+  .DiscussionHero-decorationsContainer {
+    right: 8px;
+    gap: var(--deco-pair-gap, 8px);
+  }
+
+  .DiscussionHero-decoSeparator {
+    font-size: clamp(24px, 5vw, 32px) !important;
   }
 }
 
