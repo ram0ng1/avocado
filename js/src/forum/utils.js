@@ -54,13 +54,35 @@ export const iconColors = (hex, bgAlpha = 0.12) => {
   return { bg: hexToRgba(hex, bgAlpha), color: hex };
 };
 
+// Ensures a hex color meets WCAG AA (4.5:1) contrast ratio against white (#fff).
+// Iteratively darkens the color by blending toward black until the threshold is met.
+const wcagDarkenForWhite = (hex) => {
+  if (!hex || hex.length < 6) return hex;
+  const h = hex.replace('#', '');
+  if (h.length !== 6) return hex;
+  // Already passes?
+  if ((1.05) / (hexLuminance(hex) + 0.05) >= 4.5) return hex;
+  let r = parseInt(h.substring(0, 2), 16);
+  let g = parseInt(h.substring(2, 4), 16);
+  let b = parseInt(h.substring(4, 6), 16);
+  for (let i = 0; i < 12; i++) {
+    r = Math.round(r * 0.78);
+    g = Math.round(g * 0.78);
+    b = Math.round(b * 0.78);
+    const darkened = '#' + [r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('');
+    if ((1.05) / (hexLuminance(darkened) + 0.05) >= 4.5) return darkened;
+  }
+  return '#333333';
+};
+
 // Convenience wrapper — returns the inline style object for tag pill elements.
-// Replaces the repetitive `tagColor ? { '--tag-bg': hexToRgba(...), '--tag-color': tagColor } : {}`
-// pattern across all components and automatically applies dark-mode inversion.
+// Enforces WCAG AA (4.5:1) contrast on the text color against the pill's
+// transparent-on-white background so Lighthouse accessibility audits pass.
 export const tagPillStyle = (hex, alpha = 0.1) => {
   if (!hex) return {};
-  const { bg, color } = iconColors(hex, alpha);
-  return { '--tag-bg': bg, '--tag-color': color };
+  const { bg } = iconColors(hex, alpha);
+  const safeColor = wcagDarkenForWhite(hex);
+  return { '--tag-bg': bg, '--tag-color': safeColor };
 };
 
 // ─── User display name ────────────────────────────────────────────────────────
@@ -268,3 +290,4 @@ export const renderLoadMore = (label, onclick) =>
 
 export const renderEmpty = (label) =>
   m('div', { className: 'AvocadoDiscussions-empty' }, label);
+

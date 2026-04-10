@@ -22,7 +22,6 @@ import {
   highlight,
   numberOr,
   trans,
-  resolveAssetUrl,
   FALLBACK_COLORS,
   FALLBACK_ICONS,
   navigate,
@@ -30,6 +29,7 @@ import {
   renderThreadSkeleton as renderDiscSkeleton,
   renderPostSkeleton,
   getFeaturedTagIds,
+  resolveAssetUrl,
 } from '../utils';
 
 const DISC_SORT_LABELS = {
@@ -682,8 +682,6 @@ export default class AvocadoSearchPage extends Page {
   renderEmptyState() {
     const tags = app.store.all('tags').filter((t) => t && t.id?.() && !t.parent?.()).slice(0, 8);
     const featuredIds = getFeaturedTagIds();
-    const fireUrl = resolveAssetUrl('extensions/ramon-avocado/fire.webp');
-
     return (
       <div className="AvocadoSearch-hero">
         <h1 className="AvocadoSearch-heroTitle">
@@ -714,7 +712,7 @@ export default class AvocadoSearchPage extends Page {
                     {isFeatured && (
                       <Tooltip text={trans('ramon-avocado.forum.tags.featured', 'Featured')} position="top">
                         <span className="AvocadoHome-featuredBadge">
-                          <img src={fireUrl} alt="" aria-hidden="true" />
+                          <img src={resolveAssetUrl('fire.webp')} alt="" aria-hidden="true" width="18" height="18" />
                         </span>
                       </Tooltip>
                     )}
@@ -722,7 +720,7 @@ export default class AvocadoSearchPage extends Page {
                       <i className={icon} aria-hidden="true" />
                     </span>
                     <div className="AvocadoHome-categoryBody">
-                      <h3>{tag.name?.()}</h3>
+                      <h2 className="AvocadoHome-categoryName">{tag.name?.()}</h2>
                       <p>{numberOr(tag.discussionCount?.(), 0)} {tag.discussionCount?.() === 1 ? trans('ramon-avocado.forum.home.discussion_singular', 'discussion') : trans('ramon-avocado.forum.home.discussions', 'discussions')}</p>
                     </div>
                   </a>
@@ -735,7 +733,7 @@ export default class AvocadoSearchPage extends Page {
                 onclick={(e) => this.navigate(e, safeRoute('tags'))}
               >
                 <div className="AvocadoHome-categoryBody">
-                  <h3>{trans('ramon-avocado.forum.home.all_categories', 'All categories')}</h3>
+                  <h2 className="AvocadoHome-categoryName">{trans('ramon-avocado.forum.home.all_categories', 'All categories')}</h2>
                   <p>{Math.max(0, app.store.all('tags').filter((t) => t && !t.parent?.()).length - tags.length)} {trans('ramon-avocado.forum.home.more', 'more')}</p>
                 </div>
                 <i className="fas fa-arrow-right" aria-hidden="true" />
