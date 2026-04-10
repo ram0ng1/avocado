@@ -142,6 +142,7 @@ ramon-avocado:
       discussion_singular_card: "1 discussion"
       discussion_plural_card: "{count} discussions"
       yesterday_time: "Yesterday, {time}"
+      showcase_heading: "Showcase"
     discussions:
       title: All discussions
       home: Back to Home

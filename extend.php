@@ -22,6 +22,7 @@ return [
         ->content(\Ramon\Avocado\Content\AddCriticalCss::class)
         ->content(\Ramon\Avocado\Content\AddCriticalPreloads::class)
         ->content(\Ramon\Avocado\Content\AddHeroBannerPreload::class)
+        ->content(\Ramon\Avocado\Content\AddShowcaseImagePreload::class)
         ->content(\Ramon\Avocado\Content\HideLogoFlash::class)
         ->content(\Ramon\Avocado\Content\DeferMainCss::class)
         ->route('/discussions', 'avocado-discussions')
@@ -78,6 +79,7 @@ return [
         ->fields(\Ramon\Avocado\Api\ForumAttributes::class),
 
     (new Extend\Routes('api'))
+        ->get('/avocado/optimize-image', 'avocado.optimize_image', \Ramon\Avocado\Controller\OptimizeImageController::class)
         ->post('/avocado/banner', 'avocado.banner.upload', \Ramon\Avocado\Controller\UploadBannerController::class)
         ->delete('/avocado/banner', 'avocado.banner.delete', \Ramon\Avocado\Controller\DeleteBannerController::class)
         ->post('/avocado/auth-image', 'avocado.auth_image.upload', \Ramon\Avocado\Controller\UploadAuthImageController::class)

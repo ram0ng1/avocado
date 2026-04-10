@@ -140,6 +140,7 @@ ramon-avocado:
       discussion_singular_card: "1 discussão"
       discussion_plural_card: "{count} discussões"
       yesterday_time: "Ontem, {time}"
+      showcase_heading: "Showcase"
     discussions:
       title: Todas as discussões
       home: Voltar para o Início

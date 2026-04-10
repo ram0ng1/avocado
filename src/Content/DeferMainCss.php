@@ -31,30 +31,26 @@ class DeferMainCss
     {
         // language=JavaScript
         $script = <<<'JS'
-        (function(){
-          var links = document.querySelectorAll('link[rel="stylesheet"]');
-          for (var i = 0; i < links.length; i++) {
-            var link = links[i];
-            var href = link.getAttribute('href') || '';
-            // Only defer Avocado's own stylesheet(s) — leave Flarum core CSS alone.
-            if (href.indexOf('ramon-avocado') === -1) continue;
-            // Build a <noscript> fallback before we modify the link.
-            var noscript = document.createElement('noscript');
-            var fallback = document.createElement('link');
-            fallback.rel = 'stylesheet';
-            fallback.href = href;
-            noscript.appendChild(fallback);
-            link.parentNode.insertBefore(noscript, link.nextSibling);
-            // Convert to preload so it loads in parallel without blocking render.
-            link.rel = 'preload';
-            link.as  = 'style';
-            link.onload = function() { this.onload = null; this.rel = 'stylesheet'; };
-          }
-        })();
-        JS;
+(function(){
+  var links = document.querySelectorAll('link[rel="stylesheet"]');
+  for (var i = 0; i < links.length; i++) {
+    var link = links[i];
+    var href = link.getAttribute('href') || '';
+    if (href.indexOf('ramon-avocado') === -1) continue;
+    var noscript = document.createElement('noscript');
+    var fallback = document.createElement('link');
+    fallback.rel = 'stylesheet';
+    fallback.href = href;
+    noscript.appendChild(fallback);
+    link.parentNode.insertBefore(noscript, link.nextSibling);
+    link.rel = 'preload';
+    link.as = 'style';
+    link.onload = function() { this.onload = null; this.rel = 'stylesheet'; };
+  }
+})();
+JS;
 
-        // Strip heredoc indentation
-        $script = preg_replace('/^        /m', '', trim($script));
+        $script = trim($script);
 
         $document->head[] = '<script id="avocado-defer-css">' . $script . '</script>';
     }

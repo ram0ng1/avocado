@@ -62,6 +62,10 @@ class AddCriticalPreloads
 
         foreach ($origins as $origin) {
             $safe = htmlspecialchars($origin, ENT_QUOTES, 'UTF-8');
+            // Validate the origin is still a valid URL after escaping
+            if (empty($safe) || !preg_match('/^https?:\/\//', $safe)) {
+                continue;
+            }
             // crossorigin is needed for fonts; for images it is optional but harmless.
             $document->head[] = '<link rel="preconnect" href="' . $safe . '" crossorigin>';
             $document->head[] = '<link rel="dns-prefetch" href="' . $safe . '">';
