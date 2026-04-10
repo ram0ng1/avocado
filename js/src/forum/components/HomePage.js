@@ -791,7 +791,7 @@ export default class HomePage extends Component {
     return null;
   }
 
-  renderShowcaseCard(discussion) {
+  renderShowcaseCard(discussion, isFirst = false) {
     if (!discussion) return null;
     const id            = discussion.id?.();
     const title         = discussion.title?.() || trans('ramon-avocado.forum.home.untitled', 'Untitled');
@@ -861,7 +861,15 @@ export default class HomePage extends Component {
 
           {/* ── Cover image ──────────────────────────────────────────── */}
           {imageUrl
-            ? <img className="AvocadoHome-showcaseCard-img" src={imageUrl} alt={title} loading="lazy" />
+            ? <img
+                className="AvocadoHome-showcaseCard-img"
+                src={imageUrl}
+                alt={title}
+                width="400"
+                height="150"
+                loading={isFirst ? 'eager' : 'lazy'}
+                fetchpriority={isFirst ? 'high' : undefined}
+              />
             : <div className="AvocadoHome-showcaseCard-noImg" style={{ background: noImgBg }}>
                 {primaryTag?.icon?.() && (
                   <i className={primaryTag.icon()} aria-hidden="true"
@@ -953,7 +961,7 @@ export default class HomePage extends Component {
           <h2>{app.forum?.attribute('avocadoShowcaseHeading') || tag?.name?.() || trans('ramon-avocado.forum.home.showcase_heading', 'Showcase')}</h2>
         </div>
         <div className="AvocadoHome-showcaseGrid">
-          {items.map((d) => this.renderShowcaseCard(d))}
+          {items.map((d, i) => this.renderShowcaseCard(d, i === 0))}
         </div>
       </section>
     );
@@ -1034,7 +1042,7 @@ export default class HomePage extends Component {
               style={{ zIndex: MAX_SHOWN - i }}
             >
               {avatarUrl
-                ? <img src={avatarUrl} alt={name} className="Avatar" />
+                ? <img src={avatarUrl} alt={name} className="Avatar" width="32" height="32" decoding="async" />
                 : (userModel
                     ? Avatar.component({ user: userModel })
                     : (app.forum?.attribute('avocadoCustomDefaultAvatar') !== false
@@ -1476,10 +1484,6 @@ export default class HomePage extends Component {
                   const catRoute   = tagRoute(cat);
                   const count      = numberOr(cat.discussionCount?.(), 0);
                   const isFeatured = featuredIds.has(String(cat.id?.()));
-                  const fireUrl = isFeatured
-                    ? resolveAssetUrl('extensions/ramon-avocado/fire.webp')
-                    : null;
-
                   return (
                     <a
                       key={cat.id?.()}
@@ -1488,10 +1492,10 @@ export default class HomePage extends Component {
                       onclick={(e) => navigate(e, catRoute)}
                       style={categoryCardStyle(catColor)}
                     >
-                      {isFeatured && fireUrl && (
+                      {isFeatured && (
                         <Tooltip text={trans('ramon-avocado.forum.tags.featured', 'Featured')} position="top">
                           <span className="AvocadoHome-featuredBadge">
-                            <img src={fireUrl} alt="" aria-hidden="true" />
+                            <img src={resolveAssetUrl('fire.webp')} alt="" aria-hidden="true" width="18" height="18" />
                           </span>
                         </Tooltip>
                       )}

@@ -11,10 +11,10 @@ import {
   formatTimeLabel,
   postPreview,
   tagRoute,
-  resolveAssetUrl,
   navigate,
   getFeaturedTagIds,
   iconPillStyle,
+  resolveAssetUrl,
 } from '../utils';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -23,7 +23,7 @@ import {
 
 // ─── Tag card (primary tag) ───────────────────────────────────────────────────
 
-function renderTagCard(tag, featured = false, fireUrl = '') {
+function renderTagCard(tag, featured = false) {
   const color   = tag.color?.();
   const { bg: iconBg, color: iconColor } = iconColors(color, 0.12);
   const href    = tagRoute(tag);
@@ -41,10 +41,10 @@ function renderTagCard(tag, featured = false, fireUrl = '') {
       key={tag.id()}
       className={`AvocadoTagsPage-tagCard${featured ? ' AvocadoTagsPage-tagCard--featured' : ''}`}
     >
-      {featured && fireUrl && (
+      {featured && (
         <Tooltip text={trans('ramon-avocado.forum.tags.featured', 'Featured')} position="top">
           <span className="AvocadoTagsPage-featuredBadge">
-            <img src={fireUrl} alt="" aria-hidden="true" />
+            <img src={resolveAssetUrl('fire.webp')} alt="" aria-hidden="true" width="20" height="20" />
           </span>
         </Tooltip>
       )}
@@ -58,7 +58,7 @@ function renderTagCard(tag, featured = false, fireUrl = '') {
             <i className={tag.icon?.() || 'fas fa-tag'} aria-hidden="true" />
           </span>
           <div className="AvocadoTagsPage-tagCard-info">
-            <h3 className="AvocadoTagsPage-tagCard-name">{tag.name?.()}</h3>
+            <h2 className="AvocadoTagsPage-tagCard-name">{tag.name?.()}</h2>
             <span className="AvocadoTagsPage-tagCard-count">
               {count} {count === 1 ? trans('ramon-avocado.forum.tags.discussion_singular', 'discussion') : trans('ramon-avocado.forum.tags.discussion_plural', 'discussions')}
             </span>
@@ -135,8 +135,6 @@ export function tagPageView(original) {
 
   const featuredIds = getFeaturedTagIds();
 
-  const fireUrl = resolveAssetUrl('extensions/ramon-avocado/fire.webp');
-
   const primaryTags = tags
     .filter((t) => t.position?.() !== null)
     .sort((a, b) => {
@@ -171,7 +169,7 @@ export function tagPageView(original) {
 
       {/* ── Primary tags grid ── */}
       <ul className="AvocadoTagsPage-grid">
-        {loading ? renderSkeleton() : primaryTags.map((tag) => renderTagCard(tag, featuredIds.has(String(tag.id())), fireUrl))}
+        {loading ? renderSkeleton() : primaryTags.map((tag) => renderTagCard(tag, featuredIds.has(String(tag.id()))))}
       </ul>
 
       {/* ── Cloud / secondary tags ── */}
