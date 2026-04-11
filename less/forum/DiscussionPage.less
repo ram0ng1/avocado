@@ -56,7 +56,60 @@
   // 1 icon  (right: 20px): ~100px icon + 20px offset + 40px buffer = 160px
   // 2 icons (right: 0):    G + sep + Ole Miss + buffer = 380px
   &.has-deco-icon      { padding-right: 160px; }
-  &.has-two-deco-icons { padding-right: 380px; }
+  &.has-two-deco-icons { padding-right: 420px; }
+}
+
+// Desktop to tablet transition: reduce padding gradually
+@media (max-width: 1129px) {
+  .DiscussionHero-inner.has-two-deco-icons {
+    padding-right: 300px !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .DiscussionHero-inner.has-two-deco-icons {
+    padding-right: 260px !important;
+  }
+}
+
+// Tablet: reduce padding-right significantly
+@media (max-width: 900px) {
+  .DiscussionHero-inner.has-two-deco-icons {
+    padding-right: 200px !important;
+  }
+}
+
+// Tablet: reduce padding-right significantly
+@media (max-width: 900px) {
+  .DiscussionHero-inner.has-two-deco-icons {
+    padding-right: 200px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .DiscussionHero-inner {
+    padding: 36px 16px 44px;
+  }
+
+  .DiscussionHero-inner.has-deco-icon {
+    padding-right: 110px !important;
+  }
+
+  .DiscussionHero-inner.has-two-deco-icons {
+    padding-right: 140px !important;
+  }
+}
+
+// Phone: restore normal padding
+@media @phone {
+  .DiscussionHero-inner {
+    padding: 32px 16px 40px !important;
+  }
+
+  .DiscussionHero-inner.has-deco-icon,
+  .DiscussionHero-inner.has-two-deco-icons {
+    padding-right: 16px !important;
+  }
 }
 
 // Nav row: back circle + pills on same line
@@ -333,15 +386,10 @@
 
 // ── Breakpoint visibility ─────────────────────────────────────────────────────
 
-// Phone: no icons, restore padding
+// Phone: hide large icons, restore padding
 @media @phone {
   .DiscussionHero-decorationsContainer {
     display: none !important;
-  }
-
-  .DiscussionHero-inner.has-deco-icon,
-  .DiscussionHero-inner.has-two-deco-icons {
-    padding-right: 20px !important;
   }
 }
 
@@ -356,6 +404,17 @@
   // 2 icons hidden here — shrink padding-right to 1-icon value
   .DiscussionHero-inner.has-two-deco-icons {
     padding-right: 160px !important;
+  }
+}
+
+// Phone reset MUST come after all max-width blocks above to win the cascade.
+// The (max-width: 1129px) block overrides the @phone reset at line ~104 because
+// it appears later in the source with equal specificity and !important.
+// Repeating the reset here guarantees phones always get full-width padding.
+@media @phone {
+  .DiscussionHero-inner.has-deco-icon,
+  .DiscussionHero-inner.has-two-deco-icons {
+    padding-right: 16px !important;
   }
 }
 

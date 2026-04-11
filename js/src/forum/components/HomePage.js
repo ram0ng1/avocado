@@ -26,6 +26,7 @@ import {
   navigate,
   userRoute,
   renderThreadSkeleton,
+  renderEmpty,
   getFeaturedTagIds,
   categoryCardStyle,
   safeCssUrl,
@@ -1392,7 +1393,7 @@ export default class HomePage extends Component {
             <i className="fas fa-sign-in-alt" aria-hidden="true" />
             {trans('ramon-avocado.forum.home.log_in', 'Log In')}
           </button>
-          <span className="AvocadoHome-guestCTA-or">or</span>
+          <span className="AvocadoHome-guestCTA-or">{trans('ramon-avocado.forum.home.or', 'or')}</span>
           <button
             className="AvocadoHome-guestCTA-btn AvocadoHome-guestCTA-btn--signup"
             onclick={() => app.modal.show(() => flarum.reg.asyncModuleImport('flarum/forum/components/SignUpModal'))}
@@ -1607,7 +1608,7 @@ export default class HomePage extends Component {
             </div>
             <div className="AvocadoHome-threadStack">
               {popular.length === 0
-                ? renderThreadSkeleton()
+                ? renderEmpty(trans('ramon-avocado.forum.home.popular_no_discussions', 'No discussions yet.'))
                 : popular.map((d) => this.renderThreadCard(d))
               }
             </div>

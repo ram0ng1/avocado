@@ -4,6 +4,7 @@ import Avatar from 'flarum/common/components/Avatar';
 import Tooltip from 'flarum/common/components/Tooltip';
 import Dropdown from 'flarum/common/components/Dropdown';
 import listItems from 'flarum/common/helpers/listItems';
+import abbreviateNumber from 'flarum/common/utils/abbreviateNumber';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import DiscussionListState from 'flarum/forum/states/DiscussionListState';
 import PostListState from 'flarum/forum/states/PostListState';
@@ -30,6 +31,7 @@ import {
   renderPostSkeleton,
   getFeaturedTagIds,
   resolveAssetUrl,
+  categoryCardStyle,
 } from '../utils';
 
 const DISC_SORT_LABELS = {
@@ -707,7 +709,7 @@ export default class AvocadoSearchPage extends Page {
                     className={`AvocadoHome-categoryCard${isFeatured ? ' AvocadoHome-categoryCard--featured' : ''}`}
                     href={href}
                     onclick={(e) => this.navigate(e, href)}
-                    style={(() => { const ic = iconColors(color, 0.12); return { '--cat-color': ic.color, '--cat-bg': ic.bg }; })()}
+                    style={categoryCardStyle(color)}
                   >
                     {isFeatured && (
                       <Tooltip text={trans('ramon-avocado.forum.tags.featured', 'Featured')} position="top">
@@ -720,8 +722,8 @@ export default class AvocadoSearchPage extends Page {
                       <i className={icon} aria-hidden="true" />
                     </span>
                     <div className="AvocadoHome-categoryBody">
-                      <h2 className="AvocadoHome-categoryName">{tag.name?.()}</h2>
-                      <p>{numberOr(tag.discussionCount?.(), 0)} {tag.discussionCount?.() === 1 ? trans('ramon-avocado.forum.home.discussion_singular', 'discussion') : trans('ramon-avocado.forum.home.discussions', 'discussions')}</p>
+                      <h3>{tag.name?.()}</h3>
+                      <p>{abbreviateNumber(numberOr(tag.discussionCount?.(), 0))} {tag.discussionCount?.() === 1 ? trans('ramon-avocado.forum.home.discussion_singular', 'discussion') : trans('ramon-avocado.forum.home.discussions', 'discussions')}</p>
                     </div>
                   </a>
                 );
@@ -733,7 +735,7 @@ export default class AvocadoSearchPage extends Page {
                 onclick={(e) => this.navigate(e, safeRoute('tags'))}
               >
                 <div className="AvocadoHome-categoryBody">
-                  <h2 className="AvocadoHome-categoryName">{trans('ramon-avocado.forum.home.all_categories', 'All categories')}</h2>
+                  <h3>{trans('ramon-avocado.forum.home.all_categories', 'All categories')}</h3>
                   <p>{Math.max(0, app.store.all('tags').filter((t) => t && !t.parent?.()).length - tags.length)} {trans('ramon-avocado.forum.home.more', 'more')}</p>
                 </div>
                 <i className="fas fa-arrow-right" aria-hidden="true" />

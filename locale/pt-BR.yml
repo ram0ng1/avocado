@@ -62,6 +62,7 @@ ramon-avocado:
       share: Compartilhar
     post_cta:
       text: "Gostou? Participe da discussão!"
+      or: "ou"
     link_cta:
       placeholder: "Faça login para ver o link"
     search:
@@ -87,8 +88,7 @@ ramon-avocado:
     header:
       back_home: Voltar para o Início
       search: Pesquisar
-    user:
-    tag:
+      or: "ou"
     discussion:
       post_singular: post
       post_plural: posts
@@ -118,7 +118,9 @@ ramon-avocado:
       more: mais
       new_discussion: Nova Discussão
       no_tags_found: Nenhuma tag encontrada
+      or: "ou"
       popular_heading: Discussões populares
+      popular_no_discussions: "Nenhuma discussão por enquanto."
       replies: respostas
       reply_count_plural: "{count} respostas"
       reply_count_singular: "1 resposta"
@@ -154,3 +156,5 @@ ramon-avocado:
       other_tags_label: Outras tags
       featured: Destaque
       all_discussions: Todas as discussões
+    link:
+      login_to_view: "Faça login para ver o link"
