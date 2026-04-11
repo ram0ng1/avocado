@@ -30,6 +30,7 @@ return [
         ->content(\Ramon\Avocado\Content\AddShowcaseImagePreload::class)
         ->content(\Ramon\Avocado\Content\HideLogoFlash::class)
         ->content(\Ramon\Avocado\Content\DeferMainCss::class)
+        ->content(\Ramon\Avocado\Content\LoadFontAwesomeKit::class)
         ->route('/discussions', 'avocado-discussions')
         ->route('/search', 'avocado-search'),
 

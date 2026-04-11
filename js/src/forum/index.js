@@ -441,12 +441,14 @@ app.initializers.add(
       // Decoration icon: secondary tag icon on hero right side
       // Finds child tags (tags with parent) regardless of position
       // Ignores parent tags, maintains original tag order
-      const showDecorationIcon = !!app.forum.attribute('avocadoHeroDecorationIcon');
+      // Don't show any decoration icons on mobile (≤480px)
+      const isMobile = typeof window !== 'undefined' && window.innerWidth <= 480;
+      const showDecorationIcon = !!app.forum.attribute('avocadoHeroDecorationIcon') && !isMobile;
       const decorationOpacity = app.forum.attribute('avocadoHeroDecorationIconOpacity');
       const opacityValue = decorationOpacity ? Math.min(Math.max(parseInt(decorationOpacity) / 100, 0), 1) : 0.15;
-      const iconCount = parseInt(app.forum.attribute('avocadoHeroDecorationIconCount') || '1');
+      let iconCount = parseInt(app.forum.attribute('avocadoHeroDecorationIconCount') || '1');
 
-      // Collect child tags (have parent) - up to 2
+      // Collect child tags (have parent)
       const childTags = tags.filter(t => t.parent?.());
       const firstChildTag  = childTags[0] || null;
       const secondChildTag = iconCount >= 2 ? (childTags[1] || null) : null;
@@ -475,7 +477,7 @@ app.initializers.add(
           <div className="container">
             <div className={innerClass} style={decorationIconStyle}>
               {/* Decoration icons wrapper — flexbox container for dynamic sizing */}
-              {(showDecorationIcon && decorationIconClass) || showDecoDivider || (showDecorationIcon && iconCount >= 2 && decorationIconClass2) ? (
+              {(showDecorationIcon && decorationIconClass) || (showDecorationIcon && showDecoDivider) || (showDecorationIcon && iconCount >= 2 && decorationIconClass2) ? (
                 <div 
                   className="DiscussionHero-decorationsContainer"
                   oncreate={(vnode) => {
@@ -511,7 +513,7 @@ app.initializers.add(
                     </div>
                   )}
                   {/* Divider icon between decoration icons */}
-                  {showDecoDivider && (
+                  {showDecorationIcon && showDecoDivider && (
                     <div className="DiscussionHero-decoSeparator" aria-hidden="true">
                       <i className={decoDividerIcon} />
                     </div>
