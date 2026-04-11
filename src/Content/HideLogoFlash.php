@@ -17,6 +17,8 @@ class HideLogoFlash
         if (!$this->settings->get('avocado.logo_enabled', false)) return;
         if (!$this->settings->get('avocado.logo_svg')) return;
 
+        // Add data-attribute so CSS can conditionally apply custom logo styles
+        $document->head[] = '<script>document.documentElement.dataset.avocadoLogoCustom="true"</script>';
         $document->head[] = '<style id="avocado-logo-hide">#home-link{visibility:hidden!important}</style>';
     }
 }

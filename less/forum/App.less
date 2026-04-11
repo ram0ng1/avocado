@@ -202,40 +202,49 @@
   }
 }
 
-// ─── Header logo sizing ───────────────────────────────────────────────────────
-// For PNG logos: fixed height so oversized images don't break the header.
-img.Header-logo {
-  height: 35px !important;
-  width: auto !important;
-  max-width: 200px !important;
-  vertical-align: middle !important;
-  display: inline-block !important;
-}
-// For the Avocado-injected SVG logo: width/height set explicitly by JS from viewBox aspect ratio.
-svg.Header-logo {
-  height: 50px !important;
-  width: auto !important;
-  max-width: none !important;
-  max-height: none !important;
-  display: inline-block !important;
-  vertical-align: middle !important;
-  flex-shrink: 0 !important;
-  margin: 0 !important;
-  overflow: visible;
-}
-
-// Keep header title flex-aligned so logo and title baseline nicely
-.App-header .Header-title {
-  display: flex !important;
-  align-items: center !important;
-  padding: 5px 0;
+// ─── Header logo sizing (Custom SVG only) ───────────────────────────────────
+// Only apply custom sizing when custom logo is enabled.
+// When disabled, Flarum's default .Header-logo { display: block; max-height: 30px; } applies.
+html[data-avocado-logo-custom="true"] {
+  // For fallback PNG logos: fixed height so oversized images don't break the header.
+  img.Header-logo {
+    height: 35px !important;
+    width: auto !important;
+    max-width: 200px !important;
+    vertical-align: middle !important;
+    display: inline-block !important;
+  }
+  // For the Avocado-injected SVG logo: width/height set explicitly by JS from viewBox aspect ratio.
+  svg.Header-logo {
+    height: 50px !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    overflow: visible;
+  }
 }
 
-// Constrain header height for both PNG and SVG logos
-.App-header {
-  height: 52px !important;
-  min-height: 52px !important;
-  line-height: 1;
+// Custom logo only: flex-align header title and constrain height.
+// Without this scope, the 52px height and flex layout override Flarum's default
+// logo/title behaviour (text name or admin-uploaded PNG) unnecessarily.
+html[data-avocado-logo-custom="true"] {
+  // Keep header title flex-aligned so SVG logo and title baseline nicely
+  .App-header .Header-title {
+    display: flex !important;
+    align-items: center !important;
+    padding: 5px 0;
+  }
+
+  // Constrain header height to match SVG logo height (50px) + breathing room
+  .App-header {
+    height: 52px !important;
+    min-height: 52px !important;
+    line-height: 1;
+  }
 }
 
 // Frosted-glass effect on header icon buttons (flags, notifications, user menu toggle)
@@ -478,31 +487,33 @@ svg.Header-logo {
   padding: 0 10px;
 }
 
-// ─── Avocado SVG Logo ──────────────────────────────────────────────────────────
-// Responsive SVG logo that auto-scales and centers
-.AvocadoLogoSvg {
-  max-width: 100%;
-  height: auto !important;
-  max-height: 50px;
-  width: auto !important;
-  object-fit: contain;
-  object-position: center;
+// ─── Avocado SVG Logo (Custom logo only) ──────────────────────────────────────
+// Responsive SVG logo that auto-scales and centers - only when custom logo is enabled.
+html[data-avocado-logo-custom="true"] {
+  .AvocadoLogoSvg {
+    max-width: 100%;
+    height: auto !important;
+    max-height: 50px;
+    width: auto !important;
+    object-fit: contain;
+    object-position: center;
 
-  // On mobile/tablet, allow slightly smaller logo
-  @media @tablet {
-    max-height: 45px;
+    // On mobile/tablet, allow slightly smaller logo
+    @media @tablet {
+      max-height: 45px;
+    }
+
+    @media @phone {
+      max-height: 40px;
+    }
   }
 
-  @media @phone {
-    max-height: 40px;
+  // Ensure parent container centers the logo properly
+  #home-link.Header-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
   }
-}
-
-// Ensure parent container centers the logo properly
-#home-link.Header-logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 50px;
 }
 
