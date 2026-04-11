@@ -51,8 +51,12 @@
   max-width: var(--home-max-width, 1320px);
   margin: 0 auto;
   padding: 48px 20px 52px;
-  // Decoration icons use position: absolute + right: 20px
-  // They don't participate in text flow, so no padding needed
+
+  // Reserve space so title never overlaps decoration icons.
+  // 1 icon  (right: 20px): ~100px icon + 20px offset + 40px buffer = 160px
+  // 2 icons (right: 0):    G + sep + Ole Miss + buffer = 380px
+  &.has-deco-icon      { padding-right: 160px; }
+  &.has-two-deco-icons { padding-right: 380px; }
 }
 
 // Nav row: back circle + pills on same line
@@ -285,9 +289,14 @@
   overflow: visible;
 }
 
-// When there are two decoration icons, adjust positioning
+// Wide logos (e.g. Ole Miss script) exceed 100px — let them grow naturally.
+.has-two-deco-icons .DiscussionHero-decorationIcon {
+  max-width: unset;
+}
+
+// Two icons: flush with the inner container's right edge
 .has-two-deco-icons .DiscussionHero-decorationsContainer {
-  right: 25px;
+  right: 0;
 }
 
 // ── Separator icon: flex item between the two decoration icons
@@ -301,7 +310,7 @@
   font-size: clamp(32px, 8vw, 52px);
   color: var(--deco-sep-color, rgba(255, 255, 255, 0.5));
   pointer-events: none;
-  z-index: 0;
+  z-index: 3; // above icons (z-index: 2) so it's never obscured by overflow
   padding: 0 12px;
 
   i,
@@ -322,17 +331,31 @@
   }
 }
 
-// ── Decoration icons: desktop only ───────────────────────────────────────────
-@media @phone, @tablet {
+// ── Breakpoint visibility ─────────────────────────────────────────────────────
+
+// Phone: no icons, restore padding
+@media @phone {
   .DiscussionHero-decorationsContainer {
     display: none !important;
   }
+
+  .DiscussionHero-inner.has-deco-icon,
+  .DiscussionHero-inner.has-two-deco-icons {
+    padding-right: 20px !important;
+  }
 }
 
-// 2-icon layout is too wide for @desktop (992–1099px) — hide it there, single icon is fine
-@media @desktop {
+// 2-icon layout too wide below 1130px — hide it there, single icon is fine.
+// Using an explicit max-width because @desktop in avocado extends up to 1199px
+// (overrides @screen-desktop-hd to 1200px in less/common/variables.less).
+@media (max-width: 1129px) {
   .has-two-deco-icons .DiscussionHero-decorationsContainer {
     display: none !important;
+  }
+
+  // 2 icons hidden here — shrink padding-right to 1-icon value
+  .DiscussionHero-inner.has-two-deco-icons {
+    padding-right: 160px !important;
   }
 }
 

@@ -603,7 +603,7 @@ export default class AvocadoTagPage extends Page {
                   const parent = tag.parent?.();
                   const selectedTags = parent ? [parent, tag] : [tag];
                   app.composer
-                    .load(() => import('flarum/forum/components/DiscussionComposer'), { user: app.session.user })
+                    .load(() => flarum.reg.asyncModuleImport('flarum/forum/components/DiscussionComposer'), { user: app.session.user })
                     .then(() => {
                       app.composer.fields.tags = selectedTags;
                       app.composer.show();

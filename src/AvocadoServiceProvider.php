@@ -20,7 +20,7 @@ class AvocadoServiceProvider extends AbstractServiceProvider
      * Individual files: [ dest relative to public/assets => src relative to extension root ]
      */
     private const BUNDLED_FILES = [
-        'fire.webp' => 'resources/assets/fire.webp',
+        'fire.webp' => 'assets/fire.webp',
     ];
 
     /**
