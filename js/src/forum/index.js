@@ -181,7 +181,7 @@ const gateGuestLinks = (component) => {
     placeholder.appendChild(icon);
     placeholder.appendChild(text);
 
-    const handler = () => import('flarum/forum/components/LogInModal').then(({ default: M }) => app.modal.show(M));
+    const handler = () => flarum.reg.asyncModuleImport('flarum/forum/components/LogInModal').then((M) => app.modal.show(M));
     placeholder.addEventListener('click', handler);
     placeholder.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') handler(); });
     link.parentNode.replaceChild(placeholder, link);
@@ -723,10 +723,10 @@ app.initializers.add(
     // setTimeout(fn, 0) guarantees we run in the next event-loop tick — after boot().
     setTimeout(() => {
       Promise.all([
-        import('flarum/forum/components/LogInModal'),
-        import('flarum/forum/components/SignUpModal'),
-        import('flarum/forum/components/ForgotPasswordModal'),
-      ]).then(([{ default: LogInModal }, { default: SignUpModal }, { default: ForgotPasswordModal }]) => {
+        flarum.reg.asyncModuleImport('flarum/forum/components/LogInModal'),
+        flarum.reg.asyncModuleImport('flarum/forum/components/SignUpModal'),
+        flarum.reg.asyncModuleImport('flarum/forum/components/ForgotPasswordModal'),
+      ]).then(([LogInModal, SignUpModal, ForgotPasswordModal]) => {
         if (LogInModal.prototype.__avocadoPanelPatched) return;
         override(LogInModal.prototype,         'content', authPanelOverride('fas fa-lock'));
         override(SignUpModal.prototype,         'content', authPanelOverride('fas fa-user-plus'));
@@ -746,7 +746,7 @@ app.initializers.add(
           'signUp',
           <button
             className="Button AvocadoHeader-authBtn AvocadoHeader-authBtn--signup"
-            onclick={() => app.modal.show(() => import('flarum/forum/components/SignUpModal').then((m) => m.default))}
+            onclick={() => app.modal.show(() => flarum.reg.asyncModuleImport('flarum/forum/components/SignUpModal'))}
           >
             <i className="fas fa-user-plus" aria-hidden="true" />
             {app.translator.trans('core.forum.header.sign_up_link')}
@@ -759,7 +759,7 @@ app.initializers.add(
           'logIn',
           <button
             className="Button AvocadoHeader-authBtn AvocadoHeader-authBtn--login"
-            onclick={() => app.modal.show(() => import('flarum/forum/components/LogInModal').then((m) => m.default))}
+            onclick={() => app.modal.show(() => flarum.reg.asyncModuleImport('flarum/forum/components/LogInModal'))}
           >
             <i className="fas fa-sign-in-alt" aria-hidden="true" />
             {app.translator.trans('core.forum.header.log_in_link')}
@@ -986,7 +986,7 @@ app.initializers.add(
     // ── 14b. DiscussionsSearchSource: point "see all" link to /search ─────────
     // The default points to app.route('index', {q}) → /all?q=...
     // We redirect that to the unified /search page.
-    import('flarum/forum/components/DiscussionsSearchSource').then(({ default: DiscussionsSearchSource }) => {
+    flarum.reg.asyncModuleImport('flarum/forum/components/DiscussionsSearchSource').then((DiscussionsSearchSource) => {
       extend(DiscussionsSearchSource.prototype, 'view', function (vnode) {
         if (!vnode || !Array.isArray(vnode)) return;
         // Walk the vnode tree to update any href pointing to /all
@@ -1146,7 +1146,7 @@ app.initializers.add(
               <Button
                 className="Button Button--primary AvocadoPostCta-btn AvocadoPostCta-btn--login"
                 icon="fas fa-sign-in-alt"
-                onclick={() => import('flarum/forum/components/LogInModal').then(({ default: M }) => app.modal.show(M))}
+                onclick={() => flarum.reg.asyncModuleImport('flarum/forum/components/LogInModal').then((M) => app.modal.show(M))}
               >
                 {app.translator.trans('core.forum.header.log_in_link')}
               </Button>
@@ -1154,7 +1154,7 @@ app.initializers.add(
               <Button
                 className="Button AvocadoPostCta-btn AvocadoPostCta-btn--signup"
                 icon="fas fa-user-plus"
-                onclick={() => import('flarum/forum/components/SignUpModal').then(({ default: M }) => app.modal.show(M))}
+                onclick={() => flarum.reg.asyncModuleImport('flarum/forum/components/SignUpModal').then((M) => app.modal.show(M))}
               >
                 {app.translator.trans('core.forum.header.sign_up_link')}
               </Button>
