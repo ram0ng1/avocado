@@ -228,18 +228,23 @@ html[data-avocado-logo-custom="true"] {
   }
 }
 
-// Keep header title flex-aligned so logo and title baseline nicely
-.App-header .Header-title {
-  display: flex !important;
-  align-items: center !important;
-  padding: 5px 0;
-}
+// Custom logo only: flex-align header title and constrain height.
+// Without this scope, the 52px height and flex layout override Flarum's default
+// logo/title behaviour (text name or admin-uploaded PNG) unnecessarily.
+html[data-avocado-logo-custom="true"] {
+  // Keep header title flex-aligned so SVG logo and title baseline nicely
+  .App-header .Header-title {
+    display: flex !important;
+    align-items: center !important;
+    padding: 5px 0;
+  }
 
-// Constrain header height for both PNG and SVG logos
-.App-header {
-  height: 52px !important;
-  min-height: 52px !important;
-  line-height: 1;
+  // Constrain header height to match SVG logo height (50px) + breathing room
+  .App-header {
+    height: 52px !important;
+    min-height: 52px !important;
+    line-height: 1;
+  }
 }
 
 // Frosted-glass effect on header icon buttons (flags, notifications, user menu toggle)

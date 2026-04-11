@@ -19,6 +19,7 @@ import UserControls from 'flarum/forum/utils/UserControls';
 import DiscussionHero from 'flarum/forum/components/DiscussionHero';
 import DiscussionPage from 'flarum/forum/components/DiscussionPage';
 import PageStructure from 'flarum/forum/components/PageStructure';
+import PostStream from 'flarum/forum/components/PostStream';
 import { tagPageView } from './components/TagsPage';
 import HomePage from './components/HomePage';
 import { buildUserPhoneNav, buildHero, buildSidebar } from './components/UserProfilePage';
@@ -441,8 +442,11 @@ app.initializers.add(
       // Decoration icon: secondary tag icon on hero right side
       // Finds child tags (tags with parent) regardless of position
       // Ignores parent tags, maintains original tag order
-      // Don't show any decoration icons on mobile (≤480px)
+      // Don't show any decoration icons on mobile (≤480px).
+      // Two icons need more horizontal space — only render them on desktop (>767px)
+      // to avoid the has-two-deco-icons padding-right compressing hero content on tablet.
       const isMobile = typeof window !== 'undefined' && window.innerWidth <= 480;
+      const isTwoIconScreen = typeof window !== 'undefined' && window.innerWidth > 767;
       const showDecorationIcon = !!app.forum.attribute('avocadoHeroDecorationIcon') && !isMobile;
       const decorationOpacity = app.forum.attribute('avocadoHeroDecorationIconOpacity');
       const opacityValue = decorationOpacity ? Math.min(Math.max(parseInt(decorationOpacity) / 100, 0), 1) : 0.15;
@@ -451,13 +455,14 @@ app.initializers.add(
       // Collect child tags (have parent)
       const childTags = tags.filter(t => t.parent?.());
       const firstChildTag  = childTags[0] || null;
-      const secondChildTag = iconCount >= 2 ? (childTags[1] || null) : null;
+      // Second tag only on desktop-wide screens (> 767px) to prevent layout compression
+      const secondChildTag = (iconCount >= 2 && isTwoIconScreen) ? (childTags[1] || null) : null;
 
       const decorationIconClass  = firstChildTag?.icon?.()  || null;
       const decorationIconClass2 = secondChildTag?.icon?.() || null;
       const decorationTagColor   = firstChildTag?.color?.() || null;
       const decorationTagColor2  = secondChildTag?.color?.() || null;
-      const hasTwoDecoIcons = showDecorationIcon && iconCount >= 2 && !!decorationIconClass && !!decorationIconClass2;
+      const hasTwoDecoIcons = showDecorationIcon && isTwoIconScreen && iconCount >= 2 && !!decorationIconClass && !!decorationIconClass2;
       const showDecoDivider = hasTwoDecoIcons && !!app.forum.attribute('avocadoHeroDecoDivider');
       const decoDividerIcon = app.forum.attribute('avocadoHeroDecoDividerIcon') || 'fas fa-times';
       const decorationIconStyle = {
@@ -477,7 +482,7 @@ app.initializers.add(
           <div className="container">
             <div className={innerClass} style={decorationIconStyle}>
               {/* Decoration icons wrapper — flexbox container for dynamic sizing */}
-              {(showDecorationIcon && decorationIconClass) || (showDecorationIcon && showDecoDivider) || (showDecorationIcon && iconCount >= 2 && decorationIconClass2) ? (
+              {(showDecorationIcon && decorationIconClass) || (showDecorationIcon && showDecoDivider) || (showDecorationIcon && isTwoIconScreen && iconCount >= 2 && decorationIconClass2) ? (
                 <div 
                   className="DiscussionHero-decorationsContainer"
                   oncreate={(vnode) => {
@@ -518,8 +523,8 @@ app.initializers.add(
                       <i className={decoDividerIcon} />
                     </div>
                   )}
-                  {/* Decoration icon: second child tag icon (optional) */}
-                  {showDecorationIcon && iconCount >= 2 && decorationIconClass2 && (
+                  {/* Decoration icon: second child tag icon (optional, desktop only) */}
+                  {showDecorationIcon && isTwoIconScreen && iconCount >= 2 && decorationIconClass2 && (
                     <div
                       className="DiscussionHero-decorationIcon DiscussionHero-decorationIcon--second is-visible"
                       style={decorationTagColor2 ? { '--tag-color-secondary': decorationTagColor2 } : {}}
@@ -1124,22 +1129,11 @@ app.initializers.add(
     // Badges: instead of moving Mithril-managed nodes (which causes removeChild errors on
     // redraw), we keep the original in place and maintain a non-Mithril clone in Post-side.
     //
-    // CTA: injected as a sibling DOM node between post #1 and post #2, not inside
-    // the post footer. Uses m.render() to render into a wrapper div we insert imperatively.
-    extend(CommentPost.prototype, 'oncreate', function () {
-      syncUserOnline(this);
-      gateGuestLinks(this);
-
-      const post = this.attrs?.post;
-      const ctaPosition = parseInt(app.forum?.attribute('avocadoPostCtaPosition') ?? '1', 10) || 1;
-      if (post?.number?.() === ctaPosition && !app.session.user && settingEnabled('avocadoShowPostCta', false)) {
-        const el = this.element;
-        if (!el?.parentNode) return;
-        const wrapper = document.createElement('div');
-        wrapper.className = 'AvocadoPostCta-wrapper';
-        el.parentNode.insertBefore(wrapper, el.nextSibling);
-        this._ctaBetweenEl = wrapper;
-        m.render(wrapper, (
+    // CTA: inject after configured post position (guest-only, configurable position 1-5)
+    if (PostStream) {
+      // Helper to render CTA vdom
+      const renderCtaContent = () => (
+        <div className="AvocadoPostCta-wrapper">
           <div className="AvocadoPostCta">
             <span className="AvocadoPostCta-text">
               {app.translator.trans('ramon-avocado.forum.post_cta.text')}
@@ -1148,30 +1142,96 @@ app.initializers.add(
               <Button
                 className="Button Button--primary AvocadoPostCta-btn AvocadoPostCta-btn--login"
                 icon="fas fa-sign-in-alt"
-                onclick={() => flarum.reg.asyncModuleImport('flarum/forum/components/LogInModal').then((M) => app.modal.show(M))}
+                onclick={() => app.modal.show(() => flarum.reg.asyncModuleImport('flarum/forum/components/LogInModal'))}
               >
                 {app.translator.trans('core.forum.header.log_in_link')}
               </Button>
-              <span className="AvocadoPostCta-or">{app.translator.trans('ramon-avocado.forum.post_cta.or', 'ou')}</span>
+              <span className="AvocadoPostCta-or">{app.translator.trans('ramon-avocado.forum.post_cta.or', 'or')}</span>
               <Button
                 className="Button AvocadoPostCta-btn AvocadoPostCta-btn--signup"
                 icon="fas fa-user-plus"
-                onclick={() => flarum.reg.asyncModuleImport('flarum/forum/components/SignUpModal').then((M) => app.modal.show(M))}
+                onclick={() => app.modal.show(() => flarum.reg.asyncModuleImport('flarum/forum/components/SignUpModal'))}
               >
                 {app.translator.trans('core.forum.header.sign_up_link')}
               </Button>
             </span>
           </div>
-        ));
-      }
-    });
+        </div>
+      );
+      
+      // Helper to get CTA position safely
+      const getCtaPosition = () => {
+        try {
+          const pos = app.data?.settings?.['avocadoPostCtaPosition'] ?? '1';
+          const parsed = parseInt(pos, 10);
+          return (parsed >= 1 && parsed <= 5) ? parsed : 1;
+        } catch (e) {
+          return 1; // Default to first post
+        }
+      };
+      
+      // Extend afterFirstPostItems for position 1
+      extend(PostStream.prototype, 'afterFirstPostItems', function (items) {
+        if (!settingEnabled('avocadoShowPostCta', false)) return;
+        if (app.session.user) return;
+        
+        const ctaPosition = getCtaPosition();
+        if (ctaPosition === 1) {
+          items.add('avocado-post-cta', renderCtaContent());
+        }
+      });
+      
+      // For positions > 1, inject via DOM manipulation in onupdate
+      extend(PostStream.prototype, 'onupdate', function (vnode) {
+        if (!settingEnabled('avocadoShowPostCta', false)) return;
+        if (app.session.user) return;
+        
+        const ctaPosition = getCtaPosition();
+        
+        // Remove any existing CTA from previous renders/positions
+        const existingCTA = vnode.dom.querySelector('.AvocadoPostCta-wrapper');
+        if (existingCTA && ctaPosition !== 1) {
+          existingCTA.remove(); // Clean up old CTA if position > 1
+        }
+        
+        if (ctaPosition === 1) return; // Already handled by afterFirstPostItems
+        
+        // Find post at target position
+        const postElements = vnode.dom.querySelectorAll('[data-number]');
+        if (postElements.length < ctaPosition) return; // Wait for posts to load
+        
+        const targetPost = postElements[ctaPosition - 1];
+        if (!targetPost) return;
+        
+        // Check if CTA already exists after this post
+        if (targetPost.nextElementSibling?.classList?.contains('AvocadoPostCta-wrapper')) {
+          return; // Already injected
+        }
+        
+        // Create CTA container using m() for proper Mithril rendering
+        const ctaContainer = document.createElement('div');
+        const ctaVdom = renderCtaContent();
+        
+        // Create a temporary Mithril component to render into
+        const tempComponent = {
+          view: () => ctaVdom
+        };
+        
+        try {
+          m.render(ctaContainer, m(tempComponent));
+          const ctaElement = ctaContainer.firstChild;
+          if (ctaElement) {
+            targetPost.parentNode.insertBefore(ctaElement, targetPost.nextSibling);
+          }
+        } catch (e) {
+          console.warn('[Avocado CTA] Failed to inject:', e);
+        }
+      });
+    }
 
-    extend(CommentPost.prototype, 'onremove', function () {
-      if (this._ctaBetweenEl) {
-        m.render(this._ctaBetweenEl, null);
-        this._ctaBetweenEl.remove();
-        this._ctaBetweenEl = null;
-      }
+    extend(CommentPost.prototype, 'oncreate', function () {
+      syncUserOnline(this);
+      gateGuestLinks(this);
     });
 
     // FIX: guard before DOM ops — onupdate fires on every parent redraw.

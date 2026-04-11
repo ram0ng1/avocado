@@ -407,6 +407,17 @@
   }
 }
 
+// Phone reset MUST come after all max-width blocks above to win the cascade.
+// The (max-width: 1129px) block overrides the @phone reset at line ~104 because
+// it appears later in the source with equal specificity and !important.
+// Repeating the reset here guarantees phones always get full-width padding.
+@media @phone {
+  .DiscussionHero-inner.has-deco-icon,
+  .DiscussionHero-inner.has-two-deco-icons {
+    padding-right: 16px !important;
+  }
+}
+
 
 // ── Page container ─────────────────────────────────────────────────────────────
 
