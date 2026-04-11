@@ -6,5 +6,6 @@ const config = require('flarum-webpack-config')();
 // "s[t] is not a function" errors when async chunks are loaded.
 config.optimization = config.optimization || {};
 config.optimization.moduleIds = 'named';
+config.optimization.chunkIds = 'named';
 
 module.exports = config;
