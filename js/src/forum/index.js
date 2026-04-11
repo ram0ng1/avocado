@@ -462,9 +462,11 @@ app.initializers.add(
         ...(decorationOpacity ? { '--decoration-opacity': opacityValue } : {}),
       };
 
+      const hasAnyDecoIcon = showDecorationIcon && !!decorationIconClass;
       const innerClass = [
         'DiscussionHero-inner',
-        hasTwoDecoIcons ? 'has-two-deco-icons' : '',
+        hasAnyDecoIcon   ? 'has-deco-icon'      : '',
+        hasTwoDecoIcons  ? 'has-two-deco-icons' : '',
         showDecoDivider  ? 'has-deco-divider'   : '',
       ].filter(Boolean).join(' ');
 
