@@ -64,6 +64,7 @@ ramon-avocado:
       share: Share
     post_cta:
       text: "Like what you see? Join the discussion!"
+      or: "or"
     link_cta:
       placeholder: "Login to view link"
     search:
@@ -89,8 +90,7 @@ ramon-avocado:
     header:
       back_home: Back to Home
       search: Search
-    user:
-    tag:
+      or: "or"
     discussion:
       post_singular: post
       post_plural: posts
@@ -120,7 +120,9 @@ ramon-avocado:
       more: more
       new_discussion: New Discussion
       no_tags_found: No tags found
+      or: "or"
       popular_heading: Popular discussions
+      popular_no_discussions: "No discussions yet."
       replies: Replies
       reply_count_plural: "{count} replies"
       reply_count_singular: "1 reply"
@@ -155,4 +157,5 @@ ramon-avocado:
       discussion_plural: discussions
       other_tags_label: Other Tags
       featured: Featured
-      all_discussions: All discussions
+      all_discussions: All discussions    link:
+      login_to_view: "Login to view link"

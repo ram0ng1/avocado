@@ -176,7 +176,7 @@ const gateGuestLinks = (component) => {
 
     const text = document.createElement('span');
     text.className = 'AvocadoGuestLink-label';
-    text.textContent = typeof label === 'string' ? label : 'Login to view link';
+    text.textContent = typeof label === 'string' ? label : trans('ramon-avocado.forum.link.login_to_view', 'Login to view link');
 
     placeholder.appendChild(icon);
     placeholder.appendChild(text);
@@ -768,7 +768,7 @@ app.initializers.add(
       }
 
       if (items.has('logIn') && items.has('signUp')) {
-        items.add('avocadoAuthSep', <span className="AvocadoHeader-authSep">or</span>, 5);
+        items.add('avocadoAuthSep', <span className="AvocadoHeader-authSep">{trans('ramon-avocado.forum.header.or', 'or')}</span>, 5);
       }
     });
 
@@ -1150,7 +1150,7 @@ app.initializers.add(
               >
                 {app.translator.trans('core.forum.header.log_in_link')}
               </Button>
-              <span className="AvocadoPostCta-or">ou</span>
+              <span className="AvocadoPostCta-or">{app.translator.trans('ramon-avocado.forum.post_cta.or', 'ou')}</span>
               <Button
                 className="Button AvocadoPostCta-btn AvocadoPostCta-btn--signup"
                 icon="fas fa-user-plus"
