@@ -375,7 +375,7 @@ export default class HomePage extends Component {
 
   openInlineComposer() {
     if (!app.session.user) {
-      app.modal.show(() => import('flarum/forum/components/LogInModal').then((m) => m.default));
+      app.modal.show(() => flarum.reg.asyncModuleImport('flarum/forum/components/LogInModal'));
       return;
     }
     if (this.composerOpen) return;
@@ -643,16 +643,12 @@ export default class HomePage extends Component {
               onclick={(e) => {
                 e.stopPropagation();
                 if (!app.session.user) {
-                  app.modal.show(() => import('flarum/forum/components/LogInModal').then((m) => m.default));
+                  app.modal.show(() => flarum.reg.asyncModuleImport('flarum/forum/components/LogInModal'));
                   return;
                 }
-                import('flarum/forum/components/ReplyComposer').then(({ default: ReplyComposer }) => {
-                  if (app.composer) {
-                    app.composer.load(ReplyComposer, { user: app.session.user, discussion });
-                    app.composer.show();
-                  }
-                  m.route.set(href);
-                });
+                app.composer
+                  .load(() => flarum.reg.asyncModuleImport('flarum/forum/components/ReplyComposer'), { user: app.session.user, discussion })
+                  .then(() => { app.composer.show(); m.route.set(href); });
               }}
             >
               <i className="fas fa-reply" aria-hidden="true" />
@@ -671,7 +667,7 @@ export default class HomePage extends Component {
             onclick={(e) => {
               e.stopPropagation();
               if (!app.session.user) {
-                app.modal.show(() => import('flarum/forum/components/LogInModal').then((m) => m.default));
+                app.modal.show(() => flarum.reg.asyncModuleImport('flarum/forum/components/LogInModal'));
                 return;
               }
               this.toggleLike(discussion);
@@ -1391,7 +1387,7 @@ export default class HomePage extends Component {
         <div className="AvocadoHome-guestCTA-actions">
           <button
             className="AvocadoHome-guestCTA-btn AvocadoHome-guestCTA-btn--login"
-            onclick={() => app.modal.show(() => import('flarum/forum/components/LogInModal').then((m) => m.default))}
+            onclick={() => app.modal.show(() => flarum.reg.asyncModuleImport('flarum/forum/components/LogInModal'))}
           >
             <i className="fas fa-sign-in-alt" aria-hidden="true" />
             {trans('ramon-avocado.forum.home.log_in', 'Log In')}
@@ -1399,7 +1395,7 @@ export default class HomePage extends Component {
           <span className="AvocadoHome-guestCTA-or">or</span>
           <button
             className="AvocadoHome-guestCTA-btn AvocadoHome-guestCTA-btn--signup"
-            onclick={() => app.modal.show(() => import('flarum/forum/components/SignUpModal').then((m) => m.default))}
+            onclick={() => app.modal.show(() => flarum.reg.asyncModuleImport('flarum/forum/components/SignUpModal'))}
           >
             <i className="fas fa-user-plus" aria-hidden="true" />
             {trans('ramon-avocado.forum.home.sign_up', 'Sign Up')}

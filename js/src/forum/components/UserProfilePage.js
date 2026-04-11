@@ -162,16 +162,12 @@ function renderThreadCard(discussion, likingIds, toggleLike, context = null) {
             onclick={(e) => {
               e.stopPropagation();
               if (!app.session.user) {
-                app.modal.show(() => import('flarum/forum/components/LogInModal').then((m) => m.default));
+                app.modal.show(() => flarum.reg.asyncModuleImport('flarum/forum/components/LogInModal'));
                 return;
               }
-              import('flarum/forum/components/ReplyComposer').then(({ default: ReplyComposer }) => {
-                if (app.composer) {
-                  app.composer.load(ReplyComposer, { user: app.session.user, discussion });
-                  app.composer.show();
-                }
-                m.route.set(href);
-              });
+              app.composer
+                .load(() => flarum.reg.asyncModuleImport('flarum/forum/components/ReplyComposer'), { user: app.session.user, discussion })
+                .then(() => { app.composer.show(); m.route.set(href); });
             }}>
             <i className="fas fa-reply" aria-hidden="true" />{trans('ramon-avocado.forum.home.reply_label', 'Reply')}
           </button>
@@ -184,7 +180,7 @@ function renderThreadCard(discussion, likingIds, toggleLike, context = null) {
           onclick={(e) => {
             e.stopPropagation();
             if (!app.session.user) {
-              app.modal.show(() => import('flarum/forum/components/LogInModal').then((m) => m.default));
+              app.modal.show(() => flarum.reg.asyncModuleImport('flarum/forum/components/LogInModal'));
               return;
             }
             toggleLike(discussion);

@@ -443,11 +443,11 @@ export default class AvocadoTagPage extends Page {
               onclick={(e) => {
                 e.stopPropagation();
                 if (!app.session.user) {
-                  app.modal.show(() => import('flarum/forum/components/LogInModal').then((m) => m.default));
+                  app.modal.show(() => flarum.reg.asyncModuleImport('flarum/forum/components/LogInModal'));
                   return;
                 }
                 app.composer
-                  .load(() => import('flarum/forum/components/ReplyComposer'), { user: app.session.user, discussion })
+                  .load(() => flarum.reg.asyncModuleImport('flarum/forum/components/ReplyComposer'), { user: app.session.user, discussion })
                   .then(() => { app.composer.show(); m.route.set(href); });
               }}
             >
@@ -467,7 +467,7 @@ export default class AvocadoTagPage extends Page {
             onclick={(e) => {
               e.stopPropagation();
               if (!app.session.user) {
-                app.modal.show(() => import('flarum/forum/components/LogInModal').then((m) => m.default));
+                app.modal.show(() => flarum.reg.asyncModuleImport('flarum/forum/components/LogInModal'));
                 return;
               }
               this.toggleLike(discussion);
@@ -597,7 +597,7 @@ export default class AvocadoTagPage extends Page {
                 className="AvocadoTagPage-newBtn"
                 onclick={() => {
                   if (!app.session.user) {
-                    app.modal.show(() => import('flarum/forum/components/LogInModal').then((m) => m.default));
+                    app.modal.show(() => flarum.reg.asyncModuleImport('flarum/forum/components/LogInModal'));
                     return;
                   }
                   const parent = tag.parent?.();
