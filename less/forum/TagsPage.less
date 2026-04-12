@@ -366,7 +366,11 @@
 
 @media @phone {
   .AvocadoTagsPage        { padding: 14px 10px 32px; }
-  .AvocadoTagsPage-grid   { grid-template-columns: 1fr; }
+  // minmax(0, 1fr) instead of bare 1fr so the column has a definite minimum
+  // width of 0. Without this, 1fr = minmax(auto, 1fr) and a tag card with a
+  // very long last-discussion title (white-space:nowrap) can grow the column
+  // past the viewport width, causing horizontal overflow.
+  .AvocadoTagsPage-grid   { grid-template-columns: minmax(0, 1fr); }
   .AvocadoTagsPage-title  { font-size: 38px; }
   .AvocadoTagsPage-headerActions { gap: 8px; }
 }
