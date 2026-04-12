@@ -70,6 +70,29 @@ class AddCriticalCss
             ? '.Hero--banner{min-height:400px}@media(max-width:767px){.Hero--banner{min-height:280px}}'
             : '';
 
+        // ── Mobile nav controls ───────────────────────────────────────────────
+        // .AvocadoNav-helper wraps the IndexSidebar that provides the phone-header
+        // dropdown nav. Before the main CSS loads it renders as a visible block
+        // in the page content — the same async-stylesheet flash that affects the
+        // logo. We hide it immediately and ensure the absolutely-positioned phone
+        // controls (.App-primaryControl, .App-titleControl, .App-backControl) are
+        // placed correctly from the first frame so they never "jump" into view.
+        // Breakpoints mirror Flarum core: @phone ≤ 767 px, @tablet-up ≥ 768 px.
+        $mobileNavCss =
+            // Collapse the nav helper on all viewports so it is invisible before
+            // main CSS arrives. On tablet+ the main CSS adds display:none later.
+            '.AvocadoNav-helper{height:0;overflow:hidden}' .
+            '@media(max-width:767px){' .
+                // Mirror Flarum core App.less phone rules so controls are
+                // positioned BEFORE forum.css / ramon-avocado.css arrive.
+                '.App-primaryControl,.App-titleControl,.App-backControl{' .
+                    'position:absolute!important;top:0!important;margin:0;' .
+                    'z-index:1001}' .
+                '.App-titleControl{width:200px;left:50%;margin-left:-100px;text-align:center}' .
+                '.App-primaryControl{right:0}' .
+                '.App-backControl{left:0}' .
+            '}';
+
         $css = <<<CSS
         @font-face{font-family:'DM Sans Variable';font-weight:100 900;font-style:normal;font-display:swap;src:url('{$normalFont}') format('woff2-variations')}
         @font-face{font-family:'DM Sans Variable';font-weight:100 900;font-style:italic;font-display:swap;src:url('{$italicFont}') format('woff2-variations')}
@@ -77,6 +100,7 @@ class AddCriticalCss
         body{font-family:'DM Sans Variable','DM Sans','Segoe UI',sans-serif;overflow-x:hidden}
         .App-header{height:52px;min-height:52px;contain:layout size}
         {$logoReservation}
+        {$mobileNavCss}
         {$heroReservation}
         CSS;
 
