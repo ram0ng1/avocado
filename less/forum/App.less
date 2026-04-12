@@ -330,6 +330,39 @@ html[data-avocado-logo-custom="true"] {
   }
 }
 
+// ─── Auth buttons: colored-header override ────────────────────────────────────
+// When "Colored Header" is enabled, --header-bg becomes the primary color so
+// the default primary-color buttons are invisible against the header background.
+// We switch to --header-color (the light/white text color that Flarum assigns
+// automatically to keep text readable on the colored background).
+[data-colored-header=true] {
+  .AvocadoHeader-authBtn--login {
+    border-color: var(--header-color) !important;
+    color: var(--header-color) !important;
+
+    &:hover {
+      background: color-mix(in srgb, var(--header-color) 15%, transparent) !important;
+    }
+  }
+
+  .AvocadoHeader-authBtn--signup {
+    background: var(--header-color) !important;
+    // Text should contrast against --header-color (white on light, dark on dark).
+    // --header-bg in colored mode equals the primary color — reuse it as text.
+    color: var(--header-bg) !important;
+
+    &:hover {
+      opacity: 0.9 !important;
+    }
+  }
+
+  // Separator "or" between the two buttons
+  .AvocadoHeader-authSep {
+    color: var(--header-color) !important;
+    opacity: 0.75;
+  }
+}
+
 // ─── Default avatar SVG (person silhouette, primary-colour tinted) ───────────
 .AvocadoDefaultAvatar {
   display: block !important;  // override inline-flex from .Avatar
