@@ -361,7 +361,7 @@ export default class AvocadoSearchPage extends Page {
     const featuredIds = getFeaturedTagIds();
 
     return (
-      <div className="AvocadoSearch-hero">
+      <div key="empty" className="AvocadoSearch-hero">
         <h1 className="AvocadoSearch-heroTitle">
           {trans('ramon-avocado.forum.search.hero_title', 'What are you looking for?')}
         </h1>
@@ -371,50 +371,52 @@ export default class AvocadoSearchPage extends Page {
         {this.renderSearchBar(true)}
         {tags.length > 0 && (
           <div className="AvocadoSearch-heroTags">
-            {tags.map((tag: any, idx: number) => {
-              const color      = tag.color?.() || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
-              const icon       = tag.icon?.() || FALLBACK_ICONS[idx % FALLBACK_ICONS.length];
-              const href       = tagRoute(tag);
-              const isFeatured = featuredIds.has(String(tag.id?.()));
-              return (
-                <a
-                  key={tag.id?.()}
-                  className={`AvocadoHome-categoryCard${isFeatured ? ' AvocadoHome-categoryCard--featured' : ''}`}
-                  href={href}
-                  onclick={(e: Event) => navigate(e as MouseEvent, href)}
-                  style={categoryCardStyle(color)}
-                >
-                  {isFeatured && (
-                    <Tooltip text={trans('ramon-avocado.forum.tags.featured', 'Featured')} position="top">
-                      <span className="AvocadoHome-featuredBadge">
-                        <img src={resolveAssetUrl('fire.webp') || ''} alt="" aria-hidden="true" width="18" height="18" />
-                      </span>
-                    </Tooltip>
-                  )}
-                  <span className="AvocadoHome-categoryIcon">
-                    <i className={icon} aria-hidden="true" />
-                  </span>
-                  <div className="AvocadoHome-categoryBody">
-                    <h3>{tag.name?.()}</h3>
-                    <p>{abbreviateNumber(numberOr(tag.discussionCount?.(), 0))} {tag.discussionCount?.() === 1
-                      ? trans('ramon-avocado.forum.home.discussion_singular', 'discussion')
-                      : trans('ramon-avocado.forum.home.discussions', 'discussions')}</p>
-                  </div>
-                </a>
-              );
-            })}
-            <a
-              key="--all"
-              className="AvocadoHome-categoryCard AvocadoHome-categoryCard--all"
-              href={safeRoute('tags')}
-              onclick={(e: Event) => navigate(e as MouseEvent, safeRoute('tags'))}
-            >
-              <div className="AvocadoHome-categoryBody">
-                <h3>{trans('ramon-avocado.forum.home.all_categories', 'All categories')}</h3>
-                <p>{Math.max(0, (app.store.all('tags') as any[]).filter((t) => t && !t.parent?.()).length - tags.length)} {trans('ramon-avocado.forum.home.more', 'more')}</p>
-              </div>
-              <i className="fas fa-arrow-right" aria-hidden="true" />
-            </a>
+            {[
+              ...tags.map((tag: any, idx: number) => {
+                const color      = tag.color?.() || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
+                const icon       = tag.icon?.() || FALLBACK_ICONS[idx % FALLBACK_ICONS.length];
+                const href       = tagRoute(tag);
+                const isFeatured = featuredIds.has(String(tag.id?.()));
+                return (
+                  <a
+                    key={tag.id?.()}
+                    className={`AvocadoHome-categoryCard${isFeatured ? ' AvocadoHome-categoryCard--featured' : ''}`}
+                    href={href}
+                    onclick={(e: Event) => navigate(e as MouseEvent, href)}
+                    style={categoryCardStyle(color)}
+                  >
+                    {isFeatured && (
+                      <Tooltip text={trans('ramon-avocado.forum.tags.featured', 'Featured')} position="top">
+                        <span className="AvocadoHome-featuredBadge">
+                          <img src={resolveAssetUrl('fire.webp') || ''} alt="" aria-hidden="true" width="18" height="18" />
+                        </span>
+                      </Tooltip>
+                    )}
+                    <span className="AvocadoHome-categoryIcon">
+                      <i className={icon} aria-hidden="true" />
+                    </span>
+                    <div className="AvocadoHome-categoryBody">
+                      <h3>{tag.name?.()}</h3>
+                      <p>{abbreviateNumber(numberOr(tag.discussionCount?.(), 0))} {tag.discussionCount?.() === 1
+                        ? trans('ramon-avocado.forum.home.discussion_singular', 'discussion')
+                        : trans('ramon-avocado.forum.home.discussions', 'discussions')}</p>
+                    </div>
+                  </a>
+                );
+              }),
+              <a
+                key="--all"
+                className="AvocadoHome-categoryCard AvocadoHome-categoryCard--all"
+                href={safeRoute('tags')}
+                onclick={(e: Event) => navigate(e as MouseEvent, safeRoute('tags'))}
+              >
+                <div className="AvocadoHome-categoryBody">
+                  <h3>{trans('ramon-avocado.forum.home.all_categories', 'All categories')}</h3>
+                  <p>{Math.max(0, (app.store.all('tags') as any[]).filter((t) => t && !t.parent?.()).length - tags.length)} {trans('ramon-avocado.forum.home.more', 'more')}</p>
+                </div>
+                <i className="fas fa-arrow-right" aria-hidden="true" />
+              </a>,
+            ]}
           </div>
         )}
       </div>
@@ -539,10 +541,10 @@ export default class AvocadoSearchPage extends Page {
 
     return (
       <div className="AvocadoSearch AvocadoSearch--unified">
-        <div className="AvocadoNav-helper"><IndexSidebar /></div>
+        <div key="nav" className="AvocadoNav-helper"><IndexSidebar /></div>
 
         {!hasQuery ? this.renderEmptyState() : (
-          <div className="AvocadoSearch-body">
+          <div key="body" className="AvocadoSearch-body">
             <div key="bar">{this.renderSearchBar(false)}</div>
 
             <div key="toolbar" className="AvocadoSearch-toolbar">

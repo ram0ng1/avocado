@@ -601,6 +601,7 @@ export default class HomePage extends Component {
                 const tagStyle = tagPillStyle(tagColor);
                 return (
                   <a
+                    key={tag.id?.()}
                     className={`AvocadoHome-tagPill${extraClass}`}
                     href={tagRoute(tag)}
                     onclick={(e) => { e.stopPropagation(); navigate(e, tagRoute(tag)); }}
@@ -1538,48 +1539,51 @@ export default class HomePage extends Component {
                 })()}
               </div>
               <div className="AvocadoHome-categories">
-                {categories.map((cat, idx) => {
-                  const catColor   = cat.color?.() || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
-                  const catIcon    = cat.icon?.() || FALLBACK_ICONS[idx % FALLBACK_ICONS.length];
-                  const catRoute   = tagRoute(cat);
-                  const count      = numberOr(cat.discussionCount?.(), 0);
-                  const isFeatured = featuredIds.has(String(cat.id?.()));
-                  return (
-                    <a
-                      key={cat.id?.()}
-                      className={`AvocadoHome-categoryCard${isFeatured ? ' AvocadoHome-categoryCard--featured' : ''}`}
-                      href={catRoute}
-                      onclick={(e) => navigate(e, catRoute)}
-                      style={categoryCardStyle(catColor)}
-                    >
-                      {isFeatured && (
-                        <Tooltip text={trans('ramon-avocado.forum.tags.featured', 'Featured')} position="top">
-                          <span className="AvocadoHome-featuredBadge">
-                            <img src={resolveAssetUrl('fire.webp')} alt="" aria-hidden="true" width="18" height="18" />
-                          </span>
-                        </Tooltip>
-                      )}
-                      <span className="AvocadoHome-categoryIcon">
-                        <i className={catIcon} aria-hidden="true" />
-                      </span>
-                      <div className="AvocadoHome-categoryBody">
-                        <h3>{cat.name?.()}</h3>
-                        <p>{abbreviateNumber(numberOr(count, 0))} {count === 1 ? trans('ramon-avocado.forum.home.discussion_singular', 'discussion') : trans('ramon-avocado.forum.home.discussions', 'discussions')}</p>
-                      </div>
-                    </a>
-                  );
-                })}
-                <a
-                  className="AvocadoHome-categoryCard AvocadoHome-categoryCard--all"
-                  href={safeRoute('tags')}
-                  onclick={(e) => navigate(e, safeRoute('tags'))}
-                >
-                  <div className="AvocadoHome-categoryBody">
-                    <h3>{trans('ramon-avocado.forum.home.all_categories', 'All categories')}</h3>
-                    <p>{extraCategories} {trans('ramon-avocado.forum.home.more', 'more')}</p>
-                  </div>
-                  <i className="fas fa-arrow-right" aria-hidden="true" />
-                </a>
+                {[
+                  ...categories.map((cat, idx) => {
+                    const catColor   = cat.color?.() || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
+                    const catIcon    = cat.icon?.() || FALLBACK_ICONS[idx % FALLBACK_ICONS.length];
+                    const catRoute   = tagRoute(cat);
+                    const count      = numberOr(cat.discussionCount?.(), 0);
+                    const isFeatured = featuredIds.has(String(cat.id?.()));
+                    return (
+                      <a
+                        key={cat.id?.()}
+                        className={`AvocadoHome-categoryCard${isFeatured ? ' AvocadoHome-categoryCard--featured' : ''}`}
+                        href={catRoute}
+                        onclick={(e) => navigate(e, catRoute)}
+                        style={categoryCardStyle(catColor)}
+                      >
+                        {isFeatured && (
+                          <Tooltip text={trans('ramon-avocado.forum.tags.featured', 'Featured')} position="top">
+                            <span className="AvocadoHome-featuredBadge">
+                              <img src={resolveAssetUrl('fire.webp')} alt="" aria-hidden="true" width="18" height="18" />
+                            </span>
+                          </Tooltip>
+                        )}
+                        <span className="AvocadoHome-categoryIcon">
+                          <i className={catIcon} aria-hidden="true" />
+                        </span>
+                        <div className="AvocadoHome-categoryBody">
+                          <h3>{cat.name?.()}</h3>
+                          <p>{abbreviateNumber(numberOr(count, 0))} {count === 1 ? trans('ramon-avocado.forum.home.discussion_singular', 'discussion') : trans('ramon-avocado.forum.home.discussions', 'discussions')}</p>
+                        </div>
+                      </a>
+                    );
+                  }),
+                  <a
+                    key="--all"
+                    className="AvocadoHome-categoryCard AvocadoHome-categoryCard--all"
+                    href={safeRoute('tags')}
+                    onclick={(e) => navigate(e, safeRoute('tags'))}
+                  >
+                    <div className="AvocadoHome-categoryBody">
+                      <h3>{trans('ramon-avocado.forum.home.all_categories', 'All categories')}</h3>
+                      <p>{extraCategories} {trans('ramon-avocado.forum.home.more', 'more')}</p>
+                    </div>
+                    <i className="fas fa-arrow-right" aria-hidden="true" />
+                  </a>,
+                ]}
               </div>
             </section>
           )}

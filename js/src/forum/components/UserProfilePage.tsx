@@ -450,7 +450,7 @@ export class AvocadoUserPostsPage extends AvocadoUserBase {
   content() {
     return (
       <div className="AvocadoHome-threadStack">
-        {this.posts.map((p: any) => <PostCard post={p} context={this} />)}
+        {this.posts.map((p: any) => PostCard({ post: p, context: this })).filter(Boolean)}
         {this.loading && renderThreadSkeleton()}
         {!this.loading && this.posts.length === 0 && renderEmpty('No posts yet.')}
         {this.hasMore && !this.loading && renderLoadMore('Load more', () => this.loadPosts(false))}
@@ -562,7 +562,7 @@ export class AvocadoUserLikesPage extends AvocadoUserBase {
   content() {
     return (
       <div className="AvocadoHome-threadStack">
-        {this.posts.map((p: any) => <PostCard post={p} context={this} />)}
+        {this.posts.map((p: any) => PostCard({ post: p, context: this })).filter(Boolean)}
         {this.loading && renderThreadSkeleton()}
         {!this.loading && this.posts.length === 0 && renderEmpty('No liked posts yet.')}
         {this.hasMore && !this.loading && renderLoadMore('Load more', () => this.loadPosts(false))}
@@ -607,7 +607,7 @@ export class AvocadoUserMentionsPage extends AvocadoUserBase {
   content() {
     return (
       <div className="AvocadoHome-threadStack">
-        {this.posts.map((p: any) => <PostCard post={p} context={this} />)}
+        {this.posts.map((p: any) => PostCard({ post: p, context: this })).filter(Boolean)}
         {this.loading && renderThreadSkeleton()}
         {!this.loading && this.posts.length === 0 && renderEmpty('No mentions yet.')}
         {this.hasMore && !this.loading && renderLoadMore('Load more', () => this.loadPosts(false))}
