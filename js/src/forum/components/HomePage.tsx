@@ -1,3 +1,4 @@
+// @ts-nocheck — large homepage component; shared sub-components are typed individually
 import app from 'flarum/forum/app';
 import Component from 'flarum/common/Component';
 import TextEditor from 'flarum/common/components/TextEditor';

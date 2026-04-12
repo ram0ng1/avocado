@@ -31,14 +31,40 @@ class AddCriticalCss
     public function __invoke(Document $document, ServerRequestInterface $request): void
     {
         $baseUrl  = rtrim((string) $this->config->url(), '/');
-        $fontBase = $baseUrl . '/assets/extensions/ramon-avocado/fonts/';
+        $fontBase = $baseUrl . '/assets/fonts/';
 
         $normalFont = htmlspecialchars($fontBase . 'dm-sans-variable.woff2', ENT_QUOTES, 'UTF-8');
         $italicFont = htmlspecialchars($fontBase . 'dm-sans-italic.woff2', ENT_QUOTES, 'UTF-8');
 
+        // ── Logo size reservation ─────────────────────────────────────────────
+        // The theme's main CSS gates logo constraints behind
+        //   html[data-avocado-logo-custom="true"] { … }
+        // That attribute is set by JS, which runs AFTER the first paint.
+        // Because both core and extension CSS are loaded asynchronously, the
+        // logo renders unstyled (full/natural size) until CSS arrives → visible
+        // flicker / jump (the Flarum v2 async-stylesheet issue).
+        //
+        // Fix: replicate the logo constraints here, without the JS attribute
+        // selector, so they apply from the very first rendered frame.
+        $logoEnabled = (bool) $this->settings->get('avocado.logo_enabled', false);
+        $logoSvg     = trim((string) ($this->settings->get('avocado.logo_svg') ?? ''));
+        $hasSvgLogo  = $logoEnabled && $logoSvg !== '';
+
+        if ($hasSvgLogo) {
+            // SVG logo — JS will set explicit width/height from the viewBox, but
+            // we reserve 50 px height immediately so the header doesn't shift.
+            $logoReservation = 'svg.Header-logo{height:50px;width:auto;max-width:none;max-height:none;display:inline-block;vertical-align:middle;flex-shrink:0;overflow:visible}';
+        } elseif ($logoEnabled) {
+            // Admin-uploaded PNG / fallback image logo.
+            $logoReservation = 'img.Header-logo{height:35px;width:auto;max-width:200px;display:inline-block;vertical-align:middle}';
+        } else {
+            // No custom logo — mirror Flarum core default so any admin-uploaded
+            // image or forum-name heading is constrained before the main CSS loads.
+            $logoReservation = '.Header-logo{max-height:30px;display:block}';
+        }
+
         // ── Hero image size reservation ───────────────────────────────────────
-        // We know the hero banner is present when a hero_image setting exists.
-        // Reserve 400px desktop / 280px mobile so CLS is zero for the hero area.
+        // Reserve vertical space for the hero banner so CLS is zero.
         $hasHero = !empty(trim((string) $this->settings->get('avocado.hero_image')));
         $heroReservation = $hasHero
             ? '.Hero--banner{min-height:400px}@media(max-width:767px){.Hero--banner{min-height:280px}}'
@@ -50,6 +76,7 @@ class AddCriticalCss
         @font-face{font-family:'DM Sans';font-weight:100 900;font-style:normal;font-display:swap;src:url('{$normalFont}') format('woff2-variations')}
         body{font-family:'DM Sans Variable','DM Sans','Segoe UI',sans-serif;overflow-x:hidden}
         .App-header{height:52px;min-height:52px;contain:layout size}
+        {$logoReservation}
         {$heroReservation}
         CSS;
 

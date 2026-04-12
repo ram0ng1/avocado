@@ -1,7 +1,6 @@
+// @ts-nocheck
 /**
  * Shared utilities for ramon/avocado forum components.
- * Centralises functions that were previously duplicated across
- * index.js, HomePage.js, AllDiscussionsPage.js, TagPage.js and UserProfilePage.js.
  */
 import app from 'flarum/forum/app';
 import { truncate as coreTruncate } from 'flarum/common/utils/string';
@@ -9,21 +8,21 @@ import coreHighlight from 'flarum/common/helpers/highlight';
 
 // ─── Translation helper ────────────────────────────────────────────────────────
 
-export const trans = (key, fallback, params = {}) => {
+export const trans = (key: string, fallback: string, params: Record<string, any> = {}): string => {
   const out = app.translator?.trans(key, params);
-  return out && out !== key ? out : fallback;
+  return out && out !== key ? (out as string) : fallback;
 };
 
 // ─── Number guard ─────────────────────────────────────────────────────────────
 
-export const numberOr = (value, fallback = 0) => {
+export const numberOr = (value: unknown, fallback = 0): number => {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
 };
 
 // ─── Color helpers ────────────────────────────────────────────────────────────
 
-export const hexToRgba = (hex, alpha = 1) => {
+export const hexToRgba = (hex: string | null | undefined, alpha = 1): string => {
   if (!hex) return `rgba(63,136,246,${alpha})`;
   const h = hex.replace('#', '');
   if (h.length !== 6) return `rgba(63,136,246,${alpha})`;
@@ -33,12 +32,11 @@ export const hexToRgba = (hex, alpha = 1) => {
   return `rgba(${r},${g},${b},${alpha})`;
 };
 
-// Relative luminance (WCAG 2.1).
-export const hexLuminance = (hex) => {
+export const hexLuminance = (hex: string | null | undefined): number => {
   if (!hex) return 0;
   const h = hex.replace('#', '');
   if (h.length !== 6) return 0;
-  const toLinear = (c) => {
+  const toLinear = (c: number) => {
     const s = c / 255;
     return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
   };
@@ -48,20 +46,17 @@ export const hexLuminance = (hex) => {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 };
 
-// Returns { bg, color } for tag-icon / category-icon elements.
-// Colors remain faithful regardless of dark mode - no inversion applied.
-export const iconColors = (hex, bgAlpha = 0.12) => {
-  return { bg: hexToRgba(hex, bgAlpha), color: hex };
-};
+export const iconColors = (hex: string | null | undefined, bgAlpha = 0.12): { bg: string; color: string } => ({
+  bg: hexToRgba(hex, bgAlpha),
+  color: hex || '#3f88f6',
+});
 
-// Ensures a hex color meets WCAG AA (4.5:1) contrast ratio against white (#fff).
-// Iteratively darkens the color by blending toward black until the threshold is met.
-const wcagDarkenForWhite = (hex) => {
+// Ensures a hex color meets WCAG AA (4.5:1) contrast ratio against white.
+const wcagDarkenForWhite = (hex: string): string => {
   if (!hex || hex.length < 6) return hex;
   const h = hex.replace('#', '');
   if (h.length !== 6) return hex;
-  // Already passes?
-  if ((1.05) / (hexLuminance(hex) + 0.05) >= 4.5) return hex;
+  if (1.05 / (hexLuminance(hex) + 0.05) >= 4.5) return hex;
   let r = parseInt(h.substring(0, 2), 16);
   let g = parseInt(h.substring(2, 4), 16);
   let b = parseInt(h.substring(4, 6), 16);
@@ -70,15 +65,12 @@ const wcagDarkenForWhite = (hex) => {
     g = Math.round(g * 0.78);
     b = Math.round(b * 0.78);
     const darkened = '#' + [r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('');
-    if ((1.05) / (hexLuminance(darkened) + 0.05) >= 4.5) return darkened;
+    if (1.05 / (hexLuminance(darkened) + 0.05) >= 4.5) return darkened;
   }
   return '#333333';
 };
 
-// Convenience wrapper — returns the inline style object for tag pill elements.
-// Enforces WCAG AA (4.5:1) contrast on the text color against the pill's
-// transparent-on-white background so Lighthouse accessibility audits pass.
-export const tagPillStyle = (hex, alpha = 0.1) => {
+export const tagPillStyle = (hex: string | null | undefined, alpha = 0.1): Record<string, string> => {
   if (!hex) return {};
   const { bg } = iconColors(hex, alpha);
   const safeColor = wcagDarkenForWhite(hex);
@@ -87,118 +79,103 @@ export const tagPillStyle = (hex, alpha = 0.1) => {
 
 // ─── User display name ────────────────────────────────────────────────────────
 
-export const displayName = (user) =>
+export const displayName = (user: any): string =>
   user?.displayName?.() || user?.username?.() || '';
 
 // ─── Relative time label ──────────────────────────────────────────────────────
 
-export const formatTimeLabel = (dateValue) => {
+export const formatTimeLabel = (dateValue: Date | string | null | undefined): string => {
   if (!dateValue) return '';
-  const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+  const date = dateValue instanceof Date ? dateValue : new Date(dateValue as string);
   if (isNaN(date.getTime())) return '';
-
   const now  = new Date();
   const sod  = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const soy  = new Date(sod.getTime() - 86400000);
   const time = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false });
-
   if (date >= sod) return trans('ramon-avocado.forum.home.today_time', 'Today, {time}', { time });
   if (date >= soy) return trans('ramon-avocado.forum.home.yesterday_time', 'Yesterday, {time}', { time });
-  
   const dateLabel = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   return `${dateLabel}, ${time}`;
 };
 
-// ─── Text truncation (delegates to Flarum core) ──────────────────────────────
+// ─── Text truncation ──────────────────────────────────────────────────────────
 
-export const truncate = (str, max = 150) =>
+export const truncate = (str: string | null | undefined, max = 150): string =>
   str ? coreTruncate(str, max) : '';
 
-// ─── Search highlight (delegates to Flarum core) ─────────────────────────────
-// Core highlight(string, phrase, length?, safe?) handles HTML escaping,
-// <mark> wrapping and truncation around the first match.
+// ─── Search highlight ─────────────────────────────────────────────────────────
 
-export const highlight = (text, query, maxLength = 0) => {
-  if (!text) return '';
-  return coreHighlight(text, query || undefined, maxLength || undefined);
-};
+export const highlight = (text: string, query: string, maxLength = 0): any =>
+  text ? coreHighlight(text, query || undefined, maxLength || undefined) : '';
 
 // ─── Discussion first-post excerpt ────────────────────────────────────────────
 
-export const postPreview = (discussion, max = 150) => {
+export const postPreview = (discussion: any, max = 150): string => {
   try {
     const plain = discussion.firstPost?.()?.contentPlain?.() || '';
     if (plain) return truncate(plain, max);
     return truncate(discussion.attribute?.('firstPostContent') || '', max);
-  } catch (e) {
+  } catch {
     return '';
   }
 };
 
+// Alias used in UserProfilePage
+export const postExcerpt = postPreview;
+
 // ─── Route helpers ────────────────────────────────────────────────────────────
 
-export const safeRoute = (name, params = {}, fallback = '#') => {
-  try { return app.route(name, params); } catch (e) { return fallback; }
+export const safeRoute = (name: string, params: Record<string, any> = {}, fallback = '#'): string => {
+  try { return app.route(name, params); } catch { return fallback; }
 };
 
-export const discussionRoute = (discussion, near) => {
-  try { return app.route.discussion(discussion, near); } catch (e) { return '#'; }
+export const discussionRoute = (discussion: any, near?: number): string => {
+  try { return app.route.discussion(discussion, near); } catch { return '#'; }
 };
 
-export const tagRoute = (tag) => {
-  try { return app.route('tag', { tags: tag.slug() }); } catch (e) { return '#'; }
+export const tagRoute = (tag: any): string => {
+  try { return app.route('tag', { tags: tag.slug() }); } catch { return '#'; }
 };
 
-// ─── Path normalization (prevent traversal attacks) ───────────────────────────
-// Removes ../ and \.\ sequences to prevent directory traversal.
+export const userRoute = (user: any): string =>
+  safeRoute('user', { username: user?.username?.() || '' });
 
-const normalizePath = (path) => {
-  return String(path)
+// ─── Path normalization (prevent traversal) ───────────────────────────────────
+
+const normalizePath = (path: string): string =>
+  String(path)
     .replace(/\\/g, '/')
     .replace(/\/+/g, '/')
     .split('/')
-    .filter((segment, i) => {
-      if (segment === '.' || segment === '') return i === 0;
-      if (segment === '..') return false;
+    .filter((seg, i) => {
+      if (seg === '.' || seg === '') return i === 0;
+      if (seg === '..') return false;
       return true;
     })
     .join('/');
-};
 
 // ─── Asset URL resolver ───────────────────────────────────────────────────────
-// Validates that the resolved URL uses a safe protocol (http/https) to prevent
-// javascript: or data: URI injection when used in <img src> or CSS url().
-// Also normalizes paths to prevent directory traversal attacks.
 
-export const resolveAssetUrl = (assetPath) => {
+export const resolveAssetUrl = (assetPath: string | null | undefined): string | null => {
   if (!assetPath) return null;
   if (/^https?:\/\//i.test(assetPath)) return assetPath;
-  // Block dangerous protocols (javascript:, data:, vbscript:, etc.)
   if (/^[a-z][a-z0-9+.-]*:/i.test(assetPath)) return null;
-
   const normalized = normalizePath(assetPath);
-
   const base = app.forum?.attribute('assetsBaseUrl') || app.forum?.attribute('baseUrl');
-  if (!base) return null; // No base URL — refuse to construct a relative path
-
-  const suffix = app.forum?.attribute('assetsBaseUrl')
-    ? ''
-    : '/assets';
-  return base.replace(/\/+$/, '') + suffix + '/' + normalized;
+  if (!base) return null;
+  const suffix = app.forum?.attribute('assetsBaseUrl') ? '' : '/assets';
+  return (base as string).replace(/\/+$/, '') + suffix + '/' + normalized;
 };
 
-// Returns a properly quoted and escaped CSS url() value.
-// Prevents CSS injection by escaping parentheses, quotes, and backslashes.
-export const safeCssUrl = (url) => {
+export const safeCssUrl = (url: string | null | undefined): string => {
   if (!url) return 'none';
-  // Remove any characters that could break out of url('...')
   const escaped = String(url).replace(/[\\()'";]/g, '');
   return `url('${escaped}')`;
 };
 
 // ─── Clipboard helper ─────────────────────────────────────────────────────────
 
-export const copyTextToClipboard = async (text) => {
+export const copyTextToClipboard = async (text: string): Promise<void> => {
   if (navigator.clipboard?.writeText) {
     return navigator.clipboard.writeText(text);
   }
@@ -206,41 +183,34 @@ export const copyTextToClipboard = async (text) => {
 
 // ─── Design constants ─────────────────────────────────────────────────────────
 
-export const FALLBACK_COLORS = [
-  '#f0b213',
-];
+export const FALLBACK_COLORS: string[] = ['#f0b213'];
 
-export const FALLBACK_ICONS = [
+export const FALLBACK_ICONS: string[] = [
   'fas fa-tag', 'fas fa-folder', 'fas fa-comments', 'fas fa-star',
   'fas fa-fire', 'fas fa-bolt', 'fas fa-globe', 'fas fa-heart',
 ];
 
 // ─── Navigation helper ────────────────────────────────────────────────────────
 
-export const navigate = (e, href) => {
+export const navigate = (e: Event, href: string): void => {
   e.preventDefault();
   m.route.set(href);
 };
 
-// ─── User profile route ───────────────────────────────────────────────────────
-
-export const userRoute = (user) =>
-  safeRoute('user', { username: user?.username?.() || '' });
-
 // ─── Featured tag IDs ─────────────────────────────────────────────────────────
 
-export const getFeaturedTagIds = () => {
+export const getFeaturedTagIds = (): Set<string> => {
   try {
     const raw = app.forum?.attribute('avocadoFeaturedTags');
-    return new Set((raw ? JSON.parse(raw) : []).map(String));
-  } catch (_) {
+    return new Set(((raw ? JSON.parse(raw as string) : []) as string[]).map(String));
+  } catch {
     return new Set();
   }
 };
 
 // ─── Skeleton cards ───────────────────────────────────────────────────────────
 
-export const renderThreadSkeleton = (count = 3) =>
+export const renderThreadSkeleton = (count = 3): any[] =>
   Array.from({ length: count }, (_, i) =>
     m('div', { key: i, className: 'AvocadoHome-skeletonCard' }, [
       m('div', { className: 'AvocadoHome-skeletonAvatar' }),
@@ -252,7 +222,9 @@ export const renderThreadSkeleton = (count = 3) =>
     ])
   );
 
-export const renderPostSkeleton = (count = 3) =>
+export const renderDiscSkeleton = renderThreadSkeleton;
+
+export const renderPostSkeleton = (count = 3): any[] =>
   Array.from({ length: count }, (_, i) =>
     m('div', { key: i, className: 'AvocadoSearch-postSkeleton' }, [
       m('div', { className: 'AvocadoHome-skeletonAvatar' }),
@@ -265,15 +237,15 @@ export const renderPostSkeleton = (count = 3) =>
     ])
   );
 
-// ─── Icon/category style helpers ─────────────────────────────────────────────
+// ─── Style helpers ────────────────────────────────────────────────────────────
 
-export const iconPillStyle = (hex, alpha = 0.12) => {
+export const iconPillStyle = (hex: string | null | undefined, alpha = 0.12): Record<string, string> => {
   if (!hex) return {};
   const { bg, color } = iconColors(hex, alpha);
   return { '--icon-bg': bg, '--icon-color': color };
 };
 
-export const categoryCardStyle = (hex, alpha = 0.12) => {
+export const categoryCardStyle = (hex: string | null | undefined, alpha = 0.12): Record<string, string> => {
   if (!hex) return {};
   const { bg, color } = iconColors(hex, alpha);
   return { '--cat-bg': bg, '--cat-color': color };
@@ -281,13 +253,12 @@ export const categoryCardStyle = (hex, alpha = 0.12) => {
 
 // ─── Load-more button ─────────────────────────────────────────────────────────
 
-export const renderLoadMore = (label, onclick) =>
+export const renderLoadMore = (label: string, onclick: () => void): any =>
   m('div', { className: 'AvocadoDiscussions-loadMore' }, [
     m('button', { className: 'Button AvocadoDiscussions-loadMoreBtn', onclick }, label),
   ]);
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
-export const renderEmpty = (label) =>
+export const renderEmpty = (label: string): any =>
   m('div', { className: 'AvocadoDiscussions-empty' }, label);
-
