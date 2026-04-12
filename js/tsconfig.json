@@ -13,6 +13,7 @@
 ],
   "compilerOptions": {
     // This will output typings to `dist-typings`
+    "rootDir": "./src",
     "declarationDir": "./dist-typings",
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",

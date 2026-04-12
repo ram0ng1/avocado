@@ -1,40 +1,38 @@
-import Component from 'flarum/common/Component';
+// @ts-nocheck
+import Component, { ComponentAttrs } from 'flarum/common/Component';
+
+interface StatRow {
+  key: string;
+  icon: string;
+  label: string;
+  value: string;
+}
+
+export interface AvocadoDiscussionStatsAttrs extends ComponentAttrs {
+  discussion: any;
+}
 
 /**
  * AvocadoDiscussionStats — compact stats card injected between the Reply
- * button (controls, @100) and the Scrubber/Timeline (@-100) in the
- * DiscussionPage sidebar.
+ * button (@100) and the Scrubber/Timeline (@-100) in the DiscussionPage sidebar.
  *
- * Shows: views (if flarum/views extension present), replies, and first-post
- * likes (if flarum/likes extension present).
+ * Shows: views (flarum/views), replies, and first-post likes (flarum/likes).
  */
-export default class AvocadoDiscussionStats extends Component {
+export default class AvocadoDiscussionStats extends Component<AvocadoDiscussionStatsAttrs> {
   view() {
-    const discussion = this.attrs.discussion;
+    const { discussion } = this.attrs;
     if (!discussion) return <div className="AvocadoSidebar-stats" />;
 
     const replyCount = Number(discussion.replyCount?.()) || 0;
-
-    // viewCount provided by flarum/views; may not exist — gracefully absent
-    const viewCount = Number(
-      discussion.attribute?.('viewCount') ??
-      discussion.viewCount?.() ??
-      0
-    );
-
-    // First-post likes provided by flarum/likes
+    const viewCount  = Number(discussion.attribute?.('viewCount') ?? discussion.viewCount?.() ?? 0);
     const firstPost  = discussion.firstPost?.();
-    const likeCount  = Number(
-      firstPost?.attribute?.('likesCount') ??
-      firstPost?.likesCount?.() ??
-      0
-    );
+    const likeCount  = Number(firstPost?.attribute?.('likesCount') ?? firstPost?.likesCount?.() ?? 0);
 
-    const rows = [
+    const rows: StatRow[] = [
       viewCount > 0 && { key: 'views',   icon: 'far fa-eye',       label: 'Views',   value: viewCount.toLocaleString() },
       true           && { key: 'replies', icon: 'far fa-comment',   label: 'Replies', value: String(replyCount)         },
       likeCount > 0  && { key: 'likes',   icon: 'far fa-thumbs-up', label: 'Likes',   value: String(likeCount)          },
-    ].filter(Boolean);
+    ].filter(Boolean) as StatRow[];
 
     return (
       <div className="AvocadoSidebar-stats">

@@ -1,3 +1,4 @@
+// @ts-nocheck — large bootstrap file; components are typed individually
 import { extend, override } from 'flarum/common/extend';
 import Button from 'flarum/common/components/Button';
 import Tooltip from 'flarum/common/components/Tooltip';
@@ -19,7 +20,9 @@ import UserControls from 'flarum/forum/utils/UserControls';
 import DiscussionHero from 'flarum/forum/components/DiscussionHero';
 import DiscussionPage from 'flarum/forum/components/DiscussionPage';
 import PageStructure from 'flarum/forum/components/PageStructure';
-import PostStream from 'flarum/forum/components/PostStream';
+// PostStream is code-split (lazy-loaded by DiscussionPage).
+// Do NOT import it statically — use the string-based extend/override so that
+// flarum.reg.onLoad() applies the patch after the module is loaded.
 import { tagPageView } from './components/TagsPage';
 import HomePage from './components/HomePage';
 import { buildUserPhoneNav, buildHero, buildSidebar } from './components/UserProfilePage';
@@ -1129,102 +1132,85 @@ app.initializers.add(
     // Badges: instead of moving Mithril-managed nodes (which causes removeChild errors on
     // redraw), we keep the original in place and maintain a non-Mithril clone in Post-side.
     //
-    // CTA: inject after configured post position (guest-only, configurable position 1-5)
-    if (PostStream) {
-      // Helper to render CTA vdom
-      const renderCtaContent = () => (
-        <div className="AvocadoPostCta-wrapper">
-          <div className="AvocadoPostCta">
-            <span className="AvocadoPostCta-text">
-              {app.translator.trans('ramon-avocado.forum.post_cta.text')}
-            </span>
-            <span className="AvocadoPostCta-buttons">
-              <Button
-                className="Button Button--primary AvocadoPostCta-btn AvocadoPostCta-btn--login"
-                icon="fas fa-sign-in-alt"
-                onclick={() => app.modal.show(() => flarum.reg.asyncModuleImport('flarum/forum/components/LogInModal'))}
-              >
-                {app.translator.trans('core.forum.header.log_in_link')}
-              </Button>
-              <span className="AvocadoPostCta-or">{app.translator.trans('ramon-avocado.forum.post_cta.or', 'or')}</span>
-              <Button
-                className="Button AvocadoPostCta-btn AvocadoPostCta-btn--signup"
-                icon="fas fa-user-plus"
-                onclick={() => app.modal.show(() => flarum.reg.asyncModuleImport('flarum/forum/components/SignUpModal'))}
-              >
-                {app.translator.trans('core.forum.header.sign_up_link')}
-              </Button>
-            </span>
-          </div>
-        </div>
-      );
-      
-      // Helper to get CTA position safely
+    // ── CTA: inject after configured post position (guest-only, configurable 1-5) ─
+    // PostStream is code-split — use the string-based extend/override so that
+    // flarum.reg.onLoad() applies the patch when the module finally loads.
+    // This is the official pattern used by flarum/realtime (see TypingIndicator.tsx).
+    {
       const getCtaPosition = () => {
         try {
-          const pos = app.data?.settings?.['avocadoPostCtaPosition'] ?? '1';
+          const pos = app.forum?.attribute('avocadoPostCtaPosition') ?? '1';
           const parsed = parseInt(pos, 10);
           return (parsed >= 1 && parsed <= 5) ? parsed : 1;
         } catch (e) {
-          return 1; // Default to first post
+          return 1;
         }
       };
-      
-      // Extend afterFirstPostItems for position 1
-      extend(PostStream.prototype, 'afterFirstPostItems', function (items) {
-        if (!settingEnabled('avocadoShowPostCta', false)) return;
-        if (app.session.user) return;
-        
-        const ctaPosition = getCtaPosition();
-        if (ctaPosition === 1) {
-          items.add('avocado-post-cta', renderCtaContent());
-        }
+
+      const renderCta = () => (
+        <div className="PostStream-item PostStream-avocadoCta">
+          <div className="AvocadoPostCta-wrapper">
+            <div className="AvocadoPostCta">
+              <span className="AvocadoPostCta-text">
+                {app.translator.trans('ramon-avocado.forum.post_cta.text')}
+              </span>
+              <span className="AvocadoPostCta-buttons">
+                <Button
+                  className="Button Button--primary AvocadoPostCta-btn AvocadoPostCta-btn--login"
+                  icon="fas fa-sign-in-alt"
+                  onclick={() => flarum.reg.asyncModuleImport('flarum/forum/components/LogInModal').then((M) => app.modal.show(M))}
+                >
+                  {app.translator.trans('core.forum.header.log_in_link')}
+                </Button>
+                <span className="AvocadoPostCta-or">{app.translator.trans('ramon-avocado.forum.post_cta.or')}</span>
+                <Button
+                  className="Button AvocadoPostCta-btn AvocadoPostCta-btn--signup"
+                  icon="fas fa-user-plus"
+                  onclick={() => flarum.reg.asyncModuleImport('flarum/forum/components/SignUpModal').then((M) => app.modal.show(M))}
+                >
+                  {app.translator.trans('core.forum.header.sign_up_link')}
+                </Button>
+              </span>
+            </div>
+          </div>
+        </div>
+      );
+
+      const ctaEnabled = () => settingEnabled('avocadoShowPostCta', false);
+
+      // Position 1: afterFirstPostItems — Flarum-native hook, fully Mithril-managed.
+      // The PostStream core wraps post #1 + these items in an m.fragment when items
+      // is non-empty. This is the idiomatic Flarum way to inject after the first post.
+      extend('flarum/forum/components/PostStream', 'afterFirstPostItems', function (items) {
+        if (!ctaEnabled() || app.session.user) return;
+        if (getCtaPosition() === 1) items.add('avocado-post-cta', renderCta(), 100);
       });
-      
-      // For positions > 1, inject via DOM manipulation in onupdate
-      extend(PostStream.prototype, 'onupdate', function (vnode) {
-        if (!settingEnabled('avocadoShowPostCta', false)) return;
-        if (app.session.user) return;
-        
-        const ctaPosition = getCtaPosition();
-        
-        // Remove any existing CTA from previous renders/positions
-        const existingCTA = vnode.dom.querySelector('.AvocadoPostCta-wrapper');
-        if (existingCTA && ctaPosition !== 1) {
-          existingCTA.remove(); // Clean up old CTA if position > 1
-        }
-        
-        if (ctaPosition === 1) return; // Already handled by afterFirstPostItems
-        
-        // Find post at target position
-        const postElements = vnode.dom.querySelectorAll('[data-number]');
-        if (postElements.length < ctaPosition) return; // Wait for posts to load
-        
-        const targetPost = postElements[ctaPosition - 1];
-        if (!targetPost) return;
-        
-        // Check if CTA already exists after this post
-        if (targetPost.nextElementSibling?.classList?.contains('AvocadoPostCta-wrapper')) {
-          return; // Already injected
-        }
-        
-        // Create CTA container using m() for proper Mithril rendering
-        const ctaContainer = document.createElement('div');
-        const ctaVdom = renderCtaContent();
-        
-        // Create a temporary Mithril component to render into
-        const tempComponent = {
-          view: () => ctaVdom
-        };
-        
-        try {
-          m.render(ctaContainer, m(tempComponent));
-          const ctaElement = ctaContainer.firstChild;
-          if (ctaElement) {
-            targetPost.parentNode.insertBefore(ctaElement, targetPost.nextSibling);
+
+      // Positions 2-5: extend view() and splice the CTA vnode after the N-th post.
+      // We use extend (not override) so we don't swallow other extensions' view patches.
+      // The mutation is safe because Mithril stores children by reference.
+      extend('flarum/forum/components/PostStream', 'view', function (rootVnode) {
+        if (!ctaEnabled() || app.session.user) return;
+
+        const pos = getCtaPosition();
+        if (pos === 1) return; // handled by afterFirstPostItems above
+
+        const children = rootVnode?.children;
+        if (!Array.isArray(children)) return;
+
+        // Walk children counting only COMMENT posts (data-type="comment").
+        // Event posts (stickied, locked, renamed…) carry a different data-type and
+        // must not advance the counter — the user's position setting refers to
+        // real comment posts only.
+        let count = 0;
+        for (let i = 0; i < children.length; i++) {
+          const attrs = children[i]?.attrs;
+          if (attrs?.['data-number'] && attrs?.['data-type'] === 'comment') {
+            if (++count === pos) {
+              children.splice(i + 1, 0, renderCta());
+              break;
+            }
           }
-        } catch (e) {
-          console.warn('[Avocado CTA] Failed to inject:', e);
         }
       });
     }

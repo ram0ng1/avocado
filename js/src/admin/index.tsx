@@ -1,3 +1,4 @@
+// @ts-nocheck — large bootstrap file; typed incrementally
 import UploadImageButton from 'flarum/common/components/UploadImageButton';
 import Component from 'flarum/common/Component';
 import Switch from 'flarum/common/components/Switch';
