@@ -1249,10 +1249,22 @@
   }
 }
 
-// ── Guest CTA between post #1 and post #2 ─────────────────────────────────────
-// Injected as a sibling DOM node (not inside the post footer) via m.render().
+// ── Guest CTA between posts ────────────────────────────────────────────────────
+// The Flarum core adds a 1px ::after divider to every .PostStream-item that has
+// a following sibling .PostStream-item. Suppress those dividers adjacent to the
+// CTA card — the card's own border/background provides visual separation.
+//
+// Position 1: CTA is inside .PostStream-afterFirstPost (post #1 → afterFirstPost → post #2)
+// Position 2-5: CTA is .PostStream-avocadoCta (post N → CTA → post N+1)
+.PostStream-item:has(+ .PostStream-afterFirstPost)::after,
+.PostStream-afterFirstPost::after,
+.PostStream-item:has(+ .PostStream-avocadoCta)::after,
+.PostStream-avocadoCta::after {
+  display: none;
+}
+
 .AvocadoPostCta-wrapper {
-  margin: -8px 0 16px;
+  margin: 12px 0;
 
   @media @tablet-up {
     // Align CTA with Post-main: offset by the avatar column so left edge
