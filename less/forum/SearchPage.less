@@ -648,6 +648,17 @@
   flex-shrink: 0;
 }
 
+// Skeleton placeholder that mirrors the real view button (invisible children → exact width match)
+.AvocadoSearch-userCard-viewBtn--skel {
+  .avocado-pill-btn(34px; 13px; 12px);
+  background: linear-gradient(90deg, #f0f0f4 25%, #e6e6eb 50%, #f0f0f4 75%);
+  background-size: 800px 100%;
+  animation: avocado-shimmer 1.4s infinite;
+  pointer-events: none;
+  border: none;
+  > * { visibility: hidden; }
+}
+
 // Flarum native badges (group badges) inside the user card
 .AvocadoSearch-userCard-badges {
   display: flex;

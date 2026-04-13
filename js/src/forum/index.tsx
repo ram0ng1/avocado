@@ -308,6 +308,15 @@ app.initializers.add(
     // initialize() runs before store.pushPayload() and before app.forum is set.
     // app.beforeMount() callbacks run after app.forum is set, before Mithril mounts.
     app.beforeMount(() => {
+      // ── 0b. Preload lazy chunks ────────────────────────────────────────────
+      // Must run inside beforeMount — ExportRegistry.chunkUrl() needs app.forum
+      // to build the chunk URL and app.forum is only set after store.pushPayload().
+      // Fires before Mithril mounts so chunks are cached before first navigation.
+      import('./components/AvocadoSearchPage').catch(() => {});
+      import('./components/AvocadoPostsSearchPage').catch(() => {});
+      import('./components/TagPage').catch(() => {});
+      import('./components/AllDiscussionsPage').catch(() => {});
+
       // Theme class on <html> — added whenever V2 is active
       document.documentElement.classList.add('avocado-theme');
 
@@ -1046,6 +1055,7 @@ app.initializers.add(
     override(WelcomeHero.prototype, 'isHidden', function (original) {
       if (customHomeEnabled()) return true;  // V2 home has its own banner
       if (hasSearchQuery()) return true;     // Search results have no hero
+      if (app.session.user) return true;     // Logged-in users never see the banner
       if (app.forum?.attribute('avocadoHeroImage')) return false;
       return original();
     });
