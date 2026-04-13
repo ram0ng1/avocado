@@ -4,6 +4,8 @@ on:
   release:
     types: [published]
 
+permissions: {}
+
 jobs:
   publish_to_flarum:
     name: Publicar no Fórum
@@ -39,9 +41,10 @@ jobs:
 
           if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
             echo "✅ Discussão criada com sucesso no Flarum!"
-            cat /tmp/flarum_response.json | jq '.data.id // empty'
+            jq '.data.id // empty' /tmp/flarum_response.json
           else
             echo "❌ Falha ao criar discussão no Flarum (HTTP $HTTP_STATUS)"
-            cat /tmp/flarum_response.json
+            echo "Response body:"
+            jq '.' /tmp/flarum_response.json
             exit 1
           fi
