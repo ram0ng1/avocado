@@ -2,12 +2,6 @@ name: Limpar Releases Antigas
 
 on:
   workflow_dispatch:
-  release:
-    types: [published]
-
-concurrency:
-  group: cleanup-releases
-  cancel-in-progress: false
 
 jobs:
   cleanup:
