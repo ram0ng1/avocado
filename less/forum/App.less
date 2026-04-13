@@ -161,18 +161,23 @@
 }
 
 // ─── Mobile: session dropdown inside App-drawer ────────────────────────────────
-// The App-drawer is position:fixed with overflow-y:auto which clips absolutely-
-// positioned Dropdown-menus. Make them expand inline so they are always visible.
+// Mirrors Flarum v2 core's approach exactly:
+// Make every control in Header-controls fill the full drawer width so that the
+// Dropdown-menu (position:absolute; right:0) aligns to the drawer's right edge
+// instead of overflowing outside it.
+// Reset width:auto on buttons *inside* the open menu so they don't stretch to 100%.
 @media @phone {
-  .App-drawer .open > .Dropdown-menu {
-    position: static !important;
-    transform: none !important;
-    box-shadow: none !important;
-    border: 1px solid var(--avocado-border-subtle);
-    border-radius: 10px;
-    width: 100%;
-    margin-top: 4px;
-    animation: none !important;
+  .App-drawer .Header-controls {
+    .FormControl, .ButtonGroup, .Button {
+      width: 100%;
+      justify-content: start;
+    }
+    .Dropdown-menu {
+      .ButtonGroup, .Button {
+        width: auto;
+        justify-content: initial;
+      }
+    }
   }
 }
 
