@@ -486,7 +486,9 @@ export default class HomePage extends Component {
     event.preventDefault();
     const q = this.searchValue.trim();
     if (!q) return;
-    m.route.set(app.route('index') + '?q=' + encodeURIComponent(q));
+    // Navigate directly to /search — bypasses the IndexPage /?q= → setTimeout redirect
+    // chain that causes the heroBannerOverlay to flash on the search page.
+    m.route.set(app.route('avocado-search') + '?q=' + encodeURIComponent(q));
   }
 
   likesCount(discussion) {

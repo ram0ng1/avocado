@@ -428,11 +428,22 @@ export default class AvocadoSearchPage extends Page {
   private renderUsersTab() {
     const q = ((app.search as any).state.params().q || '') as string;
     const skeleton = [0, 1, 2].map((i) => (
-      <div key={String(i)} className="AvocadoSearch-userSkeleton">
-        <div className="AvocadoSearch-userSkeletonAvatar" />
-        <div className="AvocadoHome-skeletonBody">
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--sm" />
-          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--md" />
+      <div key={String(i)} className="AvocadoSearch-userCard AvocadoSearch-userCard--skeleton">
+        <div className="AvocadoSearch-userCard-head">
+          <div className="AvocadoSearch-userCard-avatar AvocadoHome-skeletonAvatar" style={{ width: '44px', height: '44px' }} />
+          <div className="AvocadoSearch-userCard-info">
+            <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--sm" />
+            <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--md" />
+          </div>
+          <div className="AvocadoSearch-userCard-viewBtn AvocadoSearch-userCard-viewBtn--skel" aria-hidden="true">
+            <i className="fas fa-arrow-right" />
+            {trans('ramon-avocado.forum.home.view', 'View')}
+          </div>
+        </div>
+        <div className="AvocadoSearch-userCard-stats">
+          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--stat" />
+          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--stat" />
+          <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--stat" />
         </div>
       </div>
     ));
