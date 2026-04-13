@@ -85,6 +85,9 @@ ramon-avocado:
       no_posts_match: "Nenhum post corresponde a esses filtros."
       no_users_found: "Nenhum usuário encontrado para \"{q}\"."
       enter_search_term: "Digite um termo de busca para encontrar usuários."
+      posts_for: "Posts para"
+      posts_filtered_by: "Posts filtrados por"
+      posts_title: "Busca de posts"
     header:
       back_home: Voltar para o Início
       search: Pesquisar

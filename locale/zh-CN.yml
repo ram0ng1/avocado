@@ -88,6 +88,9 @@ ramon-avocado:
       no_posts_match: "没有帖子与这些筛选器匹配。"
       no_users_found: "未找到\"{q}\"相关的用户。"
       enter_search_term: "输入搜索词以查找用户。"
+      posts_for: "帖子："
+      posts_filtered_by: "筛选帖子："
+      posts_title: "帖子搜索"
     header:
       back_home: 返回首页
       search: 搜索

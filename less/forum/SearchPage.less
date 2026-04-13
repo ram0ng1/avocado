@@ -291,14 +291,14 @@
   font-weight: 700;
   color: var(--primary-color);
   text-decoration: none;
-  background: rgba(63, 136, 246, 0.07);
+  background: color-mix(in srgb, var(--primary-color) 8%, transparent);
   border-radius: 999px;
   padding: 4px 12px;
   align-self: flex-start;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 
   &:hover {
-    background: rgba(63, 136, 246, 0.13);
+    background: color-mix(in srgb, var(--primary-color) 14%, transparent);
     text-decoration: none;
   }
 
@@ -321,8 +321,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding-top: 4px;
-  border-top: 1px solid #f0f0f4;
+  padding-top: 6px;
+  border-top: 1px solid var(--home-border);
 }
 
 .AvocadoSearch-postControls {

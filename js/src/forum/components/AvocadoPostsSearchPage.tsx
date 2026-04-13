@@ -20,10 +20,10 @@ import {
 } from '../utils';
 import SortDropdown, { SortOption } from './shared/SortDropdown';
 
-const SORT_LABELS: Record<string, string> = {
-  relevance: 'Relevance',
-  newest:    'Newest',
-  oldest:    'Oldest',
+const SORT_LABELS: Record<string, () => string> = {
+  relevance: () => trans('ramon-avocado.forum.search.sort_relevance', 'Relevance'),
+  newest:    () => trans('ramon-avocado.forum.search.sort_newest',    'Newest'),
+  oldest:    () => trans('ramon-avocado.forum.search.sort_oldest',    'Oldest'),
 };
 
 export default class AvocadoPostsSearchPage extends Page {
@@ -123,15 +123,15 @@ export default class AvocadoPostsSearchPage extends Page {
     const q      = params.q || '';
     const filter = params.filter || {};
     if (q) {
-      return <>Posts for <span className="AvocadoSearch-query">"{q}"</span></>;
+      return <>{trans('ramon-avocado.forum.search.posts_for', 'Posts for')} <span className="AvocadoSearch-query">"{q}"</span></>;
     }
     const parts = Object.entries(filter as Record<string, string>)
       .filter(([k]) => !k.startsWith('-'))
       .map(([k, v]) => `${k}:${v}`);
     if (parts.length > 0) {
-      return <>Posts filtered by <span className="AvocadoSearch-query">{parts.join(', ')}</span></>;
+      return <>{trans('ramon-avocado.forum.search.posts_filtered_by', 'Posts filtered by')} <span className="AvocadoSearch-query">{parts.join(', ')}</span></>;
     }
-    return 'Posts search';
+    return trans('ramon-avocado.forum.search.posts_title', 'Posts search');
   }
 
   view() {
@@ -145,7 +145,7 @@ export default class AvocadoPostsSearchPage extends Page {
     const currentKey = params.sort || Object.keys(sortMap)[0];
     const sortOpts: SortOption[] = Object.keys(sortMap).map((key) => ({
       key,
-      label: SORT_LABELS[key] || key,
+      label: SORT_LABELS[key] ?? key,
     }));
 
     return (
@@ -168,7 +168,10 @@ export default class AvocadoPostsSearchPage extends Page {
         ) : allPosts.length === 0 ? (
           <div className="AvocadoSearch-empty">
             <i className="far fa-frown-open" aria-hidden="true" />
-            <p>{q ? `No posts found for "${q}".` : 'No posts match these filters.'}</p>
+            <p>{q
+            ? trans('ramon-avocado.forum.search.no_posts_found', 'No posts found for "{q}".', { q })
+            : trans('ramon-avocado.forum.search.no_posts_match', 'No posts match these filters.')
+          }</p>
           </div>
         ) : (
           <div className="AvocadoSearch-postStack">
