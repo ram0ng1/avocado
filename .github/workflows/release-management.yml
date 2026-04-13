@@ -51,7 +51,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publicar Release no Flarum
-        if: steps.check_version.outputs.changed == 'true' && steps.create_release.outputs.html_url
+        if: steps.check_version.outputs.changed == 'true' && steps.create_release.outcome == 'success' && steps.create_release.outputs.html_url
         env:
           FLARUM_API_KEY: ${{ secrets.FLARUM_API_KEY }}
           FLARUM_DISCUSSION_ID: ${{ vars.FLARUM_DISCUSSION_ID }}
@@ -91,7 +91,7 @@ jobs:
 
           if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
             echo "✅ Comentário publicado com sucesso no Flarum!"
-            jq '.data.id // empty' /tmp/flarum_response.json
+            echo "Post ID: $(jq -r '.data.id // empty' /tmp/flarum_response.json)"
           else
             echo "❌ Falha ao publicar comentário no Flarum (HTTP $HTTP_STATUS)"
             echo "Response body:"
