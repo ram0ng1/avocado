@@ -51,4 +51,5 @@ template: |
   ```bash
   composer require ramon/avocado:$RESOLVED_VERSION
   php flarum cache:clear
+  php flarum assets:publish
   ```

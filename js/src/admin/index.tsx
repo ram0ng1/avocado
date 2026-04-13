@@ -537,6 +537,32 @@ app.initializers.add('ramon-avocado', (app) => {
     </AdminCard>
   ), 55)
 
+  // ── Colored ───────────────────────────────────────────────────────────────
+  .registerSetting(() => (
+    <AdminCard title={trans('ramon-avocado.admin.settings.section_colored', 'Colored')} icon="fas fa-palette">
+      <AdminToggle
+        settingKey="avocado.colored_enabled"
+        label={trans('ramon-avocado.admin.settings.colored_enabled_label', 'Enable colored accents')}
+        help={trans('ramon-avocado.admin.settings.colored_enabled_help', 'Apply the active tag or discussion color to primary buttons, links, and other UI accents across the forum.')}
+      />
+      {getBool('avocado.colored_enabled') && (
+        <div className="AvocadoAdmin-subGroup">
+          <AdminSelect
+            settingKey="avocado.colored_border_style"
+            label={trans('ramon-avocado.admin.settings.colored_border_style_label', 'Discussion card border style')}
+            help={trans('ramon-avocado.admin.settings.colored_border_style_help', 'Add a colored border to discussion cards using the primary tag color.')}
+            options={{
+              'none': trans('ramon-avocado.admin.settings.colored_border_style_none', 'None'),
+              'left': trans('ramon-avocado.admin.settings.colored_border_style_left', 'Left border'),
+              'full': trans('ramon-avocado.admin.settings.colored_border_style_full', 'Full border'),
+            }}
+            default="none"
+          />
+        </div>
+      )}
+    </AdminCard>
+  ), 50)
+
   // ── Posts ──────────────────────────────────────────────────────────────────
   .registerSetting(() => (
     <AdminCard title={trans('ramon-avocado.admin.settings.section_posts', 'Posts')} icon="fas fa-comment-alt">

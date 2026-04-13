@@ -3,6 +3,7 @@ import app from 'flarum/forum/app';
 import Page from 'flarum/common/components/Page';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import { trans, tagRoute, navigate, renderThreadSkeleton, renderLoadMore, renderEmpty } from '../utils';
+import { applyColor, clearColor } from '../colored';
 import ThreadCard from './shared/ThreadCard';
 import SortDropdown, { SortOption } from './shared/SortDropdown';
 import WsUpdateBanner from './shared/WsUpdateBanner';
@@ -143,6 +144,7 @@ export default class AvocadoTagPage extends Page {
 
   onremove(vnode: any) {
     super.onremove(vnode);
+    clearColor();
     if (!app.pusher || typeof app.pusher.then !== 'function') return;
     app.pusher.then(({ channels }: any) => {
       if (!channels?.main) return;
@@ -157,13 +159,21 @@ export default class AvocadoTagPage extends Page {
   private loadTag(slug: string) {
     if (!slug) return;
     const cached = findTagBySlug(slug);
-    if (cached) { this.tag = cached; this.loadDiscussions(true); return; }
+    if (cached) {
+      this.tag = cached;
+      if (app.forum.attribute('avocadoColoredEnabled')) applyColor(cached.color?.() || null);
+      this.loadDiscussions(true);
+      return;
+    }
     this.tagLoading = true;
     app.store.find('tags', slug, { include: 'children,children.parent,parent' })
       .then(() => {
         this.tag = findTagBySlug(slug);
         this.tagLoading = false;
-        if (this.tag) this.loadDiscussions(true);
+        if (this.tag) {
+          if (app.forum.attribute('avocadoColoredEnabled')) applyColor(this.tag.color?.() || null);
+          this.loadDiscussions(true);
+        }
         m.redraw();
       })
       .catch(() => { this.tagLoading = false; m.redraw(); });

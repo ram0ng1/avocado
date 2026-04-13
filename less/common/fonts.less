@@ -1,0 +1,40 @@
+// DM Sans served locally — avoids a Google Fonts network dependency.
+//
+// IMPORTANT — path must match where Flarum's `php flarum assets:publish` copies
+// extension assets:  /assets/extensions/{extension-id}/fonts/
+// The extension ID is derived from composer.json "name" (ramon/avocado → ramon-avocado).
+// Using the extension path guarantees the fonts survive fresh asset:publish runs in
+// production without any manual copying.
+
+@font-face {
+  font-family: 'DM Sans Variable';
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  src: url('/assets/extensions/ramon-avocado/fonts/dm-sans-variable.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'DM Sans Variable';
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+  src: url('/assets/extensions/ramon-avocado/fonts/dm-sans-italic.woff2') format('woff2-variations');
+}
+
+// Alias so both 'DM Sans' and 'DM Sans Variable' resolve to the same files.
+@font-face {
+  font-family: 'DM Sans';
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  src: url('/assets/extensions/ramon-avocado/fonts/dm-sans-variable.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'DM Sans';
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+  src: url('/assets/extensions/ramon-avocado/fonts/dm-sans-italic.woff2') format('woff2-variations');
+}

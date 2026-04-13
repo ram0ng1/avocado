@@ -1,17 +1,6 @@
 // ── Avocado Discussion Page (/d/) — Clean Feed Design ─────────────────────────
 // Light gray hero · clean feed rows (no bubble cards) · avatar column layout
 
-// ── Keyframes ─────────────────────────────────────────────────────────────────
-@keyframes avocado-shimmer {
-  0%   { background-position: -400px 0; }
-  100% { background-position:  400px 0; }
-}
-
-@keyframes avocado-pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.55; }
-}
-
 // ── Design tokens ─────────────────────────────────────────────────────────────
 .Page.DiscussionPage {
   --disc-bg:      #ffffff;
@@ -521,6 +510,11 @@
     justify-content: center;
     width: 100%;
   }
+  // Pills flex: initial so justify-content:center on the nav actually centers the group
+  .DiscussionHero-pills {
+    flex: initial;
+    justify-content: center;
+  }
   .DiscussionHero-title {
     font-size: clamp(20px, 5.5vw, 28px);
     text-align: center;
@@ -584,7 +578,7 @@
 @media @tablet-up {
   .Page.DiscussionPage .PostUser-badges {
     position: absolute;
-    left: calc(5px - var(--disc-avatar) - var(--disc-gap));
+    left: calc(83px - var(--disc-avatar) - var(--disc-gap));
     white-space: nowrap;
     pointer-events: none;
   }
@@ -608,11 +602,37 @@
 }
 
 
+// ── PostUser-badges — editing state ──────────────────────────────────────────
+// When editing a post, reset badge to inline flow (no repositioning sideffects).
+@media @tablet-up {
+  .Page.DiscussionPage .CommentPost.editing .PostUser-badges {
+    display: inline-flex;
+    pointer-events: auto;
+  }
+  .Page.DiscussionPage .CommentPost.editing .PostUser-badges--inSide {
+    display: none !important;
+  }
+}
+
+@media @phone {
+  .Page.DiscussionPage .CommentPost.editing .PostUser .PostUser-badges {
+    display: inline-flex;
+    top: auto;
+    left: auto;
+    pointer-events: auto;
+  }
+}
+
 // ── PostUser-badges — mobile ──────────────────────────────────────────────────
 // Post-side is hidden on mobile; the avatar is inside PostUser-name > a.
-// PostUser-name has position:relative so the badge overlays its corner.
+// Since PostUser { display: contents }, PostUser-badges is a sibling of PostUser-name
+// (not a child), so position:relative on PostUser-name doesn't create a containing
+// block for it. Post-header { position:relative } (our rule) would be the containing
+// block, but that mis-aligns the badge vertically.
+// Fix: make li.item-user the containing block — avatar starts at its x=0, so
+// left: 6px / top: -12px overlays the avatar's top-left corner correctly.
 @media @phone {
-  .Page.DiscussionPage .PostUser-name {
+  .Page.DiscussionPage .Post-header > ul > li.item-user {
     position: relative;
   }
 
@@ -818,21 +838,76 @@
   }
 
   pre {
-    background: #18181b;
-    color: #e4e4e7;
-    padding: 14px 18px;
+    // ── Light-mode defaults (JS dark override via [data-theme="dark"]) ──────────
+    --pre-bg:          #f6f8fa;
+    --pre-text:        #24292e;
+    --pre-border:      rgba(0, 0, 0, 0.09);
+    --pre-header-bg:   rgba(0, 0, 0, 0.035);
+    --pre-header-border: rgba(0, 0, 0, 0.07);
+
+    position: relative;
+    background: var(--pre-bg);
+    color: var(--pre-text);
+    border: 1px solid var(--pre-border);
     border-radius: 12px;
+    padding: 38px 18px 16px;  // top-padding makes room for the header bar
     overflow-x: auto;
     margin: 14px 0;
     font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
     font-size: 13px;
     line-height: 1.6;
 
+    // ── Top header bar (always visible) ────────────────────────────────────────
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 32px;
+      background: var(--pre-header-bg);
+      border-bottom: 1px solid var(--pre-header-border);
+      border-radius: 11px 11px 0 0;
+      pointer-events: none;
+    }
+
     code {
       background: transparent;
       padding: 0;
       border-radius: 0;
       color: inherit;
+    }
+  }
+
+  // ── Copy button — injected by JS as .avocado-code-copy inside <pre> ──────────
+  pre .avocado-code-copy {
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--pre-text);
+    opacity: 0.4;
+    font-size: 11px;
+    cursor: pointer;
+    transition: opacity 0.15s, background 0.15s;
+    z-index: 1;
+    padding: 0;
+
+    &:hover {
+      opacity: 0.85;
+      background: rgba(0, 0, 0, 0.07);
+    }
+
+    &--copied {
+      opacity: 1;
+      color: #2ea043;
     }
   }
 
@@ -1382,190 +1457,6 @@
   display: none;
 }
 
-
-
-// ── Skeleton loading state ─────────────────────────────────────────────────────
-.DiscussionPage--skeleton {
-  background: #fff;
-  --disc-avatar: 48px;
-  --disc-gap: 24px;
-
-  .Page-main { display: block; }
-
-  .AvocadoSkeleton-discussionHero {
-    background: transparent;
-    border-bottom: 1px solid var(--avocado-border-subtle);
-
-    .container {
-      max-width: 1280px;
-      padding: 48px 48px 52px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-  }
-
-  // Nav row: back circle + tag pill placeholders
-  .AvocadoSkeleton-nav {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 18px;
-  }
-
-  .AvocadoSkeleton-backBtn {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    background: rgba(0, 0, 0, 0.08);
-  }
-
-  .AvocadoSkeleton-tag {
-    height: 26px;
-    width: 72px;
-    border-radius: 100px;
-    background: rgba(0, 0, 0, 0.07);
-  }
-
-  .AvocadoSkeleton-title {
-    height: 36px;
-    width: 64%;
-    border-radius: 8px;
-    background: rgba(0, 0, 0, 0.09);
-  }
-
-  // Meta row: stacked avatars + text chips
-  .AvocadoSkeleton-meta {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 14px;
-  }
-
-  .AvocadoSkeleton-avatarStack {
-    display: flex;
-    .AvocadoSkeleton-stackItem {
-      width: 26px;
-      height: 26px;
-      border-radius: 999px;
-      background: rgba(0, 0, 0, 0.10);
-      border: 2px solid rgba(255,255,255,0.5);
-      margin-left: -8px;
-      &:first-child { margin-left: 0; }
-    }
-  }
-
-  .AvocadoSkeleton-metaChip {
-    height: 16px;
-    border-radius: 100px;
-    background: rgba(0, 0, 0, 0.07);
-
-    &--sm { width: 60px; }
-    &--md { width: 90px; }
-  }
-
-  .AvocadoSkeleton-stream {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 0 48px;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .AvocadoSkeleton-post {
-    display: flex;
-    gap: var(--disc-gap);
-    padding: 32px 0;
-    border-bottom: 1px solid #f0f0f4;
-    animation: avocado-pulse 1.5s ease-in-out infinite;
-
-    &:nth-child(2) { animation-delay: 0.18s; }
-    &:nth-child(3) { animation-delay: 0.36s; }
-  }
-
-  .AvocadoSkeleton-postAvatar {
-    width: var(--disc-avatar);
-    height: var(--disc-avatar);
-    border-radius: 999px;
-    flex-shrink: 0;
-    background: #e8e8f0;
-  }
-
-  .AvocadoSkeleton-postBody {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding-top: 2px;
-  }
-
-  // Mobile-only header row (avatar + username inline) — hidden on desktop/tablet
-  .AvocadoSkeleton-postHeader {
-    display: none;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .AvocadoSkeleton-postAvatarSm {
-    width: 32px;
-    height: 32px;
-    border-radius: 999px;
-    flex-shrink: 0;
-    background: #e8e8f0;
-  }
-
-  .AvocadoSkeleton-line {
-    border-radius: 6px;
-    background: #e8e8f0;
-
-    &--sm   { height: 12px; width: 36%; }
-    &--md   { height: 12px; width: 65%; }
-    &--lg   { height: 80px; width: 100%; border-radius: 8px; }
-  }
-}
-
-// Skeleton — tablet adjustments
-@media @tablet {
-  .DiscussionPage--skeleton {
-    --disc-avatar: 40px;
-    --disc-gap: 18px;
-
-    .AvocadoSkeleton-discussionHero .container { padding: 36px 20px 40px; }
-    .AvocadoSkeleton-stream { padding: 0 20px; }
-    .AvocadoSkeleton-post { padding: 24px 0; }
-  }
-}
-
-// Skeleton — phone adjustments
-@media @phone {
-  .DiscussionPage--skeleton {
-    --disc-avatar: 34px;
-    --disc-gap: 12px;
-
-    .AvocadoSkeleton-discussionHero .container {
-      padding: 32px 20px 36px;
-      align-items: center;
-    }
-    .AvocadoSkeleton-nav { justify-content: center; }
-    .AvocadoSkeleton-title { width: 85%; text-align: center; }
-    .AvocadoSkeleton-meta { justify-content: center; }
-    .AvocadoSkeleton-stream { padding: 0 14px; }
-    .AvocadoSkeleton-line--lg { height: 56px; }
-
-    // Post skeleton: match Flarum's mobile layout — no side avatar column,
-    // inline avatar + username in a header row, then content block.
-    .AvocadoSkeleton-post {
-      display: block;
-      padding: 18px 0;
-    }
-    .AvocadoSkeleton-postAvatar  { display: none; }
-    .AvocadoSkeleton-postBody    { padding-top: 0; }
-    .AvocadoSkeleton-line--user  { display: none; }
-    .AvocadoSkeleton-postHeader  { display: flex; }
-  }
-}
 
 
 // ── DiscussionList sidebar inside DiscussionPage — Avocado design ──────────────

@@ -199,35 +199,30 @@
   }
 }
 
-// Glass-style stat pills inside banner
+// Stat items inside banner — same plain style as DiscussionHero-metaItem
 .AvocadoUserPage-hero-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 14px;
   align-items: center;
+  margin-top: 6px;
 }
 
 .AvocadoUserPage-hero-statPill {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  font-size: 12px;
+  gap: 5px;
+  font-size: 13px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(4px);
+  color: rgba(255, 255, 255, 0.78);
 
   strong { font-weight: 900; color: #fff; }
 
-  &--online {
-    background: rgba(34, 197, 94, 0.18);
-    border-color: rgba(34, 197, 94, 0.35);
-    color: #a7f3c0;
+  i { font-size: 13px; }
 
-    .fa-circle { font-size: 7px; color: var(--avocado-online); }
+  &--online {
+    color: rgba(255, 255, 255, 0.92);
+    .fa-circle { font-size: 8px; color: var(--avocado-online); }
   }
 }
 

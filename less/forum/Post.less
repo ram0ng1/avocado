@@ -235,11 +235,40 @@
 
     .UserCard-avatar {
       margin-bottom: 8px;
+      position: relative; // needed for online dot pseudo-element
     }
 
     .UserCard-identity {
       font-size: 20px;
       margin-top: 4px;
+    }
+
+    // ── Online ring on avatar ─────────────────────────────────────────────────
+    &:has(.UserCard-lastSeen.online) .UserCard-avatar::after {
+      content: '';
+      position: absolute;
+      bottom: 10px;
+      right: 3px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--avocado-online);
+      border: 2.5px solid var(--usercard-bg, var(--primary-color));
+      z-index: 2;
+    }
+
+    // ── Online / last-seen label ──────────────────────────────────────────────
+    .UserCard-lastSeen {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 600;
+
+      &.online {
+        color: var(--avocado-online);
+        .icon { font-size: 8px; }
+      }
     }
   }
 }

@@ -661,6 +661,19 @@ body.dark-mode {
     --disc-muted:  var(--muted-color);
   }
 
+  // ── Code blocks: dark theme ───────────────────────────────────────────────────
+  .Page.DiscussionPage .Post-body pre {
+    --pre-bg:            #0d1117;
+    --pre-text:          #e6edf3;
+    --pre-border:        rgba(255, 255, 255, 0.08);
+    --pre-header-bg:     rgba(255, 255, 255, 0.04);
+    --pre-header-border: rgba(255, 255, 255, 0.07);
+
+    // Copy button: lighter tint on dark
+    .avocado-code-copy { color: var(--pre-text); }
+    .avocado-code-copy:hover { background: rgba(255, 255, 255, 0.08); }
+  }
+
   // Auth modal close button: darken slightly on dark bg instead of light shadow
   .Modal-content:has(.AvocadoAuth-panel) .Modal-close {
     background: rgba(255, 255, 255, 0.06);
@@ -929,31 +942,31 @@ body.dark-mode {
     }
   }
 
-  // Full image variant
+  // Full image variant — dark mode: dark scrim + white text
   .AvocadoHome-showcaseCard--full {
     .AvocadoHome-showcaseCard-link {
-      background: transparent;
+      background: #111;
       border-color: rgba(255, 255, 255, 0.08);
 
       &:hover {
-        background: transparent;
+        background: #111;
         border-color: rgba(255, 255, 255, 0.15);
-      }
-
-      &::before {
-        background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%);
       }
     }
 
     .AvocadoHome-showcaseCard-img {
       opacity: 0.92;
-
-      &:hover { opacity: 0.82; }
     }
 
-    .AvocadoHome-showcaseCard-colorOverlay {
-      opacity: 0.12;
+    .AvocadoHome-showcaseCard-body {
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0) 100%);
     }
+
+    .AvocadoHome-showcaseCard-title      { color: #fff; }
+    .AvocadoHome-showcaseCard-excerpt    { color: rgba(255, 255, 255, 0.75); }
+    .AvocadoHome-showcaseCard-date       { color: rgba(255, 255, 255, 0.55); }
+    .AvocadoHome-showcaseCard-authorName { color: rgba(255, 255, 255, 0.75); }
+    .AvocadoHome-showcaseCard-arrow      { stroke: #fff; }
   }
 
   .AvocadoHome-tagPill {

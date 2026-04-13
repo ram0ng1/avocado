@@ -53,7 +53,7 @@ class AddCriticalCss
         if ($hasSvgLogo) {
             // SVG logo — JS will set explicit width/height from the viewBox, but
             // we reserve 50 px height immediately so the header doesn't shift.
-            $logoReservation = 'svg.Header-logo{height:50px;width:auto;max-width:none;max-height:none;display:inline-block;vertical-align:middle;flex-shrink:0;overflow:visible}';
+            $logoReservation = 'svg.Header-logo,svg.AvocadoLogoSvg{height:50px;width:auto;max-width:none;max-height:none;display:inline-block;vertical-align:middle;flex-shrink:0;overflow:visible}';
         } elseif ($logoEnabled) {
             // Admin-uploaded PNG / fallback image logo.
             $logoReservation = 'img.Header-logo{height:35px;width:auto;max-width:200px;display:inline-block;vertical-align:middle}';
@@ -63,11 +63,35 @@ class AddCriticalCss
             $logoReservation = '.Header-logo{max-height:30px;display:block}';
         }
 
+        // ── Header title flex alignment (custom logo only) ────────────────────
+        // App.less gates this behind html[data-avocado-logo-custom="true"] which is
+        // set by HideLogoFlash.php's inline <script>. That script runs before any
+        // render, so the attribute IS present at first paint — but the main CSS
+        // that targets it is async and arrives later. We replicate those rules here
+        // so the title flex layout is correct from the very first frame.
+        $logoTitleCss = $logoEnabled
+            ? '.App-header .Header-title{display:flex!important;align-items:center!important;padding:5px 0}' .
+              '#home-link.Header-logo{display:flex;align-items:center;justify-content:center;min-height:50px}'
+            : '';
+
         // ── Hero image size reservation ───────────────────────────────────────
         // Reserve vertical space for the hero banner so CLS is zero.
         $hasHero = !empty(trim((string) $this->settings->get('avocado.hero_image')));
         $heroReservation = $hasHero
             ? '.Hero--banner{min-height:400px}@media(max-width:767px){.Hero--banner{min-height:280px}}'
+            : '';
+
+        // ── Showcase grid mobile layout ───────────────────────────────────────
+        // On mobile the showcase grid is a horizontal scroll carousel (display:flex,
+        // overflow-x:auto). Before async CSS loads it renders as a plain block div
+        // and cards stack vertically, then jump to horizontal — same flash as the nav.
+        // Mirror the @phone rules from HomePage.less immediately.
+        $showcaseEnabled = (bool) $this->settings->get('avocado.showcase_enabled', false);
+        $showcaseCss = $showcaseEnabled
+            ? '@media(max-width:767px){' .
+                '.AvocadoHome-showcaseGrid{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:10px;padding-bottom:6px;scrollbar-width:none}' .
+                '.AvocadoHome-showcaseCard{flex:0 0 72vw;max-width:240px;scroll-snap-align:start;height:auto}' .
+              '}'
             : '';
 
         // ── Mobile nav controls ───────────────────────────────────────────────
@@ -98,10 +122,12 @@ class AddCriticalCss
         @font-face{font-family:'DM Sans Variable';font-weight:100 900;font-style:italic;font-display:swap;src:url('{$italicFont}') format('woff2-variations')}
         @font-face{font-family:'DM Sans';font-weight:100 900;font-style:normal;font-display:swap;src:url('{$normalFont}') format('woff2-variations')}
         body{font-family:'DM Sans Variable','DM Sans','Segoe UI',sans-serif;overflow-x:hidden}
-        .App-header{height:52px;min-height:52px;contain:layout size}
+        .App-header{display:flex;height:52px;min-height:52px;contain:layout}
         {$logoReservation}
+        {$logoTitleCss}
         {$mobileNavCss}
         {$heroReservation}
+        {$showcaseCss}
         CSS;
 
         // Strip extra whitespace/newlines introduced by heredoc indentation

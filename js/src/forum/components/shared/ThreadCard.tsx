@@ -38,6 +38,11 @@ export interface ThreadCardAttrs extends ComponentAttrs {
   /** Search query for title/excerpt highlighting */
   searchQuery?: string;
   /**
+   * Tag IDs to exclude from the pill row (e.g. showcase tags on HomePage).
+   * Falls back to showing all tags when omitted.
+   */
+  filterTagIds?: Set<string>;
+  /**
    * 'home' (default) — shows reply card + like/reply stat buttons
    * 'search'         — shows highlighted excerpt + reply count footer, no like button
    */
@@ -55,6 +60,7 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
       newDiscIds = new Set<string>(),
       currentTag = null,
       searchQuery = '',
+      filterTagIds,
       variant = 'home',
     } = this.attrs;
 
@@ -64,7 +70,10 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
     const user            = discussion.user?.();
     const title           = (discussion.title?.() || 'Untitled') as string;
     const href            = discussionRoute(discussion);
-    const tags            = ((discussion.tags?.() || []) as any[]).filter(Boolean);
+    const allTags         = ((discussion.tags?.() || []) as any[]).filter(Boolean);
+    const tags            = filterTagIds
+      ? allTags.filter((t: any) => !filterTagIds.has(String(t.id?.() ?? '')))
+      : allTags;
     const isSticky        = discussion.isSticky?.() || false;
     const isLocked        = discussion.isLocked?.() || false;
     const isFollowing     = discussion.subscription?.() === 'follow';
@@ -155,10 +164,13 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
       );
     })() : null;
 
+    const primaryTagColor: string = (allTags.length ? allTags[0].color?.() : null) || 'var(--primary-color)';
+
     return (
       <article
         key={id}
         className={`${p}-threadCard${isUnread ? ` ${p}-threadCard--unread` : ''}${isNew ? ` ${p}-threadCard--new` : ''}`}
+        style={{ '--item-tag-color': primaryTagColor }}
       >
         <div className={`${p}-threadHead`}>
           {/* Avatar */}
