@@ -1,296 +1,282 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Ramon\Avocado\Controller;
 
+use Flarum\Foundation\Paths;
 use Flarum\Http\Controller\AbstractController;
 use Flarum\Http\Exception\InvalidRequestException;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
+use Flarum\Http\RequestUtil;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Laminas\Diactoros\Response;
 use Laminas\Diactoros\Stream;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
-use Exception;
 
 /**
- * OptimizeImageController - Dynamic image optimization server
- * 
- * Converts GIFs to MP4/WebM, creates responsive images, optimizes formats
- * Similar to WhatsApp's image delivery optimization
- * 
+ * OptimizeImageController — Dynamic image optimization proxy (admin-only).
+ *
+ * Converts GIFs to MP4/WebM, resizes images, and converts to modern formats
+ * (WebP/AVIF). Only accessible by administrators.
+ *
  * Usage:
- *   /api/avocado/optimize-image?url=[encoded-url]&width=400&height=150&format=webp
+ *   GET /api/avocado/optimize-image?url=<encoded>&width=400&height=150&format=webp
  */
 class OptimizeImageController extends AbstractController
 {
-    // Cache directory for optimized images
-    private const CACHE_DIR = 'storage/avocado-image-cache';
-    
-    // Supported output formats
     private const FORMATS = ['webp', 'avif', 'mp4', 'webm', 'jpeg'];
-    
-    // Max file size to process (50MB)
-    private const MAX_SIZE = 52428800;
-    
-    // GIF to video conversion threshold
-    private const GIF_TO_VIDEO_SIZE = 500000; // 500KB
+    private const MAX_SIZE = 52_428_800; // 50 MB
+
+    /** Allowed MIME types for image inputs. */
+    private const ALLOWED_MIMES = [
+        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+        'image/avif', 'video/mp4', 'video/webm',
+    ];
+
+    /** Private/reserved IP ranges — blocked to prevent SSRF. */
+    private const BLOCKED_PREFIXES = [
+        '10.', '192.168.', '169.254.',  // RFC-1918 / link-local
+        '127.',                          // loopback
+        '0.',                            // IANA reserved
+        '::1', 'fc00:', 'fe80:',         // IPv6 loopback / ULA / link-local
+    ];
+
+    private string $cacheDir;
+
+    public function __construct(Paths $paths)
+    {
+        $this->cacheDir = $paths->storage . '/avocado-image-cache';
+    }
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        try {
-            $queryParams = $request->getQueryParams();
-            $imageUrl = $queryParams['url'] ?? null;
-            $width = (int)($queryParams['width'] ?? 0);
-            $height = (int)($queryParams['height'] ?? 0);
-            $format = $queryParams['format'] ?? 'webp';
-            $quality = (int)($queryParams['quality'] ?? 80);
+        // ── Auth: admin only ────────────────────────────────────────────────
+        RequestUtil::getActor($request)->assertAdmin();
 
-            if (!$imageUrl) {
-                throw new InvalidRequestException('Missing required parameter: url');
-            }
+        $params  = $request->getQueryParams();
+        $url     = $params['url']     ?? null;
+        $width   = (int) ($params['width']   ?? 0);
+        $height  = (int) ($params['height']  ?? 0);
+        $format  = $params['format']  ?? 'webp';
+        $quality = max(1, min(100, (int) ($params['quality'] ?? 80)));
 
-            if (!in_array($format, self::FORMATS)) {
-                throw new InvalidRequestException(sprintf('Unsupported format: %s', $format));
-            }
-
-            // Validate URL (prevent SSRF)
-            $this->validateImageUrl($imageUrl);
-
-            // Generate cache key
-            $cacheKey = $this->generateCacheKey($imageUrl, $width, $height, $format, $quality);
-            $cachePath = self::CACHE_DIR . '/' . $cacheKey;
-
-            // Return cached if exists
-            if (file_exists($cachePath)) {
-                return $this->streamFile($cachePath, $this->getMimeType($format));
-            }
-
-            // Ensure cache directory exists
-            @mkdir(self::CACHE_DIR, 0755, true);
-
-            // Download original image
-            $originalPath = $this->downloadImage($imageUrl);
-            $originalMime = mime_content_type($originalPath);
-
-            // Process based on source type
-            if (in_array($originalMime, ['image/gif', 'video/mp4', 'video/webm'])) {
-                $outputPath = $this->convertGifToVideo($originalPath, $format);
-            } else {
-                $outputPath = $this->optimizeImage(
-                    $originalPath,
-                    $width,
-                    $height,
-                    $format,
-                    $quality
-                );
-            }
-
-            // Move to cache
-            rename($outputPath, $cachePath);
-            
-            // Cleanup original
-            @unlink($originalPath);
-
-            return $this->streamFile($cachePath, $this->getMimeType($format));
-
-        } catch (Exception $e) {
-            throw new InvalidRequestException($e->getMessage());
+        if (!$url) {
+            throw new InvalidRequestException('Missing required parameter: url');
         }
+
+        if (!in_array($format, self::FORMATS, true)) {
+            throw new InvalidRequestException('Unsupported format: ' . $format);
+        }
+
+        $this->validateImageUrl($url);
+
+        $cacheKey  = $this->cacheKey($url, $width, $height, $format, $quality);
+        $cachePath = $this->cacheDir . '/' . $cacheKey;
+
+        if (file_exists($cachePath)) {
+            return $this->streamFile($cachePath, $this->mimeType($format));
+        }
+
+        if (!is_dir($this->cacheDir)) {
+            mkdir($this->cacheDir, 0750, true);
+        }
+
+        $tmpPath     = $this->download($url);
+        $contentMime = mime_content_type($tmpPath) ?: '';
+
+        if (!in_array($contentMime, self::ALLOWED_MIMES, true)) {
+            @unlink($tmpPath);
+            throw new InvalidRequestException('URL does not point to a supported image or video.');
+        }
+
+        try {
+            if (in_array($contentMime, ['image/gif', 'video/mp4', 'video/webm'], true)) {
+                $outPath = $this->gifToVideo($tmpPath, $format);
+            } else {
+                $outPath = $this->optimizeImage($tmpPath, $width, $height, $format, $quality);
+            }
+
+            rename($outPath, $cachePath);
+        } finally {
+            @unlink($tmpPath);
+        }
+
+        return $this->streamFile($cachePath, $this->mimeType($format));
     }
 
+    // ── Private helpers ──────────────────────────────────────────────────────
+
     /**
-     * Download image from URL with validation
+     * Download the remote image to a temp file.
+     * SSL verification is enabled; TLS errors will surface as exceptions.
      */
-    private function downloadImage(string $url): string
+    private function download(string $url): string
     {
         try {
-            $client = new Client(['timeout' => 30, 'verify' => false]);
+            $client   = new Client(['timeout' => 30, 'verify' => true]);
             $response = $client->get($url, ['stream' => true]);
 
             if ($response->getStatusCode() !== 200) {
-                throw new RuntimeException('Failed to download image');
+                throw new RuntimeException('Remote server returned ' . $response->getStatusCode());
             }
 
-            // Check size
-            $size = (int)($response->getHeader('Content-Length')[0] ?? 0);
-            if ($size > self::MAX_SIZE) {
-                throw new RuntimeException('Image too large');
+            $contentLength = (int) ($response->getHeader('Content-Length')[0] ?? 0);
+            if ($contentLength > self::MAX_SIZE) {
+                throw new RuntimeException('Image exceeds the 50 MB size limit.');
             }
 
-            $tmpPath = tempnam(sys_get_temp_dir(), 'avocado_img_');
-            $stream = fopen($tmpPath, 'w');
-            
+            $tmp    = tempnam(sys_get_temp_dir(), 'avocado_img_');
+            $stream = fopen($tmp, 'wb');
+            $total  = 0;
+
             foreach ($response->getBody() as $chunk) {
+                $total += strlen($chunk);
+                if ($total > self::MAX_SIZE) {
+                    fclose($stream);
+                    @unlink($tmp);
+                    throw new RuntimeException('Image exceeds the 50 MB size limit.');
+                }
                 fwrite($stream, $chunk);
             }
+
             fclose($stream);
 
-            return $tmpPath;
+            return $tmp;
         } catch (GuzzleException $e) {
-            throw new RuntimeException('Failed to download image: ' . $e->getMessage());
+            throw new RuntimeException('Download failed: ' . $e->getMessage(), 0, $e);
         }
     }
 
-    /**
-     * Convert GIF to MP4/WebM video
-     */
-    private function convertGifToVideo(string $gifPath, string $format): string
+    /** Convert GIF/video to MP4 or WebM using FFmpeg. */
+    private function gifToVideo(string $src, string $format): string
     {
-        $outputPath = tempnam(sys_get_temp_dir(), 'avocado_vid_');
-        $outputPath = str_replace('.tmp', '.' . ($format === 'webm' ? 'webm' : 'mp4'), $outputPath);
+        $ext = $format === 'webm' ? 'webm' : 'mp4';
+        $out = tempnam(sys_get_temp_dir(), 'avocado_vid_') . '.' . $ext;
 
-        // FFmpeg command to convert GIF to video
         if ($format === 'webm') {
             $cmd = sprintf(
                 'ffmpeg -i %s -c:v libvpx-vp9 -pix_fmt yuva420p -b:v 0 -crf 30 -f webm %s 2>/dev/null',
-                escapeshellarg($gifPath),
-                escapeshellarg($outputPath)
+                escapeshellarg($src),
+                escapeshellarg($out)
             );
         } else {
-            // MP4 with H.264
             $cmd = sprintf(
                 'ffmpeg -i %s -c:v libx264 -pix_fmt yuv420p -preset fast -crf 28 %s 2>/dev/null',
-                escapeshellarg($gifPath),
-                escapeshellarg($outputPath)
+                escapeshellarg($src),
+                escapeshellarg($out)
             );
         }
 
-        exec($cmd, $output, $returnCode);
-        
-        if ($returnCode !== 0 || !file_exists($outputPath)) {
-            throw new RuntimeException('Failed to convert GIF to video');
+        exec($cmd, $output, $code);
+
+        if ($code !== 0 || !file_exists($out)) {
+            throw new RuntimeException('FFmpeg conversion failed.');
         }
 
-        return $outputPath;
+        return $out;
     }
 
-    /**
-     * Optimize image: resize, convert format, compress
-     */
+    /** Resize and convert a static image using ImageMagick. */
     private function optimizeImage(
-        string $imagePath,
+        string $src,
         int $width,
         int $height,
         string $format,
         int $quality
     ): string {
-        // Use ImageMagick via shell (most compatible)
-        $outputPath = tempnam(sys_get_temp_dir(), 'avocado_img_');
-        $outputPath .= '.' . $format;
+        $out       = tempnam(sys_get_temp_dir(), 'avocado_img_') . '.' . $format;
+        $resizeArg = ($width > 0 && $height > 0)
+            ? sprintf('-resize %dx%d', $width, $height)
+            : '';
 
-        $resizeArg = '';
-        if ($width > 0 && $height > 0) {
-            // Fit within bounds, maintain aspect ratio
-            $resizeArg = sprintf('-resize %dx%d', $width, $height);
+        $cmd = sprintf(
+            'convert %s %s -quality %d -strip %s 2>/dev/null',
+            escapeshellarg($src),
+            $resizeArg,
+            $quality,
+            escapeshellarg($out)
+        );
+
+        exec($cmd, $output, $code);
+
+        if ($code !== 0 || !file_exists($out)) {
+            throw new RuntimeException('ImageMagick conversion failed.');
         }
 
-        // Build convert command
-        if ($format === 'webp') {
-            $cmd = sprintf(
-                'convert %s %s -quality %d -strip %s 2>/dev/null',
-                escapeshellarg($imagePath),
-                $resizeArg,
-                $quality,
-                escapeshellarg($outputPath)
-            );
-        } elseif ($format === 'avif') {
-            // Use ImageMagick for AVIF
-            $cmd = sprintf(
-                'convert %s %s -quality %d -strip %s 2>/dev/null',
-                escapeshellarg($imagePath),
-                $resizeArg,
-                $quality,
-                escapeshellarg($outputPath)
-            );
-        } else {
-            // JPEG fallback
-            $cmd = sprintf(
-                'convert %s %s -quality %d -strip %s 2>/dev/null',
-                escapeshellarg($imagePath),
-                $resizeArg,
-                $quality,
-                escapeshellarg($outputPath)
-            );
-        }
-
-        exec($cmd, $output, $returnCode);
-
-        if ($returnCode !== 0 || !file_exists($outputPath)) {
-            throw new RuntimeException('Failed to optimize image');
-        }
-
-        return $outputPath;
+        return $out;
     }
 
     /**
-     * Validate image URL (prevent SSRF)
+     * Validate a URL before fetching it.
+     *
+     * Blocks:
+     *  - Non-HTTP(S) schemes
+     *  - Private / loopback / link-local IP ranges (SSRF prevention)
+     *  - Bare `localhost` hostnames
      */
     private function validateImageUrl(string $url): void
     {
-        // Parse URL
         $parsed = parse_url($url);
-        
+
         if (!$parsed || empty($parsed['host'])) {
-            throw new RuntimeException('Invalid image URL');
+            throw new InvalidRequestException('Invalid image URL.');
         }
 
-        // Check scheme
-        if (!in_array($parsed['scheme'] ?? 'https', ['http', 'https'])) {
-            throw new RuntimeException('Invalid URL scheme');
+        $scheme = strtolower($parsed['scheme'] ?? '');
+        if (!in_array($scheme, ['http', 'https'], true)) {
+            throw new InvalidRequestException('Only http and https URLs are allowed.');
+        }
+
+        $host = strtolower($parsed['host']);
+
+        // Block bare localhost names
+        if ($host === 'localhost' || $host === 'localhost.') {
+            throw new InvalidRequestException('Requests to localhost are not allowed.');
+        }
+
+        // Resolve the hostname to an IP and check against blocked ranges
+        $ip = gethostbyname($host);
+        foreach (self::BLOCKED_PREFIXES as $prefix) {
+            if (str_starts_with($ip, $prefix) || str_starts_with($host, $prefix)) {
+                throw new InvalidRequestException('Requests to private or reserved IP ranges are not allowed.');
+            }
         }
     }
 
-    /**
-     * Generate cache key from image parameters
-     */
-    private function generateCacheKey(
+    private function cacheKey(
         string $url,
         int $width,
         int $height,
         string $format,
         int $quality
     ): string {
-        $key = sprintf(
-            '%s_%d_%d_%s_q%d',
-            md5($url),
-            $width,
-            $height,
-            $format,
-            $quality
-        );
-        return $key . '.' . $format;
+        return sprintf('%s_%d_%d_%s_q%d.%s', md5($url), $width, $height, $format, $quality, $format);
     }
 
-    /**
-     * Get MIME type for format
-     */
-    private function getMimeType(string $format): string
+    private function mimeType(string $format): string
     {
         return match ($format) {
-            'webp' => 'image/webp',
-            'avif' => 'image/avif',
-            'mp4' => 'video/mp4',
-            'webm' => 'video/webm',
+            'webp'  => 'image/webp',
+            'avif'  => 'image/avif',
+            'mp4'   => 'video/mp4',
+            'webm'  => 'video/webm',
             default => 'image/jpeg',
         };
     }
 
-    /**
-     * Stream file to client
-     */
-    private function streamFile(string $filePath, string $mimeType): ResponseInterface
+    private function streamFile(string $path, string $mime): ResponseInterface
     {
-        if (!file_exists($filePath)) {
-            throw new RuntimeException('Optimized file not found');
+        if (!file_exists($path)) {
+            throw new RuntimeException('Cached file not found.');
         }
 
-        $stream = new Stream(fopen($filePath, 'r'));
-        
-        return (new Response($stream, 200))
-            ->withHeader('Content-Type', $mimeType)
-            ->withHeader('Cache-Control', 'public, max-age=31536000')
-            ->withHeader('Content-Length', (string) filesize($filePath))
+        return (new Response(new Stream(fopen($path, 'rb')), 200))
+            ->withHeader('Content-Type', $mime)
+            ->withHeader('Cache-Control', 'public, max-age=31536000, immutable')
+            ->withHeader('Content-Length', (string) filesize($path))
             ->withHeader('Content-Disposition', 'inline');
     }
 }

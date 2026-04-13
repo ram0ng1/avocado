@@ -20,6 +20,7 @@ const PAGE_SIZE = 20;
 export default class AllDiscussionsPage extends Page {
   private discussions: any[] = [];
   private loading = false;
+  private _initialLoading = true;  // true until the first fetch completes
   private hasMore = false;
   private sort: string = 'latest';
   private offset = 0;
@@ -144,13 +145,14 @@ export default class AllDiscussionsPage extends Page {
         const items    = Array.isArray(results) ? results : [];
         const combined = reset ? [...items] : [...this.discussions, ...items];
         combined.sort((a, b) => (b.isSticky?.() ? 1 : 0) - (a.isSticky?.() ? 1 : 0));
-        this.discussions = combined;
-        this.hasMore     = !!(results.payload?.links?.next);
-        this.offset     += items.length;
-        this.loading     = false;
+        this.discussions      = combined;
+        this.hasMore          = !!(results.payload?.links?.next);
+        this.offset          += items.length;
+        this.loading          = false;
+        this._initialLoading  = false;
         m.redraw();
       })
-      .catch(() => { this.loading = false; m.redraw(); });
+      .catch(() => { this.loading = false; this._initialLoading = false; m.redraw(); });
   }
 
   private toggleLike(discussion: any) {
@@ -218,19 +220,24 @@ export default class AllDiscussionsPage extends Page {
         />
 
         <div className="AvocadoHome-threadStack">
-          {this.discussions.map((d) => (
-            <ThreadCard
-              key={d.id?.()}
-              discussion={d}
-              context={this}
-              likingIds={this.likingIds}
-              updatedLikeIds={this._updatedLikeIds}
-              newDiscIds={this._newDiscIds}
-              onToggleLike={(disc: any) => this.toggleLike(disc)}
-            />
-          ))}
-          {this.loading && renderThreadSkeleton()}
-          {!this.loading && this.discussions.length === 0 && renderEmpty(trans('ramon-avocado.forum.discussions.empty', 'No discussions found.'))}
+          {this.discussions.length === 0 && this._initialLoading
+            ? renderThreadSkeleton(5)
+            : this.discussions.length === 0
+              ? renderEmpty(trans('ramon-avocado.forum.discussions.empty', 'No discussions found.'))
+              : this.discussions.map((d) => (
+                <ThreadCard
+                  key={d.id?.()}
+                  discussion={d}
+                  context={this}
+                  likingIds={this.likingIds}
+                  updatedLikeIds={this._updatedLikeIds}
+                  newDiscIds={this._newDiscIds}
+                  onToggleLike={(disc: any) => this.toggleLike(disc)}
+                />
+              ))
+          }
+          {/* Skeleton at the bottom while loading additional pages */}
+          {this.discussions.length > 0 && this.loading && renderThreadSkeleton(3)}
         </div>
 
         {this.hasMore && !this.loading && renderLoadMore(

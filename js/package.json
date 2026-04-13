@@ -5,6 +5,9 @@
     "prettier": "@flarum/prettier-config",
     "devDependencies": {
         "@flarum/prettier-config": "^1.0.0",
+        "@typescript-eslint/parser": "^8.58.1",
+        "eslint": "^9.39.4",
+        "eslint-plugin-react": "^7.37.5",
         "flarum-tsconfig": "^2.0.0",
         "flarum-webpack-config": "^3.0.3",
         "patch-package": "^8.0.1",
@@ -15,8 +18,9 @@
     },
     "scripts": {
         "postinstall": "patch-package",
-    "dev": "webpack --mode development --watch",
-        "build": "webpack --mode production",
+        "dev": "webpack --mode development --watch",
+        "lint": "eslint \"src/**/*.{ts,tsx}\"",
+        "build": "npm run lint && webpack --mode production",
         "format": "prettier --write src",
         "format-check": "prettier --check src",
         "clean-typings": "npx rimraf dist-typings && mkdir dist-typings",

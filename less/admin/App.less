@@ -37,7 +37,7 @@
 
       &.active, &:hover {
         > a {
-          > .icon {
+          > .icon, > .Button-icon {
             background-color: var(--body-bg);
           }
         }
@@ -51,7 +51,7 @@
         transition: background-color 0.4s, color 0.4s;
         color: var(--control-color);
 
-        > .icon {
+        > .icon, > .Button-icon {
           .avocado-icon-block(32px);
           font-size: 16px !important;
           margin: 0 !important;
@@ -60,7 +60,7 @@
         }
 
         > .Button-label {
-          padding-left: 14px;;
+          padding-left: 14px;
         }
       }
 
@@ -99,17 +99,13 @@
   }
 }
 
-&::-webkit-scrollbar {
+::-webkit-scrollbar {
   width: 8px;
 }
-/*& {
-  scrollbar-width: thin;
-  scrollbar-color: var(--control-color) var(--control-color);
-}*/
-&::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: transparent;
 }
-&::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   background-color: var(--control-color);
   border-radius: 6px;
 }

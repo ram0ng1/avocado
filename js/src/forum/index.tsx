@@ -15,6 +15,8 @@ import PostEdited from 'flarum/forum/components/PostEdited';
 import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
 import WelcomeHero from 'flarum/forum/components/WelcomeHero';
 import TagsPage from 'ext:flarum/tags/forum/components/TagsPage';
+import sortTags from 'ext:flarum/tags/common/utils/sortTags';
+import { applyColor, clearColor } from './colored';
 import UserPage from 'flarum/forum/components/UserPage';
 import UserControls from 'flarum/forum/utils/UserControls';
 import DiscussionHero from 'flarum/forum/components/DiscussionHero';
@@ -60,6 +62,7 @@ import {
   truncate,
   safeCssUrl,
   renderThreadSkeleton,
+  renderDiscussionNavSkeleton,
 } from './utils';
 import TextEditor from 'flarum/common/components/TextEditor';
 import listItems from 'flarum/common/helpers/listItems';
@@ -125,6 +128,91 @@ const getPostPermalink = (post) => {
   const near     = typeof post.number === 'function' ? post.number() : undefined;
   const relative = app.route.discussion(discussion, near);
   return new URL(relative, window.location.origin).toString();
+};
+
+// ─── Code block copy button ───────────────────────────────────────────────────
+const initCodeBlocks = (root: HTMLElement | null) => {
+  if (!root) return;
+  root.querySelectorAll<HTMLElement>('pre').forEach((pre) => {
+    // Only inject once
+    if (pre.querySelector('.avocado-code-copy')) return;
+
+    const btn = document.createElement('button');
+    btn.className = 'avocado-code-copy';
+    btn.setAttribute('aria-label', 'Copiar código');
+    btn.innerHTML = '<i class="fas fa-copy" aria-hidden="true"></i>';
+
+    btn.addEventListener('click', () => {
+      const code = pre.querySelector('code');
+      const text = code ? code.textContent || '' : pre.textContent || '';
+      navigator.clipboard.writeText(text).then(() => {
+        btn.classList.add('avocado-code-copy--copied');
+        btn.innerHTML = '<i class="fas fa-check" aria-hidden="true"></i>';
+        setTimeout(() => {
+          btn.classList.remove('avocado-code-copy--copied');
+          btn.innerHTML = '<i class="fas fa-copy" aria-hidden="true"></i>';
+        }, 1800);
+      }).catch(() => {});
+    });
+
+    pre.appendChild(btn);
+  });
+};
+
+// ─── Reaction count: inject "1" badge when extension omits it ────────────────
+// fof/reactions only renders <span class="count"> when count > 1.
+// For count=1 we parse the aria-label and inject the count manually.
+const fixReactionCounts = (root: HTMLElement | null) => {
+  if (!root) return;
+  root.querySelectorAll<HTMLElement>('.Button-emoji-parent').forEach((btn) => {
+    if (btn.querySelector('.count')) return; // already has count
+    const label = btn.getAttribute('aria-label') || '';
+    const match = label.match(/\((\d+)/);
+    if (!match) return;
+    const count = parseInt(match[1], 10);
+    const innerSpan = btn.querySelector<HTMLElement>('.Button-labelText > span');
+    if (!innerSpan) return;
+    const span = document.createElement('span');
+    span.className = 'count';
+    span.textContent = String(count);
+    innerSpan.appendChild(span);
+  });
+};
+
+// ─── Unreact button: replace generic SVG with the user's reacted emoji ───────
+// When user has reacted, the extension renders an unreact button with the same
+// smiley SVG as the react button. We replace it with the user's emoji from the
+// active count badge (which lives in Post-footer, sibling of Post-actions inside
+// the same Post-main).
+const fixUnreactButton = (root: HTMLElement | null) => {
+  if (!root) return;
+  root.querySelectorAll<HTMLElement>('.Reactions').forEach((wrapper) => {
+    // Unreact state: .Reactions directly contains the button (no .Reactions--react wrapper)
+    if (wrapper.querySelector('.Reactions--react')) return;
+    const btn = wrapper.querySelector<HTMLElement>('.Reactions--ShowReactions');
+    if (!btn || btn.dataset.emojiFixed) return;
+
+    // Find the active reaction badge in Post-main (may be in adjacent Post-footer)
+    const postMain = wrapper.closest<HTMLElement>('.Post-main');
+    if (!postMain) return;
+    const activeBadge = postMain.querySelector<HTMLElement>('.Button-emoji-parent.active');
+    if (!activeBadge) return;
+
+    // Clone the emoji element from the badge
+    const emojiEl = activeBadge.querySelector<HTMLElement>('img.emoji, .emoji, .reaction-icon');
+    if (!emojiEl) return;
+
+    const svgEl = btn.querySelector<SVGElement>('svg.button-react');
+    if (!svgEl) return;
+
+    const emojiClone = emojiEl.cloneNode(true) as HTMLElement;
+    // Ensure consistent sizing inside the button
+    emojiClone.style.width = '18px';
+    emojiClone.style.height = '18px';
+    svgEl.replaceWith(emojiClone);
+    btn.dataset.emojiFixed = '1';
+    btn.classList.add('active');
+  });
 };
 
 // ─── Fixed-avatar badge sync ──────────────────────────────────────────────────
@@ -614,7 +702,7 @@ app.initializers.add(
                   <div className="DiscussionHero-participants">
                     {displayParticipants.map(renderParticipantAvatar)}
                     {extraParticipants > 0 && (
-                      <span className="DiscussionHero-participantsMore" title={`${participants.length} ${trans('ramon-avocado.forum.discussion.participant_plural', 'participants')}`}>
+                      <span className="DiscussionHero-participantsMore" title={`${participantCount} ${trans('ramon-avocado.forum.discussion.participant_plural', 'participants')}`}>
                         +{extraParticipants}
                       </span>
                     )}
@@ -658,30 +746,39 @@ app.initializers.add(
                     <div className="AvocadoSkeleton-stackItem" />
                     <div className="AvocadoSkeleton-stackItem" />
                     <div className="AvocadoSkeleton-stackItem" />
+                    {/* +more circle — mirrors DiscussionHero-participantsMore */}
+                    <div className="AvocadoSkeleton-stackItem AvocadoSkeleton-stackItem--more" />
                   </div>
                   <div className="AvocadoSkeleton-metaChip AvocadoSkeleton-metaChip--md" />
                   <div className="AvocadoSkeleton-metaChip AvocadoSkeleton-metaChip--sm" />
                 </div>
               </div>
             </div>
-            <div className="AvocadoSkeleton-stream container">
-              {[0, 1, 2].map((i) => (
-                <div key={String(i)} className="AvocadoSkeleton-post">
-                  <div className="AvocadoSkeleton-postAvatar" />
-                  <div className="AvocadoSkeleton-postBody">
-                    {/* Desktop/tablet: username line above content */}
-                    <div className="AvocadoSkeleton-line AvocadoSkeleton-line--sm AvocadoSkeleton-line--user" />
-                    {/* Mobile: inline avatar + username row (hidden on desktop via CSS) */}
-                    <div className="AvocadoSkeleton-postHeader">
-                      <div className="AvocadoSkeleton-postAvatarSm" />
-                      <div className="AvocadoSkeleton-line AvocadoSkeleton-line--sm" />
+            <div className="Page-container container">
+              {/* Sidebar FIRST (priority 100) — mirrors Flarum's containerItems() order.
+                  With flex-direction:row-reverse the first DOM child ends up on the RIGHT. */}
+              {renderDiscussionNavSkeleton(!!app.session.user)}
+              <div className="Page-content">
+                <div className="AvocadoSkeleton-stream">
+                  {[0, 1, 2].map((i) => (
+                    <div key={String(i)} className="AvocadoSkeleton-post">
+                      <div className="AvocadoSkeleton-postAvatar" />
+                      <div className="AvocadoSkeleton-postBody">
+                        {/* Desktop/tablet: username line above content */}
+                        <div className="AvocadoSkeleton-line AvocadoSkeleton-line--sm AvocadoSkeleton-line--user" />
+                        {/* Mobile: inline avatar + username row (hidden on desktop via CSS) */}
+                        <div className="AvocadoSkeleton-postHeader">
+                          <div className="AvocadoSkeleton-postAvatarSm" />
+                          <div className="AvocadoSkeleton-line AvocadoSkeleton-line--sm" />
+                        </div>
+                        <div className="AvocadoSkeleton-line AvocadoSkeleton-line--lg" />
+                        <div className="AvocadoSkeleton-line AvocadoSkeleton-line--md" />
+                        <div className="AvocadoSkeleton-line AvocadoSkeleton-line--sm" />
+                      </div>
                     </div>
-                    <div className="AvocadoSkeleton-line AvocadoSkeleton-line--lg" />
-                    <div className="AvocadoSkeleton-line AvocadoSkeleton-line--md" />
-                    <div className="AvocadoSkeleton-line AvocadoSkeleton-line--sm" />
-                  </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </div>
@@ -1218,12 +1315,18 @@ app.initializers.add(
     extend(CommentPost.prototype, 'oncreate', function () {
       syncUserOnline(this);
       gateGuestLinks(this);
+      initCodeBlocks(this.element);
+      fixReactionCounts(this.element);
+      fixUnreactButton(this.element);
     });
 
     // FIX: guard before DOM ops — onupdate fires on every parent redraw.
     extend(CommentPost.prototype, 'onupdate', function () {
       syncUserOnline(this);
       gateGuestLinks(this);
+      initCodeBlocks(this.element);
+      fixReactionCounts(this.element);
+      fixUnreactButton(this.element);
     });
 
     // ── 20. CommentPost actionItems (share button) ────────────────────────────
@@ -2024,7 +2127,83 @@ app.initializers.add(
       }
     });
 
+    // ── Colored integration ───────────────────────────────────────────────────
+    // Applies the first tag's color to the entire page (primary color, links,
+    // buttons, header) via CSS custom properties set on <body>.
+    // Ported from ramon/colored; LESS rules live in forum/colored.less.
+
+    app.beforeMount(() => {
+      const enabled     = !!app.forum.attribute<boolean>('avocadoColoredEnabled');
+      const borderStyle = enabled ? (app.forum.attribute<string>('avocadoColoredBorderStyle') || 'none') : 'none';
+      document.documentElement.setAttribute('data-avocado-colored-border', borderStyle);
+      // Colored header is driven by Flarum's own data-colored-header attribute (set by
+      // FrontendServiceProvider). No avocado attribute needed — see colored.less selector.
+    });
+
+    // DiscussionListItem: inject --item-tag-color for native Flarum list border rules
+    // + apply color on click so the discussion page opens pre-colored.
+    extend(DiscussionListItem.prototype, 'view', function (vdom) {
+      const tags  = sortTags((this.attrs.discussion?.tags?.() as any[]) || []);
+      const color: string | null = tags.length ? (tags[0] as any).color?.() : null;
+      if (!color || !vdom?.attrs) return;
+
+      vdom.attrs.style = { ...(vdom.attrs.style || {}), '--item-tag-color': color };
+
+      if (!app.forum.attribute<boolean>('avocadoColoredEnabled')) return;
+      const prev = vdom.attrs.onclick;
+      vdom.attrs.onclick = (e: MouseEvent) => {
+        applyColor(color);
+        if (typeof prev === 'function') (prev as Function).call(this, e);
+      };
+    });
+
+    // DiscussionHero: apply body-level color when entering a discussion,
+    // and clear it when leaving (color snaps via suppressTransitions in applyColor).
+    extend(DiscussionHero.prototype, 'oninit', function () {
+      if (!app.forum.attribute<boolean>('avocadoColoredEnabled')) return;
+      const tags = sortTags((this.attrs.discussion?.tags?.() as any[]) || []);
+      applyColor(tags.length ? (tags[0] as any).color?.() : null);
+    });
+    extend(DiscussionHero.prototype, 'onupdate', function () {
+      if (!app.forum.attribute<boolean>('avocadoColoredEnabled')) return;
+      const tags = sortTags((this.attrs.discussion?.tags?.() as any[]) || []);
+      applyColor(tags.length ? (tags[0] as any).color?.() : null);
+    });
+    extend(DiscussionHero.prototype, 'onremove', function () {
+      clearColor();
+    });
 
   },
   -10
+);
+
+// ─── fof/reactions: suppress "Your reaction was converted" warning ─────────────
+// The extension fires app.alerts.show({type:'warning'}, transString) after a
+// reaction is removed and the gamification/likes integration is active.
+// This alert breaks the seamless UX, so we intercept and silently drop it.
+//
+// Approach: patch app.translator.trans() so the warning key returns null.
+// Then patch app.alerts.show() to skip null/falsy children on warning alerts.
+// Double-patching is necessary because trans() may return a VNode array in some
+// Flarum 2 locales, making string comparison unreliable.
+app.initializers.add(
+  'avocado-suppress-reaction-converted-warning',
+  () => {
+    const SUPPRESS_KEY = 'fof-reactions.forum.warning';
+
+    // Patch 1: translator → return null for the warning key
+    const origTrans = app.translator.trans.bind(app.translator);
+    (app.translator as any).trans = function (key: string, ...rest: any[]) {
+      if (key === SUPPRESS_KEY) return null;
+      return origTrans.apply(app.translator, [key, ...rest] as any);
+    };
+
+    // Patch 2: alerts.show → skip null/empty warning children
+    const _show = app.alerts.show.bind(app.alerts);
+    (app.alerts as any).show = function (attrs: any, children: any) {
+      if (attrs?.type === 'warning' && (children === null || children === '' || children === undefined)) return;
+      return _show.call(app.alerts, attrs, children);
+    };
+  },
+  -200
 );
