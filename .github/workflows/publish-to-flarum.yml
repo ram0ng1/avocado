@@ -19,18 +19,17 @@ jobs:
           RELEASE_BODY: ${{ github.event.release.body }}
           RELEASE_URL: ${{ github.event.release.html_url }}
         run: |
-          # Build the JSON payload using jq to safely handle special characters
-          CONTENT=$(printf '## 🚀 %s\n\n%s\n\n[Ver release no GitHub](%s)' \
-            "$RELEASE_TAG" "$RELEASE_BODY" "$RELEASE_URL")
-
+          # Build the JSON payload using jq to safely handle all special characters
           PAYLOAD=$(jq -n \
-            --arg content "$CONTENT" \
+            --arg tag "$RELEASE_TAG" \
+            --arg body "$RELEASE_BODY" \
+            --arg url "$RELEASE_URL" \
             --arg discussion_id "$FLARUM_DISCUSSION_ID" \
             '{
               "data": {
                 "type": "posts",
                 "attributes": {
-                  "content": $content
+                  "content": ("## 🚀 " + $tag + "\n\n" + $body + "\n\n[Ver release no GitHub](" + $url + ")")
                 },
                 "relationships": {
                   "discussion": {
