@@ -11,28 +11,40 @@ jobs:
     name: Publicar no Fórum
     runs-on: ubuntu-latest
     steps:
-      - name: Publicar discussão no Flarum
+      - name: Postar comentário de release no Flarum
         env:
           FLARUM_API_KEY: ${{ secrets.FLARUM_API_KEY }}
+          FLARUM_DISCUSSION_ID: ${{ vars.FLARUM_DISCUSSION_ID }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
           RELEASE_BODY: ${{ github.event.release.body }}
+          RELEASE_URL: ${{ github.event.release.html_url }}
         run: |
           # Build the JSON payload using jq to safely handle special characters
+          CONTENT=$(printf '## 🚀 %s\n\n%s\n\n[Ver release no GitHub](%s)' \
+            "$RELEASE_TAG" "$RELEASE_BODY" "$RELEASE_URL")
+
           PAYLOAD=$(jq -n \
-            --arg title "🚀 $RELEASE_TAG — Tema Avocado" \
-            --arg content "$RELEASE_BODY" \
+            --arg content "$CONTENT" \
+            --arg discussion_id "$FLARUM_DISCUSSION_ID" \
             '{
               "data": {
-                "type": "discussions",
+                "type": "posts",
                 "attributes": {
-                  "title": $title,
                   "content": $content
+                },
+                "relationships": {
+                  "discussion": {
+                    "data": {
+                      "type": "discussions",
+                      "id": $discussion_id
+                    }
+                  }
                 }
               }
             }')
 
           HTTP_STATUS=$(curl -s -o /tmp/flarum_response.json -w "%{http_code}" \
-            -X POST "https://ramonguilherme.com.br/api/discussions" \
+            -X POST "https://ramonguilherme.com.br/api/posts" \
             -H "Authorization: Token ${FLARUM_API_KEY}" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD")
@@ -40,10 +52,10 @@ jobs:
           echo "HTTP Status: $HTTP_STATUS"
 
           if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
-            echo "✅ Discussão criada com sucesso no Flarum!"
+            echo "✅ Comentário publicado com sucesso no Flarum!"
             jq '.data.id // empty' /tmp/flarum_response.json
           else
-            echo "❌ Falha ao criar discussão no Flarum (HTTP $HTTP_STATUS)"
+            echo "❌ Falha ao publicar comentário no Flarum (HTTP $HTTP_STATUS)"
             echo "Response body:"
             jq '.' /tmp/flarum_response.json
             exit 1
