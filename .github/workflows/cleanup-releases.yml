@@ -5,6 +5,10 @@ on:
   release:
     types: [published]
 
+concurrency:
+  group: cleanup-releases
+  cancel-in-progress: false
+
 jobs:
   cleanup:
     name: Manter apenas as 5 últimas releases
@@ -24,8 +28,8 @@ jobs:
               { owner: context.repo.owner, repo: context.repo.repo, per_page: 100 }
             );
 
-            // Sort by created_at descending (newest first)
-            releases.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            // Sort by published_at descending (newest first)
+            releases.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
 
             const toDelete = releases.slice(KEEP);
 
