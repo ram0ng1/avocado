@@ -59,16 +59,20 @@ jobs:
           RELEASE_BODY: ${{ steps.create_release.outputs.body }}
           RELEASE_URL: ${{ steps.create_release.outputs.html_url }}
         run: |
+          # Extract version from tag (remove leading 'v' if present)
+          VERSION="${RELEASE_TAG#v}"
+
           PAYLOAD=$(jq -n \
             --arg tag "$RELEASE_TAG" \
             --arg body "$RELEASE_BODY" \
             --arg url "$RELEASE_URL" \
+            --arg version "$VERSION" \
             --arg discussion_id "$FLARUM_DISCUSSION_ID" \
             '{
               "data": {
                 "type": "posts",
                 "attributes": {
-                  "content": ("## 🚀 " + $tag + "\n\n" + $body + "\n\n[Ver release no GitHub](" + $url + ")")
+                  "content": ("## 🚀 " + $tag + "\n\n" + $body + "\n\n**Instalação:**\n```\ncomposer require ramon/avocado:" + $version + "\n```\n\n[Ver release no GitHub](" + $url + ")")
                 },
                 "relationships": {
                   "discussion": {

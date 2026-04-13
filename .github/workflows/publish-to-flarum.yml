@@ -1,6 +1,8 @@
 name: Publicar Release no Flarum
 
 on:
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       release_tag:
@@ -37,21 +39,25 @@ jobs:
         env:
           FLARUM_API_KEY: ${{ secrets.FLARUM_API_KEY }}
           FLARUM_DISCUSSION_ID: ${{ vars.FLARUM_DISCUSSION_ID }}
-          RELEASE_TAG: ${{ inputs.release_tag }}
-          RELEASE_BODY: ${{ inputs.release_body }}
-          RELEASE_URL: ${{ inputs.release_url }}
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
+          RELEASE_BODY: ${{ github.event.release.body || inputs.release_body }}
+          RELEASE_URL: ${{ github.event.release.html_url || inputs.release_url }}
         run: |
+          # Extract version from tag (remove leading 'v' if present)
+          VERSION="${RELEASE_TAG#v}"
+
           # Build the JSON payload using jq to safely handle all special characters
           PAYLOAD=$(jq -n \
             --arg tag "$RELEASE_TAG" \
             --arg body "$RELEASE_BODY" \
             --arg url "$RELEASE_URL" \
+            --arg version "$VERSION" \
             --arg discussion_id "$FLARUM_DISCUSSION_ID" \
             '{
               "data": {
                 "type": "posts",
                 "attributes": {
-                  "content": ("## 🚀 " + $tag + "\n\n" + $body + "\n\n[Ver release no GitHub](" + $url + ")")
+                  "content": ("## 🚀 " + $tag + "\n\n" + $body + "\n\n**Instalação:**\n```\ncomposer require ramon/avocado:" + $version + "\n```\n\n[Ver release no GitHub](" + $url + ")")
                 },
                 "relationships": {
                   "discussion": {
