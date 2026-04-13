@@ -1,0 +1,56 @@
+name: Limpar Releases Antigas
+
+on:
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    name: Manter apenas as 5 últimas releases
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Apagar releases antigas
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const KEEP = 5;
+
+            const releases = await github.paginate(
+              github.rest.repos.listReleases,
+              { owner: context.repo.owner, repo: context.repo.repo, per_page: 100 }
+            );
+
+            // Sort by published_at descending (newest first)
+            releases.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+
+            const toDelete = releases.slice(KEEP);
+
+            console.log(`Total de releases: ${releases.length}`);
+            console.log(`Mantendo as ${KEEP} mais recentes, apagando ${toDelete.length}`);
+
+            for (const release of toDelete) {
+              console.log(`Apagando release: ${release.tag_name} (id: ${release.id})`);
+
+              // Delete the release
+              await github.rest.repos.deleteRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: release.id,
+              });
+
+              // Delete the associated tag
+              try {
+                await github.rest.git.deleteRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: `tags/${release.tag_name}`,
+                });
+                console.log(`  Tag ${release.tag_name} apagada`);
+              } catch (e) {
+                console.log(`  Tag ${release.tag_name} não encontrada ou já apagada`);
+              }
+            }
+
+            console.log('✅ Limpeza concluída!');
