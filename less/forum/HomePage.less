@@ -2001,7 +2001,7 @@
   -webkit-mask-image: linear-gradient(to bottom, #000 40%, #0000 100%);
   mask-image: linear-gradient(to bottom, #000 40%, #0000 100%);
 
-  .fas, .far, .fab { font-size: 40px; opacity: 0.14; }
+  > i { font-size: 40px !important; opacity: 0.14; }
 }
 
 
@@ -2129,12 +2129,14 @@
 
 .AvocadoHome-showcaseCard--full {
   grid-row: span 1;
+  min-height: 300px; // ensure grid row resolves a definite height for abs-positioned children
 
   .AvocadoHome-showcaseCard-link {
     padding: 0;
     display: block;
     background: #e8e8ec; // light fallback when no image
     height: 100%;
+    min-height: 300px; // safety net: height:100% may not resolve in all grid/browser contexts
 
     &::before { display: none; }
 
@@ -2162,7 +2164,7 @@
     border-radius: 16px;
     z-index: 1;
 
-    .fas, .far, .fab { font-size: 40px; opacity: 0.18; }
+    > i { font-size: 40px !important; opacity: 0.18; }
   }
 
   .AvocadoHome-showcaseCard-colorOverlay { display: none; }
@@ -2195,8 +2197,9 @@
     max-width: 240px;
     scroll-snap-align: start;
     grid-row: auto;
+    height: auto; // override height:100% — flex parent has no defined height
 
-    .AvocadoHome-showcaseCard-link { height: 200px; }
+    .AvocadoHome-showcaseCard-link { height: 200px; min-height: 200px; }
   }
 }
 

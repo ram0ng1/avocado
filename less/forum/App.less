@@ -160,6 +160,22 @@
   }
 }
 
+// ─── Mobile: session dropdown inside App-drawer ────────────────────────────────
+// The App-drawer is position:fixed with overflow-y:auto which clips absolutely-
+// positioned Dropdown-menus. Make them expand inline so they are always visible.
+@media @phone {
+  .App-drawer .open > .Dropdown-menu {
+    position: static !important;
+    transform: none !important;
+    box-shadow: none !important;
+    border: 1px solid var(--avocado-border-subtle);
+    border-radius: 10px;
+    width: 100%;
+    margin-top: 4px;
+    animation: none !important;
+  }
+}
+
 // ─── Header title: push logo/name away from nav items ─────────────────────────
 .Header-title {
   padding-left: 12px;
