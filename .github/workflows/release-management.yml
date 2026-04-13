@@ -40,6 +40,7 @@ jobs:
           diff-search: true
 
       - name: Publicar Release em Português
+        id: create_release
         if: steps.check_version.outputs.changed == 'true'
         uses: release-drafter/release-drafter@v6
         with:
@@ -48,6 +49,55 @@ jobs:
           name: v${{ steps.check_version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publicar Release no Flarum
+        if: steps.check_version.outputs.changed == 'true' && steps.create_release.outputs.html_url
+        env:
+          FLARUM_API_KEY: ${{ secrets.FLARUM_API_KEY }}
+          FLARUM_DISCUSSION_ID: ${{ vars.FLARUM_DISCUSSION_ID }}
+          RELEASE_TAG: ${{ steps.create_release.outputs.tag_name }}
+          RELEASE_BODY: ${{ steps.create_release.outputs.body }}
+          RELEASE_URL: ${{ steps.create_release.outputs.html_url }}
+        run: |
+          PAYLOAD=$(jq -n \
+            --arg tag "$RELEASE_TAG" \
+            --arg body "$RELEASE_BODY" \
+            --arg url "$RELEASE_URL" \
+            --arg discussion_id "$FLARUM_DISCUSSION_ID" \
+            '{
+              "data": {
+                "type": "posts",
+                "attributes": {
+                  "content": ("## 🚀 " + $tag + "\n\n" + $body + "\n\n[Ver release no GitHub](" + $url + ")")
+                },
+                "relationships": {
+                  "discussion": {
+                    "data": {
+                      "type": "discussions",
+                      "id": $discussion_id
+                    }
+                  }
+                }
+              }
+            }')
+
+          HTTP_STATUS=$(curl -s -o /tmp/flarum_response.json -w "%{http_code}" \
+            -X POST "https://ramonguilherme.com.br/api/posts" \
+            -H "Authorization: Token ${FLARUM_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD")
+
+          echo "HTTP Status: $HTTP_STATUS"
+
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "✅ Comentário publicado com sucesso no Flarum!"
+            jq '.data.id // empty' /tmp/flarum_response.json
+          else
+            echo "❌ Falha ao publicar comentário no Flarum (HTTP $HTTP_STATUS)"
+            echo "Response body:"
+            jq '.' /tmp/flarum_response.json
+            exit 1
+          fi
 
       - name: Log de Status
         run: |
