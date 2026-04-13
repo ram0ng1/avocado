@@ -8,15 +8,11 @@ import abbreviateNumber from 'flarum/common/utils/abbreviateNumber';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import DiscussionListState from 'flarum/forum/states/DiscussionListState';
 import PostListState from 'flarum/forum/states/PostListState';
-import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
 import extractText from 'flarum/common/utils/extractText';
 import {
-  tagPillStyle,
-  discussionRoute,
   tagRoute,
   safeRoute,
   displayName,
-  formatTimeLabel,
   truncate,
   highlight,
   numberOr,
@@ -24,7 +20,6 @@ import {
   FALLBACK_COLORS,
   FALLBACK_ICONS,
   navigate,
-  userRoute,
   renderDiscSkeleton,
   renderPostSkeleton,
   getFeaturedTagIds,
@@ -32,6 +27,7 @@ import {
   categoryCardStyle,
 } from '../utils';
 import ThreadCard from './shared/ThreadCard';
+import PostCard from './shared/PostCard';
 import SortDropdown, { SortOption } from './shared/SortDropdown';
 
 const DISC_SORT_LABELS: Record<string, () => string> = {
@@ -142,74 +138,6 @@ export default class AvocadoSearchPage extends Page {
     firstPost.save({ isLiked: !isLiked })
       .then(() => { this.likingIds.delete(id); m.redraw(); })
       .catch(() => { this.likingIds.delete(id); this._selfActionIds.delete(id); m.redraw(); });
-  }
-
-  private renderPostCard(post: any) {
-    if (!post) return null;
-    const q          = (app.search as any).state.params().q || '';
-    const discussion = post.discussion?.();
-    const user       = post.user?.();
-    if (!discussion) return null;
-
-    const id       = post.id?.() as string;
-    const title    = (discussion.title?.() || '') as string;
-    const postNum  = post.number?.();
-    const href     = (() => { try { return app.route.discussion(discussion, postNum); } catch { return discussionRoute(discussion); } })();
-    const tags     = ((discussion.tags?.() || []) as any[]).filter(Boolean);
-    const timeLabel = formatTimeLabel(post.createdAt?.());
-    const userHref  = userRoute(user);
-    const plain    = (post.contentPlain?.() || '') as string;
-    const excerpt  = plain ? (q ? highlight(plain, q, 200) : truncate(plain, 200)) : null;
-    const replies  = numberOr(discussion.replyCount?.(), 0);
-    const controls = DiscussionControls.controls(discussion, this).toArray();
-
-    return (
-      <article key={id} className="AvocadoHome-threadCard">
-        <div className="AvocadoHome-threadHead">
-          <div className="AvocadoHome-avatarWrap">
-            {user && <Avatar user={user} title={displayName(user)} />}
-          </div>
-          <div className="AvocadoHome-threadMain">
-            <div className="AvocadoHome-threadMeta">
-              <a className="AvocadoHome-threadAuthor" href={userHref}
-                 onclick={(e: Event) => { e.stopPropagation(); navigate(e as MouseEvent, userHref); }}>
-                {displayName(user)}
-              </a>
-              {timeLabel && <span className="AvocadoHome-threadTime">{timeLabel}</span>}
-              {tags.slice(0, 2).map((tag: any) => (
-                <a key={tag.id?.()} className="AvocadoHome-tagPill"
-                   href={tagRoute(tag)}
-                   onclick={(e: Event) => { e.stopPropagation(); navigate(e as MouseEvent, tagRoute(tag)); }}
-                   style={tagPillStyle(tag.color?.())}>
-                  {tag.icon?.() && <i className={tag.icon()} aria-hidden="true" />}
-                  {tag.name?.()}
-                </a>
-              ))}
-            </div>
-            <a className="AvocadoHome-threadTitle" href={href}
-               onclick={(e: Event) => navigate(e as MouseEvent, href)}>
-              {q ? highlight(title, q) : title}
-            </a>
-            {excerpt && <p className="AvocadoHome-threadExcerpt AvocadoUserPage-postExcerpt">{excerpt}</p>}
-          </div>
-          <a className="AvocadoHome-replyBtn" href={href}
-             onclick={(e: Event) => { e.stopPropagation(); navigate(e as MouseEvent, href); }}>
-            <i className="fas fa-arrow-right" aria-hidden="true" />
-            {trans('ramon-avocado.forum.home.view', 'View')}
-          </a>
-        </div>
-        <div className="AvocadoHome-threadStats">
-          <span className="AvocadoHome-statBtn AvocadoHome-statBtn--replies"
-                onclick={(e: Event) => { e.stopPropagation(); m.route.set(href); }}>
-            <i className="far fa-comment" aria-hidden="true" />
-            <span>{replies === 1
-              ? trans('ramon-avocado.forum.home.reply_singular', '1 reply')
-              : trans('ramon-avocado.forum.home.reply_plural', '{count} replies', { count: replies })}
-            </span>
-          </span>
-        </div>
-      </article>
-    );
   }
 
   private renderUserCard(user: any) {
@@ -469,7 +397,8 @@ export default class AvocadoSearchPage extends Page {
     const allPosts  = state.getPages().flatMap((pg: any) => pg.items).filter((p: any) => p.id?.()) as any[];
     const q         = ((app.search as any).state.params().q || '') as string;
 
-    if (isLoading && allPosts.length === 0) return <div className="AvocadoSearch-postStack">{renderPostSkeleton()}</div>;
+    // PostCard renders .AvocadoHome-threadCard, same shape as ThreadCard → use disc skeleton
+    if (isLoading && allPosts.length === 0) return <div className="AvocadoSearch-stack">{renderDiscSkeleton()}</div>;
     if (allPosts.length === 0) {
       return (
         <div className="AvocadoSearch-empty">
@@ -480,7 +409,10 @@ export default class AvocadoSearchPage extends Page {
     }
     return (
       <div className="AvocadoSearch-stack">
-        {allPosts.map((post: any) => this.renderPostCard(post))}
+        {allPosts.map((post: any) => {
+          const q = (app.search as any).state.params().q || '';
+          return <PostCard key={post.id?.()} post={post} context={this} searchQuery={q} showBadges={false} />;
+        })}
         {isLoading && renderDiscSkeleton()}
         {!isLoading && state.hasNext() && (
           <div className="AvocadoDiscussions-loadMore">

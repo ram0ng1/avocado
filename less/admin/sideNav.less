@@ -1,26 +1,8 @@
 .sideNavOffset {
   background-color: var(--control-bg);
 
-  .Button {
-    --control-bg: var(--body-bg);
-
-    &--primary {
-      --control-bg: @primary-color;
-    }
-  }
   .Button--dashed {
     .Button--dashed();
-  }
-
-}
-
-.Button {
-  background-color: var(--control-bg);
-  color: var(--control-color);
-
-  &--primary {
-    --control-color: var(--control-bg);
-    --control-bg: @primary-color;
   }
 }
 

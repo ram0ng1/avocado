@@ -120,9 +120,6 @@ export const postPreview = (discussion: any, max = 150): string => {
   }
 };
 
-// Alias used in UserProfilePage
-export const postExcerpt = postPreview;
-
 // ─── Route helpers ────────────────────────────────────────────────────────────
 
 export const safeRoute = (name: string, params: Record<string, any> = {}, fallback = '#'): string => {
@@ -208,42 +205,16 @@ export const getFeaturedTagIds = (): Set<string> => {
   }
 };
 
-// ─── Skeleton cards ───────────────────────────────────────────────────────────
-
-export const renderThreadSkeleton = (count = 3): any[] =>
-  Array.from({ length: count }, (_, i) =>
-    m('div', { key: i, className: 'AvocadoHome-skeletonCard' }, [
-      m('div', { className: 'AvocadoHome-skeletonAvatar' }),
-      m('div', { className: 'AvocadoHome-skeletonBody' }, [
-        m('div', { className: 'AvocadoHome-skeletonLine AvocadoHome-skeletonLine--sm' }),
-        m('div', { className: 'AvocadoHome-skeletonLine AvocadoHome-skeletonLine--lg' }),
-        m('div', { className: 'AvocadoHome-skeletonLine AvocadoHome-skeletonLine--md' }),
-      ]),
-    ])
-  );
-
-export const renderDiscSkeleton = renderThreadSkeleton;
-
-export const renderPostSkeleton = (count = 3): any[] =>
-  Array.from({ length: count }, (_, i) =>
-    m('div', { key: i, className: 'AvocadoSearch-postSkeleton' }, [
-      m('div', { className: 'AvocadoHome-skeletonAvatar' }),
-      m('div', { className: 'AvocadoHome-skeletonBody' }, [
-        m('div', { className: 'AvocadoHome-skeletonLine AvocadoHome-skeletonLine--sm' }),
-        m('div', { className: 'AvocadoHome-skeletonLine AvocadoHome-skeletonLine--lg' }),
-        m('div', { className: 'AvocadoHome-skeletonLine AvocadoHome-skeletonLine--md' }),
-        m('div', { className: 'AvocadoHome-skeletonLine AvocadoHome-skeletonLine--sm', style: 'width:28%' }),
-      ]),
-    ])
-  );
+// ─── Skeleton cards — re-exported from the dedicated Skeletons module ─────────
+export {
+  renderThreadSkeleton,
+  renderDiscSkeleton,
+  renderPostSkeleton,
+  renderShowcaseSkeleton,
+  renderDiscussionNavSkeleton,
+} from './components/Skeletons';
 
 // ─── Style helpers ────────────────────────────────────────────────────────────
-
-export const iconPillStyle = (hex: string | null | undefined, alpha = 0.12): Record<string, string> => {
-  if (!hex) return {};
-  const { bg, color } = iconColors(hex, alpha);
-  return { '--icon-bg': bg, '--icon-color': color };
-};
 
 export const categoryCardStyle = (hex: string | null | undefined, alpha = 0.12): Record<string, string> => {
   if (!hex) return {};

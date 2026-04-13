@@ -12,7 +12,6 @@
 namespace Ramon\Avocado;
 
 use Flarum\Extend;
-use Flarum\Messages\DialogMessage;
 use Ramon\Avocado\AvocadoServiceProvider;
 use Ramon\Avocado\Middleware\RemoveSkipLink;
 
@@ -122,6 +121,8 @@ return [
         ->serializeToForum('avocadoShowcaseHeading', 'avocado.showcase_heading')
         ->serializeToForum('avocadoShowcaseCount', 'avocado.showcase_count')
         ->serializeToForum('avocadoShowcaseImageStyle', 'avocado.showcase_image_style')
+        ->serializeToForum('avocadoColoredEnabled', 'avocado.colored_enabled', 'boolval')
+        ->serializeToForum('avocadoColoredBorderStyle', 'avocado.colored_border_style', null, 'none')
         ->default('avocado.hero_image_position', 'center top')
         ->default('avocado.show_online_users', true)
         ->default('avocado.show_auth_buttons', false)
@@ -141,5 +142,7 @@ return [
         ->default('avocado.showcase_tag', '')
         ->default('avocado.showcase_heading', '')
         ->default('avocado.showcase_count', '5')
-        ->default('avocado.showcase_image_style', 'default'),
+        ->default('avocado.showcase_image_style', 'default')
+        ->default('avocado.colored_enabled', false)
+        ->default('avocado.colored_border_style', 'none'),
 ];
