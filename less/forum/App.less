@@ -160,24 +160,36 @@
   }
 }
 
-// ─── Mobile: session dropdown inside App-drawer ────────────────────────────────
-// Mirrors Flarum v2 core's approach exactly:
-// Make every control in Header-controls fill the full drawer width so that the
-// Dropdown-menu (position:absolute; right:0) aligns to the drawer's right edge
-// instead of overflowing outside it.
-// Reset width:auto on buttons *inside* the open menu so they don't stretch to 100%.
+// ─── Mobile: App-drawer dropdowns como painel inline ─────────────────────────
+// O core do Flarum (phone) coloca todos os .Dropdown-menu como position:fixed
+// bottom:0 (bottom sheet cobrindo o viewport). Dentro do .App-drawer isso é
+// inadequado — o menu deve abrir para baixo inline no painel.
+//
+// position:absolute → ancorado no .ButtonGroup (position:relative)
+// top:100%          → abre abaixo do botão
+// transform:none    → cancela o translate(0,70vh) do core
+// transition:visibility 0s → aparecimento imediato sem delay de 0.3s
+// backdrop display:none → remove o overlay do Bootstrap que bloqueava cliques
 @media @phone {
-  .App-drawer .Header-controls {
-    .FormControl, .ButtonGroup, .Button {
-      width: 100%;
-      justify-content: start;
-    }
-    .Dropdown-menu {
-      .ButtonGroup, .Button {
-        width: auto;
-        justify-content: initial;
-      }
-    }
+  .App-drawer .Dropdown .Dropdown-menu {
+    position: absolute !important;
+    top: 100% !important;
+    bottom: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: auto !important;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-bottom: 0 !important;
+    transform: none !important;
+    transition: visibility 0s !important;
+    border: 1px solid var(--avocado-border-subtle, #eaeaf0);
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(26, 26, 36, 0.1);
+  }
+
+  .App-drawer .dropdown-backdrop {
+    display: none !important;
   }
 }
 
