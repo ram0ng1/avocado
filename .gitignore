@@ -8,6 +8,7 @@ composer.lock
 
 # Documentation files
 DESIGN_SYSTEM.md
+Avocado Design System
 FLARUM_2.0_CORE_PATTERNS.md
 FLARUM_DIRECTORY_STRUCTURE.md
 FLARUM_IMPLEMENTATION_EXAMPLES.md
