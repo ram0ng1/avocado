@@ -168,7 +168,7 @@
   }
 }
 
-// ─── Online avatars (inline in Popular discussions section head) ──────────────
+// ─── Online avatars ───────────────────────────────────────────────────────────
 
 .AvocadoHome-sectionHead-right {
   display: flex;
@@ -187,6 +187,12 @@
 .AvocadoHome-onlineAvatars {
   display: flex;
   align-items: center;
+  gap: 0;
+}
+
+.AvocadoHome-onlineAvatars-row {
+  display: flex;
+  align-items: center;
 }
 
 .AvocadoHome-onlineAvatars-item {
@@ -194,33 +200,56 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  display: block;
-  text-decoration: none;
   margin-left: -7px;
+  border: 2px solid var(--body-bg, #fff);
+  box-sizing: border-box;
   flex-shrink: 0;
+  text-decoration: none;
+  display: block;
+  // overflow must stay visible so the ::after dot renders outside the circle
 
-  &:first-child {
-    margin-left: 0;
+  &:first-child { margin-left: 0; }
+
+  // Green ring — box-shadow avoids the overflow/clipping issue of ::after
+  box-shadow: 0 0 0 2px #22c55e;
+
+  // Clip the avatar image to the circle without overflow:hidden on the anchor
+  > img {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 50% !important;
+    border: none !important;
+    box-shadow: none !important;
+    display: block;
+    object-fit: cover;
   }
 
-  // Force .Avatar to fill and apply online ring
-  // All !important needed to override Flarum's .Avatar base styles
+  // Flarum Avatar component fallback
   > .Avatar {
     width: 100% !important;
     height: 100% !important;
     border-radius: 50% !important;
-    border: 2.5px solid var(--avocado-online) !important;
-    box-shadow: 0 0 0 2px var(--avocado-online-ring) !important;
-    box-sizing: border-box;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    border: none !important;
+    box-shadow: none !important;
     font-size: 11px !important;
+    line-height: 1 !important;
   }
 
-  &:hover {
-    opacity: 0.85;
-  }
+  &:hover { opacity: 0.85; }
+}
+
+.AvocadoHome-onlineAvatars-count {
+  margin-left: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--muted-color, #6b6b72);
+  white-space: nowrap;
+}
+
+// Standalone block (AllDiscussions page) — adds spacing from adjacent sections
+.AvocadoDiscussions-onlineBlock {
+  margin-bottom: 18px;
 }
 
 .AvocadoHome-main {
@@ -239,6 +268,7 @@
   align-items: center;
   gap: 12px;
   cursor: pointer;
+  margin-bottom: 20px;
   transition: border-color var(--avocado-t-normal), background var(--avocado-t-normal);
 
   &:hover {
@@ -470,7 +500,6 @@
   background: var(--cat-bg, #f4f4f7);
   color: var(--cat-color, #8f9097);
   box-sizing: border-box;
-  // SEM overflow:hidden — o fundo cresce para abraçar o ícone
 
   i {
     font-size: 1.1em;
@@ -483,12 +512,23 @@
     width: auto;
     height: auto;
     flex-shrink: 0;
+
+    &.fa-kit {
+      padding: 0 !important;
+      // Fix the <i> to the same size it occupies after the font loads.
+      // Without this, the ::before glyph expands the <i> when the font arrives,
+      // growing the container and causing the visible resize flash.
+      width: 1.1em;
+      height: 1.1em;
+      line-height: 1.1em;
+      overflow: hidden;
+    }
   }
 
   svg {
     display: block;
-    width: 1.1em;
-    height: 1.1em;
+    width: 1.1em !important;
+    height: 1.1em !important;
     flex-shrink: 0;
   }
 
@@ -1643,7 +1683,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 10px;
   flex-wrap: wrap;
 }
 
@@ -1894,7 +1934,7 @@
 
   @media @phone {
     flex: 0 0 72vw;
-    max-width: 240px;
+    max-width: 260px;
     scroll-snap-align: start;
     height: auto;
   }
@@ -2171,50 +2211,52 @@
 
   .AvocadoHome-showcaseCard-colorOverlay { display: none; }
 
-  // Body: absolute at bottom — extended dark scrim for legibility
+  // Body: scrim uses primary tag color via --card-accent (set from JS)
   .AvocadoHome-showcaseCard-body {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
     z-index: 2;
-    padding: 14px;
+    padding: 64px 14px 14px;
     display: flex;
     flex-direction: column;
     gap: 4px;
-    // Extended scrim: opaque at base, tapers to 35% at mid, transparent at top
+    // color-mix() blends --card-accent with transparent to get rgba-like stops
     background: linear-gradient(to top,
-      rgba(0, 0, 0, 0.82) 0%,
-      rgba(0, 0, 0, 0.52) 40%,
-      rgba(0, 0, 0, 0) 100%
+      color-mix(in srgb, var(--card-accent, #000000) 92%, transparent) 0%,
+      color-mix(in srgb, var(--card-accent, #000000) 72%, transparent) 32%,
+      color-mix(in srgb, var(--card-accent, #000000) 38%, transparent) 60%,
+      transparent 100%
     );
     border-radius: 0 0 16px 16px;
   }
 
-  // White text + text-shadow — consistent in both light and dark modes
+  // White text — no text-shadow
   .AvocadoHome-showcaseCard-title {
     color: #fff;
     font-size: 15px;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.75), 0 2px 14px rgba(0, 0, 0, 0.45);
+    font-weight: 700;
+    text-shadow: none;
   }
   .AvocadoHome-showcaseCard-excerpt {
-    color: rgba(255, 255, 255, 0.82);
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+    color: rgba(255, 255, 255, 0.92);
+    text-shadow: none;
   }
   .AvocadoHome-showcaseCard-date {
-    color: rgba(255, 255, 255, 0.62);
+    color: rgba(255, 255, 255, 0.72);
     font-size: 11px;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+    text-shadow: none;
   }
   .AvocadoHome-showcaseCard-authorName {
-    color: rgba(255, 255, 255, 0.82);
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+    color: rgba(255, 255, 255, 0.90);
+    text-shadow: none;
   }
   .AvocadoHome-showcaseCard-arrow {
     stroke: #fff;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8));
   }
-  .AvocadoHome-showcaseCard-titleRow   { gap: 8px; }
+  .AvocadoHome-showcaseCard-titleRow { gap: 8px; }
 
   .AvocadoHome-showcaseCard-link:hover & {
     .AvocadoHome-showcaseCard-title { color: #fff; }
@@ -2222,12 +2264,13 @@
 
   @media @phone {
     flex: 0 0 72vw;
-    max-width: 240px;
+    max-width: 260px;
     scroll-snap-align: start;
     grid-row: auto;
-    height: auto; // override height:100% — flex parent has no defined height
+    height: auto;
+    min-height: 0; // reset 300px desktop min-height
 
-    .AvocadoHome-showcaseCard-link { height: 200px; min-height: 200px; }
+    .AvocadoHome-showcaseCard-link { height: 300px; min-height: 300px; }
   }
 }
 

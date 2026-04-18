@@ -30,6 +30,7 @@ return [
         ->content(\Ramon\Avocado\Content\HideLogoFlash::class)
         ->content(\Ramon\Avocado\Content\DeferMainCss::class)
         ->content(\Ramon\Avocado\Content\LoadFontAwesomeKit::class)
+        ->content(\Ramon\Avocado\Content\InjectOnlineUsers::class)
         ->route('/discussions', 'avocado-discussions')
         ->route('/search', 'avocado-search'),
 
@@ -97,6 +98,7 @@ return [
         ->serializeToForum('avocadoHeroImagePosition', 'avocado.hero_image_position')
         ->serializeToForum('avocadoAuthImage', 'avocado.auth_image')
         ->serializeToForum('avocadoShowOnlineUsers', 'avocado.show_online_users', 'boolval')
+        ->serializeToForum('avocadoShowOnlineCount', 'avocado.show_online_count', 'boolval')
         ->serializeToForum('avocadoShowAuthButtons', 'avocado.show_auth_buttons', 'boolval')
         ->serializeToForum('avocadoSearchV1', 'avocado.search_v1', 'boolval')
         ->serializeToForum('avocadoShowShare', 'avocado.show_share', 'boolval')
