@@ -72,11 +72,16 @@ export default class HomePage extends Component {
     this.searchValue = '';
     this.likingIds = new Set();
     this.composerOpen = false;
+    this.composerPreview = false;
     this.composerTitle = '';
     this.composerBody = '';
     this.composerTags = [];
     this.composerSubmitting = false;
-    this.composerProxy = {};
+    this.composerProxy = {
+      isVisible: () => true,
+      fields: { content: () => this.composerBody },
+    };
+    this._previewInterval = null;
     this.onlineUsers = [];
     this.tagPickerOpen = false;
     this.tagBypassReqs = false;
@@ -398,14 +403,19 @@ export default class HomePage extends Component {
       return;
     }
     if (this.composerOpen) return;
-    this.composerOpen = true;
-    this.composerTitle = '';
-    this.composerBody = '';
-    this.composerTags = [];
-    this.tagPickerOpen = false;
-    this.tagBypassReqs = false;
-    this.tagFilter = '';
-    this.composerProxy = {}; // Fresh editor driver target each open
+    this.composerOpen     = true;
+    this.composerPreview  = false;
+    this.composerTitle    = '';
+    this.composerBody     = '';
+    this.composerTags     = [];
+    this.tagPickerOpen    = false;
+    this.tagBypassReqs    = false;
+    this.tagFilter        = '';
+    this.composerProxy = {
+      isVisible: () => true,
+      fields: { content: () => this.composerBody },
+    };
+    this._previewInterval = null;
     m.redraw();
     setTimeout(() => {
       const el = document.querySelector('.AvocadoHome-composerTitle');
@@ -497,6 +507,98 @@ export default class HomePage extends Component {
 
   replyCount(discussion) {
     return numberOr(discussion.replyCount?.(), 0);
+  }
+
+  _injectToolbarBtns(container) {
+    const ul = container?.querySelector?.('ul.TextEditor-controls');
+    if (!ul) return;
+
+    const isPreview   = this.composerPreview;
+    const isValid     = this.isComposerValid();
+    const isSubmitting = this.composerSubmitting;
+
+    // ── Preview button (first item) ───────────────────────────────────────
+    const iconCls  = isPreview ? 'icon fas fa-pen' : 'icon far fa-eye';
+    const label    = isPreview
+      ? trans('ramon-avocado.forum.home.composer_edit', 'Edit')
+      : trans('ramon-avocado.forum.home.composer_preview', 'Preview');
+    const previewCls = `Button Button--icon Button--link AvocadoHome-composerPreviewBtn${isPreview ? ' is-active' : ''}`;
+
+    const existingPreview = ul.querySelector('.item-avocadoPreview');
+    if (existingPreview) {
+      const b = existingPreview.querySelector('button');
+      const i = existingPreview.querySelector('i');
+      if (b) { b.className = previewCls; b.setAttribute('aria-label', label); }
+      if (i) { i.className = iconCls; }
+    } else {
+      const li = document.createElement('li');
+      li.className = 'item-avocadoPreview';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = previewCls;
+      btn.setAttribute('aria-label', label);
+      const icon = document.createElement('i');
+      icon.setAttribute('aria-hidden', 'true');
+      icon.className = iconCls;
+      btn.appendChild(icon);
+      btn.addEventListener('click', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        this.composerPreview = !this.composerPreview;
+        m.redraw();
+      });
+      li.appendChild(btn);
+      ul.insertBefore(li, ul.firstChild);
+    }
+
+    // ── Close + Post buttons (right side, injected once) ─────────────────
+    const submitCls = `Button Button--primary AvocadoHome-composer-submit${isSubmitting ? ' is-loading' : ''}${!isValid ? ' is-disabled' : ''}`;
+    const submitTxt = isSubmitting
+      ? trans('ramon-avocado.forum.home.composer_submitting', 'Posting…')
+      : trans('ramon-avocado.forum.home.composer_post', 'Post Discussion');
+
+    const existingPost = ul.querySelector('.item-avocadoPost');
+    if (existingPost) {
+      const btnPost = existingPost.querySelector('button');
+      if (btnPost) {
+        btnPost.className = submitCls;
+        (btnPost as HTMLButtonElement).disabled = isSubmitting || !isValid;
+        btnPost.textContent = submitTxt;
+      }
+    } else {
+      // spacer
+      const spacer = document.createElement('li');
+      spacer.className = 'item-avocadoSpacer';
+      ul.appendChild(spacer);
+
+      // close
+      const liClose = document.createElement('li');
+      liClose.className = 'item-avocadoClose';
+      const btnClose = document.createElement('button');
+      btnClose.type = 'button';
+      btnClose.className = 'Button AvocadoHome-composer-cancel';
+      btnClose.textContent = trans('ramon-avocado.forum.home.composer_close', 'Close');
+      btnClose.addEventListener('click', () => {
+        this.composerOpen = false; this.composerPreview = false;
+        this.composerTitle = ''; this.composerBody = '';
+        this.composerTags = []; this.tagPickerOpen = false;
+        this.tagBypassReqs = false; this.tagFilter = '';
+        m.redraw();
+      });
+      liClose.appendChild(btnClose);
+      ul.appendChild(liClose);
+
+      // post
+      const liPost = document.createElement('li');
+      liPost.className = 'item-avocadoPost';
+      const btnPost = document.createElement('button');
+      btnPost.type = 'button';
+      btnPost.className = submitCls;
+      (btnPost as HTMLButtonElement).disabled = isSubmitting || !isValid;
+      btnPost.textContent = submitTxt;
+      btnPost.addEventListener('click', () => this.submitInlineComposer());
+      liPost.appendChild(btnPost);
+      ul.appendChild(liPost);
+    }
   }
 
   renderAvatar(user, className = '') {
@@ -1362,8 +1464,13 @@ export default class HomePage extends Component {
               <div className="AvocadoHome-composer-tags">
                 {this.renderTagPicker()}
               </div>
-              {/* Textarea + toolbar row + footer buttons (all in one positioning context) */}
-              <div className="AvocadoHome-composerBody">
+              {/* Textarea + toolbar + preview area + footer */}
+              <div
+                className={`AvocadoHome-composerBody${this.composerPreview ? ' is-preview' : ''}`}
+                oncreate={(vnode) => { setTimeout(() => this._injectToolbarBtns(vnode.dom), 0); }}
+                onupdate={(vnode) => { this._injectToolbarBtns(vnode.dom); }}
+              >
+                {/* TextEditor — hidden (display:none) in preview mode via CSS */}
                 <TextEditor
                   composer={this.composerProxy}
                   value={this.composerBody}
@@ -1371,35 +1478,76 @@ export default class HomePage extends Component {
                   onchange={(value) => { this.composerBody = value; m.redraw(); }}
                   onsubmit={() => this.submitInlineComposer()}
                 />
-                {/* Buttons sit inside composerBody so we can overlay them on the toolbar row */}
-                <div className="AvocadoHome-composer-footer">
-                  <button
-                    className="Button AvocadoHome-composer-cancel"
-                    type="button"
-                    onclick={() => {
-                      this.composerOpen = false;
-                      this.composerTitle = '';
-                      this.composerBody = '';
-                      this.composerTags = [];
-                      this.tagPickerOpen = false;
-                      this.tagBypassReqs = false;
-                      this.tagFilter = '';
-                      m.redraw();
-                    }}
-                  >
-                    {trans('ramon-avocado.forum.home.composer_close', 'Close')}
-                  </button>
-                  <button
-                    className={`Button Button--primary AvocadoHome-composer-submit${this.composerSubmitting ? ' is-loading' : ''}${!this.isComposerValid() ? ' is-disabled' : ''}`}
-                    type="button"
-                    disabled={this.composerSubmitting || !this.isComposerValid()}
-                    onclick={this.submitInlineComposer.bind(this)}
-                  >
-                    {this.composerSubmitting
-                      ? trans('ramon-avocado.forum.home.composer_submitting', 'Posting…')
-                      : trans('ramon-avocado.forum.home.composer_post', 'Post Discussion')}
-                  </button>
+
+                {/* Preview area — replicates Flarum ComposerPostPreview: setInterval polls content,
+                    vnode.dom captured in closure avoids stale-ref issues, no Mithril children */}
+                <div className="AvocadoHome-composerPreviewArea">
+                  <article className="CommentPost Post">
+                    <div className="Post-container">
+                      <div
+                        className="Post-body"
+                        oncreate={(vnode) => {
+                          let lastContent: string | undefined;
+                          let wasPreview = false;
+                          const update = () => {
+                            const isPreview = this.composerPreview;
+                            if (!isPreview) {
+                              lastContent = undefined;
+                              wasPreview = false;
+                              return;
+                            }
+                            const content = this.composerBody || '';
+                            // Force re-render whenever preview just became active
+                            const justOpened = !wasPreview;
+                            wasPreview = true;
+                            if (!justOpened && lastContent === content) return;
+                            lastContent = content;
+                            setTimeout(() => {
+                              // Guard: check visibility when the macrotask actually fires
+                              if (!this.composerPreview) return;
+                              if (!content.trim()) {
+                                vnode.dom.innerHTML = '';
+                                const span = document.createElement('span');
+                                span.className = 'AvocadoHome-composerPreviewEmpty';
+                                span.textContent = trans('ramon-avocado.forum.home.composer_preview_empty', 'Nothing to preview.');
+                                vnode.dom.appendChild(span);
+                              } else {
+                                const s9e = (window as any).s9e;
+                                if (s9e?.TextFormatter?.preview) {
+                                  s9e.TextFormatter.preview(content, vnode.dom);
+                                  app.visuals?.processPost?.(vnode.dom);
+                                  // Sticker/lottie spans are initialized via MutationObserver (async fetch).
+                                  // If the fetch is slow or the container was hidden during init, the canvas
+                                  // may never appear. After 200ms, replace any canvas-less spans with a
+                                  // fresh clone so the observer starts a clean fetch with correct dimensions.
+                                  setTimeout(() => {
+                                    if (!this.composerPreview) return;
+                                    vnode.dom.querySelectorAll('.Sticker--tgs, .Sticker--lottie').forEach((el: Element) => {
+                                      if (el.querySelector('canvas')) return;
+                                      const clone = el.cloneNode(true) as Element;
+                                      clone.removeAttribute('data-tgs-init');
+                                      clone.removeAttribute('data-lottie-init');
+                                      el.parentNode?.replaceChild(clone, el);
+                                    });
+                                  }, 200);
+                                } else {
+                                  vnode.dom.textContent = content;
+                                }
+                              }
+                            }, 0);
+                          };
+                          update();
+                          this._previewInterval = setInterval(update, 50);
+                        }}
+                        onremove={() => {
+                          clearInterval(this._previewInterval);
+                          this._previewInterval = null;
+                        }}
+                      />
+                    </div>
+                  </article>
                 </div>
+
               </div>
             </div>
           )}

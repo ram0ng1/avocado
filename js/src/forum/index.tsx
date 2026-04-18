@@ -842,27 +842,82 @@ app.initializers.add(
     override(DiscussionPage.prototype, 'view', function (original, vnode) {
       if (this.discussion) return original(vnode);
 
+      // Decoration icon skeleton — mirrors the exact same visibility rules as the real hero.
+      // Try to use the cached discussion (already in store when navigating from the list)
+      // to show the correct number of child-tag icons. Falls back to 1 icon on cache miss.
+      const _routeId    = String(m.route.param('id') ?? '');
+      const _numericId  = _routeId && !isNaN(parseInt(_routeId)) ? String(parseInt(_routeId)) : null;
+      const _cachedDisc = _numericId ? app.store.getById('discussions', _numericId) : null;
+
+      const _skelMobile    = typeof window !== 'undefined' && window.innerWidth <= 480;
+      const _skelTwoScreen = typeof window !== 'undefined' && window.innerWidth > 1129;
+      const _skelShowDeco  = !!app.forum.attribute('avocadoHeroDecorationIcon') && !_skelMobile;
+      const _skelIconCount = parseInt(app.forum.attribute('avocadoHeroDecorationIconCount') || '1');
+
+      // Determine icon presence + actual icon class from real child tags (mirrors DiscussionHero logic)
+      let _skelHasFirstIcon   = false;
+      let _skelHasSecondIcon  = false;
+      let _skelFirstIconCls:  string | null = null;
+      let _skelSecondIconCls: string | null = null;
+      if (_skelShowDeco) {
+        if (_cachedDisc) {
+          const _skelAllTags   = (_cachedDisc.tags?.() || []).filter(Boolean);
+          const _skelChildTags = _skelAllTags.filter(t => t.parent?.());
+          _skelHasFirstIcon    = !!_skelChildTags[0];
+          _skelHasSecondIcon   = _skelTwoScreen && _skelIconCount >= 2 && !!_skelChildTags[1];
+          _skelFirstIconCls    = _skelChildTags[0]?.icon?.() || null;
+          _skelSecondIconCls   = _skelHasSecondIcon ? (_skelChildTags[1]?.icon?.() || null) : null;
+        } else {
+          // Cache miss (direct URL load) — safe assumption: 1 generic icon block
+          _skelHasFirstIcon = true;
+        }
+      }
+
+      const _skelHasTwo     = _skelHasFirstIcon && _skelHasSecondIcon;
+      const _skelHasDivider = _skelHasTwo && !!app.forum.attribute('avocadoHeroDecoDivider');
+
       return (
         <div className="Page DiscussionPage DiscussionPage--skeleton">
           <div className="Page-main">
             <div className="AvocadoSkeleton-discussionHero">
               <div className="container">
-                <div className="AvocadoSkeleton-nav">
-                  <div className="AvocadoSkeleton-backBtn" />
-                  <div className="AvocadoSkeleton-tag" />
-                  <div className="AvocadoSkeleton-tag" style="width:56px" />
-                </div>
-                <div className="AvocadoSkeleton-title" />
-                <div className="AvocadoSkeleton-meta">
-                  <div className="AvocadoSkeleton-avatarStack">
-                    <div className="AvocadoSkeleton-stackItem" />
-                    <div className="AvocadoSkeleton-stackItem" />
-                    <div className="AvocadoSkeleton-stackItem" />
-                    {/* +more circle — mirrors DiscussionHero-participantsMore */}
-                    <div className="AvocadoSkeleton-stackItem AvocadoSkeleton-stackItem--more" />
+                {/* Mirrors .DiscussionHero-inner: position reference + centering + padding */}
+                <div className="AvocadoSkeleton-heroInner">
+                  <div className="AvocadoSkeleton-nav">
+                    <div className="AvocadoSkeleton-backBtn" />
+                    <div className="AvocadoSkeleton-tag" />
+                    <div className="AvocadoSkeleton-tag" style="width:56px" />
                   </div>
-                  <div className="AvocadoSkeleton-metaChip AvocadoSkeleton-metaChip--md" />
-                  <div className="AvocadoSkeleton-metaChip AvocadoSkeleton-metaChip--sm" />
+                  <div className="AvocadoSkeleton-title" />
+                  <div className="AvocadoSkeleton-meta">
+                    <div className="AvocadoSkeleton-avatarStack">
+                      <div className="AvocadoSkeleton-stackItem" />
+                      <div className="AvocadoSkeleton-stackItem" />
+                      <div className="AvocadoSkeleton-stackItem" />
+                      {/* +more circle — mirrors DiscussionHero-participantsMore */}
+                      <div className="AvocadoSkeleton-stackItem AvocadoSkeleton-stackItem--more" />
+                    </div>
+                    <div className="AvocadoSkeleton-metaChip AvocadoSkeleton-metaChip--md" />
+                    <div className="AvocadoSkeleton-metaChip AvocadoSkeleton-metaChip--sm" />
+                  </div>
+                  {/* Decoration icon skeleton — mirrors real icon shape when cached */}
+                  {_skelShowDeco && _skelHasFirstIcon && (
+                    <div className={`AvocadoSkeleton-decoContainer${_skelHasTwo ? ' is-two' : ''}${_skelHasDivider ? ' has-divider' : ''}`}>
+                      <div className={`AvocadoSkeleton-decoIcon${_skelFirstIconCls ? ' AvocadoSkeleton-decoIcon--icon' : ''}`}>
+                        {_skelFirstIconCls && <i className={_skelFirstIconCls} aria-hidden="true" />}
+                      </div>
+                      {_skelHasDivider && (
+                        <div className="AvocadoSkeleton-decoSep" aria-hidden="true">
+                          <i className={app.forum.attribute('avocadoHeroDecoDividerIcon') || 'fas fa-times'} />
+                        </div>
+                      )}
+                      {_skelHasTwo && (
+                        <div className={`AvocadoSkeleton-decoIcon${_skelSecondIconCls ? ' AvocadoSkeleton-decoIcon--icon' : ''}`}>
+                          {_skelSecondIconCls && <i className={_skelSecondIconCls} aria-hidden="true" />}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

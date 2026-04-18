@@ -180,11 +180,11 @@ export const copyTextToClipboard = async (text: string): Promise<void> => {
 
 // ─── Design constants ─────────────────────────────────────────────────────────
 
-export const FALLBACK_COLORS: string[] = ['#f0b213'];
+export const FALLBACK_COLORS: string[] = [''];
 
 export const FALLBACK_ICONS: string[] = [
-  'fas fa-tag', 'fas fa-folder', 'fas fa-comments', 'fas fa-star',
-  'fas fa-fire', 'fas fa-bolt', 'fas fa-globe', 'fas fa-heart',
+  'fas fa-tag', 'fa-regular fa-bookmark',
+  'fas fa-fire', 'fas fa-bolt',
 ];
 
 // ─── Navigation helper ────────────────────────────────────────────────────────

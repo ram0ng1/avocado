@@ -34,6 +34,11 @@ ramon-avocado:
       logo_svg_help: Envie um logotipo SVG personalizado para seu fórum.
       logo_enabled_label: Ativar logotipo personalizado
       logo_enabled_help: Exibir o logotipo personalizado no cabeçalho.
+      custom_loading_spinner_label: Spinner de carregamento personalizado
+      custom_loading_spinner_help: Substituir o indicador de carregamento padrão por um spinner SVG animado.
+      loading_spinner_style_label: Estilo do spinner
+      spinner_custom_code_label: Código do spinner personalizado
+      spinner_custom_code_help: Cole qualquer SVG ou HTML para usar como spinner de carregamento.
       show_online_users_label: Mostrar usuários online
       show_online_users_help: Exibir a quantidade de usuários atualmente online.
       show_guest_cta_label: Mostrar call-to-action para visitantes
