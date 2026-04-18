@@ -122,7 +122,7 @@ class AddCriticalCss
         @font-face{font-family:'DM Sans Variable';font-weight:100 900;font-style:italic;font-display:swap;src:url('{$italicFont}') format('woff2-variations')}
         @font-face{font-family:'DM Sans';font-weight:100 900;font-style:normal;font-display:swap;src:url('{$normalFont}') format('woff2-variations')}
         body{font-family:'DM Sans Variable','DM Sans','Segoe UI',sans-serif;overflow-x:hidden}
-        .App-header{display:flex;height:52px;min-height:52px;contain:layout}
+        .App-header{display:flex;contain:layout}@media(min-width:768px){.App-header{height:52px;min-height:52px}}
         {$logoReservation}
         {$logoTitleCss}
         {$mobileNavCss}

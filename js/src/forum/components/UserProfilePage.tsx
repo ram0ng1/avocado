@@ -172,6 +172,13 @@ class ScrollableNav {
     this._ro = new ResizeObserver(() => this._check());
     this._ro.observe(el);
     this._check();
+
+    const activeItem = el.querySelector('li.active') as HTMLElement | null;
+    if (activeItem) {
+      requestAnimationFrame(() => {
+        el.scrollLeft = activeItem.offsetLeft - (el.clientWidth - activeItem.clientWidth) / 2;
+      });
+    }
   }
 
   onremove() {

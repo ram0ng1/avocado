@@ -38,7 +38,6 @@ return [
 
     (new Extend\Frontend('admin'))
         ->js(__DIR__.'/js/dist/admin.js')
-        ->jsDirectory(__DIR__.'/js/dist/admin')
         ->css(__DIR__.'/less/admin.less'),
 
     new Extend\Locales(__DIR__.'/locale'),
@@ -123,6 +122,7 @@ return [
         ->serializeToForum('avocadoShowcaseImageStyle', 'avocado.showcase_image_style')
         ->serializeToForum('avocadoColoredEnabled', 'avocado.colored_enabled', 'boolval')
         ->serializeToForum('avocadoColoredBorderStyle', 'avocado.colored_border_style', null, 'none')
+        ->serializeToForum('avocadoThreadsStyle', 'avocado.threads_style', 'boolval')
         ->default('avocado.hero_image_position', 'center top')
         ->default('avocado.show_online_users', true)
         ->default('avocado.show_auth_buttons', false)
@@ -144,5 +144,6 @@ return [
         ->default('avocado.showcase_count', '5')
         ->default('avocado.showcase_image_style', 'default')
         ->default('avocado.colored_enabled', false)
-        ->default('avocado.colored_border_style', 'none'),
+        ->default('avocado.colored_border_style', 'none')
+        ->default('avocado.threads_style', false),
 ];

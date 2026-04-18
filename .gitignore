@@ -1,5 +1,6 @@
 node_modules
 vendor
+js/dist/admin/
 composer.lock
 .vscode/settings.json
 .vscode

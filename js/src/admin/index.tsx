@@ -581,6 +581,11 @@ app.initializers.add('ramon-avocado', (app) => {
         label={trans('ramon-avocado.admin.settings.fixed_avatar_effect_label', 'Enable fixed avatar effect in discussion posts')}
         help={trans('ramon-avocado.admin.settings.fixed_avatar_effect_help', 'Keep the post avatar sticky while reading long comments on desktop.')}
       />
+      <AdminToggle
+        settingKey="avocado.threads_style"
+        label={trans('ramon-avocado.admin.settings.threads_style_label', 'Enable Threads-style discussion layout')}
+        help={trans('ramon-avocado.admin.settings.threads_style_help', 'Display the OP post as a card and indent replies with a left border, like the Threads app.')}
+      />
 
       <SubDivider />
 
