@@ -216,13 +216,21 @@
     background: transparent;
     border-bottom: 1px solid var(--avocado-border-subtle);
 
+    // Mirror .DiscussionHero .container: pass-through, no centering of its own
     .container {
-      max-width: 1280px;
-      padding: 48px 48px 52px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      padding: 0;
+      max-width: 100%;
     }
+  }
+
+  // Mirrors .DiscussionHero-inner exactly: block layout, no flex gap
+  // (flex gap + individual margins would double-count spacing, raising total height
+  //  and shifting top:50% of the absolute deco container vs the real hero)
+  .AvocadoSkeleton-heroInner {
+    position: relative;
+    max-width: var(--home-max-width, 1320px);
+    margin: 0 auto;
+    padding: 48px 20px 52px;
   }
 
   // Nav row: back circle + tag pill placeholders
@@ -249,8 +257,8 @@
   }
 
   .AvocadoSkeleton-title {
-    height: 36px;
-    width: 64%;
+    height: 32px;
+    width: 45%;
     border-radius: 8px;
     background: rgba(0, 0, 0, 0.09);
   }
@@ -260,7 +268,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-top: 14px;
+    margin-top: 12px;
   }
 
   .AvocadoSkeleton-avatarStack {
@@ -291,6 +299,75 @@
 
     &--sm { width: 60px; }
     &--md { width: 90px; }
+  }
+
+
+  // ── Decoration icon skeleton ──────────────────────────────────────────────────
+  // Count mirrors the admin setting (1 or 2). Mirrors .DiscussionHero-decorationsContainer.
+  .AvocadoSkeleton-decoContainer {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 0;
+    pointer-events: none;
+    z-index: 2;
+
+    &.is-two          { right: 0; gap: 16px; }
+    &.is-two.has-divider { gap: 0; } // mirrors --deco-pair-gap: 0px with divider
+  }
+
+  .AvocadoSkeleton-decoIcon {
+    width:  clamp(45px, 11vw, 100px);
+    height: clamp(45px, 11vw, 100px);
+    border-radius: 14px;
+    background: rgba(0, 0, 0, 0.08);
+    animation: avocado-pulse 1.5s ease-in-out infinite;
+    flex-shrink: 1;
+
+    &:last-child { animation-delay: 0.18s; }
+
+    // When the real icon class is known: match .DiscussionHero-decorationIcon exactly
+    // (width:fit-content / height:auto so wide kit icons like Ole Miss render at natural size)
+    &--icon {
+      width: fit-content;
+      height: auto;
+      max-width: unset;
+      background: transparent;
+      border-radius: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: visible;
+
+      i, .fa-kit {
+        font-size: clamp(45px, 11vw, 100px);
+        color: rgba(0, 0, 0, 0.13);
+        line-height: 1;
+        display: block;
+        max-height: none !important;
+        padding: 0 !important;
+        width: auto !important;
+        height: 1em;
+      }
+    }
+  }
+
+  // Mirrors .DiscussionHero-decoSeparator exactly (flex + padding, no box)
+  .AvocadoSkeleton-decoSep {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: clamp(32px, 8vw, 52px);
+    color: rgba(0, 0, 0, 0.10);
+    padding: 0 12px;
+    animation: avocado-pulse 1.5s ease-in-out infinite 0.09s;
+
+    i { display: block; line-height: 1; }
   }
 
   // Post stream — inside Page-content (flex child of Page-container.container)
@@ -422,7 +499,7 @@
     --disc-avatar: 40px;
     --disc-gap: 18px;
 
-    .AvocadoSkeleton-discussionHero .container { padding: 36px 20px 40px; }
+    .AvocadoSkeleton-heroInner { padding: 36px 20px 40px; }
     .AvocadoSkeleton-post { padding: 24px 0; }
   }
 }
@@ -433,12 +510,9 @@
     --disc-avatar: 34px;
     --disc-gap: 12px;
 
-    .AvocadoSkeleton-discussionHero .container {
-      padding: 32px 20px 36px;
-      align-items: center;
-    }
+    .AvocadoSkeleton-heroInner { padding: 32px 20px 36px; }
     .AvocadoSkeleton-nav   { justify-content: center; }
-    .AvocadoSkeleton-title { width: 85%; }
+    .AvocadoSkeleton-title { width: 85%; margin: 0 auto; }
     .AvocadoSkeleton-meta  { justify-content: center; }
     .AvocadoSkeleton-line--lg { height: 56px; }
 
@@ -451,5 +525,8 @@
 
     // Nav skeleton hidden on phone (nav moves to header area on mobile)
     .Page-sidebar { display: none; }
+
+    // Decoration icon skeleton hidden on phone (mirrors real hero behavior)
+    .AvocadoSkeleton-decoContainer { display: none !important; }
   }
 }

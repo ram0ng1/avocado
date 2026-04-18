@@ -27,6 +27,7 @@ return [
         ->content(\Ramon\Avocado\Content\AddCriticalPreloads::class)
         ->content(\Ramon\Avocado\Content\AddHeroBannerPreload::class)
         ->content(\Ramon\Avocado\Content\AddShowcaseImagePreload::class)
+        ->content(\Ramon\Avocado\Content\CustomLoadingSpinner::class)
         ->content(\Ramon\Avocado\Content\HideLogoFlash::class)
         ->content(\Ramon\Avocado\Content\DeferMainCss::class)
         ->content(\Ramon\Avocado\Content\LoadFontAwesomeKit::class)
@@ -125,6 +126,7 @@ return [
         ->serializeToForum('avocadoColoredEnabled', 'avocado.colored_enabled', 'boolval')
         ->serializeToForum('avocadoColoredBorderStyle', 'avocado.colored_border_style', null, 'none')
         ->serializeToForum('avocadoThreadsStyle', 'avocado.threads_style', 'boolval')
+        ->serializeToForum('avocadoCustomLoadingSpinner', 'avocado.custom_loading_spinner', 'boolval')
         ->default('avocado.hero_image_position', 'center top')
         ->default('avocado.show_online_users', true)
         ->default('avocado.show_auth_buttons', false)
@@ -147,5 +149,8 @@ return [
         ->default('avocado.showcase_image_style', 'default')
         ->default('avocado.colored_enabled', false)
         ->default('avocado.colored_border_style', 'none')
-        ->default('avocado.threads_style', false),
+        ->default('avocado.threads_style', false)
+        ->default('avocado.custom_loading_spinner', false)
+        ->default('avocado.loading_spinner_style', 'avocado')
+        ->default('avocado.loading_spinner_custom', ''),
 ];
