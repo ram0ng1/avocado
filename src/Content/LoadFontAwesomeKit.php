@@ -25,45 +25,14 @@ class LoadFontAwesomeKit
     {
         // language=JavaScript
         $script = <<<'JS'
+<link rel="preconnect" href="https://kit.fontawesome.com" crossorigin>
+<link rel="preconnect" href="https://ka-f.fontawesome.com" crossorigin>
 <script>
-(function() {
-  // Wait for Font Awesome Kit to load, then configure it to observe mutations
-  // (this ensures .fa-kit icons added after page load are processed immediately)
-  function setupFontAwesomeObserver() {
-    if (typeof window.FontAwesome === 'undefined' || !window.FontAwesome.config) {
-      // Font Awesome not loaded yet, try again soon
-      setTimeout(setupFontAwesomeObserver, 100);
-      return;
-    }
-    
-    // Font Awesome is loaded. Configure observation:
-    // - observeMutationsFallback: true enables the MutationObserver as fallback
-    // - autoReplaceSvg: true (default) replaces i.fa-* with SVG
-    // - keepOriginalSource: false (default) removes original elements
-    // - searchPseudoElements: true checks :before/:after pseudo-elements
-    window.FontAwesome.config.observeMutationsFallback = true;
-    window.FontAwesome.config.autoReplaceSvg = 'replace';
-    window.FontAwesome.config.mutationObserverOptions = {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['class']
-    };
-    
-    // Force Font Awesome to process any newly-added icons immediately
-    // (this is called automatically by MutationObserver, but we prime it here)
-    if (typeof window.FontAwesome.watch === 'function') {
-      window.FontAwesome.watch();
-    }
-  }
-  
-  // Start watching after DOM is ready  
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupFontAwesomeObserver);
-  } else {
-    setupFontAwesomeObserver();
-  }
-})();
+window.FontAwesomeConfig = {
+  autoReplaceSvg: true,
+  observeMutations: true,
+  mutationObserverOptions: { childList: true, subtree: true }
+};
 </script>
 JS;
 

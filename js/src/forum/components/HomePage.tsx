@@ -724,7 +724,7 @@ export default class HomePage extends Component {
 
     return (
       // article: position:relative, NO overflow:hidden — badges anchor here & tooltip never clips
-      <article key={id} className={cardClass}>
+      <article key={id} className={cardClass} style={tagColor ? { '--card-accent': tagColor } : {}}>
 
         {/* ── Badge — top-left, absolute above image ───────────────────── */}
         {isSticky && (
@@ -861,11 +861,14 @@ export default class HomePage extends Component {
       .slice(0, showcaseCount);
     const tagHref = tag ? tagRoute(tag) : null;
 
+    const showcaseHeading = app.forum?.attribute('avocadoShowcaseHeading') || tag?.name?.() || trans('ramon-avocado.forum.home.showcase_heading', 'Showcase');
+
     if (this.showcaseLoading && items.length === 0) {
       return (
         <section className="AvocadoHome-section AvocadoHome-section--showcase">
           <div className="AvocadoHome-sectionHead">
-            <h2>{app.forum?.attribute('avocadoShowcaseHeading') || tag?.name?.() || trans('ramon-avocado.forum.home.showcase_heading', 'Showcase')}</h2>
+            <h2>{showcaseHeading}</h2>
+            {this.renderOnlineAvatars()}
           </div>
           <div className="AvocadoHome-showcaseGrid">
             {renderShowcaseSkeleton(showcaseCount)}
@@ -879,7 +882,8 @@ export default class HomePage extends Component {
     return (
       <section className="AvocadoHome-section AvocadoHome-section--showcase">
         <div className="AvocadoHome-sectionHead">
-          <h2>{app.forum?.attribute('avocadoShowcaseHeading') || tag?.name?.() || trans('ramon-avocado.forum.home.showcase_heading', 'Showcase')}</h2>
+          <h2>{showcaseHeading}</h2>
+          {this.renderOnlineAvatars()}
         </div>
         <div className="AvocadoHome-showcaseGrid">
           {items.map((d, i) => this.renderShowcaseCard(d, i === 0))}
@@ -934,76 +938,69 @@ export default class HomePage extends Component {
   }
 
   loadOnlineUsers() {
-    // Prefer server-injected data (works for guests too; trust even if empty [])
-    const injected = app.forum?.attribute('avocadoOnlineUsers');
-    if (Array.isArray(injected)) {
-      this.onlineUsers = injected; // plain objects: { id, username, displayName, avatarUrl }
+    // Prefer data injected synchronously into <head> by InjectOnlineUsers.php —
+    // available on first paint, no API round-trip, no layout shift.
+    const win = window as any;
+    if (Array.isArray(win.__avocadoOnlineUsers)) {
+      this.onlineUsers = win.__avocadoOnlineUsers;
       return;
     }
 
-    // Fallback for logged-in users when PHP attribute is not present
-    if (!app.session.user) return;
-
-    app.store
-      .find('users', { page: { limit: 50 } })
-      .then((users) => {
-        this.onlineUsers = (Array.isArray(users) ? users : []).filter((u) => u.isOnline?.());
-        m.redraw();
-      })
-      .catch(() => {
-        this.onlineUsers = app.store.all('users').filter((u) => u.isOnline?.());
-        m.redraw();
-      });
+    // Secondary fallback: forum attribute (may arrive after boot)
+    const injected = app.forum?.attribute('avocadoOnlineUsers');
+    if (Array.isArray(injected)) {
+      this.onlineUsers = injected;
+      return;
+    }
   }
 
   renderOnlineAvatars() {
     if (!app.forum?.attribute('avocadoShowOnlineUsers')) return null;
     if (!this.onlineUsers.length) return null;
-    const MAX_SHOWN = 8;
-    const shown = this.onlineUsers.slice(0, MAX_SHOWN);
-    const extra = this.onlineUsers.length - shown.length;
 
-    // Determine if items are plain objects (server-injected) or User model instances
+    const MAX_SHOWN = 6;
+    const total = this.onlineUsers.length;
+    const shown = this.onlineUsers.slice(0, MAX_SHOWN);
     const isPlain = shown[0] && typeof shown[0].username === 'string';
+
+    const GRADIENTS = [
+      'linear-gradient(135deg,#ffd166,#f28482)',
+      'linear-gradient(135deg,#89cff0,#6b7fc4)',
+      'linear-gradient(135deg,#9eea6c,#337d63)',
+      'linear-gradient(135deg,#f0b213,#e84393)',
+      'linear-gradient(135deg,#c5ccff,#b5e3ff)',
+      'linear-gradient(135deg,#ffb5a7,#fcd5ce)',
+    ];
 
     return (
       <div className="AvocadoHome-onlineAvatars">
-        {shown.map((user, i) => {
-          const key         = isPlain ? user.id : user.id?.();
-          // Prefer the live User model from store (has correct color & avatarUrl)
-          const userModel   = isPlain ? (key ? app.store.getById('users', String(key)) : null) : user;
-          const username    = userModel?.username?.() || (isPlain ? user.username : '');
-          const name        = userModel?.displayName?.() || userModel?.username?.() || (isPlain ? (user.displayName || user.username) : displayName(user));
-          const avatarUrl   = userModel?.avatarUrl?.() || (isPlain ? (user.avatarUrl || null) : null);
-          const profileHref = safeRoute('user', { username });
-          const userColor   = userModel?.color?.() || (isPlain ? (user.color || null) : null);
-          const fallbackBg  = userColor || FALLBACK_COLORS[(parseInt(String(key), 10) || i) % FALLBACK_COLORS.length];
-          return (
-            <a
-              key={key}
-              className="AvocadoHome-onlineAvatars-item"
-              href={profileHref}
-              onclick={(e) => { e.stopPropagation(); navigate(e, profileHref); }}
-              title={name}
-              style={{ zIndex: MAX_SHOWN - i }}
-            >
-              {avatarUrl
-                ? <img src={avatarUrl} alt={name} className="Avatar" width="32" height="32" decoding="async" />
-                : (userModel
-                    ? Avatar.component({ user: userModel })
-                    : (app.forum?.attribute('avocadoCustomDefaultAvatar') !== false
-                        ? defaultAvatarSvg
-                        : <span className="Avatar" style={{ background: fallbackBg }}>{name.charAt(0).toUpperCase()}</span>
-                      )
-                  )
-              }
-            </a>
-          );
-        })}
-        {extra > 0 && (
-          <span className="AvocadoHome-onlineAvatars-more" title={`${extra} more online`}>
-            +{extra}
-          </span>
+        <div className="AvocadoHome-onlineAvatars-row">
+          {shown.map((user, i) => {
+            const key        = isPlain ? user.id : user.id?.();
+            const userModel  = isPlain ? (key ? app.store.getById('users', String(key)) : null) : user;
+            const username   = userModel?.username?.() || (isPlain ? user.username : '');
+            const name       = userModel?.displayName?.() || userModel?.username?.() || (isPlain ? (user.displayName || user.username) : displayName(user));
+            const avatarUrl  = userModel?.avatarUrl?.() || (isPlain ? (user.avatarUrl || null) : null);
+            const profileHref = safeRoute('user', { username });
+            const fallbackBg = GRADIENTS[i % GRADIENTS.length];
+            return (
+              <a
+                key={key}
+                className="AvocadoHome-onlineAvatars-item"
+                href={profileHref}
+                onclick={(e) => { e.stopPropagation(); navigate(e, profileHref); }}
+                title={name}
+                style={avatarUrl ? {} : { background: fallbackBg }}
+              >
+                {avatarUrl && (
+                  <img src={avatarUrl} alt={name} className="Avatar" width="28" height="28" decoding="async" />
+                )}
+              </a>
+            );
+          })}
+        </div>
+        {app.forum?.attribute('avocadoShowOnlineCount') !== false && (
+          <span className="AvocadoHome-onlineAvatars-count">{total} online</span>
         )}
       </div>
     );
@@ -1487,7 +1484,7 @@ export default class HomePage extends Component {
               }</h2>
               <div className="AvocadoHome-sectionHead-right">
                 {this._sectionHasNew && <span className="AvocadoStatDot AvocadoHome-sectionDot" aria-hidden="true" />}
-                {this.renderOnlineAvatars()}
+                {!app.forum?.attribute('avocadoShowcaseEnabled') && this.renderOnlineAvatars()}
                 <a
                   className="AvocadoHome-seeAll"
                   href={safeRoute('avocado-discussions')}
