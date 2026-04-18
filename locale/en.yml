@@ -34,6 +34,11 @@ ramon-avocado:
       logo_svg_help: Upload a custom SVG logo for your forum.
       logo_enabled_label: Enable Custom Logo
       logo_enabled_help: Display the custom logo in the header.
+      custom_loading_spinner_label: Custom loading spinner
+      custom_loading_spinner_help: Replace the default text loading indicator with an animated SVG spinner.
+      loading_spinner_style_label: Spinner style
+      spinner_custom_code_label: Custom spinner code
+      spinner_custom_code_help: Paste any SVG or HTML to use as the loading spinner.
       show_online_users_label: Show online users count
       show_online_users_help: Display the number of currently online users.
       show_guest_cta_label: Show guest call-to-action

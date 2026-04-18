@@ -354,3 +354,111 @@
   color: var(--muted-color);
   text-align: center;
 }
+
+
+// ─── Custom code textarea ─────────────────────────────────────────────────────
+.AvocadoAdmin-codeField {
+  font-family: ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 120px;
+}
+
+// ─── SpinnerPicker ────────────────────────────────────────────────────────────
+.AvocadoSpinnerPicker {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.AvocadoSpinnerOption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  border: 2px solid var(--control-bg, #e8e8f0);
+  border-radius: 12px;
+  background: var(--body-bg, #fff);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  min-width: 100px;
+
+  &:hover {
+    border-color: var(--primary-color);
+  }
+
+  &.is-selected {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 20%, transparent);
+  }
+}
+
+.AvocadoSpinnerOption-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+}
+
+.AvocadoSpinnerOption-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted-color);
+
+  .is-selected & {
+    color: var(--primary-color);
+  }
+}
+
+// ─── css-orbital admin preview ────────────────────────────────────────────────
+.avs-co {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  position: relative;
+  color: var(--primary-color);
+
+  &::before, &::after, > i::before, > i::after {
+    content: '';
+    position: absolute;
+    width: 40%;
+    height: 40%;
+    border-radius: 3px;
+    background: currentColor;
+    animation: avs-orbit 2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  }
+  &::before       { top: 0;    left: 0;    animation-name: avs-orbit-tl; }
+  &::after        { top: 0;    right: 0;   animation-name: avs-orbit-tr; }
+  > i::before     { bottom: 0; left: 0;    animation-name: avs-orbit-bl; }
+  > i::after      { bottom: 0; right: 0;   animation-name: avs-orbit-br; }
+  > i { position: absolute; inset: 0; display: block; font-size: 0; }
+}
+
+@keyframes avs-orbit-tl {
+  0%,100% { transform: translate(0, 0); }
+  25%     { transform: translate(0, 60%); }
+  50%     { transform: translate(60%, 60%); }
+  75%     { transform: translate(60%, 0); }
+}
+@keyframes avs-orbit-tr {
+  0%,100% { transform: translate(0, 0); }
+  25%     { transform: translate(-60%, 0); }
+  50%     { transform: translate(-60%, 60%); }
+  75%     { transform: translate(0, 60%); }
+}
+@keyframes avs-orbit-br {
+  0%,100% { transform: translate(0, 0); }
+  25%     { transform: translate(0, -60%); }
+  50%     { transform: translate(-60%, -60%); }
+  75%     { transform: translate(-60%, 0); }
+}
+@keyframes avs-orbit-bl {
+  0%,100% { transform: translate(0, 0); }
+  25%     { transform: translate(60%, 0); }
+  50%     { transform: translate(60%, -60%); }
+  75%     { transform: translate(0, -60%); }
+}

@@ -34,6 +34,8 @@ ramon-avocado:
       logo_svg_help: 为你的论坛上传自定义站点Logo SVG。
       logo_enabled_label: 启用自定义Logo
       logo_enabled_help: 在页头显示自定义Logo。
+      custom_loading_spinner_label: 自定义加载动画
+      custom_loading_spinner_help: 用动态SVG动画替换默认的文字加载提示。
       show_online_users_label: 显示在线用户数量
       show_online_users_help: 显示当前在线用户数量。
       show_guest_cta_label: 显示访客行动提示

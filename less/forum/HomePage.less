@@ -1364,9 +1364,11 @@
 }
 
 .AvocadoHome-composerBody {
-  position: relative; // positioning context for the overlaid footer buttons
+  display: flex;
+  flex-direction: column;
 
   .TextEditor {
+    flex: 1;
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
@@ -1378,20 +1380,22 @@
     padding: 12px 16px !important;
   }
 
-  // Toolbar row: reset Flarum's -105px margin, leave right space for buttons
+  // Toolbar row — single line, preview button first, Close+Post injected on right
   ul.TextEditor-controls {
     display: flex !important;
-    flex-wrap: wrap !important;      // itens de extensões quebram linha em vez de sumir
+    flex-wrap: nowrap !important;
     align-items: center !important;
     margin: 0 !important;
-    padding: 4px 244px 4px 12px !important; // 244px right = espaço para Close + Post Discussion
+    padding: 4px 8px !important;
     border-top: 1px solid #f0f0f4 !important;
     background: #fafafa !important;
-    overflow: visible !important;
-    border-bottom-left-radius: 16px !important;
-    border-bottom-right-radius: 16px !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    scrollbar-width: none !important;
+    border-radius: 0 0 16px 16px !important;
 
-    // li items se comportam como flex items
+    &::-webkit-scrollbar { display: none; }
+
     > li {
       display: inline-flex !important;
       align-items: center !important;
@@ -1399,9 +1403,25 @@
       flex-shrink: 0;
     }
 
-    // Hide the paper-plane submit button
     li.App-primaryControl {
       display: none !important;
+    }
+
+    // Separator after preview button
+    li.item-avocadoPreview {
+      margin-right: 4px !important;
+      padding-right: 4px !important;
+      border-right: 1px solid #e8e8f0;
+    }
+
+    // Spacer pushes Close + Post to right
+    li.item-avocadoSpacer { flex: 1 !important; }
+
+    // Close + Post buttons in toolbar
+    li.item-avocadoClose,
+    li.item-avocadoPost {
+      margin-left: 4px !important;
+      flex-shrink: 0 !important;
     }
   }
 
@@ -1414,19 +1434,71 @@
     overflow-y: auto !important;
   }
 
-  // Footer buttons — overlaid on the RIGHT of the toolbar row
-  .AvocadoHome-composer-footer {
-    position: absolute;
-    right: 12px;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 0;
-    border-top: none;
-    background: transparent;
-    pointer-events: auto;
+
+  // Preview mode: preview area on top, toolbar (with only our buttons) pinned below
+  &.is-preview {
+    .TextEditor {
+      order: 2;
+    }
+    .AvocadoHome-composerPreviewArea {
+      order: 1;
+      display: block;
+      flex: 1;
+    }
+    .TextEditor-editor {
+      display: none !important;
+    }
+    ul.TextEditor-controls {
+      border-top: none !important;
+      border-bottom: 1px solid #f0f0f4;
+      > li { display: none !important; }
+      > li.item-avocadoPreview { display: inline-flex !important; border-right: none !important; }
+      > li.item-avocadoSpacer  { display: flex !important; }
+      > li.item-avocadoClose   { display: inline-flex !important; }
+      > li.item-avocadoPost    { display: inline-flex !important; }
+    }
   }
+
+  // Preview area
+  .AvocadoHome-composerPreviewArea {
+    display: none;
+    background: var(--body-bg, #fff);
+    overflow-y: auto;
+    border-bottom: 1px solid #f0f0f4;
+
+    // Reset Flarum post chrome — keep only content rendering
+    article.CommentPost,
+    .Post-container {
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      border-radius: 0 !important;
+    }
+
+    .Post-body {
+      min-height: 140px;
+      padding: 14px 16px;
+      font-size: 14px;
+      line-height: 1.7;
+      word-break: break-word;
+    }
+  }
+}
+
+.AvocadoHome-composerPreviewBtn {
+  // Inherits Button Button--icon Button--link styles from Flarum
+  // Only override active state
+  &.is-active {
+    color: var(--primary-color) !important;
+  }
+}
+
+.AvocadoHome-composerPreviewEmpty {
+  color: var(--avocado-muted-label);
+  font-style: italic;
+  font-size: 14px;
 }
 
 .AvocadoHome-composer-tags {
@@ -2180,10 +2252,10 @@
 
     &::before { display: none; }
 
-    &:hover .AvocadoHome-showcaseCard-img { opacity: 0.88; }
+    &:hover .AvocadoHome-showcaseCard-img { opacity: 0.65; }
   }
 
-  // Image covers entire card, full opacity — remove the base fade mask
+  // Image covers entire card — muted opacity similar to compact mode
   .AvocadoHome-showcaseCard-img {
     position: absolute;
     inset: 0;
@@ -2191,7 +2263,7 @@
     height: 100%;
     object-fit: cover;
     border-radius: 16px;
-    opacity: 1;
+    opacity: 0.5;
     z-index: 1;
     -webkit-mask-image: none;
     mask-image: none;
