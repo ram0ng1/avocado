@@ -434,11 +434,18 @@ app.initializers.add('ramon-avocado', (app) => {
         <SubDivider />
 
         {/* General homepage toggles */}
-        <AdminToggle
-          settingKey="avocado.show_online_users"
-          label={trans('ramon-avocado.admin.settings.show_online_users_label', 'Show Online Users section')}
-          help={trans('ramon-avocado.admin.settings.show_online_users_help', 'Display currently online users between Categories and Popular Discussions.')}
-        />
+        <div className="AvocadoAdmin-subGroup">
+          <AdminToggle
+            settingKey="avocado.show_online_users"
+            label={trans('ramon-avocado.admin.settings.show_online_users_label', 'Show Online Users section')}
+            help={trans('ramon-avocado.admin.settings.show_online_users_help', 'Display currently online users between Categories and Popular Discussions.')}
+          />
+          <AdminToggle
+            settingKey="avocado.show_online_count"
+            label={trans('ramon-avocado.admin.settings.show_online_count_label', 'Show online count text')}
+            help={trans('ramon-avocado.admin.settings.show_online_count_help', 'Show the "X online" label next to the online user avatars.')}
+          />
+        </div>
         <AdminToggle
           settingKey="avocado.show_guest_cta"
           label={trans('ramon-avocado.admin.settings.show_guest_cta_label', 'Show Login / Sign Up buttons in hero banner')}
