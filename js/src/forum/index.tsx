@@ -8,6 +8,7 @@ import DiscussionListItem from 'flarum/forum/components/DiscussionListItem';
 import GlobalSearch from 'flarum/forum/components/GlobalSearch';
 import Search from 'flarum/forum/components/Search';
 import HeaderSecondary from 'flarum/forum/components/HeaderSecondary';
+import SessionDropdown from 'flarum/forum/components/SessionDropdown';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import IndexPage from 'flarum/forum/components/IndexPage';
 import CommentPost from 'flarum/forum/components/CommentPost';
@@ -280,6 +281,81 @@ const gateGuestLinks = (component) => {
   });
 };
 
+// ─── Threads style: inject tagRow + title into the OP CommentPost ────────────
+// Mirrors Avocado-threadView-tagRow + Avocado-threadView-title from kit.css.
+// Structure after injection:
+//   .Post-header  (meta: author · time)
+//   .AvocadoThreads-tagRow  (tag pills — separate row)
+//   h2.AvocadoThreads-title  (discussion title)
+//   .Post-body    (full post content)
+//   .Post-footer  (stats bar)
+const initThreadsTitleBlock = (component) => {
+  if (!settingEnabled('avocadoThreadsStyle', false)) return;
+  const post = component.attrs?.post;
+  if (post?.number?.() !== 1) return;
+  const root = component.element as HTMLElement | null;
+  if (!root || root.dataset.avocadoThreadsInited) return;
+
+  const discussion = post.discussion?.();
+  if (!discussion) return;
+
+  const postMain = root.querySelector<HTMLElement>('.Post-main');
+  const postHeader = postMain?.querySelector<HTMLElement>('.Post-header');
+  if (!postMain || !postHeader) return;
+
+  // ── Tag row (separate row below meta — matches .Avocado-threadView-tagRow) ──
+  const tags = (discussion.tags?.() || []).filter(Boolean);
+  const tagRow = document.createElement('div');
+  tagRow.className = 'AvocadoThreads-tagRow';
+  tags.forEach((tag) => {
+    const pill = document.createElement('a');
+    pill.className = 'AvocadoHome-tagPill';
+    const color = tag.color?.();
+    if (color) {
+      const styleObj = tagPillStyle(color, 0.12);
+      Object.entries(styleObj).forEach(([k, v]) => {
+        if (k.startsWith('--')) pill.style.setProperty(k, String(v));
+      });
+    }
+    const slug = tag.slug?.() || '';
+    const href = app.route('tag', { tags: slug });
+    pill.setAttribute('href', href);
+    pill.addEventListener('click', (e) => { e.preventDefault(); m.route.set(href); });
+    if (tag.icon?.()) {
+      const icon = document.createElement('i');
+      icon.className = tag.icon();
+      icon.setAttribute('aria-hidden', 'true');
+      pill.appendChild(icon);
+      pill.appendChild(document.createTextNode('\u00A0'));
+    }
+    pill.appendChild(document.createTextNode(tag.name?.() || ''));
+    tagRow.appendChild(pill);
+  });
+
+  // ── Title (matches .Avocado-threadView-title: 32px/900) ──────────────────────
+  const titleEl = document.createElement('h2');
+  titleEl.className = 'AvocadoThreads-title';
+  titleEl.textContent = discussion.title?.() || '';
+
+  // Insert: tagRow first, then title — both after Post-header
+  postHeader.insertAdjacentElement('afterend', titleEl);
+  postHeader.insertAdjacentElement('afterend', tagRow);
+
+  root.dataset.avocadoThreadsInited = '1';
+};
+
+// ─── Threads style: add "Back" text to .DiscussionHero-back pill ─────────────
+const addThreadsBackLabel = (root: HTMLElement | null) => {
+  if (!settingEnabled('avocadoThreadsStyle', false) || !root) return;
+  const backBtn = root.querySelector<HTMLElement>('.DiscussionHero-back');
+  if (backBtn && !backBtn.querySelector('.DiscussionHero-back-label')) {
+    const label = document.createElement('span');
+    label.className = 'DiscussionHero-back-label';
+    label.textContent = trans('ramon-avocado.forum.header.back', 'Back');
+    backBtn.appendChild(label);
+  }
+};
+
 
 app.initializers.add(
   'ramon-avocado',
@@ -421,6 +497,33 @@ app.initializers.add(
             });
         } else {
           restoreVisibility();
+        }
+      } else {
+        // No Avocado custom logo — PHP may have hidden #home-link because Flarum has
+        // a default logo image set. If so, reveal it once the <img> fires its load event.
+        // The <img> is created by Mithril AFTER mount, so we watch with MutationObserver.
+        const logoHide = document.getElementById('avocado-logo-hide');
+        if (logoHide) {
+          const homeLink = document.getElementById('home-link');
+          const revealFn = () => {
+            if (homeLink) homeLink.style.visibility = '';
+            logoHide.remove();
+          };
+          // Safety net: reveal after 2.5 s even if img never fires load/error
+          const tid = setTimeout(revealFn, 2500);
+          const obs = new MutationObserver(() => {
+            const img = document.querySelector<HTMLImageElement>('#home-link img.Header-logo');
+            if (!img) return;
+            obs.disconnect();
+            clearTimeout(tid);
+            if (img.complete && img.naturalWidth > 0) {
+              revealFn();
+            } else {
+              img.addEventListener('load',  revealFn, { once: true });
+              img.addEventListener('error', revealFn, { once: true });
+            }
+          });
+          obs.observe(document.documentElement, { childList: true, subtree: true });
         }
       }
     });
@@ -851,7 +954,7 @@ app.initializers.add(
       }).catch(() => {}); // graceful no-op if chunks unavailable
     }, 0);
 
-    // ── 7. HeaderSecondary auth buttons for guest users ───────────────────────
+// ── 7b. HeaderSecondary auth buttons for guest users ──────────────────────
     extend(HeaderSecondary.prototype, 'items', function (items) {
       if (!settingEnabled('avocadoShowAuthButtons', false) || app.session.user) return;
 
@@ -905,19 +1008,28 @@ app.initializers.add(
       }
     });
 
-    // ── 9. IndexPage contentItems: swap to HomePage or custom search ──────────
+    // ── 9. IndexPage oninit: redirect /?q=… to /search?q=… once per mount ──────
+    // Placed in oninit (fires once per component mount) instead of contentItems
+    // (fires on every Mithril redraw) to prevent multiple m.route.set calls
+    // accumulating via setTimeout and causing the search page refresh loop.
+    // Guard: skip when navigating back FROM a search-providing page so that
+    // "Back to Discussion List" (href /?q=…) and browser Back from the search
+    // page land on the real filtered IndexPage instead of looping back to search.
+    extend(IndexPage.prototype, 'oninit', function () {
+      if (!customHomeEnabled() && hasSearchQuery()) {
+        const prevRoute = app.previous?.get?.('routeName');
+        if (prevRoute === 'avocado-search' || prevRoute === 'posts') return;
+        const params = app.search?.state?.params?.() || {};
+        m.route.set(app.route('avocado-search', params), null, { replace: true });
+      }
+    });
+
+    // ── 9b. IndexPage contentItems: swap to HomePage ──────────────────────────
     extend(IndexPage.prototype, 'contentItems', function (items) {
       if (customHomeEnabled()) {
         items.remove('discussionList');
         items.remove('toolbar');
         items.add('avocadoHome', <HomePage />, 100);
-      } else if (hasSearchQuery()) {
-        // Redirect to the unified /search page instead of rendering inline.
-        const params = app.search?.state?.params?.() || {};
-        const searchRoute = app.route('avocado-search', params);
-        setTimeout(() => m.route.set(searchRoute), 0);
-        items.remove('discussionList');
-        items.remove('toolbar');
       }
     });
 
@@ -991,12 +1103,14 @@ app.initializers.add(
       );
     });
 
-    // IndexSidebar.view: strip Flarum's IndexPage-nav / sideNav classes.
-    // All content lives inside AvocadoNav-helper so the class name is irrelevant
-    // visually, but removing it prevents Flarum's sideNav CSS from leaking in.
+    // IndexSidebar.view: keep Flarum's IndexPage-nav/sideNav classes so core CSS
+    // (@expand-side-nav expand behaviour, phone absolute positioning) still applies.
+    // AvocadoExtensionNav is kept alongside so HomePage.less selectors still match.
+    // The extension's sideNav.less uses .IndexPage-nav.sideNav (higher specificity)
+    // to override Flarum core's sideNav styles with the avocado design.
     override(IndexSidebar.prototype, 'view', function () {
       return (
-        <nav className="AvocadoExtensionNav">
+        <nav className="IndexPage-nav sideNav AvocadoExtensionNav">
           <ul>{listItems(this.items().toArray())}</ul>
         </nav>
       );
@@ -1106,25 +1220,62 @@ app.initializers.add(
     flarum.reg.asyncModuleImport('flarum/forum/components/DiscussionsSearchSource').then((DiscussionsSearchSource) => {
       extend(DiscussionsSearchSource.prototype, 'view', function (vnode) {
         if (!vnode || !Array.isArray(vnode)) return;
-        // Walk the vnode tree to update any href pointing to /all
+        // Walk the vnode tree to update any href pointing to the index route.
+        // app.route('index') may be '/' (root install) or '/all' — match by comparing
+        // the path portion so both cases are handled.
+        const indexBasePath = app.route('index').split('?')[0];
         const patchNode = (node) => {
           if (!node || typeof node !== 'object') return;
           if (Array.isArray(node)) { node.forEach(patchNode); return; }
           if (node.attrs?.href) {
             const href = node.attrs.href;
-            if (typeof href === 'string' && href.includes('/all')) {
+            if (typeof href === 'string' && href.split('?')[0] === indexBasePath) {
               const url = new URL(href, window.location.origin);
               url.pathname = app.route('avocado-search');
               node.attrs.href = url.pathname + url.search;
-              if (node.attrs.onclick) {
-                const q = url.searchParams.get('q') || '';
-                node.attrs.onclick = (e) => { e.preventDefault(); m.route.set(app.route('avocado-search', { q })); };
-              }
+              const q = url.searchParams.get('q') || '';
+              // Use replace:true when already on the search page to avoid accumulating
+              // empty /search entries in browser history that Back would land on.
+              node.attrs.onclick = (e) => {
+                e.preventDefault();
+                const onSearch = app.current.get('routeName') === 'avocado-search';
+                m.route.set(app.route('avocado-search', { q }), null, onSearch ? { replace: true } : {});
+              };
             }
           }
           if (Array.isArray(node.children)) node.children.forEach(patchNode);
         };
         patchNode(vnode);
+      });
+    }).catch(() => {});
+
+    // ── 14c. GlobalDiscussionsSearchSource: point "see all" link to /search ──────
+    // The SearchModal (v2 native search) uses GlobalDiscussionsSearchSource.fullPage()
+    // which links to /?q=… → IndexPage redirects to /search?q=… leaving an empty
+    // /search entry in browser history. Fix: navigate directly to /search?q=… and
+    // use replace:true when already on the search page (otherwise pushState).
+    // Using a <button> (not <a>) ensures SelectResult() falls through to button.click()
+    // so keyboard Enter navigation also picks up the replace logic.
+    flarum.reg.asyncModuleImport('flarum/forum/components/GlobalDiscussionsSearchSource').then((GlobalDiscussionsSearchSource) => {
+      override(GlobalDiscussionsSearchSource.prototype, 'fullPage', function (_original, query: string) {
+        const href = app.route('avocado-search', { q: query });
+        return (
+          <li>
+            <button
+              className="Button Button--link"
+              onclick={(e: Event) => {
+                e.preventDefault();
+                const onSearch = app.current.get('routeName') === 'avocado-search';
+                m.route.set(href, null, onSearch ? { replace: true } : {});
+              }}
+            >
+              <i className="fas fa-search icon Button-icon" aria-hidden="true" />
+              <span className="Button-label">
+                {app.translator.trans('core.lib.search_source.discussions.all_button', { query })}
+              </span>
+            </button>
+          </li>
+        );
       });
     }).catch(() => {});
 
@@ -1328,6 +1479,7 @@ app.initializers.add(
       initCodeBlocks(this.element);
       fixReactionCounts(this.element);
       fixUnreactButton(this.element);
+      initThreadsTitleBlock(this);
     });
 
     // FIX: guard before DOM ops — onupdate fires on every parent redraw.
@@ -1337,6 +1489,7 @@ app.initializers.add(
       initCodeBlocks(this.element);
       fixReactionCounts(this.element);
       fixUnreactButton(this.element);
+      initThreadsTitleBlock(this);
     });
 
     // ── 20. CommentPost actionItems (share button) ────────────────────────────
@@ -1421,6 +1574,25 @@ app.initializers.add(
       const post = this.attrs?.post;
       if (post?.number?.() !== 1) return;
       items.add('avocado-op', <span className="AvocadoPost-opBadge">{trans('ramon-avocado.forum.post.op_badge', 'OP')}</span>, 50);
+    });
+
+    // ── 19d. DiscussionPage oncreate/onupdate: threads class + "Back" label ────
+    // Using this.element.classList is more reliable than setClassName(vdom, ...)
+    // because vdom from view() may be a PageStructure component node whose
+    // className prop doesn't map directly to the rendered .Page.DiscussionPage div.
+    const syncThreadsClass = (el: HTMLElement) => {
+      if (!el) return;
+      const enabled = settingEnabled('avocadoThreadsStyle', false);
+      el.classList.toggle('avocado-threads', enabled);
+    };
+
+    extend(DiscussionPage.prototype, 'oncreate', function () {
+      syncThreadsClass(this.element);
+      addThreadsBackLabel(this.element);
+    });
+    extend(DiscussionPage.prototype, 'onupdate', function () {
+      syncThreadsClass(this.element);
+      addThreadsBackLabel(this.element);
     });
 
     // ── 19e. DiscussionPage sidebarItems: stats card ──────────────────────────

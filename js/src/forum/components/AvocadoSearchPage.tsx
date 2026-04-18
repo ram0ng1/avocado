@@ -234,7 +234,7 @@ export default class AvocadoSearchPage extends Page {
         onChange={(key: string) => {
           const params = { ...(app.search as any).state.params() };
           if (key === keys[0]) { delete params.sort; } else { params.sort = key; }
-          m.route.set(app.route('avocado-search', params));
+          m.route.set(app.route('avocado-search', params), null, { replace: true });
         }}
       />
     );
@@ -245,7 +245,7 @@ export default class AvocadoSearchPage extends Page {
       const q = (this.searchInputValue || '').trim();
       if (!q) return;
       this._resultsKey++;
-      m.route.set(app.route('avocado-search', { q }));
+      m.route.set(app.route('avocado-search', { q }), null, { replace: true });
     };
 
     return (
@@ -267,7 +267,7 @@ export default class AvocadoSearchPage extends Page {
             <button
               className="AvocadoSearch-barClear"
               aria-label={trans('ramon-avocado.forum.search.clear', 'Clear')}
-              onclick={() => { this.searchInputValue = ''; m.route.set(app.route('avocado-search')); }}
+              onclick={() => { this.searchInputValue = ''; m.route.set(app.route('avocado-search'), null, { replace: true }); }}
             >
               <i className="fas fa-times" aria-hidden="true" />
             </button>
