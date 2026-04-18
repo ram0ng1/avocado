@@ -1294,6 +1294,28 @@
   .Scrubber-bar { border-radius: 4px; }
 }
 
+// ── Phone: PostStreamScrubber color reset ─────────────────────────────────────
+// On phone, the Scrubber renders inside .App-titleControl which forces
+// color: var(--header-color) !important onto all descendants.
+// Override here so the scrubber text is legible regardless of header color.
+@media @phone {
+  .PostStreamScrubber .Dropdown-menu {
+    color: var(--text-color);
+
+    .Scrubber-index, .Scrubber-first, .Scrubber-last {
+      color: var(--text-color);
+    }
+
+    .Scrubber-description {
+      color: var(--muted-color);
+    }
+
+    .Button {
+      color: var(--link-color);
+    }
+  }
+}
+
 // ── OP badge — appears in Post-header between username (priority 100) and
 //    timestamp (priority 0). Zinc-style chip matching mockup.
 //    .Page.DiscussionPage .AvocadoPost-opBadge has 0,2,0 — no !important needed.
@@ -1458,6 +1480,320 @@
 }
 
 
+
+// ─── Threads Style ─────────────────────────────────────────────────────────────
+// Redesign da página de discussão seguindo o Avocado Design System (kit.css):
+//   OP      → card (border + border-radius:21px + padding:20px) com meta row +
+//             tag row separada + título grande + body + stats bar com border-top
+//   Replies → grupo indentado (margin-left:20px + left-border) com linhas compactas
+//
+// JS injects:
+//   - div.AvocadoThreads-tagRow (pills .AvocadoHome-tagPill) after Post-header
+//   - h2.AvocadoThreads-title after tagRow
+//   - span.DiscussionHero-back-label into .DiscussionHero-back
+//   - class avocado-threads on .Page.DiscussionPage
+
+.avocado-threads.Page.DiscussionPage {
+
+  // ─── DiscussionHero → ghost "← Back" pill only ──────────────────────────────
+
+  .DiscussionHero {
+    background: transparent;
+    &::before { display: none; }
+  }
+
+  .DiscussionHero .container { padding: 0; }
+
+  .DiscussionHero-inner {
+    padding: 16px 0 16px !important;
+    &.has-deco-icon,
+    &.has-two-deco-icons { padding-right: 0 !important; }
+  }
+
+  .DiscussionHero-pills,
+  .DiscussionHero-title,
+  .DiscussionHero-meta,
+  .DiscussionHero-decorationsContainer { display: none !important; }
+
+  .DiscussionHero-nav { margin-bottom: 0; }
+
+  // Back → ghost pill (Avocado-btnGhost)
+  .DiscussionHero-back {
+    width: auto !important;
+    height: 34px !important;
+    border-radius: 999px !important;
+    padding: 0 13px !important;
+    background: var(--avocado-surface-1, #f3f3f6) !important;
+    backdrop-filter: none;
+    color: var(--disc-title, #202126) !important;
+    gap: 7px;
+    font: 800 12px/1 "DM Sans Variable", "DM Sans", sans-serif;
+
+    &:hover {
+      opacity: 1 !important;
+      background: color-mix(in srgb, var(--avocado-surface-1, #f3f3f6) 50%, #d8d8e0) !important;
+      color: var(--primary-color) !important;
+    }
+  }
+
+  .DiscussionHero-back-label {
+    font: 800 12px/1 "DM Sans Variable", "DM Sans", sans-serif;
+  }
+
+  // ─── OP Post: card matching .Avocado-threadView ─────────────────────────────
+  .PostStream > .PostStream-item:first-child > .CommentPost {
+    border: 1px solid var(--avocado-border-subtle, #eaeaf0);
+    border-radius: 21px;
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+
+  // OP: 44px avatar (.Avocado-threadView avatar)
+  @media @tablet-up {
+    .PostStream > .PostStream-item:first-child > .CommentPost {
+      --disc-avatar: 44px;
+    }
+  }
+
+  // ─── OP Post-header → .Avocado-threadView-meta ───────────────────────────────
+  // display:flex + align-items:center + gap:8px + font:700 14px
+  .PostStream > .PostStream-item:first-child > .CommentPost .Post-header {
+    margin-bottom: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    border-bottom: none;
+  }
+
+  // Username: 14px/700 (Avocado-threadView-meta font)
+  .PostStream > .PostStream-item:first-child > .CommentPost .PostUser-name .username {
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  // Time: flows inline (no margin-left:auto push)
+  .PostStream > .PostStream-item:first-child > .CommentPost .PostMeta {
+    margin-left: 0 !important;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  // ─── Tag row (div.AvocadoThreads-tagRow injected by JS) ──────────────────────
+  // .Avocado-threadView-tagRow: display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 8px
+  .AvocadoThreads-tagRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 4px 0 8px;
+  }
+
+  // ─── Title (h2.AvocadoThreads-title injected by JS) ─────────────────────────
+  // .Avocado-threadView-title: font:900 32px/1.15; letter-spacing:-0.5px; margin:0 0 10px
+  .AvocadoThreads-title {
+    display: block;
+    font: 900 32px/1.15 "DM Sans Variable", "DM Sans", sans-serif;
+    letter-spacing: -0.5px;
+    color: var(--disc-title, #202126);
+    margin: 0 0 10px;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  // ─── OP Post-body: .Avocado-threadView-body (17px/1.5, margin-bottom:14px) ───
+  .PostStream > .PostStream-item:first-child > .CommentPost .Post-body {
+    font-size: 17px;
+    line-height: 1.5;
+    padding-bottom: 0;
+    margin-bottom: 14px;
+  }
+
+  // ─── OP Post-footer: .Avocado-threadView-stats ───────────────────────────────
+  // border-top:1px solid var(--divider); padding-top:14px; display:flex; gap:14px
+  .PostStream > .PostStream-item:first-child > .CommentPost .Post-footer {
+    display: flex !important;
+    align-items: center;
+    height: auto !important;
+    overflow: visible !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    border-top: 1px solid var(--disc-border, #f0f0f4);
+    padding-top: 14px;
+    gap: 14px;
+  }
+
+  .PostStream > .PostStream-item:first-child > .CommentPost .Post-actions {
+    float: none;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .PostStream > .PostStream-item:first-child > .CommentPost .Post-likedBy {
+    display: none;
+  }
+
+  // Stat buttons: .Avocado-statBtn (padding:0; background:none; border:0; font:800 13px/1)
+  .PostStream > .PostStream-item:first-child > .CommentPost .Post-footer {
+    .Button.Button--link,
+    .avocado-action-btn {
+      padding: 0 !important;
+      border-radius: 0 !important;
+      background: none !important;
+      border: 0 !important;
+      font-size: 13px !important;
+      font-weight: 800 !important;
+      gap: 6px;
+      color: var(--disc-muted) !important;
+      transition: color 0.12s ease !important;
+
+      &:hover, &:focus {
+        background: none !important;
+        color: var(--disc-title) !important;
+      }
+
+      i { font-size: 13px; }
+    }
+
+    .Button--liked {
+      color: #e84393 !important;
+      background: none !important;
+
+      .fas, .far { color: #e84393 !important; }
+
+      &:hover { background: none !important; color: #e84393 !important; }
+    }
+  }
+
+  // Phone: compact card padding
+  @media @phone {
+    .PostStream > .PostStream-item:first-child > .CommentPost {
+      padding: 14px;
+    }
+  }
+
+  // ─── Reply group: .Avocado-replyGroup ────────────────────────────────────────
+  // margin-left:20px; border-left:2px solid var(--border-soft); padding-left:20px
+  .PostStream > .PostStream-item:not(:first-child) {
+    margin-left: 20px;
+    border-left: 2px solid var(--avocado-border-soft, #efeff4);
+    padding-left: 20px;
+    margin-bottom: 2px;
+  }
+
+  // ─── Reply CommentPost: .Avocado-replyLine ───────────────────────────────────
+  // padding:10px 8px; border-radius:10px; hover:background:var(--surface-1)
+  .PostStream > .PostStream-item:not(:first-child) > .CommentPost {
+    border-radius: 10px;
+    padding: 10px 8px;
+    transition: background 0.12s;
+
+    &:hover { background: var(--avocado-surface-1, #f4f4f7); }
+  }
+
+  // 28px avatar for replies
+  @media @tablet-up {
+    .PostStream > .PostStream-item:not(:first-child) > .CommentPost {
+      --disc-avatar: 28px;
+    }
+  }
+
+  // Thinner ring on 28px avatar
+  .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-side .Avatar {
+    border-width: 1.5px;
+    box-shadow: none;
+  }
+
+  // Reply Post-header: .Avocado-replyLine-head (margin-bottom:3px; gap:8px)
+  .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-header {
+    margin-bottom: 3px;
+    align-items: center;
+    gap: 8px;
+  }
+
+  // Reply username: 13px/700
+  .PostStream > .PostStream-item:not(:first-child) > .CommentPost .PostUser-name .username {
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  // Reply PostMeta: 12px/500
+  .PostStream > .PostStream-item:not(:first-child) > .CommentPost .PostMeta {
+    margin-left: 0 !important;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  // Reply body: .Avocado-replyLine-text (15px/1.45)
+  .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-body {
+    font-size: 15px;
+    line-height: 1.45;
+    padding-bottom: 4px;
+  }
+
+  // ─── Reply Post-footer: .Avocado-replyLine-actions ───────────────────────────
+  .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-footer {
+    display: flex !important;
+    align-items: center;
+    height: auto !important;
+    overflow: visible !important;
+    margin-top: 4px !important;
+    margin-bottom: 0 !important;
+    gap: 14px;
+  }
+
+  .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-actions {
+    float: none;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-likedBy {
+    display: none;
+  }
+
+  // Reply action buttons: .Avocado-replyLine-action (padding:0; bg:none; 11px/800)
+  .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-footer {
+    .Button.Button--link,
+    .avocado-action-btn {
+      padding: 0 !important;
+      border-radius: 0 !important;
+      background: none !important;
+      border: 0 !important;
+      font-size: 11px !important;
+      font-weight: 800 !important;
+      gap: 5px;
+      color: var(--disc-muted) !important;
+      transition: color 0.12s ease !important;
+
+      &:hover, &:focus {
+        background: none !important;
+        color: var(--disc-title) !important;
+      }
+
+      i { font-size: 12px; }
+    }
+  }
+
+  // EventPost in reply area: compact
+  .PostStream > .PostStream-item:not(:first-child) > .EventPost {
+    border-radius: 8px;
+    padding: 4px 8px;
+  }
+
+  // ─── Phone ───────────────────────────────────────────────────────────────────
+  @media @phone {
+    .PostStream > .PostStream-item:not(:first-child) {
+      margin-left: 12px;
+      padding-left: 12px;
+    }
+
+    // Show avatar for replies on phone (base CSS hides all Post-side on phone)
+    .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-side {
+      display: flex !important;
+    }
+  }
+}
 
 // ── DiscussionList sidebar inside DiscussionPage — Avocado design ──────────────
 // Applies to the sliding panel (App-drawer) that shows the discussion list

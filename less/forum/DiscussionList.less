@@ -181,6 +181,17 @@
       margin: 0;
       padding: 0;
       float: none;
+
+      // Unread state: primary tint + hide the redundant checkmark icon
+      &.Button--ua-reset {
+        color: var(--primary-color);
+        cursor: pointer;
+        transition: opacity 0.15s;
+
+        ._checkmark { display: none; }
+
+        &:hover { opacity: 0.7; }
+      }
     }
   }
 }

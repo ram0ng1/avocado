@@ -14,19 +14,23 @@ class HideLogoFlash
 
     public function __invoke(Document $document, ServerRequestInterface $request): void
     {
-        if (!$this->settings->get('avocado.logo_enabled', false)) return;
+        $avocadoEnabled = (bool) $this->settings->get('avocado.logo_enabled', false);
+        $hasSvgLogo     = $avocadoEnabled && !empty(trim((string) ($this->settings->get('avocado.logo_svg') ?? '')));
+        $flarumLogoPath = trim((string) ($this->settings->get('logo_path') ?? ''));
 
-        // Set the data-attribute for ALL custom logo types (SVG or PNG) so that
-        // html[data-avocado-logo-custom="true"] CSS rules in App.less activate
-        // from the very first frame — before async CSS finishes loading.
-        // This is an inline <script> so it runs synchronously during HTML parsing,
-        // before any render occurs.
-        $document->head[] = '<script>document.documentElement.dataset.avocadoLogoCustom="true"</script>';
+        if ($avocadoEnabled) {
+            // Set the data-attribute so html[data-avocado-logo-custom="true"] CSS rules
+            // activate from the very first frame — before async CSS finishes loading.
+            $document->head[] = '<script>document.documentElement.dataset.avocadoLogoCustom="true"</script>';
+        }
 
-        // For SVG logos: hide #home-link until JS fetches the SVG, crops whitespace
-        // via getBBox, injects it, then calls restoreVisibility(). Without this,
-        // the old forum-name text or a blank link flashes before the SVG appears.
-        if ($this->settings->get('avocado.logo_svg')) {
+        if ($hasSvgLogo) {
+            // SVG logo: hide until JS fetches, crops via getBBox, injects, then reveals.
+            $document->head[] = '<style id="avocado-logo-hide">#home-link{visibility:hidden!important}</style>';
+        } elseif (!$avocadoEnabled && $flarumLogoPath !== '') {
+            // Flarum default logo image: hide until the <img> fires its load event.
+            // Without this the image appears at its natural (oversized) dimensions
+            // for the duration of the first network fetch, then jumps to the CSS size.
             $document->head[] = '<style id="avocado-logo-hide">#home-link{visibility:hidden!important}</style>';
         }
     }

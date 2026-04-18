@@ -2143,7 +2143,7 @@
     &:hover .AvocadoHome-showcaseCard-img { opacity: 0.88; }
   }
 
-  // Image covers entire card, full opacity
+  // Image covers entire card, full opacity — remove the base fade mask
   .AvocadoHome-showcaseCard-img {
     position: absolute;
     inset: 0;
@@ -2153,6 +2153,8 @@
     border-radius: 16px;
     opacity: 1;
     z-index: 1;
+    -webkit-mask-image: none;
+    mask-image: none;
     transition: opacity 0.3s ease;
   }
 
@@ -2169,7 +2171,7 @@
 
   .AvocadoHome-showcaseCard-colorOverlay { display: none; }
 
-  // Body: absolute at bottom — light scrim in light mode (dark text on white fade)
+  // Body: absolute at bottom — extended dark scrim for legibility
   .AvocadoHome-showcaseCard-body {
     position: absolute;
     bottom: 0;
@@ -2180,17 +2182,43 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-    background: linear-gradient(to top, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0) 100%);
+    // Extended scrim: opaque at base, tapers to 35% at mid, transparent at top
+    background: linear-gradient(to top,
+      rgba(0, 0, 0, 0.82) 0%,
+      rgba(0, 0, 0, 0.52) 40%,
+      rgba(0, 0, 0, 0) 100%
+    );
     border-radius: 0 0 16px 16px;
   }
 
-  // Dark text on light scrim
-  .AvocadoHome-showcaseCard-title      { color: var(--home-title); font-size: 15px; }
-  .AvocadoHome-showcaseCard-excerpt    { color: var(--home-muted); }
-  .AvocadoHome-showcaseCard-date       { color: var(--home-muted); font-size: 11px; }
-  .AvocadoHome-showcaseCard-authorName { color: var(--home-muted); }
-  .AvocadoHome-showcaseCard-arrow      { stroke: var(--home-title); }
+  // White text + text-shadow — consistent in both light and dark modes
+  .AvocadoHome-showcaseCard-title {
+    color: #fff;
+    font-size: 15px;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.75), 0 2px 14px rgba(0, 0, 0, 0.45);
+  }
+  .AvocadoHome-showcaseCard-excerpt {
+    color: rgba(255, 255, 255, 0.82);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+  }
+  .AvocadoHome-showcaseCard-date {
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 11px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  }
+  .AvocadoHome-showcaseCard-authorName {
+    color: rgba(255, 255, 255, 0.82);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  }
+  .AvocadoHome-showcaseCard-arrow {
+    stroke: #fff;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+  }
   .AvocadoHome-showcaseCard-titleRow   { gap: 8px; }
+
+  .AvocadoHome-showcaseCard-link:hover & {
+    .AvocadoHome-showcaseCard-title { color: #fff; }
+  }
 
   @media @phone {
     flex: 0 0 72vw;

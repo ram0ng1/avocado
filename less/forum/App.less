@@ -160,10 +160,27 @@
   }
 }
 
+// ─── Phone: hide phone header controls while drawer is open ──────────────────
+// Flarum's drawer z-index (--zindex-modal = 1050) should be above the phone
+// header controls (calc(--zindex-header + 1) = 1001).  In practice a stacking-
+// context created by the contain:layout on .App-header or the opacity transition
+// on .Page-main can cause the controls to paint above the drawer.
+// When the drawer is open the nav title (.App-titleControl) and the primary
+// action button (.App-primaryControl) are not needed anyway — the user is
+// interacting with the drawer. We hide them instantly so they never bleed
+// through the drawer surface.
+@media @phone {
+  .App.drawerOpen .App-titleControl,
+  .App.drawerOpen .App-primaryControl {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
 // ─── Mobile: App-drawer dropdowns como painel inline ─────────────────────────
 // O core do Flarum (phone) coloca todos os .Dropdown-menu como position:fixed
 // bottom:0 (bottom sheet cobrindo o viewport). Dentro do .App-drawer isso é
-// inadequado — o menu deve abrir para baixo inline no painel.
+// inadequado — o menu deve abrir inline no painel.
 //
 // position:absolute → ancorado no .ButtonGroup (position:relative)
 // top:100%          → abre abaixo do botão
@@ -190,6 +207,20 @@
 
   .App-drawer .dropdown-backdrop {
     display: none !important;
+  }
+
+  // HeaderList footer ("View all …" link) inside drawer dropdowns:
+  // core only styles this on @tablet-up; on phone just center the button.
+  .App-drawer .HeaderList-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .Button {
+      justify-content: center;
+      width: 100%;
+      text-align: center;
+    }
   }
 }
 
@@ -272,11 +303,15 @@ html[data-avocado-logo-custom="true"] {
     padding: 5px 0;
   }
 
-  // Constrain header height to match SVG logo height (50px) + breathing room
-  .App-header {
-    height: 52px !important;
-    min-height: 52px !important;
-    line-height: 1;
+  // On tablet+ the header is a fixed top bar — constrain to the SVG logo height.
+  // On phone the header lives INSIDE the App-drawer and stacks vertically, so we
+  // must NOT force a fixed height (it would clip the search bar + auth controls).
+  @media @tablet-up {
+    .App-header {
+      height: 52px !important;
+      min-height: 52px !important;
+      line-height: 1;
+    }
   }
 }
 

@@ -558,11 +558,20 @@ export default class HomePage extends Component {
     this.showcaseLoading = true;
     // No m.redraw() here — oninit hasn't rendered yet; first render handles it.
 
+    const expectedCount = Number(app.forum?.attribute('avocadoShowcaseCount') || 5);
+
     // Fast path: discussions already in store (guests with server preload, or
     // after loadHomeDiscussions() completes). Show skeleton for a fixed minimum
     // so the loading effect is always visible alongside popular discussions.
+    //
+    // Guard: only use the fast-path when the store is genuinely populated:
+    //  - fromStore has >= expectedCount items (enough items for the full set), OR
+    //  - the discussion store has >= 10 items (home-page fetch has run before).
+    // This prevents the "1 card on back-navigation" bug where the store only
+    // contains the single discussion the user just came back from.
     const fromStore = this._showcaseFromStore();
-    if (fromStore.length > 0) {
+    const storeIsPopulated = this.allDiscussions().length >= 10;
+    if (fromStore.length > 0 && (fromStore.length >= expectedCount || storeIsPopulated)) {
       setTimeout(() => {
         this.showcaseItems = fromStore;
         this.showcaseLoading = false;

@@ -1,3 +1,13 @@
+// ─── sideNav: Avocado design system overrides ────────────────────────────────
+// Selectors use .IndexPage-nav.sideNav (two-class = higher specificity than
+// Flarum core's single-class .sideNav) to win without blanket !important spam.
+// Works on all three viewports:
+//   @expand-side-nav (tablet+): dropdown expanded into a flat list
+//   @tablet:                    horizontal scrolling tab bar
+//   @phone:                     collapsed – App-titleControl escapes via
+//                               position:absolute to the phone header bar
+// ---------------------------------------------------------------------------
+
 .sideNavOffset, .sideNav > ul {
   margin-top: 0;
 }
@@ -6,15 +16,17 @@
   padding-top: 0;
 }
 
-// Nav item styles apply on all viewports (phone drawer + desktop sidebar)
-.sideNav {
-  // Remove wrapper offsets that push items below the primary button
-  .item-nav > div {
-    margin: 0;
-    padding: 0;
-  }
+// Remove nav wrapper margin injected by some widgets
+.sideNav .item-nav > div {
+  margin: 0;
+  padding: 0;
+}
 
-  .Dropdown--select .Dropdown-menu {
+// ─── Expanded (tablet-up / @expand-side-nav) ─────────────────────────────────
+// Override Flarum core @expand-side-nav styles (background:none, padding-left:0,
+// muted-color text) with avocado pill-icon design.
+@media @expand-side-nav {
+  .IndexPage-nav.sideNav .Dropdown--select .Dropdown-menu {
     padding: 0;
 
     > li {
@@ -31,7 +43,10 @@
         border-radius: 25px;
         transition: background-color 0.15s, color 0.15s;
         font-size: 13px;
+        color: var(--text-color);
+        font-weight: normal;
 
+        // Non-tag icon: circular background pill
         .Button-icon:not(.TagIcon) {
           flex: 0 0 var(--icon-size);
           width: var(--icon-size);
@@ -44,10 +59,11 @@
           border-radius: 100%;
           float: none;
           margin: 0;
+          font-size: 13px;
           transition: background-color 0.15s;
         }
 
-        // Tag items: show the tag color as the icon background
+        // Tag icon: use the tag colour as background
         .TagIcon.Button-icon {
           flex: 0 0 var(--icon-size);
           width: var(--icon-size);
@@ -62,18 +78,31 @@
           transition: background-color 0.15s;
         }
 
+        // fa-kit SVG icons: override App.less !important rules to fit 28px container
+        .Button-icon.fa-kit {
+          width: var(--icon-size) !important;
+          height: var(--icon-size) !important;
+          max-height: var(--icon-size) !important;
+          padding: 0 !important;
+        }
+
+        // fa-kit with custom tag color: light-tinted background (matches iconColors 12% on TagsPage)
+        // text-colored already sets color: var(--color), so the icon appears in the tag color
+        .Button-icon.fa-kit.text-colored {
+          background: color-mix(in srgb, var(--color) 12%, transparent) !important;
+        }
+
         .Button-label {
           flex: 1;
           min-width: 0;
           overflow: hidden;
           text-overflow: ellipsis;
         }
-      }
 
-      &.active {
-        > a {
-          background-color: color-mix(in srgb, var(--primary-color) 15%, transparent);
-          color: var(--primary-color);
+        &:hover {
+          background-color: var(--control-bg);
+          color: var(--text-color);
+          text-decoration: none;
 
           .Button-icon:not(.TagIcon) {
             background-color: var(--body-bg);
@@ -81,24 +110,19 @@
         }
       }
 
-      &:hover {
-        > a {
-          background-color: var(--control-bg);
-          color: var(--text-color);
+      &.active > a {
+        background-color: color-mix(in srgb, var(--primary-color) 15%, transparent);
+        color: var(--primary-color);
+        font-weight: normal;
 
-          .Button-icon:not(.TagIcon) {
-            background-color: var(--body-bg);
-          }
+        .Button-icon:not(.TagIcon) {
+          background-color: var(--body-bg);
         }
       }
     }
 
     > li[class^="item-tag"]:not(.item-tags) a {
       font-size: 13px;
-
-      .icon {
-        --size: 24px;
-      }
     }
 
     > .Dropdown-separator {
@@ -107,13 +131,12 @@
   }
 }
 
+// ─── Desktop (992px+) ────────────────────────────────────────────────────────
 @media @desktop-up {
-  .sideNav .Dropdown--select .Dropdown-menu > li {
+  .IndexPage-nav.sideNav .Dropdown--select .Dropdown-menu > li {
     width: 100%;
-  }
 
-  .sideNav .Dropdown--select .Dropdown-menu > li > a {
-    width: 100%;
+    > a { width: 100%; }
   }
 
   .sideNavContainer {
@@ -121,7 +144,7 @@
   }
 }
 
-// Compact side navigation controls on smaller screens.
+// ─── Tablet (768–991px): horizontal tab bar ──────────────────────────────────
 @media @tablet {
   .IndexPage-nav.sideNav {
     padding: 8px 0;
@@ -142,69 +165,130 @@
   }
 }
 
+// ─── Phone (≤767px) ──────────────────────────────────────────────────────────
+// On phone the entire nav collapses inside .AvocadoNav-helper (h:0 overflow:hidden).
+// The .App-titleControl (SelectDropdown) and .App-primaryControl (new discussion)
+// escape via position:absolute and appear in the phone header bar.
+//
+// When the user taps the centred title, Flarum opens the dropdown as a bottom-
+// sheet (position:fixed, slides up from bottom). We style those list items to
+// match the avocado design (circular icon backgrounds, avocado hover/active).
 @media @phone {
-  .IndexPage-nav.sideNav {
-    .item-nav > .App-titleControl {
-      width: 200px;
-      left: 50%;
-      margin-left: -100px;
-      text-align: center;
+  // Bottom-sheet container: round top corners + reduce core's generous bottom padding
+  .IndexPage-nav.sideNav .Dropdown--select .Dropdown-menu {
+    border-radius: 18px 18px 0 0;
+    padding-bottom: 12px;
+  }
 
-      > .Dropdown-toggle.Button {
-        width: 100%;
+  // Bottom-sheet nav items: override Flarum core phone Dropdown styles
+  .IndexPage-nav.sideNav .Dropdown--select .Dropdown-menu > li {
+    > a,
+    > button,
+    > span {
+      --icon-size: 28px;
+      padding: 11px 18px;
+      font-size: 15px;
+      line-height: 1.35;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--body-bg);
+      color: var(--text-color);
 
-        > .Button-label {
-          display: block;
-          text-align: center;
+      .Button-icon:not(.TagIcon) {
+        flex: 0 0 var(--icon-size);
+        width: var(--icon-size);
+        height: var(--icon-size);
+        line-height: var(--icon-size);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--control-bg);
+        border-radius: 100%;
+        float: none;
+        margin: 0;
+        font-size: 14px;
+      }
+
+      .TagIcon.Button-icon {
+        flex: 0 0 var(--icon-size);
+        width: var(--icon-size);
+        height: var(--icon-size);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--color, var(--control-bg));
+        border-radius: 100%;
+        float: none;
+        margin: 0;
+      }
+
+      // fa-kit SVG icons: override App.less !important rules to fit 28px container
+      .Button-icon.fa-kit {
+        width: var(--icon-size) !important;
+        height: var(--icon-size) !important;
+        max-height: var(--icon-size) !important;
+        padding: 0 !important;
+      }
+
+      // fa-kit with custom tag color: light-tinted background (matches iconColors 12% on TagsPage)
+      .Button-icon.fa-kit.text-colored {
+        background: color-mix(in srgb, var(--color) 12%, transparent) !important;
+      }
+
+      .Button-label {
+        flex: 1;
+        min-width: 0;
+      }
+
+      &:hover {
+        background: var(--control-bg);
+        color: var(--text-color);
+      }
+    }
+
+    // Active item: primary-tinted background + primary text colour
+    &.active {
+      > a, > button {
+        &, &:hover {
+          background: color-mix(in srgb, var(--primary-color) 10%, var(--body-bg)) !important;
+          color: var(--primary-color) !important;
         }
-      }
 
-      .Dropdown-menu .Button-label {
-        display: inline;
-        text-align: left;
-      }
-    }
-
-    > ul > li {
-      margin: 0;
-    }
-
-    .item-newDiscussion .Button {
-      margin-bottom: 8px;
-    }
-
-    .Dropdown--select .Dropdown-menu > li {
-      > a,
-      > button,
-      > span {
-        padding: 10px 14px;
-        font-size: 14px;
-        line-height: 1.35;
-      }
-
-      > a.hasIcon,
-      > button.hasIcon {
-        padding-left: 42px;
-      }
-
-      > a .Button-icon,
-      > button .Button-icon {
-        margin-left: -24px;
-        font-size: 14px;
-      }
-
-      &.active > a .Button-icon,
-      &.active > button .Button-icon {
-        color: var(--primary-color) !important;
-      }
-
-      &:hover > a .Button-icon,
-      &:hover > button .Button-icon,
-      &:focus-within > a .Button-icon,
-      &:focus-within > button .Button-icon {
-        color: var(--text-color) !important;
+        .Button-icon:not(.TagIcon) {
+          color: var(--primary-color) !important;
+        }
       }
     }
   }
-}
 
+  // Centred nav title control (SelectDropdown toggle)
+  .IndexPage-nav.sideNav .item-nav > .App-titleControl {
+    width: 200px;
+    left: 50%;
+    margin-left: -100px;
+    text-align: center;
+
+    > .Dropdown-toggle.Button {
+      width: 100%;
+
+      > .Button-label {
+        display: block;
+        text-align: center;
+      }
+    }
+
+    .Dropdown-menu .Button-label {
+      display: inline;
+      text-align: left;
+    }
+  }
+
+  .IndexPage-nav.sideNav > ul > li {
+    margin: 0;
+  }
+
+  .IndexPage-nav.sideNav .item-newDiscussion .Button {
+    margin-bottom: 8px;
+  }
+}
