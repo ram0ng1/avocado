@@ -76,9 +76,11 @@ class AddCriticalCss
 
         // ── Hero image size reservation ───────────────────────────────────────
         // Reserve vertical space for the hero banner so CLS is zero.
+        // aspect-ratio gives proportional reservation across all viewport widths,
+        // while min-height provides a floor on mobile to avoid too-short banners.
         $hasHero = !empty(trim((string) $this->settings->get('avocado.hero_image')));
         $heroReservation = $hasHero
-            ? '.Hero--banner{min-height:400px}@media(max-width:767px){.Hero--banner{min-height:280px}}'
+            ? '.Hero--banner{aspect-ratio:3/1;min-height:280px;contain:layout style}@media(min-width:768px){.Hero--banner{min-height:400px}}'
             : '';
 
         // ── Showcase grid mobile layout ───────────────────────────────────────
@@ -121,7 +123,11 @@ class AddCriticalCss
         @font-face{font-family:'DM Sans Variable';font-weight:100 900;font-style:normal;font-display:swap;src:url('{$normalFont}') format('woff2-variations')}
         @font-face{font-family:'DM Sans Variable';font-weight:100 900;font-style:italic;font-display:swap;src:url('{$italicFont}') format('woff2-variations')}
         @font-face{font-family:'DM Sans';font-weight:100 900;font-style:normal;font-display:swap;src:url('{$normalFont}') format('woff2-variations')}
+        html,body{margin:0;padding:0;height:100%}
         body{font-family:'DM Sans Variable','DM Sans','Segoe UI',sans-serif;overflow-x:hidden}
+        *,*::before,*::after{box-sizing:border-box}
+        .App{display:flex;flex-direction:column;height:100%}
+        .App-content{flex:1 1 auto;min-width:0}
         .App-header{display:flex;contain:layout}@media(min-width:768px){.App-header{height:52px;min-height:52px}}
         {$logoReservation}
         {$logoTitleCss}

@@ -65,9 +65,5 @@ class AddShowcaseImagePreload
         foreach ($preloadLinks as $link) {
             $document->head[] = $link;
         }
-
-        // Add early hint for critical images
-        // This runs VERY early to tell browser to start downloading the image ASAP
-        $document->head[] = '<script>if(navigator.sendBeacon){fetch("/api/discussions?sort=-lastPostedAt&page[limit]=5&filter[q]=tag:' . htmlspecialchars((string)$firstTag, ENT_QUOTES, 'UTF-8') . '").then(r=>r.json()).then(d=>{const discussions=d.data||[];if(discussions[0]){const post=discussions[0].relationships?.firstPost?.data;if(post){const src=post.attributes?.contentHtml?.match(/src="([^"]+\\.(gif|png|jpg|jpeg|webp))"/i)?.[1];if(src){const link=document.createElement("link");link.rel="preload";link.as="image";link.href="/api/avocado/optimize-image?url="+encodeURIComponent(src)+"&width=400&height=150&format=webp";document.head.appendChild(link);}}}}).catch(()=>{})}</script>';
     }
 }
