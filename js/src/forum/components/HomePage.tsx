@@ -1,14 +1,11 @@
 // @ts-nocheck — large homepage component; shared sub-components are typed individually
 import app from 'flarum/forum/app';
 import Component from 'flarum/common/Component';
-import TextEditor from 'flarum/common/components/TextEditor';
 import Tooltip from 'flarum/common/components/Tooltip';
 import Avatar from 'flarum/common/components/Avatar';
-import Dropdown from 'flarum/common/components/Dropdown';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import abbreviateNumber from 'flarum/common/utils/abbreviateNumber';
 import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
-// FIX: import shared utilities — removes all local duplicates
 import ThreadCard from './shared/ThreadCard';
 import {
   trans,
@@ -35,10 +32,21 @@ import {
   safeCssUrl,
 } from '../utils';
 
+// ── Lazy-loaded composer ──────────────────────────────────────────────────────
+// Loaded once the first time the user opens the inline composer (or preloaded
+// after mount). Keeps the composer's TagPicker + TextEditor toolbar injection
+// (~8 KiB) out of the initial parse until it's actually needed.
+let _HomeComposer: any = null;
 
-
-// FIX: all local helpers removed — imported from ../utils above.
-// formatThreadCount replaced by Flarum core's abbreviateNumber.
+// ─── Hex → "r,g,b" string for inline rgba() in showcase cards ────────────────
+const _hexToRgb = (hex) => {
+  const h = (hex || '').replace('#', '');
+  if (h.length !== 6) return '0,0,0';
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `${r},${g},${b}`;
+};
 
 // SVG person silhouette — colours driven by var(--primary-color) via CSS classes
 const defaultAvatarSvg = (
@@ -51,16 +59,6 @@ const defaultAvatarSvg = (
   </svg>
 );
 
-// ─── Hex → "r,g,b" string for inline rgba() in showcase cards ────────────────
-const _hexToRgb = (hex) => {
-  const h = (hex || '').replace('#', '');
-  if (h.length !== 6) return '0,0,0';
-  const r = parseInt(h.slice(0, 2), 16);
-  const g = parseInt(h.slice(2, 4), 16);
-  const b = parseInt(h.slice(4, 6), 16);
-  return `${r},${g},${b}`;
-};
-
 // ─────────────────────────────────────────────────────────────────────────────
 // HomePage Component
 // ─────────────────────────────────────────────────────────────────────────────
@@ -69,23 +67,10 @@ export default class HomePage extends Component {
   oninit(vnode) {
     super.oninit(vnode);
 
-    this.searchValue = '';
-    this.likingIds = new Set();
+    this.searchValue  = '';
+    this.likingIds    = new Set();
     this.composerOpen = false;
-    this.composerPreview = false;
-    this.composerTitle = '';
-    this.composerBody = '';
-    this.composerTags = [];
-    this.composerSubmitting = false;
-    this.composerProxy = {
-      isVisible: () => true,
-      fields: { content: () => this.composerBody },
-    };
-    this._previewInterval = null;
-    this.onlineUsers = [];
-    this.tagPickerOpen = false;
-    this.tagBypassReqs = false;
-    this.tagFilter = '';
+    this.onlineUsers  = [];
 
     // FIX: memoization cache — invalidated when store discussion count changes
     this._cachedPopular    = null;
@@ -103,14 +88,9 @@ export default class HomePage extends Component {
     // Showcase grid state
     this.showcaseItems   = [];
     this.showcaseLoading = false;
-    this._showcaseCached = false;  // Track if we've attempted to load showcase
-    this._showcaseCache  = {};     // Cache results per slug to avoid duplicate API calls
+    this._showcaseCached = false;
+    this._showcaseCache  = {};
 
-    // Start as loading. loadHomeDiscussions() sets this to false synchronously
-    // when the store is already populated (guests / re-navigation), or
-    // _fetchHomeDiscussions() sets it to false once the fetch completes (logged-in).
-    // This guarantees the skeleton shows while discussions are genuinely loading,
-    // without flashing for users whose store is already pre-populated.
     this._homeLoading = true;
 
     // Preload tags in parallel (for tag names/slugs — does NOT block showcase)
@@ -118,31 +98,18 @@ export default class HomePage extends Component {
       app.tagList.load(['children', 'parent']).catch(() => {});
     }
 
-    // Showcase: fast-path reads from store synchronously if discussions are
-    // already available (guests with server-preload). For logged-in users the
-    // store is empty on init, so loadShowcaseDiscussions() marks it as loading
-    // and _fetchHomeDiscussions() populates it from the store after the fetch.
     this.loadShowcaseDiscussions();
-
-    // Load online users
     this.loadOnlineUsers();
-
-    // For logged-in users the discussion store is not pre-populated server-side,
-    // so we fetch explicitly. This ensures isSticky is available for the sort.
     this.loadHomeDiscussions();
+
+    // Preload the composer chunk so it's ready before the user clicks
+    if (!_HomeComposer) {
+      import('./HomeComposer').then((m) => { _HomeComposer = m.default; }).catch(() => {});
+    }
   }
 
   oncreate(vnode) {
     super.oncreate(vnode);
-    this._tagPickerOutside = (e) => {
-      if (!this.tagPickerOpen) return;
-      if (!e.target.closest?.('.AvocadoHome-tagPicker')) {
-        this.tagPickerOpen = false;
-        this.tagFilter = '';
-        m.redraw();
-      }
-    };
-    document.addEventListener('click', this._tagPickerOutside);
 
     if (app.pusher) {
       this._wsHandler = (data) => {
@@ -152,13 +119,10 @@ export default class HomePage extends Component {
           .find('discussions', discId, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
           .then(() => {
             this._cachedPopular = null;
-            this._cachedLatest = null;
+            this._cachedLatest  = null;
             this._sectionHasNew = true;
             m.redraw();
-            setTimeout(() => {
-              this._sectionHasNew = false;
-              m.redraw();
-            }, 5000);
+            setTimeout(() => { this._sectionHasNew = false; m.redraw(); }, 5000);
           })
           .catch(() => { m.redraw(); });
       };
@@ -166,33 +130,22 @@ export default class HomePage extends Component {
       const handleLikeEvent = (data) => {
         const discId = String(data?.discussionId || '');
         if (!discId) return;
-        
         const isSelf = this._selfActionIds.has(discId);
         if (isSelf) this._selfActionIds.delete(discId);
-        
-        // Force invalidate cache to ensure fresh fetch
         this._cachedPopular = null;
-        this._cachedLatest = null;
-        
-        // Fetch fresh data from server
+        this._cachedLatest  = null;
         app.store
           .find('discussions', discId, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
           .then(() => {
-
             if (!isSelf) {
               this._updatedLikeIds.add(discId);
-              setTimeout(() => { 
-                this._updatedLikeIds.delete(discId); 
-                m.redraw(); 
-              }, 500);
+              setTimeout(() => { this._updatedLikeIds.delete(discId); m.redraw(); }, 500);
             }
             m.redraw();
           })
-          .catch(() => {
-            m.redraw();
-          });
+          .catch(() => { m.redraw(); });
       };
-      this._likeHandler = handleLikeEvent;
+      this._likeHandler   = handleLikeEvent;
       this._unlikeHandler = handleLikeEvent;
 
       this._deletedHandler = (data) => {
@@ -200,11 +153,7 @@ export default class HomePage extends Component {
         if (!discId) return;
         app.store
           .find('discussions', discId, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
-          .then(() => {
-            this._cachedPopular = null;
-            this._cachedLatest = null;
-            m.redraw();
-          })
+          .then(() => { this._cachedPopular = null; this._cachedLatest = null; m.redraw(); })
           .catch(() => {});
       };
 
@@ -213,11 +162,7 @@ export default class HomePage extends Component {
         if (!discId) return;
         app.store
           .find('discussions', discId, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
-          .then(() => {
-            this._cachedPopular = null;
-            this._cachedLatest = null;
-            m.redraw();
-          })
+          .then(() => { this._cachedPopular = null; this._cachedLatest = null; m.redraw(); })
           .catch(() => {});
       };
 
@@ -237,7 +182,6 @@ export default class HomePage extends Component {
 
   onremove(vnode) {
     super.onremove(vnode);
-    document.removeEventListener('click', this._tagPickerOutside);
     if (app.pusher && typeof app.pusher.then === 'function') {
       app.pusher.then(({ channels }) => {
         if (channels?.main) {
@@ -251,27 +195,18 @@ export default class HomePage extends Component {
     }
   }
 
-
-
   allDiscussions() {
     try {
       const pages = app.discussions?.getPages?.();
       if (Array.isArray(pages) && pages.length > 0) {
         const discussions: any[] = [];
         if (typeof pages[0] === 'object' && pages[0] !== null && 'items' in pages[0]) {
-          pages.forEach((page: any) => {
-            if (page?.items) discussions.push(...page.items);
-          });
+          pages.forEach((page: any) => { if (page?.items) discussions.push(...page.items); });
         } else {
           discussions.push(...pages);
         }
-        // Only use getPages() results if they actually contain discussions.
-        // When getPages() is in a loading state it returns [] (truthy but empty),
-        // which would block the store fallback — so we skip it and fall through.
         if (discussions.filter(Boolean).length > 0) return discussions.filter(Boolean);
       }
-      // Fall back to raw store: covers initial load, _fetchHomeDiscussions results,
-      // and any case where getPages() hasn't been populated yet.
       return app.store.all('discussions').filter(Boolean);
     } catch (e) {
       return app.store.all('discussions').filter(Boolean);
@@ -280,15 +215,14 @@ export default class HomePage extends Component {
 
   discussionScore(d) {
     const replyCount = numberOr(d.replyCount?.(), 0);
-    const likeCount = numberOr(d.firstPost?.()?.attribute?.('likesCount'), 0);
-    const views = numberOr(d.attribute?.('viewCount'), 0);
+    const likeCount  = numberOr(d.firstPost?.()?.attribute?.('likesCount'), 0);
+    const views      = numberOr(d.attribute?.('viewCount'), 0);
     const lastPostedAt = d.lastPostedAt?.();
-    const ageMs = lastPostedAt ? Date.now() - new Date(lastPostedAt).getTime() : Infinity;
+    const ageMs      = lastPostedAt ? Date.now() - new Date(lastPostedAt).getTime() : Infinity;
     const agePenalty = Math.max(0, 1 - ageMs / (7 * 24 * 3600 * 1000));
     return replyCount * 2 + likeCount * 3 + views * 0.1 + agePenalty * 20;
   }
 
-  // FIX: invalidate memoization cache when store discussion count changes
   _invalidateIfStoreChanged() {
     const current = app.store.all('discussions').length;
     if (current !== this._cachedStoreSize) {
@@ -298,7 +232,6 @@ export default class HomePage extends Component {
     }
   }
 
-  // Returns the showcase tag ID as a string, or null
   _showcaseTagIds() {
     if (!app.forum?.attribute('avocadoShowcaseEnabled')) return new Set();
     const raw = app.forum?.attribute('avocadoShowcaseTag') || '';
@@ -307,12 +240,10 @@ export default class HomePage extends Component {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) return new Set(parsed.map(String).filter(Boolean));
     } catch (_) {}
-    // Legacy: plain string ID
     const s = String(raw).trim();
     return s ? new Set([s]) : new Set();
   }
 
-  // Returns true if discussion belongs to any showcase tag
   _isShowcaseDiscussion(discussion) {
     const ids = this._showcaseTagIds();
     if (!ids.size) return false;
@@ -321,8 +252,6 @@ export default class HomePage extends Component {
 
   popularDiscussions(limit = 5) {
     this._invalidateIfStoreChanged();
-    // NOTE: do NOT cache empty results — discussions may not yet be loaded from
-    // app.discussions.getPages(). An empty [] is truthy and would stick forever.
     if (this._cachedPopular?.length > 0) return this._cachedPopular;
     const result = [...this.allDiscussions()]
       .filter((d) => !this._isShowcaseDiscussion(d))
@@ -355,11 +284,7 @@ export default class HomePage extends Component {
     try {
       const tags = app.store.all('tags').filter((t) => t && !t.parent?.());
       return tags
-        .sort((a, b) => {
-          const aPos = a.position?.() ?? 9999;
-          const bPos = b.position?.() ?? 9999;
-          return aPos - bPos;
-        })
+        .sort((a, b) => (a.position?.() ?? 9999) - (b.position?.() ?? 9999))
         .slice(0, limit);
     } catch (e) {
       return [];
@@ -367,8 +292,7 @@ export default class HomePage extends Component {
   }
 
   openDiscussion(discussion) {
-    const href = discussionRoute(discussion);
-    m.route.set(href);
+    m.route.set(discussionRoute(discussion));
   }
 
   toggleLike(discussion) {
@@ -376,25 +300,14 @@ export default class HomePage extends Component {
     if (!firstPost) return;
     const id = discussion.id?.();
     if (this.likingIds.has(id)) return;
-
-    const likes = firstPost.likes?.() || [];
+    const likes   = firstPost.likes?.() || [];
     const isLiked = app.session.user && likes.some((u) => u === app.session.user);
-
     this.likingIds.add(id);
     this._selfActionIds.add(id);
     m.redraw();
-
-    firstPost.save({ isLiked: !isLiked }).then(() => {
-      this.likingIds.delete(id);
-      // Always redraw to update the UI immediately.
-      // If WebSocket is available, it will sync the server state afterwards.
-      // If not, the like state is still persisted on the server and the UI reflects this.
-      m.redraw();
-    }).catch(() => {
-      this.likingIds.delete(id);
-      this._selfActionIds.delete(id);
-      m.redraw();
-    });
+    firstPost.save({ isLiked: !isLiked })
+      .then(() => { this.likingIds.delete(id); m.redraw(); })
+      .catch(() => { this.likingIds.delete(id); this._selfActionIds.delete(id); m.redraw(); });
   }
 
   openInlineComposer() {
@@ -403,101 +316,14 @@ export default class HomePage extends Component {
       return;
     }
     if (this.composerOpen) return;
-    this.composerOpen     = true;
-    this.composerPreview  = false;
-    this.composerTitle    = '';
-    this.composerBody     = '';
-    this.composerTags     = [];
-    this.tagPickerOpen    = false;
-    this.tagBypassReqs    = false;
-    this.tagFilter        = '';
-    this.composerProxy = {
-      isVisible: () => true,
-      fields: { content: () => this.composerBody },
-    };
-    this._previewInterval = null;
+    this.composerOpen = true;
     m.redraw();
-    setTimeout(() => {
-      const el = document.querySelector('.AvocadoHome-composerTitle');
-      if (el) el.focus();
-    }, 50);
-  }
-
-  isComposerValid() {
-    // Check if title and body are filled
-    const title = this.composerTitle.trim();
-    const body = this.composerBody.trim();
-    if (!title || !body) return false;
-
-    // Check tag requirements (same logic as flarum/tags addTagComposer.js)
-    if (!this.tagBypassReqs) {
-      const minP = parseInt(app.forum.attribute('minPrimaryTags')) || 0;
-      const minS = parseInt(app.forum.attribute('minSecondaryTags')) || 0;
-      const chosenPrimary = this.composerTags.filter((t) => t.position?.() !== null && !t.isChild?.()).length;
-      const chosenSecond  = this.composerTags.filter((t) => t.position?.() === null).length;
-      const selectableTags = app.store.all('tags').filter(Boolean);
-      if (selectableTags.length && (chosenPrimary < minP || chosenSecond < minS)) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  submitInlineComposer() {
-    if (this.composerSubmitting) return;
-    const title = this.composerTitle.trim();
-    const body = this.composerBody.trim();
-    if (!title || !body) return;
-
-    // Validate tag requirements (same logic as flarum/tags addTagComposer.js)
-    if (!this.tagBypassReqs) {
-      const minP = parseInt(app.forum.attribute('minPrimaryTags')) || 0;
-      const minS = parseInt(app.forum.attribute('minSecondaryTags')) || 0;
-      const chosenPrimary = this.composerTags.filter((t) => t.position?.() !== null && !t.isChild?.()).length;
-      const chosenSecond  = this.composerTags.filter((t) => t.position?.() === null).length;
-      const selectableTags = app.store.all('tags').filter(Boolean);
-      if (selectableTags.length && (chosenPrimary < minP || chosenSecond < minS)) {
-        this.tagPickerOpen = true;
-        m.redraw();
-        return;
-      }
-    }
-
-    this.composerSubmitting = true;
-    m.redraw();
-
-    const data = {
-      title,
-      content: body,
-    };
-
-    if (this.composerTags.length > 0) {
-      data.relationships = {
-        tags: this.composerTags, // pass model instances; store serializes them
-      };
-    }
-
-    app.store.createRecord('discussions').save(data).then((discussion) => {
-      this.composerOpen = false;
-      this.composerSubmitting = false;
-      this.composerTitle = '';
-      this.composerBody = '';
-      this.composerTags = [];
-      m.redraw();
-      m.route.set(app.route.discussion(discussion));
-    }).catch(() => {
-      this.composerSubmitting = false;
-      m.redraw();
-    });
   }
 
   submitSearch(event) {
     event.preventDefault();
     const q = this.searchValue.trim();
     if (!q) return;
-    // Navigate directly to /search — bypasses the IndexPage /?q= → setTimeout redirect
-    // chain that causes the heroBannerOverlay to flash on the search page.
     m.route.set(app.route('avocado-search') + '?q=' + encodeURIComponent(q));
   }
 
@@ -509,108 +335,13 @@ export default class HomePage extends Component {
     return numberOr(discussion.replyCount?.(), 0);
   }
 
-  _injectToolbarBtns(container) {
-    const ul = container?.querySelector?.('ul.TextEditor-controls');
-    if (!ul) return;
-
-    const isPreview   = this.composerPreview;
-    const isValid     = this.isComposerValid();
-    const isSubmitting = this.composerSubmitting;
-
-    // ── Preview button (first item) ───────────────────────────────────────
-    const iconCls  = isPreview ? 'icon fas fa-pen' : 'icon far fa-eye';
-    const label    = isPreview
-      ? trans('ramon-avocado.forum.home.composer_edit', 'Edit')
-      : trans('ramon-avocado.forum.home.composer_preview', 'Preview');
-    const previewCls = `Button Button--icon Button--link AvocadoHome-composerPreviewBtn${isPreview ? ' is-active' : ''}`;
-
-    const existingPreview = ul.querySelector('.item-avocadoPreview');
-    if (existingPreview) {
-      const b = existingPreview.querySelector('button');
-      const i = existingPreview.querySelector('i');
-      if (b) { b.className = previewCls; b.setAttribute('aria-label', label); }
-      if (i) { i.className = iconCls; }
-    } else {
-      const li = document.createElement('li');
-      li.className = 'item-avocadoPreview';
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = previewCls;
-      btn.setAttribute('aria-label', label);
-      const icon = document.createElement('i');
-      icon.setAttribute('aria-hidden', 'true');
-      icon.className = iconCls;
-      btn.appendChild(icon);
-      btn.addEventListener('click', (e) => {
-        e.preventDefault(); e.stopPropagation();
-        this.composerPreview = !this.composerPreview;
-        m.redraw();
-      });
-      li.appendChild(btn);
-      ul.insertBefore(li, ul.firstChild);
-    }
-
-    // ── Close + Post buttons (right side, injected once) ─────────────────
-    const submitCls = `Button Button--primary AvocadoHome-composer-submit${isSubmitting ? ' is-loading' : ''}${!isValid ? ' is-disabled' : ''}`;
-    const submitTxt = isSubmitting
-      ? trans('ramon-avocado.forum.home.composer_submitting', 'Posting…')
-      : trans('ramon-avocado.forum.home.composer_post', 'Post Discussion');
-
-    const existingPost = ul.querySelector('.item-avocadoPost');
-    if (existingPost) {
-      const btnPost = existingPost.querySelector('button');
-      if (btnPost) {
-        btnPost.className = submitCls;
-        (btnPost as HTMLButtonElement).disabled = isSubmitting || !isValid;
-        btnPost.textContent = submitTxt;
-      }
-    } else {
-      // spacer
-      const spacer = document.createElement('li');
-      spacer.className = 'item-avocadoSpacer';
-      ul.appendChild(spacer);
-
-      // close
-      const liClose = document.createElement('li');
-      liClose.className = 'item-avocadoClose';
-      const btnClose = document.createElement('button');
-      btnClose.type = 'button';
-      btnClose.className = 'Button AvocadoHome-composer-cancel';
-      btnClose.textContent = trans('ramon-avocado.forum.home.composer_close', 'Close');
-      btnClose.addEventListener('click', () => {
-        this.composerOpen = false; this.composerPreview = false;
-        this.composerTitle = ''; this.composerBody = '';
-        this.composerTags = []; this.tagPickerOpen = false;
-        this.tagBypassReqs = false; this.tagFilter = '';
-        m.redraw();
-      });
-      liClose.appendChild(btnClose);
-      ul.appendChild(liClose);
-
-      // post
-      const liPost = document.createElement('li');
-      liPost.className = 'item-avocadoPost';
-      const btnPost = document.createElement('button');
-      btnPost.type = 'button';
-      btnPost.className = submitCls;
-      (btnPost as HTMLButtonElement).disabled = isSubmitting || !isValid;
-      btnPost.textContent = submitTxt;
-      btnPost.addEventListener('click', () => this.submitInlineComposer());
-      liPost.appendChild(btnPost);
-      ul.appendChild(liPost);
-    }
-  }
-
   renderAvatar(user, className = '') {
     if (!user) return null;
     return <Avatar user={user} className={className || undefined} title={displayName(user)} />;
   }
 
-
   // ── Showcase Grid ────────────────────────────────────────────────────────
 
-  // Read showcase discussions synchronously from the store — same pattern as
-  // popularDiscussions(). Returns [] if store is empty or tags not configured.
   _showcaseFromStore() {
     const ids = this._showcaseTagIds();
     if (!ids.size) return [];
@@ -627,21 +358,10 @@ export default class HomePage extends Component {
   }
 
   loadShowcaseDiscussions() {
-    // Skip if already cached or loading
     if (this._showcaseCached || this.showcaseLoading) return;
-
-    if (!app.forum?.attribute('avocadoShowcaseEnabled')) {
-      this._showcaseCached = true;
-      return;
-    }
-
+    if (!app.forum?.attribute('avocadoShowcaseEnabled')) { this._showcaseCached = true; return; }
     const raw = app.forum?.attribute('avocadoShowcaseTag');
-    if (!raw) {
-      this._showcaseCached = true;
-      return;
-    }
-
-    // Parse JSON array or legacy plain-string ID
+    if (!raw) { this._showcaseCached = true; return; }
     let tagIds = [];
     try {
       const parsed = JSON.parse(raw);
@@ -650,52 +370,28 @@ export default class HomePage extends Component {
       const s = String(raw).trim();
       if (s) tagIds = [s];
     }
-    if (!tagIds.length) {
-      this._showcaseCached = true;
-      return;
-    }
-
-    // Mark loading now so the skeleton renders on the first frame regardless of
-    // whether data comes from the store (fast-path) or from an API call.
+    if (!tagIds.length) { this._showcaseCached = true; return; }
     this.showcaseLoading = true;
-    // No m.redraw() here — oninit hasn't rendered yet; first render handles it.
-
     const expectedCount = Number(app.forum?.attribute('avocadoShowcaseCount') || 5);
-
-    // Fast path: discussions already in store (guests with server preload, or
-    // after loadHomeDiscussions() completes). Show skeleton for a fixed minimum
-    // so the loading effect is always visible alongside popular discussions.
-    //
-    // Guard: only use the fast-path when the store is genuinely populated:
-    //  - fromStore has >= expectedCount items (enough items for the full set), OR
-    //  - the discussion store has >= 10 items (home-page fetch has run before).
-    // This prevents the "1 card on back-navigation" bug where the store only
-    // contains the single discussion the user just came back from.
     const fromStore = this._showcaseFromStore();
     const storeIsPopulated = this.allDiscussions().length >= 10;
     if (fromStore.length > 0 && (fromStore.length >= expectedCount || storeIsPopulated)) {
       setTimeout(() => {
-        this.showcaseItems = fromStore;
+        this.showcaseItems   = fromStore;
         this.showcaseLoading = false;
         this._showcaseCached = true;
         m.redraw();
       }, 350);
       return;
     }
-
-    // Resolve IDs → slugs quickly using store cache + minimal API calls
     const resolveSlug = (id) => {
-      // Check all() cache first (faster than find)
       const allTags = app.store.all('tags') || [];
-      const cached = allTags.find((t) => String(t.id?.()) === id);
+      const cached  = allTags.find((t) => String(t.id?.()) === id);
       if (cached) return Promise.resolve(cached.slug?.());
-      
-      // Fall back to API only if not in store
       return app.store.find('tags', id)
         .then((tag) => tag?.slug?.() || null)
         .catch(() => null);
     };
-
     Promise.all(tagIds.map(resolveSlug))
       .then((slugs) => slugs.filter(Boolean))
       .then((slugs) => {
@@ -705,12 +401,10 @@ export default class HomePage extends Component {
           m.redraw();
           return Promise.resolve([]);
         }
-        // Batch fetch all discussions in parallel, max 1 API call per slug
         return Promise.all(slugs.map((slug) => this._fetchShowcaseBySlug(slug)));
       })
       .then((batches) => {
         if (!batches) return;
-        // _fetchHomeDiscussions() may have already populated showcase — skip.
         if (this._showcaseCached) return;
         const seen  = new Set();
         const limit = Number(app.forum?.attribute('avocadoShowcaseCount') || 5);
@@ -724,20 +418,13 @@ export default class HomePage extends Component {
         this._showcaseCached = true;
         m.redraw();
       })
-      .catch(() => {
-        this.showcaseLoading = false;
-        this._showcaseCached = true;
-        m.redraw();
-      });
+      .catch(() => { this.showcaseLoading = false; this._showcaseCached = true; m.redraw(); });
   }
 
   _fetchShowcaseBySlug(slug) {
     if (!slug) return Promise.resolve([]);
-    
-    // Use local cache if available to avoid duplicate API calls
     if (!this._showcaseCache) this._showcaseCache = {};
     if (this._showcaseCache[slug]) return Promise.resolve(this._showcaseCache[slug]);
-    
     return app.store
       .find('discussions', {
         filter: { tag: slug },
@@ -747,16 +434,14 @@ export default class HomePage extends Component {
       })
       .then((results) => {
         const filtered = Array.isArray(results) ? results.filter(Boolean) : [];
-        this._showcaseCache[slug] = filtered; // Cache results
+        this._showcaseCache[slug] = filtered;
         return filtered;
       })
       .catch(() => []);
   }
 
-  // Extract first <img src> from a post's rendered HTML.
   _extractFirstImage(post) {
     if (!post) return null;
-    // contentHtml is the server-rendered HTML; content() is raw markdown (no <img>).
     const html = post.data?.attributes?.contentHtml
       || post.attribute?.('contentHtml')
       || (typeof post.contentHtml === 'function' ? post.contentHtml() : null)
@@ -776,7 +461,6 @@ export default class HomePage extends Component {
         }
       } catch (e) {}
     }
-    // Fallback: markdown image syntax or bare URL
     const raw = post.data?.attributes?.content || post.attribute?.('content') || '';
     if (raw && typeof raw === 'string') {
       const mdMatch = raw.match(/!\[[^\]]*\]\(([^)\s]+)\)/);
@@ -789,46 +473,34 @@ export default class HomePage extends Component {
 
   renderShowcaseCard(discussion, isFirst = false) {
     if (!discussion) return null;
-    const id            = discussion.id?.();
-    const title         = discussion.title?.() || trans('ramon-avocado.forum.home.untitled', 'Untitled');
-    const href          = discussionRoute(discussion);
-    const firstPost     = discussion.firstPost?.();
-    const isSticky      = discussion.isSticky?.() || false;
+    const id             = discussion.id?.();
+    const title          = discussion.title?.() || trans('ramon-avocado.forum.home.untitled', 'Untitled');
+    const href           = discussionRoute(discussion);
+    const firstPost      = discussion.firstPost?.();
+    const isSticky       = discussion.isSticky?.() || false;
     const showcaseTagIds = this._showcaseTagIds();
     const imageStyle     = app.forum?.attribute('avocadoShowcaseImageStyle') || 'default';
-
     const allTags    = (discussion.tags?.() || []).filter(Boolean);
     const otherTags  = allTags.filter((t) => !showcaseTagIds.has(String(t.id?.())));
     const primaryTag = allTags.find((t) => showcaseTagIds.has(String(t.id?.()))) || allTags[0] || null;
     const tagColor   = primaryTag?.color?.() || null;
-
-    const imageUrl = this._extractFirstImage(firstPost);
-    const excerpt  = postPreview(discussion, 140);
-
-    // Both modes use the same tint logic; full mode uses slightly higher opacity so the
-    // tag color is visible through the mask fade (image fades to white card bg at bottom).
+    const imageUrl   = this._extractFirstImage(firstPost);
+    const excerpt    = postPreview(discussion, 140);
     const noImgBg = tagColor
       ? imageStyle === 'full'
         ? `linear-gradient(135deg,rgba(${_hexToRgb(tagColor)},0.50),rgba(${_hexToRgb(tagColor)},0.30))`
         : `linear-gradient(135deg,rgba(${_hexToRgb(tagColor)},0.18),rgba(${_hexToRgb(tagColor)},0.06))`
       : 'linear-gradient(135deg,var(--avocado-surface-1),var(--control-bg))';
-
-    const rawDate  = discussion.createdAt?.();
-    const dateStr  = formatTimeLabel(rawDate);
-    const dateIso  = rawDate ? new Date(rawDate).toISOString() : '';
-
-    const user = discussion.user?.();
-
+    const rawDate = discussion.createdAt?.();
+    const dateStr = formatTimeLabel(rawDate);
+    const dateIso = rawDate ? new Date(rawDate).toISOString() : '';
+    const user    = discussion.user?.();
     const cardClass = [
       'AvocadoHome-showcaseCard',
-      imageStyle === 'full' && 'AvocadoHome-showcaseCard--full'
+      imageStyle === 'full' && 'AvocadoHome-showcaseCard--full',
     ].filter(Boolean).join(' ');
-
     return (
-      // article: position:relative, NO overflow:hidden — badges anchor here & tooltip never clips
       <article key={id} className={cardClass} style={tagColor ? { '--card-accent': tagColor } : {}}>
-
-        {/* ── Badge — top-left, absolute above image ───────────────────── */}
         {isSticky && (
           <div className="AvocadoHome-showcaseCard-badges">
             <Tooltip text={trans('ramon-avocado.forum.home.badge_sticky', 'Pinned')} position="bottom">
@@ -839,8 +511,6 @@ export default class HomePage extends Component {
             </Tooltip>
           </div>
         )}
-
-        {/* ── Tag pills — top-right, navigate to tag page on click ── */}
         {otherTags.length > 0 && (
           <div className="AvocadoHome-showcaseCard-topTags">
             {otherTags.slice(0, 2).map((tag) => {
@@ -860,36 +530,18 @@ export default class HomePage extends Component {
             })}
           </div>
         )}
-
         <a className="AvocadoHome-showcaseCard-link" href={href} onclick={(e) => navigate(e, href)}>
-
-          {/* ── Cover image ──────────────────────────────────────────── */}
           {imageUrl
             ? (isFirst
-              ? <img
-                  className="AvocadoHome-showcaseCard-img"
-                  src={imageUrl}
-                  alt={title}
-                  width="400"
-                  height="150"
-                  loading="eager"
-                  fetchpriority="high"
-                />
-              : <img
-                  className="AvocadoHome-showcaseCard-img"
-                  alt={title}
-                  width="400"
-                  height="150"
-                  oncreate={(vnode) => {
-                    const io = new IntersectionObserver(([entry]) => {
-                      if (entry.isIntersecting) {
-                        vnode.dom.src = imageUrl;
-                        io.disconnect();
-                      }
-                    }, { rootMargin: '200px' });
-                    io.observe(vnode.dom);
-                  }}
-                />
+              ? <img className="AvocadoHome-showcaseCard-img" src={imageUrl} alt={title}
+                     width="400" height="150" loading="eager" fetchpriority="high" />
+              : <img className="AvocadoHome-showcaseCard-img" alt={title} width="400" height="150"
+                     oncreate={(vnode) => {
+                       const io = new IntersectionObserver(([entry]) => {
+                         if (entry.isIntersecting) { vnode.dom.src = imageUrl; io.disconnect(); }
+                       }, { rootMargin: '200px' });
+                       io.observe(vnode.dom);
+                     }} />
             )
             : <div className="AvocadoHome-showcaseCard-noImg" style={{ background: noImgBg }}>
                 {primaryTag?.icon?.() && (
@@ -898,50 +550,30 @@ export default class HomePage extends Component {
                 )}
               </div>
           }
-
-          {/* ── Full image color overlay ─────────────────────────────── */}
-          {imageStyle === 'full' && (
-            <div className="AvocadoHome-showcaseCard-colorOverlay" />
-          )}
-
-          {/* ── Content body ─────────────────────────────────────────── */}
+          {imageStyle === 'full' && <div className="AvocadoHome-showcaseCard-colorOverlay" />}
           <div className="AvocadoHome-showcaseCard-body">
-
-            {/* Date */}
             {dateStr && (
               <span className="AvocadoHome-showcaseCard-date">
                 <time datetime={dateIso}>{dateStr}</time>
               </span>
             )}
-
-            {/* Title + arrow */}
             <div className="AvocadoHome-showcaseCard-titleRow">
               <span className="AvocadoHome-showcaseCard-title">{title}</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
                    fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
                    className="AvocadoHome-showcaseCard-arrow" aria-hidden="true">
-                <line x1="5" y1="12" x2="19" y2="12"
-                      className="AvocadoHome-showcaseCard-arrow-line" />
-                <polyline points="12 5 19 12 12 19"
-                          className="AvocadoHome-showcaseCard-arrow-head" />
+                <line x1="5" y1="12" x2="19" y2="12" className="AvocadoHome-showcaseCard-arrow-line" />
+                <polyline points="12 5 19 12 12 19" className="AvocadoHome-showcaseCard-arrow-head" />
               </svg>
             </div>
-
-            {/* Excerpt */}
-            {excerpt && (
-              <p className="AvocadoHome-showcaseCard-excerpt">{excerpt}</p>
-            )}
-
-            {/* Author */}
+            {excerpt && <p className="AvocadoHome-showcaseCard-excerpt">{excerpt}</p>}
             {user && (
               <div className="AvocadoHome-showcaseCard-author">
                 <Avatar user={user} />
                 <span className="AvocadoHome-showcaseCard-authorName">{displayName(user)}</span>
               </div>
             )}
-
           </div>
-
         </a>
       </article>
     );
@@ -949,22 +581,17 @@ export default class HomePage extends Component {
 
   renderShowcaseSlider() {
     if (!app.forum?.attribute('avocadoShowcaseEnabled')) return null;
-
     const tagId = app.forum?.attribute('avocadoShowcaseTag');
     if (!tagId) return null;
-
     const isFollowingPage = app.current.get?.('routeName') === 'following';
     if (isFollowingPage) return null;
-
-    const tag     = app.store.getById('tags', String(tagId));
+    const tag           = app.store.getById('tags', String(tagId));
     const showcaseCount = Math.max(1, Math.min(5, parseInt(app.forum?.attribute('avocadoShowcaseCount')) || 5));
-    const items   = [...this.showcaseItems]
+    const items         = [...this.showcaseItems]
       .sort((a, b) => (b.isSticky?.() ? 1 : 0) - (a.isSticky?.() ? 1 : 0))
       .slice(0, showcaseCount);
-    const tagHref = tag ? tagRoute(tag) : null;
-
+    const tagHref         = tag ? tagRoute(tag) : null;
     const showcaseHeading = app.forum?.attribute('avocadoShowcaseHeading') || tag?.name?.() || trans('ramon-avocado.forum.home.showcase_heading', 'Showcase');
-
     if (this.showcaseLoading && items.length === 0) {
       return (
         <section className="AvocadoHome-section AvocadoHome-section--showcase">
@@ -978,9 +605,7 @@ export default class HomePage extends Component {
         </section>
       );
     }
-
     if (!this.showcaseLoading && items.length === 0) return null;
-
     return (
       <section className="AvocadoHome-section AvocadoHome-section--showcase">
         <div className="AvocadoHome-sectionHead">
@@ -997,22 +622,15 @@ export default class HomePage extends Component {
   loadHomeDiscussions() {
     const existing = app.store.all('discussions');
     if (existing.length > 0) {
-      // Data already in store — show skeleton for a fixed minimum so the
-      // loading effect is visible every time the user navigates to the home page.
-      setTimeout(() => {
-        this._homeLoading = false;
-        m.redraw();
-      }, 350);
+      setTimeout(() => { this._homeLoading = false; m.redraw(); }, 350);
       return;
     }
-    // Store is empty (logged-in users on fresh load) — fetch and keep _homeLoading
-    // true so the skeleton renders until the response arrives.
     this._fetchHomeDiscussions();
   }
 
   _fetchHomeDiscussions() {
     this._cachedPopular = null;
-    this._cachedLatest = null;
+    this._cachedLatest  = null;
     app.store
       .find('discussions', {
         include: 'user,lastPostedUser,tags,firstPost',
@@ -1020,35 +638,25 @@ export default class HomePage extends Component {
       })
       .then(() => {
         this._homeLoading = false;
-        // After home discussions load, try to populate showcase from store.
-        // This covers logged-in users whose showcase discussions are in the
-        // top-20 fetch. If not found here the slug-based fallback continues.
         if (this.showcaseLoading && !this._showcaseCached) {
           const fromStore = this._showcaseFromStore();
           if (fromStore.length > 0) {
-            this.showcaseItems = fromStore;
+            this.showcaseItems   = fromStore;
             this.showcaseLoading = false;
             this._showcaseCached = true;
           }
         }
         m.redraw();
       })
-      .catch(() => {
-        this._homeLoading = false;
-        m.redraw();
-      });
+      .catch(() => { this._homeLoading = false; m.redraw(); });
   }
 
   loadOnlineUsers() {
-    // Prefer data injected synchronously into <head> by InjectOnlineUsers.php —
-    // available on first paint, no API round-trip, no layout shift.
     const win = window as any;
     if (Array.isArray(win.__avocadoOnlineUsers)) {
       this.onlineUsers = win.__avocadoOnlineUsers;
       return;
     }
-
-    // Secondary fallback: forum attribute (may arrive after boot)
     const injected = app.forum?.attribute('avocadoOnlineUsers');
     if (Array.isArray(injected)) {
       this.onlineUsers = injected;
@@ -1059,12 +667,10 @@ export default class HomePage extends Component {
   renderOnlineAvatars() {
     if (!app.forum?.attribute('avocadoShowOnlineUsers')) return null;
     if (!this.onlineUsers.length) return null;
-
     const MAX_SHOWN = 6;
     const total = this.onlineUsers.length;
     const shown = this.onlineUsers.slice(0, MAX_SHOWN);
     const isPlain = shown[0] && typeof shown[0].username === 'string';
-
     const GRADIENTS = [
       'linear-gradient(135deg,#ffd166,#f28482)',
       'linear-gradient(135deg,#89cff0,#6b7fc4)',
@@ -1073,7 +679,6 @@ export default class HomePage extends Component {
       'linear-gradient(135deg,#c5ccff,#b5e3ff)',
       'linear-gradient(135deg,#ffb5a7,#fcd5ce)',
     ];
-
     return (
       <div className="AvocadoHome-onlineAvatars">
         <div className="AvocadoHome-onlineAvatars-row">
@@ -1086,13 +691,11 @@ export default class HomePage extends Component {
             const profileHref = safeRoute('user', { username });
             const fallbackBg = GRADIENTS[i % GRADIENTS.length];
             return (
-              <a
-                key={key}
-                className="AvocadoHome-onlineAvatars-item"
-                href={profileHref}
-                onclick={(e) => { e.stopPropagation(); navigate(e, profileHref); }}
-                title={name}
-                style={avatarUrl ? {} : { background: fallbackBg }}
+              <a key={key} className="AvocadoHome-onlineAvatars-item"
+                 href={profileHref}
+                 onclick={(e) => { e.stopPropagation(); navigate(e, profileHref); }}
+                 title={name}
+                 style={avatarUrl ? {} : { background: fallbackBg }}
               >
                 {avatarUrl && (
                   <img src={avatarUrl} alt={name} className="Avatar" width="28" height="28" decoding="async" />
@@ -1108,204 +711,6 @@ export default class HomePage extends Component {
     );
   }
 
-
-
-  renderTagPicker() {
-    // Limits from forum settings (mirrors TagDiscussionModal / addTagComposer.js)
-    const rawMaxP = parseInt(app.forum.attribute('maxPrimaryTags'));
-    const rawMaxS = parseInt(app.forum.attribute('maxSecondaryTags'));
-    const maxPrimary = isNaN(rawMaxP) ? Infinity : rawMaxP;
-    const maxSecond  = isNaN(rawMaxS) ? Infinity : rawMaxS;
-    const minPrimary = parseInt(app.forum.attribute('minPrimaryTags'))  || 0;
-    const minSecond  = parseInt(app.forum.attribute('minSecondaryTags')) || 0;
-    const canBypass  = !!app.forum.attribute('canBypassTagCounts');
-
-    const selected     = this.composerTags;
-    const bypass       = this.tagBypassReqs;
-    const primaryCount = selected.filter((t) => t.position?.() !== null && !t.isChild?.()).length;
-    const secondCount  = selected.filter((t) => t.position?.() === null).length;
-
-    // Build grouped tag list: root tags first (by position), then their children
-    const allTags  = app.store.all('tags').filter(Boolean);
-    const rootTags = allTags
-      .filter((t) => !t.isChild?.())
-      .sort((a, b) => (a.position?.() ?? 9999) - (b.position?.() ?? 9999));
-
-    const tagItems = [];
-    for (const root of rootTags) {
-      tagItems.push({ tag: root, isChild: false });
-      allTags
-        .filter((t) => t.isChild?.() && t.parent?.()?.id?.() === root.id?.())
-        .sort((a, b) => (a.position?.() ?? 9999) - (b.position?.() ?? 9999))
-        .forEach((child) => tagItems.push({ tag: child, isChild: true }));
-    }
-
-    // Hide secondary/child tags when secondary tags are not allowed and bypass is off
-    const visibleItems = (maxSecond === 0 && !bypass)
-      ? tagItems.filter(({ isChild }) => !isChild)
-      : tagItems;
-
-    // Filter by search text
-    const filterText = (this.tagFilter || '').toLowerCase();
-    const filtered = filterText
-      ? visibleItems.filter(({ tag }) => tag.name?.().toLowerCase().includes(filterText))
-      : visibleItems;
-
-    // Whether a tag can be newly selected (limits check)
-    const canSelectTag = (tag) => {
-      if (bypass || selected.includes(tag)) return true;
-      const isPrimary = tag.position?.() !== null && !tag.isChild?.();
-      // Secondary tags require at least one primary to be selected first
-      if (!isPrimary && primaryCount === 0) return false;
-      if (isPrimary && primaryCount >= maxPrimary) return false;
-      if (!isPrimary && secondCount >= maxSecond) return false;
-      return true;
-    };
-
-    // Instruction text shown in trigger when requirements not yet met
-    let instruction = '';
-    if (!bypass) {
-      if (primaryCount < minPrimary) {
-        const n = minPrimary - primaryCount;
-        instruction = n === 1 ? 'Choose 1 primary tag' : `Choose ${n} primary tags`;
-      } else if (secondCount < minSecond) {
-        const n = minSecond - secondCount;
-        instruction = n === 1 ? 'Choose 1 secondary tag' : `Choose ${n} secondary tags`;
-      }
-    }
-
-    const addTag = (tag) => {
-      if (selected.includes(tag)) return;
-      const next = [...selected];
-      // Auto-add parent when selecting a child (requireParentTag logic)
-      const parent = tag.parent?.();
-      if (parent && parent !== false && !next.includes(parent)) next.push(parent);
-      next.push(tag);
-      this.composerTags = next;
-      this.tagFilter = '';
-      m.redraw();
-    };
-
-    const removeTag = (tag) => {
-      // Also remove children whose parent is being removed
-      this.composerTags = this.composerTags.filter(
-        (t) => t !== tag && t.parent?.()?.id?.() !== tag.id?.()
-      );
-      m.redraw();
-    };
-
-    return (
-      <div className="AvocadoHome-tagPicker">
-        {/* Trigger button */}
-        <button
-          className={`AvocadoHome-tagPickerTrigger${this.tagPickerOpen ? ' is-open' : ''}`}
-          type="button"
-          onclick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.tagPickerOpen = !this.tagPickerOpen;
-            if (!this.tagPickerOpen) this.tagFilter = '';
-            m.redraw();
-          }}
-        >
-          <i className="fas fa-tag" aria-hidden="true" />
-          {selected.length === 0 && (
-            <span className="AvocadoHome-tagPickerPlaceholder">
-              {instruction || trans('ramon-avocado.forum.home.choose_tags', 'Choose tags')}
-            </span>
-          )}
-          {selected.map((tag) => {
-            const tagColor = tag.color?.() || null;
-            return (
-              <span
-                key={tag.id?.()}
-                className="AvocadoHome-tagChip"
-                style={tagColor ? { '--tag-color': iconColors(tagColor).color } : {}}
-                onclick={(e) => { e.preventDefault(); e.stopPropagation(); removeTag(tag); }}
-                title="Remove tag"
-              >
-                {tag.icon?.() && <i className={tag.icon()} aria-hidden="true" />}
-                {tag.name?.()}
-                <i className="fas fa-times AvocadoHome-tagChipRemoveIcon" aria-hidden="true" />
-              </span>
-            );
-          })}
-          <i className={`fas fa-chevron-${this.tagPickerOpen ? 'up' : 'down'} AvocadoHome-tagPickerChevron`} aria-hidden="true" />
-        </button>
-
-        {/* Dropdown */}
-        {this.tagPickerOpen && (
-          <div className="AvocadoHome-tagPickerDropdown">
-            {/* Search */}
-            <div className="AvocadoHome-tagPickerSearch">
-              <i className="fas fa-search" aria-hidden="true" />
-              <input
-                type="text"
-                placeholder={trans('ramon-avocado.forum.home.filter_tags', 'Filter tags')}
-                value={this.tagFilter || ''}
-                oninput={(e) => { this.tagFilter = e.target.value; m.redraw(); }}
-                onclick={(e) => e.stopPropagation()}
-                oncreate={(vnode) => { setTimeout(() => vnode.dom.focus(), 0); }}
-              />
-            </div>
-            {/* Tag list */}
-            {filtered.length === 0
-              ? <span className="AvocadoHome-tagPickerEmpty">{trans('ramon-avocado.forum.home.no_tags_found', 'No tags found')}</span>
-              : <ul className="AvocadoHome-tagPickerList">
-                  {filtered.map(({ tag, isChild }) => {
-                    const tagId     = tag.id?.();
-                    const isSelected = selected.includes(tag);
-                    const tagColor  = tag.color?.() || FALLBACK_COLORS[0];
-                    const selectable = canSelectTag(tag);
-                    return (
-                      <li
-                        key={tagId}
-                        className={[
-                          'AvocadoHome-tagPickerItem',
-                          isChild   && 'is-child',
-                          isSelected && 'is-selected',
-                          !selectable && !isSelected && 'is-disabled',
-                        ].filter(Boolean).join(' ')}
-                        onclick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          if (!selectable && !isSelected) return;
-                          isSelected ? removeTag(tag) : addTag(tag);
-                        }}
-                      >
-                        <span className="AvocadoHome-tagPickerItem-icon" style={{ background: tagColor }}>
-                          {tag.icon?.()
-                            ? <i className={tag.icon()} aria-hidden="true" />
-                            : <i className="fas fa-tag" aria-hidden="true" />
-                          }
-                        </span>
-                        <span className="AvocadoHome-tagPickerItem-name">{tag.name?.()}</span>
-                        {tag.description?.() && (
-                          <span className="AvocadoHome-tagPickerItem-desc">{tag.description()}</span>
-                        )}
-                        {isSelected && <i className="fas fa-check AvocadoHome-tagPickerItem-check" aria-hidden="true" />}
-                      </li>
-                    );
-                  })}
-                </ul>
-            }
-            {/* Bypass toggle (admins only) */}
-            {canBypass && (
-              <label className="AvocadoHome-tagPickerBypass" onclick={(e) => e.stopPropagation()}>
-                <input
-                  type="checkbox"
-                  checked={this.tagBypassReqs}
-                  onchange={(e) => { this.tagBypassReqs = e.target.checked; m.redraw(); }}
-                />
-                {' Bypass tag requirements'}
-              </label>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  }
-
   renderNavBar() {
     let itemList;
     try {
@@ -1313,22 +718,15 @@ export default class HomePage extends Component {
     } catch (_) {
       return null;
     }
-    // Remove the generic Tags overview — categories section shows them below
-    // Remove Avocado's own nav items — these are shown by the home page itself
     itemList.remove('tags');
     itemList.remove('popularHome');
     itemList.remove('allDiscussions');
     const items = itemList.toArray().filter((item) => {
       if (!item) return false;
-      // Drop separators (plain HTML elements like <li class="Dropdown-separator">)
       if (typeof item.tag === 'string') return false;
-      // TagLinkButton (from flarum/tags) receives `attrs.model` (the Tag model).
-      // It computes href internally via initAttrs, so href is never in attrs.
       if (item.attrs && 'model' in item.attrs) return false;
-      // Fallback: drop any href that explicitly matches the tag route pattern /t/slug
       const href = item.attrs?.href || '';
       if (/\/t\//.test(href)) return false;
-      // Drop the "More..." link (href=/tags or label text contains "More")
       if (/\/tags$/.test(href)) return false;
       const label = item.children?.[0]?.children?.[0]?.children || '';
       if (typeof label === 'string' && label.toLowerCase().includes('more')) return false;
@@ -1343,34 +741,25 @@ export default class HomePage extends Component {
   }
 
   view() {
-    const user = app.session.user;
+    const user      = app.session.user;
     const heroImage = app.forum?.attribute('avocadoHeroImage');
-    const heroUrl = heroImage ? resolveAssetUrl(heroImage) : null;
+    const heroUrl   = heroImage ? resolveAssetUrl(heroImage) : null;
     const heroImagePosition = app.forum?.attribute('avocadoHeroImagePosition') || 'center top';
-    // Use Flarum's configured Welcome Banner text (admin: Forum Configuration > Welcome Banner)
     const forumTitle = app.forum?.attribute('welcomeTitle') || app.forum?.attribute('title') || '';
-    const forumDesc = app.forum?.attribute('welcomeMessage') || app.forum?.attribute('description') || '';
-
+    const forumDesc  = app.forum?.attribute('welcomeMessage') || app.forum?.attribute('description') || '';
     const isFollowingPage = app.current.get?.('routeName') === 'following';
-    // While _homeLoading, force popular=[] so the skeleton always renders on
-    // the first frame — even when the store is already pre-populated.
     const popular = this._homeLoading
       ? []
       : (isFollowingPage ? this.allDiscussions().slice(0, 5) : this.popularDiscussions(5));
-
     const featuredIds = getFeaturedTagIds();
-
-    // Featured categories appear first, then the rest in position order
-    const categories = this.topCategories(7).sort((a, b) => {
+    const categories  = this.topCategories(7).sort((a, b) => {
       const aF = featuredIds.has(String(a.id?.()));
       const bF = featuredIds.has(String(b.id?.()));
       if (aF === bF) return 0;
       return aF ? -1 : 1;
     });
-
-    const allTagsCount = app.store.all('tags').filter((t) => t && !t.parent?.()).length;
-    const extraCategories = Math.max(0, allTagsCount - categories.length);
-
+    const allTagsCount     = app.store.all('tags').filter((t) => t && !t.parent?.()).length;
+    const extraCategories  = Math.max(0, allTagsCount - categories.length);
     const guestCTA = (
       <div className="AvocadoHome-guestCTA">
         <div className="AvocadoHome-guestCTA-actions">
@@ -1392,6 +781,9 @@ export default class HomePage extends Component {
         </div>
       </div>
     );
+
+    // Resolve the lazy-loaded composer component at render time
+    const HC = _HomeComposer;
 
     return (
       <div className="AvocadoHome">
@@ -1421,12 +813,9 @@ export default class HomePage extends Component {
             </div>
           )}
 
-          {/* ── Post input / inline composer ─────────────────────────────── */}
+          {/* ── Post input trigger ────────────────────────────────────── */}
           {user && !this.composerOpen && (
-            <div
-              className="AvocadoHome-postInput"
-              onclick={this.openInlineComposer.bind(this)}
-            >
+            <div className="AvocadoHome-postInput" onclick={this.openInlineComposer.bind(this)}>
               <div className="AvocadoHome-postInput-inner">
                 {this.renderAvatar(user, 'AvocadoHome-postInput-avatar')}
                 <span className="AvocadoHome-postInput-placeholder">
@@ -1444,129 +833,25 @@ export default class HomePage extends Component {
             </div>
           )}
 
-          {/* ── Inline composer ───────────────────────────────────────────── */}
-          {this.composerOpen && (
-            <div className="AvocadoHome-composer">
-              {/* Row 1: avatar + title */}
-              <div className="AvocadoHome-composer-header">
-                <div className="AvocadoHome-composer-avatar">
-                  {this.renderAvatar(user)}
-                </div>
-                <input
-                  className="AvocadoHome-composerTitle"
-                  type="text"
-                  placeholder={trans('ramon-avocado.forum.home.composer_title_placeholder', 'Discussion title…')}
-                  value={this.composerTitle}
-                  oninput={(e) => { this.composerTitle = e.target.value; }}
-                />
-              </div>
-              {/* Row 2: tag picker */}
-              <div className="AvocadoHome-composer-tags">
-                {this.renderTagPicker()}
-              </div>
-              {/* Textarea + toolbar + preview area + footer */}
-              <div
-                className={`AvocadoHome-composerBody${this.composerPreview ? ' is-preview' : ''}`}
-                oncreate={(vnode) => { setTimeout(() => this._injectToolbarBtns(vnode.dom), 0); }}
-                onupdate={(vnode) => { this._injectToolbarBtns(vnode.dom); }}
-              >
-                {/* TextEditor — hidden (display:none) in preview mode via CSS */}
-                <TextEditor
-                  composer={this.composerProxy}
-                  value={this.composerBody}
-                  placeholder={trans('ramon-avocado.forum.home.composer_body_placeholder', 'Tell everyone what are you working on...')}
-                  onchange={(value) => { this.composerBody = value; m.redraw(); }}
-                  onsubmit={() => this.submitInlineComposer()}
-                />
-
-                {/* Preview area — replicates Flarum ComposerPostPreview: setInterval polls content,
-                    vnode.dom captured in closure avoids stale-ref issues, no Mithril children */}
-                <div className="AvocadoHome-composerPreviewArea">
-                  <article className="CommentPost Post">
-                    <div className="Post-container">
-                      <div
-                        className="Post-body"
-                        oncreate={(vnode) => {
-                          let lastContent: string | undefined;
-                          let wasPreview = false;
-                          const update = () => {
-                            const isPreview = this.composerPreview;
-                            if (!isPreview) {
-                              lastContent = undefined;
-                              wasPreview = false;
-                              return;
-                            }
-                            const content = this.composerBody || '';
-                            // Force re-render whenever preview just became active
-                            const justOpened = !wasPreview;
-                            wasPreview = true;
-                            if (!justOpened && lastContent === content) return;
-                            lastContent = content;
-                            setTimeout(() => {
-                              // Guard: check visibility when the macrotask actually fires
-                              if (!this.composerPreview) return;
-                              if (!content.trim()) {
-                                vnode.dom.innerHTML = '';
-                                const span = document.createElement('span');
-                                span.className = 'AvocadoHome-composerPreviewEmpty';
-                                span.textContent = trans('ramon-avocado.forum.home.composer_preview_empty', 'Nothing to preview.');
-                                vnode.dom.appendChild(span);
-                              } else {
-                                const s9e = (window as any).s9e;
-                                if (s9e?.TextFormatter?.preview) {
-                                  s9e.TextFormatter.preview(content, vnode.dom);
-                                  app.visuals?.processPost?.(vnode.dom);
-                                  // Sticker/lottie spans are initialized via MutationObserver (async fetch).
-                                  // If the fetch is slow or the container was hidden during init, the canvas
-                                  // may never appear. After 200ms, replace any canvas-less spans with a
-                                  // fresh clone so the observer starts a clean fetch with correct dimensions.
-                                  setTimeout(() => {
-                                    if (!this.composerPreview) return;
-                                    vnode.dom.querySelectorAll('.Sticker--tgs, .Sticker--lottie').forEach((el: Element) => {
-                                      if (el.querySelector('canvas')) return;
-                                      const clone = el.cloneNode(true) as Element;
-                                      clone.removeAttribute('data-tgs-init');
-                                      clone.removeAttribute('data-lottie-init');
-                                      el.parentNode?.replaceChild(clone, el);
-                                    });
-                                  }, 200);
-                                } else {
-                                  vnode.dom.textContent = content;
-                                }
-                              }
-                            }, 0);
-                          };
-                          update();
-                          this._previewInterval = setInterval(update, 50);
-                        }}
-                        onremove={() => {
-                          clearInterval(this._previewInterval);
-                          this._previewInterval = null;
-                        }}
-                      />
-                    </div>
-                  </article>
-                </div>
-
-              </div>
-            </div>
+          {/* ── Inline composer (lazy-loaded) ─────────────────────────── */}
+          {this.composerOpen && HC && (
+            <HC
+              user={user}
+              onClose={() => { this.composerOpen = false; m.redraw(); }}
+            />
           )}
 
-          {/* ── Categories section ────────────────────────────────────────── */}
+          {/* ── Categories section ────────────────────────────────────── */}
           {categories.length > 0 && !isFollowingPage && (
             <section className="AvocadoHome-section AvocadoHome-section--categories">
               <div className="AvocadoHome-sectionHead">
                 <h2>{trans('ramon-avocado.forum.home.categories_heading', 'Categories')}</h2>
-                {/* AvocadoHomeNav inline — separator dash + MENU label + nav pills */}
                 {(() => {
                   const nav = this.renderNavBar();
                   if (!nav) return null;
-                  // Clone the nav vnode adding the --inline modifier class
                   const inlineNav = { ...nav, attrs: { ...nav.attrs, className: (nav.attrs?.className || '') + ' AvocadoHomeNav--inline' } };
                   return (
-                    <div className="AvocadoHome-sectionHead-nav">
-                      {inlineNav}
-                    </div>
+                    <div className="AvocadoHome-sectionHead-nav">{inlineNav}</div>
                   );
                 })()}
               </div>
@@ -1663,8 +948,7 @@ export default class HomePage extends Component {
             </div>
           </section>
 
-        </div>
-
+          </div>
         </div>
       </div>
     );
