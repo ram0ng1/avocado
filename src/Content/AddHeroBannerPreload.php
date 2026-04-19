@@ -62,6 +62,8 @@ class AddHeroBannerPreload
             return;
         }
 
-        $document->head[] = '<link rel="preload" as="image" href="' . $escapedUrl . '" fetchpriority="high">';
+        // imagesizes tells the browser which rendered size to expect so it can
+        // pick the right source from imagesrcset (or just prioritise the single src).
+        $document->head[] = '<link rel="preload" as="image" href="' . $escapedUrl . '" fetchpriority="high" imagesizes="100vw">';
     }
 }

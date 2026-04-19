@@ -28,7 +28,7 @@ import PageStructure from 'flarum/forum/components/PageStructure';
 // flarum.reg.onLoad() applies the patch after the module is loaded.
 import { tagPageView } from './components/TagsPage';
 import HomePage from './components/HomePage';
-import { buildUserPhoneNav, buildHero, buildSidebar } from './components/UserProfilePage';
+import { buildUserPhoneNav, buildHero, buildSidebar } from './components/UserProfileBuilders';
 
 // ─── Lazy route components ────────────────────────────────────────────────────
 // Flarum's DefaultResolver.onmatch expects either:
