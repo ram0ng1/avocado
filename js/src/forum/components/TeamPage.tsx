@@ -28,7 +28,12 @@ export default class TeamPage extends Page {
   async load() {
     const raw = app.forum.attribute('avocadoTeamPageGroups') || '[]';
     let groupIds: string[];
-    try { groupIds = JSON.parse(raw); } catch { groupIds = []; }
+    try {
+      const parsed = JSON.parse(raw);
+      groupIds = Array.isArray(parsed) ? parsed.map(String) : [];
+    } catch {
+      groupIds = [];
+    }
     this.configuredGroupIds = groupIds;
 
     if (groupIds.length) {
