@@ -18,17 +18,19 @@ class CustomLoadingSpinner
             return;
         }
 
+        $primaryColor = trim((string) ($this->settings->get('theme_primary_color') ?: '#5c7cfa'));
+
         $style = (string) ($this->settings->get('avocado.loading_spinner_style') ?: 'avocado');
 
         if ($style === 'css-orbital') {
-            $this->injectCssOrbital($document);
+            $this->injectCssOrbital($document, $primaryColor);
             return;
         }
 
         if ($style === 'custom') {
             $raw = trim((string) ($this->settings->get('avocado.loading_spinner_custom') ?? ''));
             if ($raw === '') return;
-            $this->injectSpinner($document, '<div class="AvocadoSpinner">' . $raw . '</div>');
+            $this->injectSpinner($document, '<div class="AvocadoSpinner">' . $raw . '</div>', $primaryColor);
             return;
         }
 
@@ -40,25 +42,25 @@ class CustomLoadingSpinner
             'pl3'     => $this->buildPl3Svg(),
             default   => $this->buildAvocadoSvg(),
         };
-        $this->injectSpinner($document, '<div class="AvocadoSpinner">' . $svg . '</div>');
+        $this->injectSpinner($document, '<div class="AvocadoSpinner">' . $svg . '</div>', $primaryColor);
     }
 
     // ── Shared injection ─────────────────────────────────────────────────────
 
-    private function injectSpinner(Document $document, string $html): void
+    private function injectSpinner(Document $document, string $html, string $color = '#5c7cfa'): void
     {
         $json = json_encode($html, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $document->head[] = <<<HTML
 <style>
-#flarum-loading[data-av-spinner]{padding:0;height:100vh;display:flex;align-items:center;justify-content:center}
-#flarum-loading[data-av-spinner] .AvocadoSpinner{color:var(--primary-color,#5c7cfa)}
+#flarum-loading[data-av-spinner]{position:fixed!important;inset:0!important;padding:0!important;margin:0!important}
+#flarum-loading[data-av-spinner] .AvocadoSpinner{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:{$color}}
 html.avq-loading #alerts{display:none!important}
 </style>
 HTML;
         $document->head[] = $this->buildObserverScript($json);
     }
 
-    private function injectCssOrbital(Document $document): void
+    private function injectCssOrbital(Document $document, string $color = '#5c7cfa'): void
     {
         $json = json_encode(
             '<div class="AvocadoSpinner"><div class="LoadingIndicator"><i></i></div></div>',
@@ -66,8 +68,8 @@ HTML;
         );
         $document->head[] = <<<HTML
 <style>
-#flarum-loading[data-av-spinner]{padding:0;height:100vh;display:flex;align-items:center;justify-content:center}
-#flarum-loading[data-av-spinner] .AvocadoSpinner{color:var(--primary-color,#5c7cfa)}
+#flarum-loading[data-av-spinner]{position:fixed!important;inset:0!important;padding:0!important;margin:0!important}
+#flarum-loading[data-av-spinner] .AvocadoSpinner{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:{$color}}
 html.avq-loading #alerts{display:none!important}
 html[data-avocado-spinner="css-orbital"] .LoadingIndicator>svg{display:none}
 html[data-avocado-spinner="css-orbital"] .LoadingIndicator{display:inline-block;width:40px;height:40px;position:relative}

@@ -20,6 +20,22 @@ function suppressTransitions(): void {
   );
 }
 
+function updateThemeColor(color: string | null): void {
+  let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
+  if (!meta) {
+    meta = document.createElement('meta');
+    meta.name = 'theme-color';
+    document.head.appendChild(meta);
+  }
+  const isColoredHeader = document.documentElement.getAttribute('data-colored-header') === 'true';
+  if (color && isColoredHeader) {
+    meta.content = color;
+  } else {
+    const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+    meta.content = primary || '#5c7cfa';
+  }
+}
+
 export function applyColor(color: string | null | undefined): void {
   if (color === lastAppliedColor) return;
   lastAppliedColor = color;
@@ -34,6 +50,7 @@ export function applyColor(color: string | null | undefined): void {
     document.body.style.removeProperty('--colored-contrast');
     document.body.classList.remove('colored--active');
   }
+  updateThemeColor(color ?? null);
 }
 
 export function clearColor(): void {
