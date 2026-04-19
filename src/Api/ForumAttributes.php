@@ -39,6 +39,26 @@ class ForumAttributes
                         ->count('users.id');
                 }),
 
+            Attribute::make('avocadoShowcaseItemCount')
+                ->get(function () {
+                    if (!$this->settings->get('avocado.showcase_enabled', false)) {
+                        return 0;
+                    }
+
+                    $tagId = (int) $this->settings->get('avocado.showcase_tag');
+                    if (!$tagId) {
+                        return 0;
+                    }
+
+                    $limit = (int) ($this->settings->get('avocado.showcase_count') ?: 5);
+
+                    $count = DB::table('discussion_tag')
+                        ->where('tag_id', $tagId)
+                        ->count();
+
+                    return min($count, $limit);
+                }),
+
             Attribute::make('avocadoOnlineUsers')
                 ->get(function () {
                     if (!$this->settings->get('avocado.show_online_users', true)) {

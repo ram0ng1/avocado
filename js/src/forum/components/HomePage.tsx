@@ -32,6 +32,9 @@ import {
   safeCssUrl,
 } from '../utils';
 
+// Module-level cache for real showcase item count (persists across SPA navigations).
+let _showcaseRealCount: number | null = null;
+
 // ── Lazy-loaded composer ──────────────────────────────────────────────────────
 // Loaded once the first time the user opens the inline composer (or preloaded
 // after mount). Keeps the composer's TagPicker + TextEditor toolbar injection
@@ -378,6 +381,7 @@ export default class HomePage extends Component {
     if (fromStore.length > 0 && (fromStore.length >= expectedCount || storeIsPopulated)) {
       setTimeout(() => {
         this.showcaseItems   = fromStore;
+        _showcaseRealCount   = fromStore.length;
         this.showcaseLoading = false;
         this._showcaseCached = true;
         m.redraw();
@@ -414,6 +418,7 @@ export default class HomePage extends Component {
           .filter((d) => { const id = d.id?.(); if (!id || seen.has(id)) return false; seen.add(id); return true; })
           .sort((a, b) => new Date(b.createdAt?.()) - new Date(a.createdAt?.()))
           .slice(0, limit);
+        _showcaseRealCount   = this.showcaseItems.length;
         this.showcaseLoading = false;
         this._showcaseCached = true;
         m.redraw();
@@ -593,6 +598,8 @@ export default class HomePage extends Component {
     const tagHref         = tag ? tagRoute(tag) : null;
     const showcaseHeading = app.forum?.attribute('avocadoShowcaseHeading') || tag?.name?.() || trans('ramon-avocado.forum.home.showcase_heading', 'Showcase');
     if (this.showcaseLoading && items.length === 0) {
+      const phpCount = parseInt(String(app.forum?.attribute('avocadoShowcaseItemCount') ?? ''), 10);
+      const skeletonCount = (phpCount > 0) ? phpCount : (_showcaseRealCount ?? showcaseCount);
       return (
         <section className="AvocadoHome-section AvocadoHome-section--showcase">
           <div className="AvocadoHome-sectionHead">
@@ -600,7 +607,7 @@ export default class HomePage extends Component {
             {this.renderOnlineAvatars()}
           </div>
           <div className="AvocadoHome-showcaseGrid">
-            {renderShowcaseSkeleton(showcaseCount)}
+            {renderShowcaseSkeleton(skeletonCount)}
           </div>
         </section>
       );
