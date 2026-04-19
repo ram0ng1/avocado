@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Flarum\Api\Schema\Attribute;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Flarum\User\User;
+use Illuminate\Database\Capsule\Manager as DB;
 
 class ForumAttributes
 {
@@ -18,6 +19,26 @@ class ForumAttributes
     public function __invoke(): array
     {
         return [
+            Attribute::make('avocadoTeamPageMemberCount')
+                ->get(function () {
+                    if (!$this->settings->get('avocado.team_page_enabled', false)) {
+                        return 0;
+                    }
+
+                    $raw = (string) ($this->settings->get('avocado.team_page_groups') ?: '[]');
+                    $groupIds = json_decode($raw, true);
+
+                    if (empty($groupIds) || !is_array($groupIds)) {
+                        return 0;
+                    }
+
+                    return (int) DB::table('users')
+                        ->join('group_user', 'users.id', '=', 'group_user.user_id')
+                        ->whereIn('group_user.group_id', $groupIds)
+                        ->distinct('users.id')
+                        ->count('users.id');
+                }),
+
             Attribute::make('avocadoOnlineUsers')
                 ->get(function () {
                     if (!$this->settings->get('avocado.show_online_users', true)) {

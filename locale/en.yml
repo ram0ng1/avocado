@@ -64,6 +64,15 @@ ramon-avocado:
       footer_social: Social Links
       footer_show_social: Show Social Media Links
       footer_social_help_json: "Configure social media links in JSON format. Use keys: facebook, twitter, linkedin, instagram, youtube."
+      section_team: Team Page
+      team_enabled_label: Enable Team Page
+      team_enabled_help: Shows the /team page with members from the selected groups.
+      team_title_label: Page Title
+      team_desc_label: Page Description
+      team_desc_placeholder: Meet the people behind the community.
+      team_groups_label: Groups to display
+      team_groups_help: Members of the selected groups will appear on the Team page.
+      team_groups_empty: No groups found.
   forum:
     actions:
       share: Share
@@ -165,5 +174,16 @@ ramon-avocado:
       discussion_plural: discussions
       other_tags_label: Other Tags
       featured: Featured
-      all_discussions: All discussions    link:
+      all_discussions: All discussions
+    team:
+      title: Our Team
+      disabled: This page is not available.
+      empty: No members found.
+      no_bio: Community member.
+      discussions: discussions
+      posts: posts
+      member_since: "Since"
+      member_singular: member
+      member_plural: members
+    link:
       login_to_view: "Login to view link"

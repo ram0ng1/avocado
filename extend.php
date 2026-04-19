@@ -35,6 +35,9 @@ return [
         ->route('/discussions', 'avocado-discussions')
         ->route('/search', 'avocado-search'),
 
+    (new Extend\Routes('forum'))
+        ->get('/team', 'avocado-team', \Ramon\Avocado\Controller\TeamPageController::class),
+
     (new Extend\Middleware('forum'))
         ->add(RemoveSkipLink::class),
 
@@ -127,6 +130,10 @@ return [
         ->serializeToForum('avocadoColoredBorderStyle', 'avocado.colored_border_style', null, 'none')
         ->serializeToForum('avocadoThreadsStyle', 'avocado.threads_style', 'boolval')
         ->serializeToForum('avocadoCustomLoadingSpinner', 'avocado.custom_loading_spinner', 'boolval')
+        ->serializeToForum('avocadoTeamPageEnabled', 'avocado.team_page_enabled', 'boolval')
+        ->serializeToForum('avocadoTeamPageGroups', 'avocado.team_page_groups')
+        ->serializeToForum('avocadoTeamPageTitle', 'avocado.team_page_title')
+        ->serializeToForum('avocadoTeamPageDescription', 'avocado.team_page_description')
         ->default('avocado.hero_image_position', 'center top')
         ->default('avocado.show_online_users', true)
         ->default('avocado.show_auth_buttons', false)
@@ -152,5 +159,9 @@ return [
         ->default('avocado.threads_style', false)
         ->default('avocado.custom_loading_spinner', false)
         ->default('avocado.loading_spinner_style', 'avocado')
-        ->default('avocado.loading_spinner_custom', ''),
+        ->default('avocado.loading_spinner_custom', '')
+        ->default('avocado.team_page_enabled', false)
+        ->default('avocado.team_page_groups', '[]')
+        ->default('avocado.team_page_title', '')
+        ->default('avocado.team_page_description', ''),
 ];
