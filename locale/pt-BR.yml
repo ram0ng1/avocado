@@ -62,7 +62,26 @@ ramon-avocado:
       footer_social: Links sociais
       footer_show_social: Mostrar links de mídias sociais
       footer_social_help_json: "Configure links de mídias sociais em formato JSON. Use as chaves: facebook, twitter, linkedin, instagram, youtube."
+      section_team: Página Equipe
+      team_enabled_label: Ativar página Equipe
+      team_enabled_help: Exibe a página /team com os membros dos grupos selecionados.
+      team_title_label: Título da página
+      team_desc_label: Descrição da página
+      team_desc_placeholder: Conheça as pessoas por trás da comunidade.
+      team_groups_label: Grupos a exibir
+      team_groups_help: Os membros dos grupos selecionados aparecerão na página Equipe.
+      team_groups_empty: Nenhum grupo encontrado.
   forum:
+    team:
+      title: Nossa Equipe
+      disabled: Esta página não está disponível.
+      empty: Nenhum membro encontrado.
+      no_bio: Membro da comunidade.
+      discussions: discussões
+      posts: posts
+      member_since: "Desde"
+      member_singular: membro
+      member_plural: membros
     actions:
       share: Compartilhar
     post_cta:

@@ -36,6 +36,9 @@ ramon-avocado:
       logo_enabled_help: 在页头显示自定义Logo。
       custom_loading_spinner_label: 自定义加载动画
       custom_loading_spinner_help: 用动态SVG动画替换默认的文字加载提示。
+      loading_spinner_style_label: 动画样式
+      spinner_custom_code_label: 自定义动画代码
+      spinner_custom_code_help: 粘贴任意 SVG 或 HTML 作为加载动画。
       show_online_users_label: 显示在线用户数量
       show_online_users_help: 显示当前在线用户数量。
       show_guest_cta_label: 显示访客行动提示
@@ -61,6 +64,15 @@ ramon-avocado:
       footer_social: 社交链接
       footer_show_social: 显示社交媒体链接
       footer_social_help_json: "以 JSON 格式配置社交媒体链接，使用键：facebook、twitter、linkedin、instagram、youtube"
+      section_team: 团队页面
+      team_enabled_label: 启用团队页面
+      team_enabled_help: 显示 /team 页面，列出所选群组的成员。
+      team_title_label: 页面标题
+      team_desc_label: 页面描述
+      team_desc_placeholder: 认识社区背后的人们。
+      team_groups_label: 显示的群组
+      team_groups_help: 所选群组的成员将出现在团队页面上。
+      team_groups_empty: 未找到群组。
 
   forum:
     actions:
@@ -163,5 +175,16 @@ ramon-avocado:
       discussion_plural: 讨论
       other_tags_label: 其它标签
       featured: 推荐
-      all_discussions: 所有讨论    link:
+      all_discussions: 所有讨论
+    team:
+      title: 我们的团队
+      disabled: 此页面暂不可用。
+      empty: 未找到成员。
+      no_bio: 社区成员。
+      discussions: 讨论
+      posts: 帖子
+      member_since: "加入于"
+      member_singular: 成员
+      member_plural: 成员
+    link:
       login_to_view: "登录以查看链接"

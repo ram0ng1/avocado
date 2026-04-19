@@ -427,6 +427,78 @@ class AdminTagPicker extends Component {
   }
 }
 
+// ─── AdminGroupPicker ─────────────────────────────────────────────────────────
+class AdminGroupPicker extends Component {
+  groups = [];
+  loaded = false;
+
+  oninit(vnode) {
+    super.oninit(vnode);
+    app.store.find('groups').then((groups) => {
+      this.groups = groups;
+      this.loaded = true;
+      m.redraw();
+    }).catch(() => { this.loaded = true; m.redraw(); });
+  }
+
+  getSelected() {
+    try { return JSON.parse(getStr(this.attrs.settingKey, '[]') || '[]'); }
+    catch { return []; }
+  }
+
+  toggle(id) {
+    const sel = this.getSelected();
+    const idx = sel.indexOf(String(id));
+    if (idx >= 0) sel.splice(idx, 1); else sel.push(String(id));
+    const val = JSON.stringify(sel);
+    app.data.settings[this.attrs.settingKey] = val;
+    m.redraw();
+    saveSetting({ [this.attrs.settingKey]: val });
+  }
+
+  view() {
+    const { label, help } = this.attrs;
+    const selected = this.getSelected().map(String);
+    // Filter out Guests (id=2) and Members (id=3) — show only named/custom groups
+    const groups = this.groups.filter((g) => g.id() !== '2' && g.id() !== '3');
+
+    return (
+      <div className="Form-group">
+        {label && <label className="AvocadoAdmin-label">{label}</label>}
+        {!this.loaded ? (
+          <p className="helpText">{trans('ramon-avocado.admin.loading', 'Loading…')}</p>
+        ) : !groups.length ? (
+          <p className="helpText">{trans('ramon-avocado.admin.settings.team_groups_empty', 'No groups found.')}</p>
+        ) : (
+          <div className="AvocadoAdmin-tagPickerList">
+            {groups.map((group) => {
+              const id       = String(group.id());
+              const name     = group.namePlural?.() || group.nameSingular?.() || `Group ${id}`;
+              const color    = group.color?.() || '#8f9097';
+              const icon     = group.icon?.() || 'fas fa-users';
+              const isSelected = selected.includes(id);
+              return (
+                <li
+                  key={id}
+                  className={`AvocadoAdmin-tagPickerItem${isSelected ? ' is-selected' : ''}`}
+                  onclick={() => this.toggle(id)}
+                >
+                  <span className="AvocadoAdmin-tagPickerItem-icon" style={{ background: color }}>
+                    <i className={icon} aria-hidden="true" />
+                  </span>
+                  <span className="AvocadoAdmin-tagPickerItem-name">{name}</span>
+                  {isSelected && <i className="fas fa-check AvocadoAdmin-tagPickerItem-check" aria-hidden="true" />}
+                </li>
+              );
+            })}
+          </div>
+        )}
+        {help && <p className="helpText">{help}</p>}
+      </div>
+    );
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Registration
 // ─────────────────────────────────────────────────────────────────────────────
@@ -757,5 +829,35 @@ app.initializers.add('ramon-avocado', (app) => {
         help={trans('ramon-avocado.admin.settings.hide_links_for_guests_help', 'Prevent guests from following links in posts. Clicking shows a Login / Sign Up prompt instead.')}
       />
     </AdminCard>
-  ), 45);
+  ), 45)
+
+  // ── Team Page ────────────────────────────────────────────────────────────────
+  .registerSetting(() => (
+    <AdminCard title={trans('ramon-avocado.admin.settings.section_team', 'Team Page')} icon="fas fa-users">
+      <AdminToggle
+        settingKey="avocado.team_page_enabled"
+        label={trans('ramon-avocado.admin.settings.team_enabled_label', 'Enable Team page')}
+        help={trans('ramon-avocado.admin.settings.team_enabled_help', 'Show a /team page listing members of the selected groups.')}
+      />
+      {getBool('avocado.team_page_enabled') && (
+        <div className="AvocadoAdmin-subGroup">
+          <AdminText
+            settingKey="avocado.team_page_title"
+            label={trans('ramon-avocado.admin.settings.team_title_label', 'Page title')}
+            placeholder="Our Team"
+          />
+          <AdminText
+            settingKey="avocado.team_page_description"
+            label={trans('ramon-avocado.admin.settings.team_desc_label', 'Page description')}
+            placeholder={trans('ramon-avocado.admin.settings.team_desc_placeholder', 'Meet the people behind the community.')}
+          />
+          {m(AdminGroupPicker, {
+            settingKey: 'avocado.team_page_groups',
+            label: trans('ramon-avocado.admin.settings.team_groups_label', 'Groups to display'),
+            help: trans('ramon-avocado.admin.settings.team_groups_help', 'Members of the selected groups will appear on the Team page.'),
+          })}
+        </div>
+      )}
+    </AdminCard>
+  ), 38);
 });

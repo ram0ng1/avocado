@@ -109,7 +109,6 @@
         --button-color: var(--primary-color);
         --link-color: var(--primary-color);
         color: var(--primary-color);
-        border-color: var(--primary-color);
         font-weight: 700;
       }
     }
@@ -276,4 +275,13 @@
       }
     }
   }
+}
+
+// ── Global Tabs override — bottom border only ─────────────────────────────────
+// Flarum core sets border-color on all sides for [active]; restrict to bottom.
+.Tabs-nav > .Button[active] {
+  border-top-color: transparent !important;
+  border-left-color: transparent !important;
+  border-right-color: transparent !important;
+  border-bottom-color: var(--primary-color) !important;
 }
