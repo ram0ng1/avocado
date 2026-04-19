@@ -40,6 +40,7 @@ import { buildUserPhoneNav, buildHero, buildSidebar } from './components/UserPro
 // registered with flarum.reg.addChunkModule().
 
 const AllDiscussionsPage     = () => import('./components/AllDiscussionsPage');
+const AvocadoTeamPage        = () => import('./components/TeamPage');
 const AvocadoPostsSearchPage = () => import('./components/AvocadoPostsSearchPage');
 const AvocadoSearchPage      = () => import('./components/AvocadoSearchPage');
 const AvocadoTagPage         = () => import('./components/TagPage');
@@ -362,6 +363,7 @@ app.initializers.add(
   () => {
     // ── 0. Register custom routes ─────────────────────────────────────────────
     // The /discussions page is always registered so direct links keep working.
+    app.routes['avocado-team'] = { path: '/team', component: AvocadoTeamPage };
     app.routes['avocado-discussions'] = { path: '/discussions', component: AllDiscussionsPage };
     // Replace Flarum's default PostsPage (/posts?q=) with our Avocado-styled version.
     app.routes['posts'] = { path: '/posts', component: AvocadoPostsSearchPage };
@@ -1215,6 +1217,17 @@ app.initializers.add(
             {trans('ramon-avocado.forum.header.search', 'Search')}
           </LinkButton>,
           95
+        );
+      }
+
+      if (!items.has('avocadoTeam') && app.forum?.attribute('avocadoTeamPageEnabled')) {
+        const teamTitle = app.forum.attribute('avocadoTeamPageTitle') || trans('ramon-avocado.forum.team.title', 'Our Team');
+        items.add(
+          'avocadoTeam',
+          <LinkButton href={app.route('avocado-team')} icon="fas fa-users">
+            {teamTitle}
+          </LinkButton>,
+          90
         );
       }
 
