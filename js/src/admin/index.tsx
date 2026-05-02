@@ -134,6 +134,38 @@ class AdminText extends Component {
   }
 }
 
+// ─── AdminTextarea ────────────────────────────────────────────────────────────
+// Like AdminText but multi-line. Used for HTML/CSS settings (custom hero, etc.).
+class AdminTextarea extends Component {
+  oninit(vnode) {
+    super.oninit(vnode);
+    this._timer = null;
+  }
+
+  view() {
+    const { settingKey, label, help, placeholder, rows = 8, className = '' } = this.attrs;
+    const value = getStr(settingKey);
+    return (
+      <div className="Form-group">
+        {label && <label className="AvocadoAdmin-label">{label}</label>}
+        <textarea
+          className={`FormControl ${className}`.trim()}
+          rows={rows}
+          value={value}
+          placeholder={placeholder || ''}
+          oninput={(e) => {
+            const val = e.target.value;
+            app.data.settings[settingKey] = val;
+            clearTimeout(this._timer);
+            this._timer = setTimeout(() => saveSetting({ [settingKey]: val }), 600);
+          }}
+        />
+        {help && <p className="helpText">{help}</p>}
+      </div>
+    );
+  }
+}
+
 // ─── AdminCard ────────────────────────────────────────────────────────────────
 // POJO component (Mithril requires view method — arrow functions are React syntax)
 const AdminCard = {
@@ -694,6 +726,27 @@ app.initializers.add('ramon-avocado', (app) => {
             help={trans('ramon-avocado.admin.settings.hero_image_position_help', "CSS background-position value, e.g. 'center top' or 'center 20%'.")}
             placeholder="center top"
           />
+        )}
+
+        <SubDivider />
+
+        {/* Custom hero HTML — replaces the inner content of the hero banner when enabled */}
+        <AdminToggle
+          settingKey="avocado.custom_hero_enabled"
+          label={trans('ramon-avocado.admin.settings.custom_hero_enabled_label', 'Use custom hero content (HTML)')}
+          help={trans('ramon-avocado.admin.settings.custom_hero_enabled_help', 'Replace the default hero content (icon, title, description, Login/Sign Up buttons) with your own HTML. The hero banner wrapper, background image and overlay stay intact. Shown to guests only — same as the default hero.')}
+        />
+        {getBool('avocado.custom_hero_enabled') && (
+          <div className="AvocadoAdmin-subGroup">
+            <AdminTextarea
+              settingKey="avocado.custom_hero_html"
+              label={trans('ramon-avocado.admin.settings.custom_hero_html_label', 'Custom hero HTML')}
+              help={trans('ramon-avocado.admin.settings.custom_hero_html_help', 'HTML injected inside the hero banner overlay (replaces .AvocadoHome-heroBannerContent). Inline <style> tags are supported.')}
+              placeholder={'<div class="AvocadoHome-heroBannerContent">\n  <h1 class="AvocadoHome-heroBannerTitle">Welcome!</h1>\n  <p class="AvocadoHome-heroBannerDesc">Anything you want — links, images, buttons.</p>\n</div>'}
+              rows={10}
+              className="AvocadoAdmin-codeField"
+            />
+          </div>
         )}
 
         <SubDivider />
