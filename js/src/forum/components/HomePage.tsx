@@ -777,28 +777,47 @@ export default class HomePage extends Component {
         <div className="AvocadoHome-wrapper">
           <div className="AvocadoHome-main">
 
-          {/* ── Hero banner (guests only) ─────────────────────────────── */}
-          {!user && (
-            <div
-              className={`AvocadoHome-heroBanner${heroUrl ? ' AvocadoHome-heroBanner--hasImage' : ''}`}
-              style={heroUrl ? {
-                backgroundImage: safeCssUrl(heroUrl),
-                backgroundSize: 'cover',
-                backgroundPosition: heroImagePosition,
-              } : {}}
-            >
-              <div className="AvocadoHome-heroBannerOverlay">
-                <div className="AvocadoHome-heroBannerContent">
-                  <div className="AvocadoHome-heroBannerIcon">
-                    <i className="fas fa-comments" aria-hidden="true" />
-                  </div>
-                  <h1 className="AvocadoHome-heroBannerTitle">{forumTitle}</h1>
-                  {forumDesc && <p className="AvocadoHome-heroBannerDesc">{forumDesc}</p>}
-                  {app.forum?.attribute('avocadoShowGuestCta') !== false && guestCTA}
+          {/* ── Hero banner (guests only) — content can be overridden by admin */}
+          {!user && (() => {
+            const customEnabled = !!app.forum?.attribute('avocadoCustomHeroEnabled');
+            const customHtml    = (app.forum?.attribute('avocadoCustomHeroHtml') as string || '').trim();
+            // forumDesc is rendered with m.trust because welcomeMessage in Flarum
+            // is HTML by convention (admin → Appearance → Edit Welcome Message).
+            const defaultContent = (
+              <div className="AvocadoHome-heroBannerContent">
+                <div className="AvocadoHome-heroBannerIcon">
+                  <i className="fas fa-comments" aria-hidden="true" />
+                </div>
+                <h1 className="AvocadoHome-heroBannerTitle">{forumTitle}</h1>
+                {forumDesc && (
+                  <p className="AvocadoHome-heroBannerDesc">{m.trust(forumDesc)}</p>
+                )}
+                {app.forum?.attribute('avocadoShowGuestCta') !== false && guestCTA}
+              </div>
+            );
+            // Custom HTML replaces ONLY the inner content; the wrapper, background
+            // image and overlay stay so all hero settings (image, position, etc.)
+            // keep working with custom content too.
+            const innerContent = (customEnabled && customHtml)
+              ? <div className="AvocadoHome-heroBannerContent AvocadoHome-heroBannerContent--custom">
+                  {m.trust(customHtml)}
+                </div>
+              : defaultContent;
+            return (
+              <div
+                className={`AvocadoHome-heroBanner${heroUrl ? ' AvocadoHome-heroBanner--hasImage' : ''}`}
+                style={heroUrl ? {
+                  backgroundImage: safeCssUrl(heroUrl),
+                  backgroundSize: 'cover',
+                  backgroundPosition: heroImagePosition,
+                } : {}}
+              >
+                <div className="AvocadoHome-heroBannerOverlay">
+                  {innerContent}
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* ── Post input trigger ────────────────────────────────────── */}
           {user && !this.composerOpen && (
