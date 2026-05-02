@@ -7,6 +7,13 @@
     .avocado-border-radius(~'.Avatar');
   }
 
+  // Hide flarum/realtime's "N discussions have updated activity, click to release"
+  // banner. Auto-release still runs in the background (config: 10s default), so
+  // the list refreshes silently without the intrusive button.
+  &-update {
+    display: none !important;
+  }
+
   &Item {
     --discussion-list-item-bg-hover: var(--control-bg-light);
     background: var(--control-bg);
