@@ -615,6 +615,34 @@ app.initializers.add('ramon-avocado', (app) => {
 
         <SubDivider />
 
+        {/* Custom section titles — overrides the locale defaults when set */}
+        <div className="AvocadoAdmin-subGroup">
+          <h4>{trans('ramon-avocado.admin.settings.section_titles_heading', 'Section titles')}</h4>
+          <p className="helpText">
+            {trans(
+              'ramon-avocado.admin.settings.section_titles_help',
+              'Override the homepage section titles. Leave any field empty to use the language pack default.'
+            )}
+          </p>
+          <AdminText
+            settingKey="avocado.categories_heading"
+            label={trans('ramon-avocado.admin.settings.categories_heading_label', 'Categories Section Title')}
+            placeholder={trans('ramon-avocado.forum.home.categories_heading', 'Categories')}
+          />
+          <AdminText
+            settingKey="avocado.popular_heading"
+            label={trans('ramon-avocado.admin.settings.popular_heading_label', 'Popular Discussions Title')}
+            placeholder={trans('ramon-avocado.forum.home.popular_heading', 'Popular discussions')}
+          />
+          <AdminText
+            settingKey="avocado.following_heading"
+            label={trans('ramon-avocado.admin.settings.following_heading_label', 'Following Discussions Title')}
+            placeholder={trans('ramon-avocado.forum.home.following_heading', 'Following')}
+          />
+        </div>
+
+        <SubDivider />
+
         {/* General homepage toggles */}
         <div className="AvocadoAdmin-subGroup">
           <AdminToggle
