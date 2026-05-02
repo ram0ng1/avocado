@@ -1,0 +1,644 @@
+.App {
+  padding-bottom: 0;
+
+  &-footer {
+    &:empty {
+      display: none;
+    }
+  }
+}
+
+// ── Custom Footer (admin → Appearance → Edit Custom Footer) ─────────────────
+// Flarum's core blade renders TWO footers (vendor/flarum/core/views/frontend/forum.blade.php):
+//   1. <footer class="App-footer" id="footer"></footer>  — Mithril mount target,
+//      always empty (Footer.view() returns null).
+//   2. {!! $forum['footerHtml'] !!}                       — Custom footer HTML
+//      from admin settings, sibling of #app inside <body>.
+//
+// Both share `id="footer"`. That duplicate ID breaks `document.getElementById('footer')`,
+// confuses Mithril patching and is invalid HTML. Hiding the empty one with CSS
+// avoids visual artifacts but does NOT fix the duplicate ID. We strip the id
+// from the mount target via JS at boot — see js/src/forum/index.tsx.
+//
+// Beyond that, do NOT add layout overrides here. Core's
+// `.hasPane.panePinned .App-footer { margin-left: var(--pane-width) }` is
+// intentional — it aligns the footer with the content pushed by the sidebar.
+
+#app > footer.App-footer:empty,
+.App > footer.App-footer:empty {
+  display: none;
+}
+
+
+
+// Smooth page loading transition (reduces jarring loading flash)
+.Page-main {
+  transition: opacity 0.15s ease;
+}
+.Page-main > .LoadingIndicator {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.5;
+}
+
+// V1-style Search bar (inline dropdown, no modal)
+// transform: translateZ(0) forces GPU compositing so the width transition is smooth
+// even when the header is position:fixed (affix state on scroll / discussion page)
+.Search {
+  position: relative;
+  width: 200px;
+  flex-shrink: 0;
+  transform: translateZ(0);
+  transition: width 0.3s ease !important;
+
+  &.focused {
+    width: 400px;
+  }
+
+  // On tablet and small laptops: don't grow on focus — prevents header overflow
+  @media (max-width: 1100px) {
+    &.focused {
+      width: 200px;
+    }
+  }
+
+  &-input {
+    position: relative;
+    overflow: hidden;
+    border-radius: @border-radius;
+    // Use Flarum's own --transition var so .Input .FormControl keeps its width 0.4s rule
+    --transition: border-color 0.15s ease;
+
+    .Input-prefix-icon {
+      color: inherit;
+    }
+
+    .FormControl {
+      border-radius: @border-radius;
+      background: var(--control-bg);
+      border-color: transparent;
+
+      &:focus {
+        background: var(--control-bg);
+        border-color: var(--primary-color);
+      }
+
+      &::-webkit-search-cancel-button,
+      &::-webkit-search-decoration {
+        -webkit-appearance: none;
+        appearance: none;
+      }
+    }
+
+    .Search-clear {
+      color: var(--primary-color);
+    }
+  }
+
+  &-results {
+    position: absolute;
+    left: 0;
+    right: 0;
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: @border-radius;
+    overflow: hidden;
+  }
+}
+
+
+// Search result item layout
+// Override Flarum core overflow:hidden + white header text on .Dropdown-menu > li > a
+.App-header .Search-results .DiscussionSearchResult {
+  > a {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    overflow: visible;
+    padding: 8px 15px;
+
+    &:hover,
+    &:focus {
+      text-decoration: none;
+      background: var(--control-bg);
+    }
+  }
+
+  .DiscussionSearchResult-title {
+    display: block;
+    width: 100%;
+    font-weight: bold;
+    color: var(--text-color);
+    .avocado-truncate();
+
+    mark {
+      background: transparent;
+      font-weight: bold;
+      color: inherit;
+      padding: 0;
+    }
+  }
+
+  .DiscussionSearchResult-excerpt {
+    .avocado-line-clamp(2);
+    width: 100%;
+    font-size: 12px;
+    color: var(--muted-color);
+    margin-top: 3px;
+    margin-bottom: 4px;
+
+    mark {
+      background: transparent;
+      font-weight: bold;
+      color: inherit;
+      padding: 0;
+    }
+  }
+}
+
+// Hide the V2 GlobalSearch modal trigger wrapper (we override it with V1 Search)
+.GlobalSearch {
+  display: contents;
+}
+
+// On phone the search lives in the drawer — cap it to the available width
+@media @phone {
+  .Search {
+    width: 100% !important;
+    transform: none;
+
+    &.focused {
+      width: 100% !important;
+    }
+  }
+}
+
+// Hide the skip-to-content link in mobile/tablet UI so it does not appear in the drawer/header list.
+@media @phone, @tablet {
+  a.sr-only.sr-only-focusable-custom[href="#content"],
+  .App-drawer .App-skipNav,
+  .App-drawer .App-skipLink {
+    display: none !important;
+  }
+}
+
+// ─── Phone: hide phone header controls while drawer is open ──────────────────
+// Flarum's drawer z-index (--zindex-modal = 1050) should be above the phone
+// header controls (calc(--zindex-header + 1) = 1001).  In practice a stacking-
+// context created by the contain:layout on .App-header or the opacity transition
+// on .Page-main can cause the controls to paint above the drawer.
+// When the drawer is open the nav title (.App-titleControl) and the primary
+// action button (.App-primaryControl) are not needed anyway — the user is
+// interacting with the drawer. We hide them instantly so they never bleed
+// through the drawer surface.
+@media @phone {
+  .App.drawerOpen .App-titleControl,
+  .App.drawerOpen .App-primaryControl {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+// ─── Mobile: App-drawer dropdowns como painel inline ─────────────────────────
+// O core do Flarum (phone) coloca todos os .Dropdown-menu como position:fixed
+// bottom:0 (bottom sheet cobrindo o viewport). Dentro do .App-drawer isso é
+// inadequado — o menu deve abrir inline no painel.
+//
+// position:absolute → ancorado no .ButtonGroup (position:relative)
+// top:100%          → abre abaixo do botão
+// transform:none    → cancela o translate(0,70vh) do core
+// transition:visibility 0s → aparecimento imediato sem delay de 0.3s
+// backdrop display:none → remove o overlay do Bootstrap que bloqueava cliques
+@media @phone {
+  .App-drawer .Dropdown .Dropdown-menu {
+    position: absolute !important;
+    top: 100% !important;
+    bottom: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: auto !important;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-bottom: 0 !important;
+    transform: none !important;
+    transition: visibility 0s !important;
+    border: 1px solid var(--avocado-border-subtle, #eaeaf0);
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(26, 26, 36, 0.1);
+  }
+
+  .App-drawer .dropdown-backdrop {
+    display: none !important;
+  }
+
+  // HeaderList footer ("View all …" link) inside drawer dropdowns:
+  // core only styles this on @tablet-up; on phone just center the button.
+  .App-drawer .HeaderList-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .Button {
+      justify-content: center;
+      width: 100%;
+      text-align: center;
+    }
+  }
+}
+
+// ─── Header title: push logo/name away from nav items ─────────────────────────
+.Header-title {
+  padding-left: 12px;
+}
+
+// Core Flarum collapses header search to 1px on tablet when input isn't focused.
+// Keep V1 search visible in this breakpoint as well.
+@media @tablet {
+  .Header-title {
+    padding-left: 20px;  // extra breathing room from the nav drawer button
+  }
+
+  .Header-secondary .Search {
+    input:not(:focus) {
+      width: 100%;
+      background: var(--control-bg);
+    }
+
+    &:not(.active) input {
+      padding-right: 36px;
+    }
+  }
+}
+
+@media @tablet-up {
+  .App {
+    display: flex;
+    flex-direction: column;
+
+    &-content {
+      flex-grow: 1;
+      border-top: 0;
+    }
+  }
+}
+
+@media @desktop-up {
+  .container {
+    padding: 0;
+  }
+}
+
+// ─── Header logo sizing (Custom SVG only) ───────────────────────────────────
+// Only apply custom sizing when custom logo is enabled.
+// When disabled, Flarum's default .Header-logo { display: block; max-height: 30px; } applies.
+html[data-avocado-logo-custom="true"] {
+  // For fallback PNG logos: fixed height so oversized images don't break the header.
+  img.Header-logo {
+    height: 35px !important;
+    width: auto !important;
+    max-width: 200px !important;
+    vertical-align: middle !important;
+    display: inline-block !important;
+  }
+  // For the Avocado-injected SVG logo: width/height set explicitly by JS from viewBox aspect ratio.
+  svg.Header-logo {
+    height: 50px !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    overflow: visible;
+  }
+}
+
+// Custom logo only: flex-align header title and constrain height.
+// Without this scope, the 52px height and flex layout override Flarum's default
+// logo/title behaviour (text name or admin-uploaded PNG) unnecessarily.
+html[data-avocado-logo-custom="true"] {
+  // Keep header title flex-aligned so SVG logo and title baseline nicely
+  .App-header .Header-title {
+    display: flex !important;
+    align-items: center !important;
+    padding: 5px 0;
+  }
+
+  // On tablet+ the header is a fixed top bar — constrain to the SVG logo height.
+  // On phone the header lives INSIDE the App-drawer and stacks vertically, so we
+  // must NOT force a fixed height (it would clip the search bar + auth controls).
+  @media @tablet-up {
+    .App-header {
+      height: 52px !important;
+      min-height: 52px !important;
+      line-height: 1;
+    }
+  }
+}
+
+// Frosted-glass effect on header icon buttons (flags, notifications, user menu toggle)
+// backdrop-filter blurs the hero/content behind them, improving legibility on any bg
+.App-header .Button--flat {
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+// ─── DiscussionPage sidebar (scrubber/stream pane) ───────────────────────────
+// All other pages get AvocadoNav-helper instead of Page-sidebar via the
+// PageStructure.prototype.sidebar() override in JS — no CSS hiding needed.
+
+// ─── Safety net: suppress Page-hero on all unregistered extension pages ───────
+// JS layers (mainItems.remove + providedHero override) handle this at runtime,
+// but if a third-party extension re-adds a hero after our extend callbacks run,
+// this CSS catches it.
+// Guard uses IndexPage--avocadoRoot (stamped by our IndexPage.view extend) so that
+// extension pages sharing the 'IndexPage' class (e.g. LeaderboardPage uses
+// className="IndexPage LeaderboardPage") are still matched and their hero is hidden.
+.Page:not(.DiscussionPage):not(.IndexPage--avocadoRoot) {
+  .Page-hero { display: none !important; }
+}
+
+// ─── Global: no underlines on links inside avocado theme pages ────────────────
+.AvocadoHome a,
+.AvocadoTagPage a,
+.AvocadoUserPage a,
+.AvocadoTagsPage a,
+.AllDiscussionsPage a,
+.AvocadoDiscussions a,
+.AvocadoSearch a,
+.AvocadoHome-replyBtn,
+.AvocadoSearch-userCard-viewBtn {
+  text-decoration: none !important;
+
+  &:hover {
+    text-decoration: none !important;
+  }
+}
+
+// ─── Online avatars "+N more" badge ───────────────────────────────────────────
+.AvocadoHome-onlineAvatars-more {
+  .avocado-flex-center();
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--avocado-surface-1) 82%, transparent);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  border: 2px solid var(--avocado-online-ring);
+  color: var(--avocado-muted-icon);
+  font-size: 10px;
+  font-weight: 800;
+  margin-left: -7px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+// ─── Header auth buttons (Log In / Sign Up) ───────────────────────────────────
+// !important needed to override Flarum's .Button base styles injected via JS
+.AvocadoHeader-authBtn {
+  .avocado-pill-btn(34px; 16px; 13px);
+
+  &--login {
+    border: 1.5px solid var(--primary-color) !important;
+    color: var(--primary-color) !important;
+    background: transparent !important;
+
+    &:hover {
+      background: color-mix(in srgb, var(--primary-color) 8%, transparent) !important;
+    }
+  }
+
+  &--signup {
+    background: var(--primary-color) !important;
+    color: #fff !important;
+    border: none !important;
+
+    &:hover {
+      opacity: 0.88 !important;
+    }
+  }
+}
+
+// ─── Auth buttons: colored-header override ────────────────────────────────────
+// When "Colored Header" is enabled, --header-bg becomes the primary color so
+// the default primary-color buttons are invisible against the header background.
+// We switch to --header-color (the light/white text color that Flarum assigns
+// automatically to keep text readable on the colored background).
+[data-colored-header=true] {
+  .AvocadoHeader-authBtn--login {
+    border-color: var(--header-color) !important;
+    color: var(--header-color) !important;
+
+    &:hover {
+      background: color-mix(in srgb, var(--header-color) 15%, transparent) !important;
+    }
+  }
+
+  .AvocadoHeader-authBtn--signup {
+    background: var(--header-color) !important;
+    // Text should contrast against --header-color (white on light, dark on dark).
+    // --header-bg in colored mode equals the primary color — reuse it as text.
+    color: var(--header-bg) !important;
+
+    &:hover {
+      opacity: 0.9 !important;
+    }
+  }
+
+  // Separator "or" between the two buttons
+  .AvocadoHeader-authSep {
+    color: var(--header-color) !important;
+    opacity: 0.75;
+  }
+}
+
+// ─── Default avatar SVG (person silhouette, primary-colour tinted) ───────────
+.AvocadoDefaultAvatar {
+  display: block !important;  // override inline-flex from .Avatar
+  border-radius: 50%;
+  overflow: hidden;
+
+  .AvocadoDefaultAvatar-bg {
+    fill: color-mix(in srgb, var(--primary-color) 15%, #fff);
+  }
+
+  .AvocadoDefaultAvatar-fg {
+    fill: color-mix(in srgb, var(--primary-color) 42%, #fff);
+  }
+}
+
+// ─── Composer: hide default avatar SVG where Flarum hides the real avatar ────
+// The core .ComposerBody-avatar { display: none } rules don't use !important,
+// so they are overridden by .AvocadoDefaultAvatar { display: block !important }.
+// We restore the expected hidden behaviour for each context Flarum targets.
+@media @phone {
+  .ComposerBody-avatar.AvocadoDefaultAvatar {
+    display: none !important;
+  }
+}
+.minimized .ComposerBody-avatar.AvocadoDefaultAvatar,
+.fullScreen .ComposerBody-avatar.AvocadoDefaultAvatar {
+  display: none !important;
+}
+
+// ─── Header auth separator ("or" between Log In / Sign Up) ───────────────────
+.AvocadoHeader-authSep {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted-color);
+  opacity: 0.65;
+  align-self: center;
+  margin: 0 6px;
+}
+
+// ─── Composer: tag pills wrap to next line instead of overflowing ─────────────
+// Flarum renders tags as a <li class="item-tags"> inside .ComposerBody-header (a <ul>).
+// The default <li> is display:inline-block which keeps all tags on one line.
+// We switch to display:block + flex so tags flow onto multiple lines naturally.
+.ComposerBody-header > li.item-tags {
+  display: block;
+  width: 100%;
+  margin-right: 0;
+  white-space: normal;
+  overflow: visible;
+
+  // The TagControl inner container — make it wrap
+  > .TagControl,
+  > .TagsInput,
+  > span,
+  > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    white-space: normal;
+  }
+}
+
+// Allow the composer content to grow in height when tags wrap
+.Composer-body .ComposerBody-header {
+  overflow: visible;
+}
+
+// ─── Settings & Security pages: match avocado design system ──────────────────
+// These pages are wrapped in .AvocadoUserPage via the UserPage override.
+// Override Flarum's native .SettingsPage and .UserSecurityPage layout to
+// match the card-based look of the rest of the user profile pages.
+
+.AvocadoUserPage .SettingsPage,
+.AvocadoUserPage .UserSecurityPage {
+  margin-top: 0;
+
+  // Top-level section list
+  > ul {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    > li {
+      list-style: none;
+      margin: 0;
+    }
+  }
+
+  // Native HTML <fieldset> — same card look as .FieldSet component
+  fieldset {
+    border: 1px solid var(--home-border, #eaeaf0);
+    border-radius: 18px;
+    margin: 0;
+    padding: 0;
+    background: var(--control-bg);
+    overflow: hidden;
+    transition: box-shadow var(--avocado-t-medium), border-color var(--avocado-t-medium);
+
+    &:hover {
+      border-color: #dfdfe6;
+      box-shadow: 0 8px 24px rgba(26, 26, 36, 0.06);
+    }
+
+    // Section title (legend or label)
+    > legend,
+    > label:first-child {
+      float: none;
+      width: 100%;
+      padding: 14px 20px 12px;
+      border-bottom: 1px solid #f4f4f8;
+      font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--home-muted, #8f9097);
+      box-sizing: border-box;
+      margin: 0;
+    }
+
+    // Items inside fieldset
+    > ul {
+      list-style: none;
+      padding: 16px 20px 18px;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+
+      > li {
+        list-style: none;
+        margin: 0;
+      }
+    }
+  }
+}
+
+@media @phone {
+  .AvocadoUserPage .SettingsPage fieldset,
+  .AvocadoUserPage .UserSecurityPage fieldset {
+    border-radius: 14px;
+  }
+}
+
+// ─── Font Awesome Kit icons (.fa-kit) ─────────────────────────────────────────
+// Custom kit icons are SVG-based and behave differently from standard FA glyphs.
+// Allow them to size naturally rather than being clipped by fixed width/height.
+.fa-kit {
+  max-height: 44px !important;
+  width: fit-content !important;
+  padding: 0 10px;
+}
+
+// ─── Avocado SVG Logo (Custom logo only) ──────────────────────────────────────
+// Responsive SVG logo that auto-scales and centers - only when custom logo is enabled.
+html[data-avocado-logo-custom="true"] {
+  .AvocadoLogoSvg {
+    max-width: 100%;
+    height: auto !important;
+    max-height: 50px;
+    width: auto !important;
+    object-fit: contain;
+    object-position: center;
+
+    // On mobile/tablet, allow slightly smaller logo
+    @media @tablet {
+      max-height: 45px;
+    }
+
+    @media @phone {
+      max-height: 40px;
+    }
+  }
+
+  // Ensure parent container centers the logo properly
+  #home-link.Header-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+  }
+}
+

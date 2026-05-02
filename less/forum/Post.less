@@ -1,0 +1,275 @@
+.Post {
+  margin: 0 0 15px 0;
+  background: var(--control-bg);
+  border-radius: 8px;
+}
+
+.PostEdited .fa-pencil-alt {
+  font-size: 10px;
+}
+
+@media @phone, @tablet {
+  .Post {
+    padding-left: var(--post-padding);
+  }
+}
+
+// V1-style layout for CommentPost: avatar absolutely positioned, content padded left
+// .ReplyPlaceholder is excluded — it uses Flarum's own native layout unchanged.
+@media @desktop-up {
+  .CommentPost:not(.ReplyPlaceholder) {
+
+    .Post-container {
+      display: block;
+    }
+
+    .Post-side {
+      position: absolute;
+      left: var(--post-padding);
+      top: var(--post-padding);
+      width: 64px;
+      display: flex;
+      justify-content: center;
+    }
+  }
+
+  .CommentPost.CommentPost--fixedAvatar {
+    --avocado-avatar-sticky-top: 76px;
+
+    padding-left: var(--post-padding);
+
+    .Post-container {
+      display: grid;
+      grid-template-columns: var(--avatar-column-width) 1fr;
+      align-items: start;
+    }
+
+    .Post-side {
+      position: sticky;
+      top: var(--avocado-avatar-sticky-top);
+      left: auto;
+      width: 64px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      overflow: visible;
+    }
+
+    &.Post--by-start-user {
+      --avocado-avatar-sticky-top: 84px;
+
+      .PostUser-name .username {
+        position: relative;
+        top: 2px;
+      }
+    }
+
+    .Post-main {
+      min-width: 0;
+    }
+
+    // display: contents removes the Post-header block box so its children
+    // participate directly in the Post-main flow.
+    .Post-header,
+    .Post-header > ul {
+      display: contents;
+    }
+
+    // .Post-side-inner is a normal in-flow child of the sticky Post-side.
+    // It has position:relative so it acts as containing block for the badge.
+    // The sticky element itself is NOT a containing block for absolute children,
+    // but its in-flow children with position:relative ARE — so the badge is
+    // always anchored to the same corner of the avatar regardless of scroll.
+    .Post-side-inner {
+      position: relative;
+      width: 64px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .Post-side .PostUser-badges--inSide {
+      position: relative !important;
+      top: auto !important;
+      left: 0;
+      width: 64px;
+      text-align: right;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 3;
+    }
+  }
+}
+
+// On phone/tablet the sticky layout is inactive, so hide the sideItems badge
+// and restore the original PostUser-badges in the header.
+@media @phone, @tablet {
+  .CommentPost--fixedAvatar {
+    .Post-side .PostUser-badges--inSide {
+      display: none !important;
+    }
+
+    .Post-header .PostUser > .PostUser-badges {
+      display: inline !important;
+    }
+  }
+}
+
+@media @desktop-up {
+  // EventPost still uses grid — keep icon column tight
+  .EventPost .Post-container {
+    display: grid;
+    grid-template-columns: var(--avatar-column-width) 1fr;
+  }
+}
+
+// Align icon + name inside tags (EventPost and elsewhere)
+.TagLabel-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.PostStream-item {
+  &:not(:last-child) {
+    border-bottom: none;
+  }
+}
+
+
+.EventPost {
+  background-color: transparent;
+
+  .Post-footer {
+    display: none;
+  }
+
+  // Align icon column and content row vertically
+  .Post-container {
+    align-items: center;
+  }
+
+  .Post-main {
+    display: flex;
+    align-items: center;
+    min-height: 0;
+  }
+
+  // Move controls to the right without floating/negative-margin hacks
+  .Post-actions {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    float: none;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+}
+
+.Post--hidden:not(.revealContent) .Post-actions {
+  margin-top: -27px;
+}
+
+@media @phone, @tablet {
+  // Keep event lines readable and avoid icon glued to the left edge.
+  .EventPost {
+    padding-left: var(--post-padding);
+  }
+
+  .EventPost .Post-body {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .EventPost-icon {
+    float: none;
+    margin: 0;
+    font-size: 16px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .EventPost-info {
+    line-height: 1.4;
+    display: block;
+    min-width: 0;
+
+    .TagLabel {
+      white-space: nowrap;
+    }
+  }
+
+  .CommentPost .Post-header {
+    .Avatar {
+      margin-right: 10px;
+    }
+
+    .PostUser .UserOnline {
+      margin-left: 4px;
+      margin-right: 7px;
+    }
+  }
+
+}
+
+@media @phone {
+
+  // Prevent oversized user popover on mobile discussion view.
+  .Post-header .UserCard.UserCard--popover {
+    width: calc(~"100vw - 30px");
+    max-width: 360px;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .UserCard--popover {
+    .container {
+      padding: 14px !important;
+    }
+
+    .UserCard-profile {
+      gap: 14px;
+      text-align: center;
+      grid-template-columns: 1fr;
+      padding-right: 0;
+    }
+
+    .UserCard-avatar {
+      margin-bottom: 8px;
+      position: relative; // needed for online dot pseudo-element
+    }
+
+    .UserCard-identity {
+      font-size: 20px;
+      margin-top: 4px;
+    }
+
+    // ── Online ring on avatar ─────────────────────────────────────────────────
+    &:has(.UserCard-lastSeen.online) .UserCard-avatar::after {
+      content: '';
+      position: absolute;
+      bottom: 10px;
+      right: 3px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--avocado-online);
+      border: 2.5px solid var(--usercard-bg, var(--primary-color));
+      z-index: 2;
+    }
+
+    // ── Online / last-seen label ──────────────────────────────────────────────
+    .UserCard-lastSeen {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 600;
+
+      &.online {
+        color: var(--avocado-online);
+        .icon { font-size: 8px; }
+      }
+    }
+  }
+}
+

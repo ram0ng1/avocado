@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "flarum-webpack-config": "^3.0.3",
+    "webpack-cli": "^7.0.2"
+  }
+}

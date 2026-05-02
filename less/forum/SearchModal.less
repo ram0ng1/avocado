@@ -1,0 +1,287 @@
+// ─── Flarum v2 GlobalSearch / SearchModal — Avocado design system ─────────────
+// Applied when the v1 inline Search is disabled and the native v2 SearchModal
+// is shown instead.  We only override visual presentation; the modal JS
+// behaviour (keyboard nav, source switching, etc.) is untouched.
+//
+// Structure quick-ref:
+//   .Modal.SearchModal.Modal--flat
+//     .Modal-content
+//       .Modal-header         ← "Search" title + close button
+//       .Modal-body.SearchModal-body
+//         .SearchModal-form   ← Input wrapper
+//         .Tabs
+//           .Tabs-nav         ← Discussions / Posts / Users tab buttons
+//           .Tabs-content.SearchModal-tabs-content
+//             .SearchModal-section (×N)
+//               .Modal-divider
+//               .Dropdown-menu.SearchModal-fullPage  ← "Search all …" link
+//               .Dropdown-menu.SearchModal-results
+//                 .Dropdown-header                  ← "SEARCH PREVIEW"
+//                 li.DiscussionSearchResult          ← discussion hit
+//                 li.PostSearchResult                ← post hit
+//                 li.UserSearchResult                ← user hit
+
+// ── Modal shell ───────────────────────────────────────────────────────────────
+.SearchModal.Modal--flat {
+  .Modal-content {
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .Modal-header {
+    padding: 20px 20px 0;
+
+    h3 {
+      font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-color);
+      letter-spacing: -0.2px;
+      text-align: left;
+    }
+  }
+
+  .Modal-body {
+    padding: 12px 16px 20px;
+  }
+
+  // Dividers between sections are a bit too prominent — soften them
+  .Modal-divider {
+    border-color: var(--avocado-border-soft, #efeff4);
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 8px;
+  }
+}
+
+// Mobile: full-screen sheet — keep it looking like a sheet, not a page
+@media @phone {
+  .SearchModal.Modal--flat {
+    .Modal-content {
+      border-radius: 0;
+    }
+  }
+}
+
+// ── Search input ──────────────────────────────────────────────────────────────
+.SearchModal {
+  &-form .Input {
+    border-radius: @border-radius;
+  }
+
+  &-input {
+    height: 46px;
+    border-radius: @border-radius !important;
+    border-color: var(--avocado-border-subtle, #eaeaf0) !important;
+    background: var(--avocado-surface-1, #f4f4f7) !important;
+    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+    font-size: 15px;
+    transition: border-color var(--avocado-t-normal), box-shadow var(--avocado-t-normal);
+
+    &:focus {
+      border-color: var(--primary-color) !important;
+      background: var(--body-bg) !important;
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 12%, transparent) !important;
+    }
+  }
+
+  // ── Tabs ──────────────────────────────────────────────────────────────────
+  .Tabs-nav {
+    padding: 0 2px;
+    margin-bottom: -1px;
+    gap: 2px;
+
+    > .Button {
+      font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 9px 12px;
+      color: var(--muted-color);
+      border-bottom-width: 2px;
+      border-color: transparent;
+      transition: color var(--avocado-t-fast), border-color var(--avocado-t-fast);
+
+      &:hover {
+        color: var(--text-color);
+      }
+
+      &[active] {
+        --button-color: var(--primary-color);
+        --link-color: var(--primary-color);
+        color: var(--primary-color);
+        font-weight: 700;
+      }
+    }
+  }
+
+  // ── Section heading ("SEARCH PREVIEW") ────────────────────────────────────
+  .Dropdown-header {
+    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1.1px;
+    color: var(--avocado-muted-icon, #767680);
+    padding: 6px 0 4px;
+  }
+
+  // ── "Search all …" full-page link ─────────────────────────────────────────
+  &-fullPage {
+    padding: 0;
+    box-shadow: none;
+    background: none;
+
+    .LinkButton {
+      font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--primary-color) !important;
+      padding: 8px 10px;
+      border-radius: @border-radius;
+      transition: background var(--avocado-t-fast);
+
+      .Button-icon {
+        color: var(--primary-color);
+      }
+
+      &:hover {
+        background: color-mix(in srgb, var(--primary-color) 8%, transparent);
+        text-decoration: none;
+      }
+    }
+  }
+
+  // ── Results list ──────────────────────────────────────────────────────────
+  &-results {
+    padding: 0;
+    box-shadow: none;
+    background: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    mark {
+      background: none;
+      padding: 0;
+      font-weight: 700;
+      color: var(--primary-color);
+    }
+
+    // ── Empty / loading states ─────────────────────────────────────────────
+    .Dropdown-message {
+      padding: 20px 0;
+      text-align: center;
+      color: var(--muted-color);
+    }
+
+    // ── Discussion & Post result cards ─────────────────────────────────────
+    .DiscussionSearchResult,
+    .PostSearchResult {
+      border: 1px solid var(--avocado-border-subtle, #eaeaf0);
+      border-radius: 14px;
+      overflow: hidden;
+      margin: 0;
+      transition: border-color var(--avocado-t-normal), box-shadow var(--avocado-t-normal);
+
+      &:hover,
+      &.active {
+        border-color: var(--avocado-border-soft, #dfdfe6);
+        box-shadow: 0 4px 16px rgba(26, 26, 36, 0.07);
+      }
+
+      // The DiscussionListItem inside — flatten it to fit the card
+      > .DiscussionListItem,
+      > .MinimalDiscussionListItem {
+        margin: 0;
+        border-radius: 0;
+        background: transparent;
+        --discussion-list-item-bg-hover: var(--control-bg);
+
+        // Remove the inner hover background since we style the card wrapper
+        &:hover {
+          background: transparent;
+        }
+      }
+    }
+
+    // ── User result cards ──────────────────────────────────────────────────
+    .UserSearchResult {
+      border: 1px solid var(--avocado-border-subtle, #eaeaf0);
+      border-radius: 14px;
+      overflow: hidden;
+      margin: 0;
+      transition: border-color var(--avocado-t-normal), box-shadow var(--avocado-t-normal);
+
+      &:hover,
+      &.active {
+        border-color: var(--avocado-border-soft, #dfdfe6);
+        box-shadow: 0 4px 16px rgba(26, 26, 36, 0.07);
+      }
+
+      // Flatten the inner link
+      > a {
+        border-radius: 0;
+        padding: 12px 14px;
+        gap: 10px;
+
+        &:hover {
+          background: var(--control-bg);
+          text-decoration: none;
+        }
+      }
+
+      .Avatar {
+        --size: 36px;
+      }
+
+      .username {
+        font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-color);
+      }
+    }
+  }
+
+  // ── Tabs content scrollable area ───────────────────────────────────────────
+  &-tabs-content {
+    max-height: 55vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0;
+    // Smooth scrollbar on WebKit
+    &::-webkit-scrollbar { width: 4px; }
+    &::-webkit-scrollbar-thumb {
+      background: var(--avocado-border-subtle, #eaeaf0);
+      border-radius: 2px;
+    }
+  }
+}
+
+// ── Dark mode adjustments ─────────────────────────────────────────────────────
+[data-theme^=dark] {
+  .SearchModal {
+    &-results {
+      .DiscussionSearchResult,
+      .PostSearchResult,
+      .UserSearchResult {
+        border-color: var(--avocado-border-subtle);
+
+        &:hover,
+        &.active {
+          border-color: var(--avocado-border-soft);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+        }
+      }
+    }
+  }
+}
+
+// ── Global Tabs override — bottom border only ─────────────────────────────────
+// Flarum core sets border-color on all sides for [active]; restrict to bottom.
+.Tabs-nav > .Button[active] {
+  border-top-color: transparent !important;
+  border-left-color: transparent !important;
+  border-right-color: transparent !important;
+  border-bottom-color: var(--primary-color) !important;
+}

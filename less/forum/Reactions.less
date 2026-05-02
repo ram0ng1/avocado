@@ -1,0 +1,429 @@
+// ─── fof/reactions — Avocado visual style ────────────────────────────────────
+// Facebook-style reaction picker.
+//
+// DOM map (extension class → role):
+//   .Reactions                    root wrapper (wraps react btn + count badges)
+//   .Reactions--react             relative container that triggers popup on hover
+//   .Reactions--ShowReactions     trigger / unreact button
+//   .CommentPost--Reactions       floating pill popup
+//   .Reactions--Ul                emoji list <ul> inside popup
+//   .Reactions--Ul > li > button  individual emoji button
+//   .Reactions--reactions         count badges row (below post body)
+//   .Button-emoji-parent          single count badge button
+
+// ── Root wrapper ──────────────────────────────────────────────────────────────
+.Reactions {
+  display: inline-flex;
+  align-items: center;
+}
+
+// ── Overflow + stacking-context fix ──────────────────────────────────────────
+// The popup lives inside: .Post-actions > ul > li.item-react > .Reactions > .Reactions--react
+// Any positioned ancestor with overflow ≠ visible clips the absolute popup.
+// Note: .Post-footer contains the badge row (footerItems); .Post-actions contains
+// the trigger button (actionItems) — both need overflow:visible coverage.
+.Page.DiscussionPage .Post-actions,
+.Page.DiscussionPage .Post-actions > ul,
+.Page.DiscussionPage .Post-actions > ul > li,
+.Page.DiscussionPage .Post-footer,
+.Page.DiscussionPage .Post-footer > ul,
+.Page.DiscussionPage .Reactions,
+.Page.DiscussionPage .Reactions--react {
+  overflow: visible !important;
+  clip: auto !important;
+  clip-path: none !important;
+}
+
+// The trigger container needs position:relative as containing block for the popup.
+.Page.DiscussionPage .Reactions--react {
+  position: relative !important;
+}
+
+// Align the reaction li with the Like li in Post-actions > ul
+.Page.DiscussionPage .Post-actions > ul > li {
+  vertical-align: middle !important;
+}
+
+// ── Trigger container ─────────────────────────────────────────────────────────
+// Needs a reliable self-contained height so bottom:100% on the popup lands correctly.
+.Reactions .Reactions--react {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  position: relative;
+}
+
+// ── Trigger button (react / unreact) ─────────────────────────────────────────
+// Flat style matching other Post-footer Button--link buttons.
+.Reactions .Reactions--ShowReactions,
+.Reactions .Reactions--react .Reactions--ShowReactions {
+  // Reset Flarum Button--link defaults
+  float: none !important;
+  margin: 0 !important;
+  padding: 5px 10px !important;
+  text-decoration: none !important;
+
+  // Flat button (same as Like)
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px;
+  height: auto !important;
+  border-radius: 8px !important;
+  border: none !important;
+  background: transparent !important;
+  color: var(--muted-color) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  transition: color 0.15s ease !important;
+  box-sizing: border-box !important;
+  white-space: nowrap;
+
+  &:hover,
+  &:focus,
+  &:active {
+    background: transparent !important;
+    color: var(--primary-color) !important;
+    text-decoration: none !important;
+  }
+
+  &.active {
+    background: transparent !important;
+    color: var(--primary-color) !important;
+  }
+
+  // SVG icon (the custom smiley/react svg)
+  // Only target <path> — the <rect id="Rectangle-5"> is a transparent background
+  // rect that becomes a solid dark square if filled with currentColor.
+  svg.button-react {
+    width: 20px !important;
+    height: 20px !important;
+    flex-shrink: 0;
+
+    path { fill: currentColor !important; }
+    rect { fill: none !important; }
+  }
+
+  // Emoji image / font icon inside button (when user has reacted)
+  .emoji, img.emoji {
+    width: 16px !important;
+    height: 16px !important;
+    flex-shrink: 0;
+  }
+
+  .reaction-icon,
+  .button-emoji {
+    font-size: 15px !important;
+    margin: 0 !important;
+    flex-shrink: 0;
+  }
+
+  // Nested Button-label wrappers — make them transparent/pass-through
+  .Button-label,
+  .Button-labelText {
+    display: contents !important;
+    margin: 0 !important;
+  }
+}
+
+// ── Popup: horizontal pill ────────────────────────────────────────────────────
+// Centered horizontally over the trigger (.Reactions--react):
+//   left: 50%          → moves the left edge to the trigger's horizontal center
+//   translateX(-50%)   → shifts the popup left by half its own width → centered
+.Reactions .CommentPost--Reactions {
+  // Override extension defaults
+  position: absolute !important;
+  top: auto !important;
+  bottom: calc(100% + 10px) !important;
+  left: 50% !important;
+  right: auto !important;
+
+  max-width: none !important;
+  width: auto !important;
+  height: 54px !important;
+  padding: 3px !important;
+  box-sizing: border-box !important;
+
+  // overflow:visible is critical — without it the spring-animation emojis
+  // (which start at translateY(20px) and temporarily overflow the 54px box)
+  // and the tooltip ::after (which goes above the box) get clipped.
+  overflow: visible !important;
+
+  border-radius: 100px !important;
+  background: var(--body-bg) !important;
+  color: var(--text-color) !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.13), 0 0 0 1px rgba(0, 0, 0, 0.06) !important;
+  line-height: 1 !important;
+  z-index: 9999 !important;
+
+  // Entrance animation — translateX(-50%) centralizes; translateY+scale = slide in
+  transform: translateX(-50%) translateY(8px) scale(0.92) !important;
+  transition: opacity 220ms ease, visibility 0s linear 220ms, transform 220ms cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+
+  // Invisible hover bridge — prevents popup from hiding when cursor moves toward it
+  &::before {
+    content: '';
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 18px;
+    bottom: -18px;
+    left: 0;
+  }
+}
+
+// ── Emoji list ────────────────────────────────────────────────────────────────
+.Reactions .Reactions--Ul {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  justify-content: flex-start !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  list-style: none !important;
+
+  > li {
+    display: flex !important;
+    align-items: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+
+    > button.Button {
+      position: relative;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 48px !important;
+      height: 48px !important;
+      padding: 0 !important;
+      border: none !important;
+      background: transparent !important;
+      border-radius: 50%;
+      cursor: pointer !important;
+      overflow: visible;
+
+      // Flarum's Button component wraps content in .Button-label { overflow:hidden }
+      // which clips the emoji when it scales up. display:contents removes the box
+      // entirely so the emoji is a direct flex child of the button.
+      .Button-label,
+      .Button-labelText {
+        display: contents !important;
+        overflow: visible !important;
+        margin: 0 !important;
+      }
+
+      // Emoji image
+      .emoji,
+      img.emoji {
+        width: 32px !important;
+        height: 32px !important;
+        display: block;
+        // Spring entrance: start small + below center
+        transform: scale(0.5) translateY(20px);
+        // transform-origin: bottom center → scaling grows UPWARD, never clips popup bottom
+        transform-origin: bottom center;
+        transition: transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+        will-change: transform;
+        margin: 0 !important;
+      }
+
+      // Font-icon reaction
+      .reaction-icon,
+      .button-emoji {
+        font-size: 26px !important;
+        margin: 0 !important;
+        display: block;
+        transform: scale(0.5) translateY(20px);
+        transform-origin: bottom center;
+        transition: transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+        will-change: transform;
+      }
+
+      // Tooltip from aria-label
+      &::after {
+        content: attr(aria-label);
+        position: absolute;
+        bottom: calc(100% + 6px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.80);
+        color: #fff;
+        padding: 3px 9px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 120ms ease;
+        font-family: "DM Sans Variable", "DM Sans", sans-serif;
+        line-height: 1.6;
+        z-index: 2;
+      }
+
+      // Hover: scale up + float upward (transform-origin:bottom keeps it from clipping down)
+      &:hover,
+      &:focus {
+        background: transparent !important;
+
+        .emoji,
+        img.emoji,
+        .reaction-icon,
+        .button-emoji {
+          transform: scale(1.15) translateY(-4px) !important;
+          transition-delay: 0s !important;
+        }
+
+        &::after { opacity: 1; }
+      }
+    }
+  }
+}
+
+// ── Popup visible: slide into view + spring emojis into position ─────────────
+.Reactions .Reactions--react:hover .CommentPost--Reactions,
+.Reactions .CommentPost--Reactions.mobile-show {
+  // Keep translateX(-50%) so centering is preserved at the end of the animation
+  transform: translateX(-50%) translateY(0) scale(1) !important;
+  transition: opacity 220ms ease, visibility 0s linear 0s, transform 220ms cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+.Reactions .Reactions--react:hover .CommentPost--Reactions .Reactions--Ul,
+.Reactions .CommentPost--Reactions.mobile-show .Reactions--Ul {
+  > li:nth-child(1) > button { .emoji, img.emoji, .reaction-icon, .button-emoji { transform: scale(1) translateY(0); transition-delay: 0.00s; } }
+  > li:nth-child(2) > button { .emoji, img.emoji, .reaction-icon, .button-emoji { transform: scale(1) translateY(0); transition-delay: 0.06s; } }
+  > li:nth-child(3) > button { .emoji, img.emoji, .reaction-icon, .button-emoji { transform: scale(1) translateY(0); transition-delay: 0.12s; } }
+  > li:nth-child(4) > button { .emoji, img.emoji, .reaction-icon, .button-emoji { transform: scale(1) translateY(0); transition-delay: 0.18s; } }
+  > li:nth-child(5) > button { .emoji, img.emoji, .reaction-icon, .button-emoji { transform: scale(1) translateY(0); transition-delay: 0.24s; } }
+  > li:nth-child(6) > button { .emoji, img.emoji, .reaction-icon, .button-emoji { transform: scale(1) translateY(0); transition-delay: 0.30s; } }
+  > li:nth-child(n+7) > button { .emoji, img.emoji, .reaction-icon, .button-emoji { transform: scale(1) translateY(0); transition-delay: 0.34s; } }
+}
+
+// ── Reaction count badges ─────────────────────────────────────────────────────
+// Clean inline row: emoji + count, transparent background, design-system font.
+// Count=1 is missing from the extension's output — our JS injects it.
+.Reactions--reactions {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  vertical-align: unset !important;
+
+  // Nested Button-label wrappers — pass-through so emoji + count are flex children
+  .Button-label,
+  .Button-labelText {
+    display: contents !important;
+    margin: 0 !important;
+  }
+
+  .Button-emoji-parent {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px;
+    height: auto !important;
+    padding: 4px 8px 4px 6px !important;
+    border-radius: 100px !important;
+    box-sizing: border-box !important;
+    background: transparent !important;
+    border: none !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    font-family: "DM Sans Variable", "DM Sans", sans-serif !important;
+    color: var(--muted-color) !important;
+    cursor: pointer !important;
+    transition: color 0.15s, background 0.15s !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+
+    &:not(.disabled):hover {
+      color: var(--primary-color) !important;
+      background: color-mix(in srgb, var(--primary-color) 8%, transparent) !important;
+    }
+
+    &.active {
+      color: var(--primary-color) !important;
+      background: color-mix(in srgb, var(--primary-color) 10%, transparent) !important;
+    }
+
+    &.disabled {
+      cursor: default !important;
+      pointer-events: none !important;
+      opacity: 0.7;
+    }
+
+    .button-emoji { margin: 0 !important; }
+
+    .emoji, img.emoji {
+      width: 18px !important;
+      height: 18px !important;
+      flex-shrink: 0;
+    }
+
+    .reaction-icon {
+      font-size: 15px !important;
+      margin: 0 !important;
+      flex-shrink: 0;
+    }
+
+    .count {
+      margin: 0 !important;
+      font-weight: 400 !important;
+    }
+  }
+}
+
+// ── Unreact button (user already reacted) ────────────────────────────────────
+// .Reactions directly wraps the button (no .Reactions--react in between).
+// JS injects the user's emoji — ensure it sizes correctly inside the flat button.
+.Reactions > .Reactions--ShowReactions {
+  img.emoji,
+  .emoji,
+  .reaction-icon {
+    width: 18px !important;
+    height: 18px !important;
+    font-size: 16px !important;
+    flex-shrink: 0;
+  }
+}
+
+// ── ReactionsModal — centered ─────────────────────────────────────────────────
+.ReactionsModal .Modal-container {
+  margin: auto;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+// ── Mobile — tamanho reduzido (centralização já vem do bloco principal) ───────
+@media @phone {
+  .Reactions .CommentPost--Reactions {
+    height: 46px !important;
+    padding: 2px !important;
+  }
+
+  .Reactions .Reactions--Ul > li > button.Button {
+    width: 40px !important;
+    height: 40px !important;
+
+    .emoji, img.emoji {
+      width: 24px !important;
+      height: 24px !important;
+    }
+
+    .reaction-icon, .button-emoji {
+      font-size: 21px !important;
+    }
+
+    &:hover, &:focus {
+      .emoji, img.emoji, .reaction-icon, .button-emoji {
+        transform: scale(1.1) translateY(-3px) !important;
+      }
+    }
+  }
+}

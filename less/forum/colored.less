@@ -1,0 +1,85 @@
+// ─── Colored Integration ─────────────────────────────────────────────────────
+// JS (colored.ts) injects two CSS vars onto <body> when a tag/discussion is active:
+//   --colored-color    → the tag's hex/rgb color
+//   --colored-contrast → 'var(--text-on-dark)' or 'var(--text-on-light)'
+//
+// The `colored--instant` class on <html> suppresses transitions for 2 frames
+// so color vars snap instantly on navigation without visible animation.
+
+html.colored--instant,
+html.colored--instant * {
+  transition-duration: 0s !important;
+  animation-duration:  0s !important;
+}
+
+// ── Active state: override primary brand tokens ────────────────────────────────
+body.colored--active {
+  // Primary brand color: focus rings, unread dots, scrubber, notification badge
+  --primary-color: var(--colored-color);
+
+  // Links throughout the page
+  --link-color: var(--colored-color);
+
+  // Primary buttons (Reply, Post Discussion, Sign In, Submit…)
+  --button-primary-bg:          var(--colored-color);
+  --button-primary-bg-hover:    color-mix(in srgb, var(--colored-color) 88%, black);
+  --button-primary-bg-active:   color-mix(in srgb, var(--colored-color) 78%, black);
+  --button-primary-bg-disabled: var(--colored-color);
+  --button-primary-color:       var(--colored-contrast);
+}
+
+// ── Discussion card borders ───────────────────────────────────────────────────
+// --item-tag-color is injected inline per-card by ThreadCard (avocado cards)
+// and DiscussionListItem extend (native Flarum list).
+// Falls back to transparent so layout never shifts when no tag color is set.
+
+html[data-avocado-colored-border="left"] {
+  .AvocadoHome-threadCard,
+  .AvocadoSearch-threadCard,
+  .DiscussionListItem {
+    border-left: 3px solid var(--item-tag-color, transparent);
+  }
+}
+
+html[data-avocado-colored-border="full"] {
+  .AvocadoHome-threadCard,
+  .AvocadoSearch-threadCard,
+  .DiscussionListItem {
+    border:        2px solid var(--item-tag-color, transparent);
+    border-radius: var(--border-radius);
+  }
+}
+
+// ── Colored header ────────────────────────────────────────────────────────────
+// Activates only when Flarum's own "Colored header" setting is on
+// (data-colored-header="true" is set by Flarum's FrontendServiceProvider on <html>)
+// AND our colored accents are active (body.colored--active).
+// Overrides --header-* and the light-contents vars consumed by .App-header.
+
+html[data-colored-header="true"] body.colored--active {
+  --header-bg:            var(--colored-color);
+  --header-color:         var(--colored-contrast);
+  --header-control-bg:    rgba(0, 0, 0, 0.15);
+  --header-control-color: var(--colored-contrast);
+
+  // light-contents('header-colored') vars consumed by .App-header
+  --header-colored-color:              var(--colored-contrast);
+  --header-colored-control-bg:         rgba(0, 0, 0, 0.15);
+  --header-colored-control-color:      var(--colored-contrast);
+  --header-colored-control-bg-shaded:  rgba(0, 0, 0, 0.25);
+  --header-colored-control-bg-fadedin: rgba(0, 0, 0, 0.20);
+
+  .App-titleControl > .Button {
+    color: var(--primary-color) !important;
+  }
+}
+
+// ── Tag page: hero tinted by tag color ────────────────────────────────────────
+// The tag hero already uses --tag-color for its own gradient.
+// When the page is colored--active we also apply the color globally so the
+// avocado header tint, active nav links, and buttons all match the tag.
+// No extra CSS needed here beyond the body.colored--active rules above.
+
+// ── Avocado DiscussionHero: ensure colored vars reach avocado's --discussion-color ──
+// DiscussionHero in avocado already reads the first tag color for --discussion-color.
+// The colored layer additionally colorizes everything outside the hero area.
