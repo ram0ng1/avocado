@@ -1,0 +1,33 @@
+.sideNavOffset {
+  background-color: var(--control-bg);
+
+  .Button--dashed {
+    .Button--dashed();
+  }
+}
+
+@media @tablet {
+  .sideNav {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+}
+
+@media @tablet, @phone {
+  .sideNavOffset {
+    padding-top: 15px;
+  }
+}
+
+@media @desktop-up {
+  .sideNav {
+    margin-right: 0;
+    height: 100vh;
+  }
+
+  .sideNavOffset {
+    position: relative;
+    padding-left: 1rem;
+    z-index: 0;
+  }
+}

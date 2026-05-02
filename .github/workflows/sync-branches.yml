@@ -1,0 +1,54 @@
+name: Sincronizar Branches com Master
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: sync-branches
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Sincronizar branches com master
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configurar Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Sincronizar branches com master
+        run: |
+          git fetch --all
+
+          BRANCHES=$(git branch -r \
+            | grep -v 'HEAD' \
+            | grep -v 'origin/master' \
+            | grep -v 'origin/copilot/' \
+            | sed 's|origin/||' \
+            | tr -d ' ')
+
+          for branch in $BRANCHES; do
+            echo "▶ Sincronizando branch: $branch"
+
+            git checkout -B "$branch" "origin/$branch"
+
+            if git merge origin/master --no-edit -m "chore: sync with master"; then
+              git push origin "$branch"
+              echo "✅ Branch '$branch' sincronizada com sucesso"
+            else
+              echo "⚠️  Conflito ao sincronizar '$branch' com master — pulando"
+              git merge --abort
+            fi
+          done

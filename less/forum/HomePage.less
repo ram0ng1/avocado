@@ -1,0 +1,2401 @@
+.App--avocadoHome {
+  .App-header {
+    display: none;
+  }
+
+  .App-content {
+    margin-top: 0;
+    border-top: 0;
+  }
+}
+
+.IndexPage--avocadoHome {
+  background: #ffffff;
+
+  .Page-hero {
+    display: none;
+  }
+
+  // On phone: collapse the sidebar so the nav list doesn't show in normal flow,
+  // but allow absolutely-positioned App-titleControl / App-primaryControl to escape
+  // to the phone header.
+  //
+  // Safe to use overflow:hidden here because Flarum's Dropdown-menu on phone uses
+
+  // Hide toolbar and discussion list when custom home is active
+  .Page-toolbar,
+  .IndexPage-toolbar,
+  .IndexPage-list {
+    display: none !important;
+  }
+
+  .Page-container.container {
+    max-width: 100%;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+
+  .Page-content {
+    width: 100%;
+    float: none;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+:root {
+  --home-max-width: 1320px;
+  --home-border: #eaeaf0;
+  --home-muted: #6b6b72; // was #8f8f95 — bumped to 4.6:1 ratio on white (WCAG AA)
+  --home-title: #202126;
+  --home-shadow: 0 10px 24px rgba(22, 22, 33, 0.05);
+}
+
+.AvocadoHome {
+
+  min-height: 100vh;
+  background: #fff;
+  color: var(--home-title);
+  font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.AvocadoHome-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  justify-content: space-between;
+  height: 72px;
+  max-width: var(--home-max-width);
+  margin: 0 auto;
+  padding: 0 12px;
+  border-bottom: 1px solid #efeff4;
+  background: rgba(255, 255, 255, 0.93);
+  backdrop-filter: blur(6px);
+}
+
+.AvocadoHome-brand {
+  font-size: 38px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  color: var(--avocado-brand-dark);
+  font-style: italic;
+  font-family: Georgia, "Times New Roman", serif;
+  white-space: nowrap;
+}
+
+.AvocadoHome-search {
+  position: relative;
+  flex: 1;
+  max-width: 420px;
+
+  > i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--avocado-muted-icon);
+    font-size: 14px;
+  }
+
+  > input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    height: 42px;
+    border-radius: 999px;
+    background: var(--avocado-surface-1);
+    padding: 0 16px 0 38px;
+    color: var(--avocado-text-dark);
+    font-size: 14px;
+    font-weight: 500;
+
+    &::placeholder {
+      color: var(--avocado-muted-placeholder);
+      font-weight: 500;
+    }
+
+    &:focus {
+      box-shadow: 0 0 0 2px var(--avocado-border-chip);
+    }
+  }
+}
+
+.AvocadoHome-topActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.AvocadoHome-newThread {
+  .avocado-pill-btn(40px; 20px; 14px);
+  background: var(--avocado-btn-dark);
+  color: #fff;
+
+  &:hover {
+    background: var(--avocado-btn-dark-hover);
+  }
+}
+
+.AvocadoHome-userChip {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--avocado-border-chip);
+  .avocado-flex-center();
+}
+
+.AvocadoHome-userAvatar,
+.AvocadoHome-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 999px;
+}
+
+// Force Flarum's .Avatar to fill our fixed-size containers
+.AvocadoHome-avatarWrap,
+.AvocadoHome-replyCard-avatar,
+.AvocadoHome-composer-avatar {
+  > .Avatar {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+// ─── Online avatars ───────────────────────────────────────────────────────────
+
+.AvocadoHome-sectionHead-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+// New-content dot in the section header — always visible including on phone
+.AvocadoHome-sectionDot {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+}
+
+.AvocadoHome-onlineAvatars {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.AvocadoHome-onlineAvatars-row {
+  display: flex;
+  align-items: center;
+}
+
+.AvocadoHome-onlineAvatars-item {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  margin-left: -7px;
+  border: 2px solid var(--body-bg, #fff);
+  box-sizing: border-box;
+  flex-shrink: 0;
+  text-decoration: none;
+  display: block;
+  // overflow must stay visible so the ::after dot renders outside the circle
+
+  &:first-child { margin-left: 0; }
+
+  // Green ring — box-shadow avoids the overflow/clipping issue of ::after
+  box-shadow: 0 0 0 2px #22c55e;
+
+  // Clip the avatar image to the circle without overflow:hidden on the anchor
+  > img {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 50% !important;
+    border: none !important;
+    box-shadow: none !important;
+    display: block;
+    object-fit: cover;
+  }
+
+  // Flarum Avatar component fallback
+  > .Avatar {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 50% !important;
+    border: none !important;
+    box-shadow: none !important;
+    font-size: 11px !important;
+    line-height: 1 !important;
+  }
+
+  &:hover { opacity: 0.85; }
+}
+
+.AvocadoHome-onlineAvatars-count {
+  margin-left: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--muted-color, #6b6b72);
+  white-space: nowrap;
+}
+
+// Standalone block (AllDiscussions page) — adds spacing from adjacent sections
+.AvocadoDiscussions-onlineBlock {
+  margin-bottom: 18px;
+}
+
+.AvocadoHome-main {
+  max-width: var(--home-max-width);
+  margin: 0 auto;
+  padding: 22px 12px 56px;
+}
+
+.AvocadoHome-postInput {
+  background: var(--avocado-surface-2);
+  border: 1px solid var(--avocado-border-soft);
+  border-radius: 18px;
+  min-height: 58px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: border-color var(--avocado-t-normal), background var(--avocado-t-normal);
+
+  &:hover {
+    background: color-mix(in srgb, var(--avocado-surface-2) 80%, #e0e0e8);
+    border-color: var(--avocado-border-chip);
+  }
+}
+
+.AvocadoHome-postInput-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.AvocadoHome-postInput-placeholder {
+  flex: 1;
+  min-width: 0;
+  color: var(--avocado-muted-label);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.AvocadoHome-postInput-newBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: none;
+  background: var(--primary-color);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.15s ease;
+
+  &:hover { opacity: 0.88; }
+}
+
+// ─── Extension nav bar ────────────────────────────────────────────────────────
+
+.AvocadoHomeNav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  margin-bottom: 22px;
+  padding-bottom: 8px; // room for the active ::after indicator
+
+  // When used inline (same row as a heading), reset vertical margins
+  &--inline {
+    margin: 0 !important;
+    padding-bottom: 0 !important;
+    justify-content: flex-start;
+  }
+
+  // Each LinkButton / TagLinkButton rendered as a pill
+  > .Button,
+  > .LinkButton,
+  > .TagLinkButton {
+    position: relative;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 14px !important;
+    border-radius: 999px !important;
+    border: none !important;
+    background: var(--avocado-surface-1) !important;
+    box-shadow: none !important;
+    font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: var(--avocado-text-dark) !important;
+    text-decoration: none !important;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background var(--avocado-t-fast), color var(--avocado-t-fast);
+
+    .Button-icon { font-size: 12px; margin: 0; }
+    .Button-label { display: flex; }
+    .Button-caret { display: none; }
+
+    // Active dot-indicator below the pill
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%) scaleX(0);
+      width: 16px;
+      height: 3px;
+      border-radius: 999px;
+      background: var(--primary-color);
+      transition: transform 0.18s ease;
+    }
+
+    &:hover, &:focus {
+      background: color-mix(in srgb, var(--avocado-surface-1) 60%, #d0d0d8) !important;
+      color: var(--primary-color) !important;
+      text-decoration: none !important;
+    }
+
+    // Flarum LinkButton renders active state as active="true" attribute (not .active class)
+    &[active="true"] {
+      background: color-mix(in srgb, var(--primary-color) 10%, transparent) !important;
+      color: var(--primary-color) !important;
+
+      &::after { transform: translateX(-50%) scaleX(1); }
+      &:hover { background: color-mix(in srgb, var(--primary-color) 16%, transparent) !important; }
+    }
+  }
+
+  // Suppress separators (added by Tags extension between tag groups)
+  > li.Dropdown-separator { display: none !important; }
+
+  // Mobile: hidden — the native phone nav (drawer + primaryControl escape) handles navigation
+  @media @phone {
+    display: none;
+  }
+
+  @media (max-width: 640px) {
+    gap: 5px;
+    margin-top: 14px;
+    margin-bottom: 16px;
+  }
+}
+
+
+.AvocadoHome-section {
+  margin-top: 30px;
+
+  > h2,
+  .AvocadoHome-sectionHead h2 {
+    margin: 0 0 14px;
+    font-size: 37px;
+    line-height: 1;
+    font-weight: 900;
+    letter-spacing: -0.8px;
+    color: var(--home-title);
+  }
+}
+
+.AvocadoHome-sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  flex-wrap: nowrap;
+  gap: 10px;
+
+  h2 {
+    margin: 0;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+// Inline MENU nav — sits on the same row as the section h2
+.AvocadoHome-sectionHead-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+
+.AvocadoHome-seeAll {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary-color);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.AvocadoHome-categories {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.AvocadoHome-categoryCard {
+  border: 1px solid var(--home-border);
+  border-radius: 16px;
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  color: inherit;
+  text-decoration: none;
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+
+  &:hover,
+  &:focus {
+    text-decoration: none;
+    color: inherit;
+    border-color: #dfdfe6;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(26, 26, 36, 0.06);
+  }
+}
+
+.AvocadoHome-categoryIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: auto;
+  height: auto;
+  min-width: 2.4em;
+  min-height: 2.4em;
+  padding: 0.3em;
+  border-radius: 999px;
+  font-size: 18px;
+  background: var(--cat-bg, #f4f4f7);
+  color: var(--cat-color, #8f9097);
+  box-sizing: border-box;
+
+  i {
+    font-size: 1.1em;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-height: 44px !important;
+    max-width: fit-content !important;
+    width: auto;
+    height: auto;
+    flex-shrink: 0;
+
+    &.fa-kit {
+      padding: 0 !important;
+      // Fix the <i> to the same size it occupies after the font loads.
+      // Without this, the ::before glyph expands the <i> when the font arrives,
+      // growing the container and causing the visible resize flash.
+      width: 1.1em;
+      height: 1.1em;
+      line-height: 1.1em;
+      overflow: hidden;
+    }
+  }
+
+  svg {
+    display: block;
+    width: 1.1em !important;
+    height: 1.1em !important;
+    flex-shrink: 0;
+  }
+
+  img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 4em;
+    max-height: 4em;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+}
+
+.AvocadoHome-categoryBody {
+  min-width: 0;
+  flex: 1;
+
+  > h3 {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.1;
+    font-weight: 800;
+    color: var(--home-title);
+    .avocado-truncate();
+  }
+
+  > p {
+    margin: 4px 0 0;
+    color: var(--home-muted);
+    font-size: 15px;
+    font-weight: 600;
+  }
+}
+
+// ── Featured category card ────────────────────────────────────────────────────
+
+.AvocadoHome-categoryCard--featured {
+  position: relative;
+}
+
+.AvocadoHome-featuredBadge {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  display: block;
+  line-height: 0;
+  cursor: default;
+
+  img, svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+.AvocadoHome-categoryCard--all {
+  justify-content: space-between;
+
+  > i {
+    color: var(--avocado-muted-icon);
+    font-size: 14px;
+  }
+}
+
+.AvocadoHome-threadStack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.AvocadoHome-threadCard {
+  border: 1px solid var(--home-border);
+  border-radius: 21px;
+  padding: 16px;
+// background: var(--control-bg);
+}
+
+.AvocadoHome-threadHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.AvocadoHome-avatarWrap {
+  position: relative; // anchor for .AvocadoHome-unreadBadge
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  text-decoration: none;
+  // overflow stays visible so the unread badge isn't clipped — the .Avatar
+  // child already provides its own rounding/clipping for the image.
+}
+
+// ── Unread badge — overlays the avatar's top-left corner ─────────────────────
+// Counter pill in the theme primary colour by default; switches to the per-card
+// tag colour only when the admin "Discussion card border style" is enabled
+// (same toggle that drives .AvocadoHome-threadCard--unread tinting).
+.AvocadoHome-unreadBadge {
+  position: absolute;
+  top: -4px;
+  left: -6px;
+  z-index: 2;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--primary-color);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+  // Halo against the card so it pops over the avatar edge regardless of background.
+  box-shadow: 0 0 0 2px var(--card-bg, #fff);
+  pointer-events: auto;
+  cursor: default;
+}
+
+[data-avocado-colored-border="left"] .AvocadoHome-unreadBadge,
+[data-avocado-colored-border="full"] .AvocadoHome-unreadBadge {
+  background: var(--item-tag-color, var(--primary-color));
+}
+
+.AvocadoHome-threadMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.AvocadoHome-threadMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;  // allow tags to wrap if they exceed the card width
+  gap: 6px;
+  min-width: 0;
+}
+
+.AvocadoHome-threadUser {
+  color: var(--home-title);
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.AvocadoHome-threadTime {
+  color: var(--avocado-muted-icon);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.AvocadoHome-threadTitle {
+  margin-top: 3px;
+  display: block;
+  color: var(--home-title);
+  text-decoration: none;
+  font-size: 25px;
+  line-height: 1.15;
+  font-weight: 900;
+  letter-spacing: -0.3px;
+  word-break: normal;
+  overflow-wrap: break-word;
+
+  &:hover {
+    text-decoration: underline;
+    color: var(--home-title);
+  }
+}
+
+.AvocadoHome-threadExcerpt {
+  margin: 5px 0 0;
+  color: var(--muted-color);
+  font-size: 17px;
+  line-height: 1.4;
+  .avocado-line-clamp(2);
+}
+
+// ─── Thread card: actions (controls ⋮ + reply btn) ───────────────────────────
+// Wrapper keeps the two buttons vertically centered relative to each other
+.AvocadoHome-threadActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+.AvocadoHome-replyBtn {
+  .avocado-pill-btn(34px; 13px; 12px);
+  font-weight: 800;
+  background: var(--avocado-surface-1);
+  color: var(--avocado-text-dark);
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background: color-mix(in srgb, var(--avocado-surface-1) 50%, #d8d8e0);
+    color: var(--primary-color);
+  }
+
+  &:active {
+    background: color-mix(in srgb, var(--avocado-surface-1) 30%, #c8c8d0);
+    transform: scale(0.94);
+    transition: background 0.05s ease, transform 0.05s ease;
+  }
+}
+
+// ─── Thread card: controls dropdown (three-dot) ───────────────────────────────
+.AvocadoHome-threadControls {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+
+  .AvocadoHome-threadCard:hover &,
+  &.open {
+    opacity: 1;
+  }
+
+  &-toggle {
+    width: 30px;
+    height: 30px;
+    border-radius: 999px !important;
+    padding: 0;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted-color);
+    transition: background 0.15s ease, color 0.15s ease;
+
+    .Button-caret { display: none; }
+    .Button-icon  { font-size: 14px; }
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.07);
+      color: var(--heading-color);
+    }
+  }
+
+  .Dropdown-menu {
+    right: 0;
+    left: auto;
+    border: 1px solid var(--home-border, #eaeaf0);
+    box-shadow: var(--home-shadow, 0 8px 30px rgba(0, 0, 0, 0.1));
+    min-width: 180px;
+  }
+}
+
+// ─── Badge: discussão trancada ────────────────────────────────────────────────
+.AvocadoHome-badge--locked {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.AvocadoHome-threadStats {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  margin-left: 52px;
+}
+
+.AvocadoStatDot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  flex-shrink: 0;
+  animation: AvocadoStatDot-pulse 1.5s ease infinite;
+}
+
+@keyframes AvocadoStatDot-pulse {
+  0%, 100% { opacity: 1;   transform: scale(1);    }
+  50%       { opacity: 0.5; transform: scale(0.75); }
+}
+
+// ─── Thread card: WebSocket animation states ───────────────────────────────
+
+// Brand-new discussion inserted from "X new discussions" button
+@keyframes AvocadoCard-new {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.AvocadoHome-threadCard--new {
+  animation: AvocadoCard-new 0.35s ease-out;
+}
+
+.AvocadoHome-statBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  position: relative;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: none;
+  background: none;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted-color);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  i { font-size: 13px; }
+
+  &:hover {
+    background: var(--control-bg);
+  }
+
+  &:active {
+    background: none;
+  }
+
+  &--likes {
+    .fas, .far {
+      color: var(--muted-color);
+    }
+
+    &.AvocadoHome-statBtn--liked,
+    &:hover {
+      color: #e84393;
+
+      .fas, .far {
+        color: #e84393;
+      }
+    }
+
+    &.AvocadoHome-statBtn--loading {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+  }
+
+  &--replies {
+    .fas, .far {
+      color: #6b7fc4;
+    }
+  }
+
+  // ── Like pop animation (fires when a new like arrives via WebSocket) ───────
+  &--pop {
+    .fa-thumbs-up {
+      animation: AvocadoStatBtn-pop 0.45s ease-out;
+    }
+  }
+}
+
+@keyframes AvocadoStatBtn-pop {
+  0%   { transform: scale(1);    color: inherit; }
+  35%  { transform: scale(1.45); color: #e84393; }
+  70%  { transform: scale(0.9);  color: #e84393; }
+  100% { transform: scale(1);    color: inherit; }
+}
+
+.AvocadoHome-threadReplyGroup {
+  margin-top: 10px;
+  margin-left: 56px;
+  border-left: 2px solid var(--avocado-border-subtle);
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.AvocadoHome-seeReplies {
+  border: 0;
+  background: transparent;
+  color: var(--muted-color);
+  font-size: 13px;
+  font-weight: 800;
+  padding: 0;
+  text-align: left;
+
+  &:hover {
+    color: var(--avocado-text-dark);
+  }
+}
+
+.AvocadoHome-section--yesterday > h2 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--muted-color);
+  font-weight: 900;
+  margin-bottom: 12px;
+}
+
+.AvocadoHome-emptyState {
+  border: 1px dashed var(--avocado-border-subtle);
+  border-radius: 16px;
+  padding: 18px;
+  color: var(--muted-color);
+  font-weight: 700;
+}
+
+// ── Responsive: large screens (below 1100px) ──────────────────────────────────
+@media (max-width: 1099px) {
+  .AvocadoHome-section > h2,
+  .AvocadoHome-sectionHead h2 { font-size: 33px; }
+  .AvocadoHome-threadTitle    { font-size: 22px; }
+}
+
+// ── Responsive: tablet (768px – 991px) ────────────────────────────────────────
+@media @tablet {
+  .AvocadoHome-topbar {
+    height: auto;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .AvocadoHome-search {
+    order: 3;
+    max-width: none;
+    flex-basis: 100%;
+  }
+  .AvocadoHome-brand  { font-size: 32px; }
+  .AvocadoHome-main   { padding-top: 16px; }
+  .AvocadoHome-categories { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .AvocadoHome-section > h2,
+  .AvocadoHome-sectionHead h2 { font-size: 30px; }
+  .AvocadoHome-threadTitle { font-size: 20px; }
+}
+
+// ── Responsive: phone (≤ 767px) ───────────────────────────────────────────────
+@media @phone {
+  .AvocadoHome-topbar {
+    height: auto;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .AvocadoHome-search {
+    order: 3;
+    max-width: none;
+    flex-basis: 100%;
+  }
+  .AvocadoHome-brand              { font-size: 28px; }
+  .AvocadoHome-main               { padding: 12px 10px 40px; }
+  .AvocadoHome-postInput          { display: none; }
+  .AvocadoHome-section > h2       { font-size: 26px; }
+  .AvocadoHome-threadTitle        { font-size: 18px; letter-spacing: -0.1px; }
+  .AvocadoHome-threadExcerpt      { font-size: 15px; }
+  .AvocadoHome-threadCard         { padding: 12px; border-radius: 16px; }
+  .AvocadoHome-threadStats        { margin-left: 46px; }
+  .AvocadoHome-threadReplyGroup   { padding-left: 10px; }
+  .AvocadoHome-section--categories { display: none; }
+  .AvocadoHome-categories         { grid-template-columns: 1fr; }
+  .AvocadoHome-categoryCard       { min-height: 72px; }
+  .AvocadoHome-heroBanner         { min-height: 0; border-radius: 14px; }
+
+  // On phone: overlay becomes a flow element so content drives banner height.
+  .AvocadoHome-heroBannerOverlay {
+    position: relative !important;
+    inset: unset !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    padding: 0 !important;
+  }
+
+  // Reduce top/bottom padding so icon and CTA stay clear of border-radius
+  .AvocadoHome-heroBannerContent {
+    padding: 28px 20px 28px !important;
+  }
+
+  // Reply button: icon-only on phone
+  .AvocadoHome-replyBtn {
+    font-size: 0;
+    padding: 0 10px;
+    i { font-size: 14px; }
+  }
+
+  // Thread meta: allow tags to wrap to a second line instead of overflowing
+  .AvocadoHome-threadMain {
+    overflow: hidden;
+  }
+  .AvocadoHome-threadMeta {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .AvocadoHome-tagPill,
+  .AvocadoHome-tagMore {
+    flex-shrink: 0;
+  }
+
+  // On phone: show +N badge, hide tags 3 and 4
+  .AvocadoHome-tagMore {
+    display: inline-flex;
+  }
+  .AvocadoHome-tagPill--extra {
+    display: none;
+  }
+}
+
+// ─── Author name alias (JS uses threadAuthor) ────────────────────────────────
+.AvocadoHome-threadAuthor {
+  color: var(--home-title);
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+// ─── Unread indicator — bolder title + faint tint, no border, no author tint ─
+// Uses --avocado-unread-color, which defaults to the theme's --primary-color
+// and only switches to the discussion's tag colour when the admin enables
+// "Discussion card border style" (data-avocado-colored-border != "none").
+.AvocadoHome-threadCard--unread {
+  --avocado-unread-color: var(--primary-color);
+
+  background: color-mix(in srgb, var(--avocado-unread-color) 4%, transparent);
+
+  .AvocadoHome-threadTitle {
+    font-weight: 900;
+    color: var(--heading-color, var(--home-title));
+  }
+}
+
+// When the colored-border admin setting is on, follow the per-card tag colour
+// (matches the existing border tinting behaviour).
+[data-avocado-colored-border="left"] .AvocadoHome-threadCard--unread,
+[data-avocado-colored-border="full"] .AvocadoHome-threadCard--unread {
+  --avocado-unread-color: var(--item-tag-color, var(--primary-color));
+}
+
+// ─── Badges (pinned, following) — unread is now .AvocadoHome-unreadBadge ─────
+.AvocadoHome-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 10px;
+
+  &--sticky    { background: rgba(255, 140, 0, 0.12);  color: #f97316; }
+  &--locked    { background: rgba(239, 68,  68, 0.12);  color: #ef4444; }
+  &--hidden    { background: rgba(107, 114, 128, 0.12); color: #6b7280; }
+  &--following { background: rgba(251, 191, 36, 0.15);  color: #f59e0b; }
+  &--ignoring  { background: rgba(107, 114, 128, 0.12); color: #6b7280; }
+}
+
+// ─── Tag overflow badge (+N) — phone only ────────────────────────────────────
+.AvocadoHome-tagMore {
+  display: none; // hidden on desktop; shown on phone via @media below
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--control-bg, #f0f0f5);
+  color: var(--muted-color, #8f9097);
+  flex-shrink: 0;
+}
+
+// ─── Tag pills on thread cards ────────────────────────────────────────────────
+.AvocadoHome-tagPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: var(--tag-bg, rgba(63, 136, 246, 0.1));
+  color: var(--tag-color, #3f88f6);
+  transition: opacity 0.15s;
+
+  &:hover {
+    text-decoration: none;
+    opacity: 0.8;
+  }
+
+  i, svg {
+    display: inline-flex !important;
+    width: fit-content !important;
+    max-width: fit-content !important;
+    align-items: center;
+    font-size: 11px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  // Reset global .fa-kit padding (App.less applies 0 10px globally)
+  .fa-kit {
+    padding: 0 !important;
+  }
+
+  svg {
+    display: block;
+    width: 11px;
+    height: 11px;
+    flex-shrink: 0;
+  }
+
+  // Imagens: escalam proporcionalmente dentro da pill
+  img {
+    display: block;
+    flex-shrink: 0;
+    width: auto;
+    height: 1.4em;
+    max-height: 2em;
+    object-fit: contain;
+  }
+}
+
+// ─── Reply card ───────────────────────────────────────────────────────────────
+.AvocadoHome-replyCard {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.AvocadoHome-replyCard-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  min-height: 44px; // WCAG 2.5.5 touch target
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.12s ease;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+    text-decoration: none;
+    color: inherit;
+  }
+}
+
+.AvocadoHome-replyCard-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+
+  img, span {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    border-radius: 50%;
+  }
+}
+
+.AvocadoHome-replyCard-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--avocado-text-dark);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.AvocadoHome-replyCard-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--muted-color);
+  .avocado-truncate();
+}
+
+.AvocadoHome-replyCard-seeMore {
+  display: flex;
+  align-items: center;
+  min-height: 44px; // WCAG 2.5.5 touch target
+  padding: 8px 8px; // aligns with avatar left edge
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted-color);
+  text-decoration: none;
+  transition: color 0.12s ease;
+
+  &:hover {
+    color: var(--primary-color);
+    text-decoration: none;
+  }
+}
+
+
+// ─── Hero banner ──────────────────────────────────────────────────────────────
+// ─── Guest hero banner ────────────────────────────────────────────────────────
+.AvocadoHome-heroBanner {
+  width: 100%;
+  min-height: 270px;
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 22px;
+  // Base: solid primary color (no image)
+  background: var(--primary-color);
+}
+
+.AvocadoHome-heroBannerOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  // Depth gradient over the primary color
+  background: linear-gradient(135deg, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.02) 60%, rgba(255,255,255,0.04) 100%);
+
+  // Decorative blobs
+  &::before {
+    content: '';
+    position: absolute;
+    top: -70px;
+    right: -70px;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.09);
+    pointer-events: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -50px;
+    left: -50px;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    pointer-events: none;
+  }
+}
+
+// When there is a hero image: primary-color overlay (::before) + hide decorative blobs
+.AvocadoHome-heroBanner--hasImage .AvocadoHome-heroBannerOverlay {
+  background: transparent;
+
+  &::before {
+    content: '' !important;
+    display: block !important;
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important; height: 100% !important;
+    border-radius: 0 !important;
+    background: var(--primary-color) !important;
+    opacity: 0.62 !important;
+    z-index: 0 !important;
+    pointer-events: none !important;
+  }
+
+  &::after { display: none; }
+}
+
+.AvocadoHome-heroBannerContent {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 44px 28px;
+  width: 100%;
+  max-width: 640px;
+}
+
+.AvocadoHome-heroBannerIcon {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: rgba(0,0,0,0.2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: #fff;
+  margin: 0 auto 20px;
+}
+
+.AvocadoHome-heroBannerTitle {
+  margin: 0 0 10px;
+  font-size: 34px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.AvocadoHome-heroBannerDesc {
+  margin: 0 0 22px;
+  font-size: 15px;
+  color: rgba(255,255,255,0.84);
+  line-height: 1.5;
+}
+
+// ─── Guest CTA (inside hero) ──────────────────────────────────────────────────
+.AvocadoHome-guestCTA {
+  display: flex;
+  justify-content: center;
+}
+
+.AvocadoHome-guestCTA-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.AvocadoHome-guestCTA-btn {
+  .avocado-pill-btn(40px; 22px; 13px);
+
+  &:hover { opacity: 0.88; transform: translateY(-1px); }
+
+  &--login {
+    background: #fff;
+    color: var(--primary-color);
+  }
+
+  &--signup {
+    background: rgba(255,255,255,0.16);
+    color: #fff;
+    border: 1.5px solid rgba(255,255,255,0.5);
+  }
+}
+
+.AvocadoHome-guestCTA-or {
+  font-size: 13px;
+  color: rgba(255,255,255,0.65);
+  font-weight: 500;
+}
+
+// ─── Post input inner + actions ───────────────────────────────────────────────
+.AvocadoHome-postInput-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+
+// ─── Inline composer ──────────────────────────────────────────────────────────
+.AvocadoHome-composer {
+  border: 2px solid var(--primary-color);
+  border-radius: 18px;
+  background: #fff;
+  margin-bottom: 22px;
+  // No overflow:hidden — allows tag picker dropdown to escape the container
+}
+
+.AvocadoHome-composer-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid #f0f0f4;
+}
+
+.AvocadoHome-composer-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.AvocadoHome-composerTitle {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2025;
+  background: transparent;
+  min-width: 0;
+
+  &::placeholder { color: #b0b1bb; }
+}
+
+.AvocadoHome-composerBody {
+  display: flex;
+  flex-direction: column;
+
+  .TextEditor {
+    flex: 1;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  // Editor textarea
+  .TextEditor-editor {
+    min-height: 140px;
+    padding: 12px 16px !important;
+  }
+
+  // Toolbar row — single line, preview button first, Close+Post injected on right
+  ul.TextEditor-controls {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    margin: 0 !important;
+    padding: 4px 8px !important;
+    border-top: 1px solid #f0f0f4 !important;
+    background: #fafafa !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    scrollbar-width: none !important;
+    border-radius: 0 0 16px 16px !important;
+
+    &::-webkit-scrollbar { display: none; }
+
+    > li {
+      display: inline-flex !important;
+      align-items: center !important;
+      margin: 0 !important;
+      flex-shrink: 0;
+    }
+
+    li.App-primaryControl {
+      display: none !important;
+    }
+
+    // Separator after preview button
+    li.item-avocadoPreview {
+      margin-right: 4px !important;
+      padding-right: 4px !important;
+      border-right: 1px solid #e8e8f0;
+    }
+
+    // Spacer pushes Close + Post to right
+    li.item-avocadoSpacer { flex: 1 !important; }
+
+    // Close + Post buttons in toolbar
+    li.item-avocadoClose,
+    li.item-avocadoPost {
+      margin-left: 4px !important;
+      flex-shrink: 0 !important;
+    }
+  }
+
+  // Emoji autocomplete: position:fixed lets JS use viewport coordinates directly.
+  // The JS patch in index.js repositions it just above the toolbar.
+  .EmojiDropdown {
+    position: fixed !important;
+    z-index: 1000 !important;
+    max-height: 280px !important;
+    overflow-y: auto !important;
+  }
+
+
+  // Preview mode: preview area on top, toolbar (with only our buttons) pinned below
+  &.is-preview {
+    .TextEditor {
+      order: 2;
+    }
+    .AvocadoHome-composerPreviewArea {
+      order: 1;
+      display: block;
+      flex: 1;
+    }
+    .TextEditor-editor {
+      display: none !important;
+    }
+    ul.TextEditor-controls {
+      border-top: none !important;
+      border-bottom: 1px solid #f0f0f4;
+      > li { display: none !important; }
+      > li.item-avocadoPreview { display: inline-flex !important; border-right: none !important; }
+      > li.item-avocadoSpacer  { display: flex !important; }
+      > li.item-avocadoClose   { display: inline-flex !important; }
+      > li.item-avocadoPost    { display: inline-flex !important; }
+    }
+  }
+
+  // Preview area
+  .AvocadoHome-composerPreviewArea {
+    display: none;
+    background: var(--body-bg, #fff);
+    overflow-y: auto;
+    border-bottom: 1px solid #f0f0f4;
+
+    // Reset Flarum post chrome — keep only content rendering
+    article.CommentPost,
+    .Post-container {
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      border-radius: 0 !important;
+    }
+
+    .Post-body {
+      min-height: 140px;
+      padding: 14px 16px;
+      font-size: 14px;
+      line-height: 1.7;
+      word-break: break-word;
+    }
+  }
+}
+
+.AvocadoHome-composerPreviewBtn {
+  // Inherits Button Button--icon Button--link styles from Flarum
+  // Only override active state
+  &.is-active {
+    color: var(--primary-color) !important;
+  }
+}
+
+.AvocadoHome-composerPreviewEmpty {
+  color: var(--avocado-muted-label);
+  font-style: italic;
+  font-size: 14px;
+}
+
+.AvocadoHome-composer-tags {
+  padding: 8px 16px;
+  border-bottom: 1px solid #f0f0f4;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.AvocadoHome-composer-cancel {
+  border-radius: 999px;
+}
+
+.AvocadoHome-composer-submit {
+  border-radius: 999px;
+
+  &.is-disabled,
+  &:disabled {
+    cursor: not-allowed !important;
+    opacity: 0.6;
+    background-color: var(--bg-control-disabled, #e0e0e0);
+    color: var(--text-control-disabled, #999);
+  }
+}
+
+// ─── Tag picker ───────────────────────────────────────────────────────────────
+.AvocadoHome-tagPicker {
+  position: relative;
+  flex-shrink: 1;
+  flex-grow: 1;       // ocupa o espaço disponível no row do composer
+  min-width: 0;
+}
+
+.AvocadoHome-tagPickerTrigger {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 34px;
+  max-width: 100%;        // nunca ultrapassa o container
+  padding: 5px 12px;
+  border-radius: 999px;   // pill quando vazio; continua arredondado ao crescer
+  border: 1px solid #e3e4ea;
+  background: #f7f7fa;
+  color: #60616c;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, border-radius 0.15s;
+  box-sizing: border-box;
+  text-align: left;
+
+  // Quando tem chips (mais de 2 filhos: ícone + chip(s) + chevron) muda para rounded-rect
+  &:has(.AvocadoHome-tagChip) {
+    border-radius: 16px;
+  }
+
+  &:hover { border-color: var(--primary-color); }
+}
+
+.AvocadoHome-tagPickerPlaceholder {
+  color: #9b9ca6;
+}
+
+.AvocadoHome-tagPickerChevron {
+  font-size: 10px;
+  color: #9b9ca6;
+  margin-left: auto;   // empurra para o canto direito mesmo com multi-linha
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.AvocadoHome-tagChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: none;
+  background: var(--tag-color, var(--primary-color));
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.12s;
+
+  &:hover { opacity: 0.82; }
+}
+
+.AvocadoHome-tagChipRemoveIcon {
+  font-size: 9px;
+  opacity: 0.7;
+  margin-left: 2px;
+}
+
+.AvocadoHome-tagPickerDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 400;
+  background: #fff;
+  border: 1px solid #e8e9ef;
+  border-radius: 14px;
+  padding: 6px;
+  min-width: 240px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+// ── Search bar ────────────────────────────────────────────────────────────────
+.AvocadoHome-tagPickerSearch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  background: #f4f4f8;
+
+  > i {
+    font-size: 12px;
+    color: #aaa;
+    flex-shrink: 0;
+  }
+
+  > input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 13px;
+    color: #2a2b32;
+
+    &::placeholder { color: #bbbcc4; }
+  }
+}
+
+// ── Tag list ──────────────────────────────────────────────────────────────────
+.AvocadoHome-tagPickerList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.AvocadoHome-tagPickerItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2a2b32;
+  transition: background 0.12s;
+
+  &:hover { background: #f3f4f8; }
+  &.is-selected { background: color-mix(in srgb, var(--primary-color) 10%, transparent); }
+
+  // Child (secondary) tags are indented
+  &.is-child {
+    padding-left: 26px;
+
+    .AvocadoHome-tagPickerItem-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      font-size: 10px;
+    }
+  }
+
+  // Tags that cannot be selected due to limits
+  &.is-disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.AvocadoHome-tagPickerItem-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.AvocadoHome-tagPickerItem-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.AvocadoHome-tagPickerItem-desc {
+  font-size: 11px;
+  color: #9b9ca6;
+  font-weight: 400;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100px;
+}
+
+.AvocadoHome-tagPickerItem-check {
+  font-size: 11px;
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.AvocadoHome-tagPickerEmpty {
+  display: block;
+  padding: 10px;
+  font-size: 13px;
+  color: #9b9ca6;
+  text-align: center;
+}
+
+// ── Bypass requirements toggle (admins) ───────────────────────────────────────
+.AvocadoHome-tagPickerBypass {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px 3px;
+  margin-top: 4px;
+  border-top: 1px solid #f0f0f4;
+  font-size: 12px;
+  color: #7a7b85;
+  cursor: pointer;
+
+  input[type="checkbox"] {
+    cursor: pointer;
+  }
+}
+
+// ─── All Discussions Page ─────────────────────────────────────────────────────
+
+.AvocadoDiscussions {
+  max-width: var(--home-max-width);
+  margin: 0 auto;
+  padding: 22px 12px 56px;
+}
+
+.AvocadoDiscussions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.AvocadoDiscussions-title {
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  margin: 0;
+  color: #1a1b21;
+}
+
+.AvocadoDiscussions-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+// ── Sort dropdown ─────────────────────────────────────────────────────────────
+
+.AvocadoDiscussions-sortWrap {
+  position: relative;
+}
+
+.AvocadoDiscussions-sortTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--home-border, #e8e9f0);
+  background: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  color: #3a3b44;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  i { font-size: 11px; color: #8f9097; }
+
+  &:hover,
+  &.is-open {
+    border-color: #c4c5d0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+}
+
+.AvocadoDiscussions-sortDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 100;
+  background: #fff;
+  border: 1px solid #e4e5ee;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  min-width: 160px;
+  padding: 6px;
+  overflow: hidden;
+}
+
+.AvocadoDiscussions-sortOption {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: #3a3b44;
+  text-align: left;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+
+  &:hover {
+    background: #f4f4f8;
+  }
+
+  &.is-active {
+    font-weight: 700;
+    color: #1a1b21;
+  }
+}
+
+.AvocadoDiscussions-sortOption-check {
+  width: 20px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #3f88f6;
+}
+
+// ── Home link ─────────────────────────────────────────────────────────────────
+
+.AvocadoDiscussions-homeLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary-color);
+  text-decoration: none;
+
+  i { font-size: 12px; }
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// ── Load more ─────────────────────────────────────────────────────────────────
+
+.AvocadoDiscussions-loadMore {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0 8px;
+}
+
+.AvocadoDiscussions-loadMoreBtn {
+  padding: 10px 32px;
+  border-radius: 999px;
+  border: 1px solid var(--home-border, #e8e9f0);
+  background: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  color: #3a3b44;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    background: #f4f4f8;
+    border-color: #c4c5d0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+}
+
+// ── Empty state ───────────────────────────────────────────────────────────────
+
+.AvocadoDiscussions-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted-color);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+// ── Mobile/tablet navigation helper ───────────────────────────────────────────
+// IndexSidebar rendered inside standalone pages (AllDiscussionsPage, AvocadoTagPage).
+// On phone:      container is collapsed (h=0, overflow hidden) but the absolutely-
+//                positioned App-titleControl escapes to the phone header.
+// On tablet+:    hidden entirely — our pages have their own horizontal tab nav.
+// NOTE: @desktop-up = 992px+, @tablet-up = 768px+. Must use @tablet-up so the
+//       nav does not leak inline at 768-991px (the tablet gap).
+
+// Strip list markers from the AvocadoExtensionNav ul — the li.App-primaryControl
+// escapes via position:absolute on phone and its ::marker would otherwise be visible.
+.AvocadoExtensionNav > ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  > li { list-style: none; }
+}
+
+// ─── Extension page header (inside .Page-content) ────────────────────────────
+// Injected at the top of providedContent() for all non-DiscussionPage/IndexPage.
+// Matches the layout of .AvocadoDiscussions-header: title on the left, back link
+// on the right. app.title supplies the page name (set by each page's oncreate).
+
+.AvocadoExtensionPage-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.AvocadoExtensionPage-title {
+  margin: 0;
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  color: #1a1b21;
+  line-height: 1.2;
+}
+
+.AvocadoExtensionPage-homeLink {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary-color);
+  text-decoration: none;
+
+  .fas { font-size: 12px; }
+
+  &:hover, &:focus {
+    text-decoration: underline;
+    color: var(--primary-color);
+  }
+}
+
+.AvocadoNav-helper {
+  @media @phone {
+    height: 0;
+    overflow: hidden;
+  }
+  @media @tablet-up {
+    display: none;
+  }
+}
+
+// ── Showcase Grid ─────────────────────────────────────────────────────────────
+
+.AvocadoHome-section--showcase {
+  margin-bottom: 8px;
+}
+
+.AvocadoHome-showcaseGrid {
+  // Dynamic columns: 1 item = full width, 2 = halves, 5 = fifths, etc.
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-auto-rows: minmax(300px, auto); // minimum height for cards
+  align-items: stretch; // all cells in a row match tallest card
+  gap: 12px;
+
+  @media @phone {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 10px;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+  }
+}
+
+// ── Card ──────────────────────────────────────────────────────────────────────
+// portrait card: image at top, badges absolutely anchored on article
+
+.AvocadoHome-showcaseCard {
+  position: relative; // anchor for badges — NO overflow:hidden so tooltip is never clipped
+  height: 100%;       // stretch to fill grid row height → all cards same size
+
+  @media @phone {
+    flex: 0 0 72vw;
+    max-width: 260px;
+    scroll-snap-align: start;
+    height: auto;
+  }
+}
+
+// Badge — top-left, absolute above image
+.AvocadoHome-showcaseCard-badges {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 30;
+  display: flex;
+  gap: 4px;
+
+  .AvocadoHome-badge--sticky   { background: #ffffff; }
+  .AvocadoHome-badge--locked   { background: #ffffff; }
+  .AvocadoHome-badge--following { background: #ffffff; }
+}
+
+// Tag pills — top-right
+.AvocadoHome-showcaseCard-topTags {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+// Tippy tooltip — force above all card layers
+.AvocadoHome-showcaseCard [data-tippy-root],
+.AvocadoHome-showcaseCard .tippy-box {
+  z-index: 99999 !important;
+}
+
+// The <a> IS the card — border, bg, radius all here
+.AvocadoHome-showcaseCard-link {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  height: 100%;      // fills the article which fills the grid row
+  border-radius: 16px;
+  border: 1px solid var(--home-border);
+  background: #ffffff;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  padding: 150px 14px 14px;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  box-sizing: border-box;
+
+  &:hover {
+    background: #f4f4f7;
+    border-color: #dfdfe6;
+    color: var(--primary-color);
+  }
+}
+
+// ── Cover image — absolute, top, fades to card bg at bottom ──────────────────
+
+.AvocadoHome-showcaseCard-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 150px; // fixed — matches padding-top on link
+  object-fit: cover;
+  display: block;
+  z-index: 0;
+  opacity: 0.5;
+  border-radius: 16px 16px 0 0;
+  -webkit-mask-image: linear-gradient(to bottom, #000 40%, #0000 100%);
+  mask-image: linear-gradient(to bottom, #000 40%, #0000 100%);
+  transition: opacity 0.3s ease;
+
+  .AvocadoHome-showcaseCard-link:hover & { opacity: 0.72; }
+
+  // While waiting for IntersectionObserver to assign src: reserve space,
+  // suppress the broken-image icon, show a shimmer placeholder.
+  &:not([src]) {
+    opacity: 0;
+    background: var(--avocado-surface-1);
+    // mask must be removed or the shimmer below won't show through
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+
+.AvocadoHome-showcaseCard-noImg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 150px;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px 16px 0 0;
+  -webkit-mask-image: linear-gradient(to bottom, #000 40%, #0000 100%);
+  mask-image: linear-gradient(to bottom, #000 40%, #0000 100%);
+
+  > i { font-size: 40px !important; opacity: 0.14; }
+}
+
+
+// ── Content — sits above image via z-index + padding-top on link ──────────────
+
+.AvocadoHome-showcaseCard-body {
+  position: relative;
+  z-index: 1;
+  flex: 1; // fills remaining height inside the flex link
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+// Date
+.AvocadoHome-showcaseCard-date {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--home-muted);
+  margin-bottom: 1px;
+}
+
+// Title row: title text + arrow svg
+.AvocadoHome-showcaseCard-titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.AvocadoHome-showcaseCard-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--home-title);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color 0.18s ease;
+
+  .AvocadoHome-showcaseCard-link:hover & { color: var(--primary-color); }
+}
+
+// Arrow — animated on hover (line slides in)
+.AvocadoHome-showcaseCard-arrow {
+  flex-shrink: 0;
+  margin-top: 2px;
+  stroke: var(--home-muted);
+  transition: stroke 0.18s ease;
+
+  .AvocadoHome-showcaseCard-arrow-line {
+    transform: translateX(4px) scaleX(0);
+    transform-origin: right center;
+    transition: transform 0.3s ease;
+  }
+  .AvocadoHome-showcaseCard-arrow-head {
+    transition: transform 0.3s ease;
+  }
+
+  .AvocadoHome-showcaseCard-link:hover & {
+    stroke: var(--primary-color);
+
+    .AvocadoHome-showcaseCard-arrow-line {
+      transform: translateX(1px) scaleX(1);
+    }
+    .AvocadoHome-showcaseCard-arrow-head {
+      transform: translateX(1px);
+    }
+  }
+}
+
+// Excerpt
+.AvocadoHome-showcaseCard-excerpt {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--home-muted);
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// Author row — always pinned to bottom via margin-top: auto
+.AvocadoHome-showcaseCard-author {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: auto;
+  padding-top: 8px;
+
+  .Avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 9px;
+    flex-shrink: 0;
+  }
+}
+
+.AvocadoHome-showcaseCard-authorName {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--home-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Tags row
+.AvocadoHome-showcaseCard-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+// ── Full image variant ───────────────────────────────────────────────────────
+// Image covers 100% of card. Text sits on a subtle bottom gradient scrim.
+
+.AvocadoHome-showcaseCard--full {
+  grid-row: span 1;
+  min-height: 300px; // ensure grid row resolves a definite height for abs-positioned children
+
+  .AvocadoHome-showcaseCard-link {
+    padding: 0;
+    display: block;
+    background: #e8e8ec; // light fallback when no image
+    height: 100%;
+    min-height: 300px; // safety net: height:100% may not resolve in all grid/browser contexts
+
+    &::before { display: none; }
+
+    &:hover .AvocadoHome-showcaseCard-img { opacity: 0.65; }
+  }
+
+  // Image covers entire card — muted opacity similar to compact mode
+  .AvocadoHome-showcaseCard-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 16px;
+    opacity: 0.5;
+    z-index: 1;
+    -webkit-mask-image: none;
+    mask-image: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .AvocadoHome-showcaseCard-noImg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 16px;
+    z-index: 1;
+
+    > i { font-size: 40px !important; opacity: 0.18; }
+  }
+
+  .AvocadoHome-showcaseCard-colorOverlay { display: none; }
+
+  // Body: scrim uses primary tag color via --card-accent (set from JS)
+  .AvocadoHome-showcaseCard-body {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    padding: 64px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    // color-mix() blends --card-accent with transparent to get rgba-like stops
+    background: linear-gradient(to top,
+      color-mix(in srgb, var(--card-accent, #000000) 92%, transparent) 0%,
+      color-mix(in srgb, var(--card-accent, #000000) 72%, transparent) 32%,
+      color-mix(in srgb, var(--card-accent, #000000) 38%, transparent) 60%,
+      transparent 100%
+    );
+    border-radius: 0 0 16px 16px;
+  }
+
+  // White text — no text-shadow
+  .AvocadoHome-showcaseCard-title {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    text-shadow: none;
+  }
+  .AvocadoHome-showcaseCard-excerpt {
+    color: rgba(255, 255, 255, 0.92);
+    text-shadow: none;
+  }
+  .AvocadoHome-showcaseCard-date {
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 11px;
+    text-shadow: none;
+  }
+  .AvocadoHome-showcaseCard-authorName {
+    color: rgba(255, 255, 255, 0.90);
+    text-shadow: none;
+  }
+  .AvocadoHome-showcaseCard-arrow {
+    stroke: #fff;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8));
+  }
+  .AvocadoHome-showcaseCard-titleRow { gap: 8px; }
+
+  .AvocadoHome-showcaseCard-link:hover & {
+    .AvocadoHome-showcaseCard-title { color: #fff; }
+  }
+
+  @media @phone {
+    flex: 0 0 72vw;
+    max-width: 260px;
+    scroll-snap-align: start;
+    grid-row: auto;
+    height: auto;
+    min-height: 0; // reset 300px desktop min-height
+
+    .AvocadoHome-showcaseCard-link { height: 300px; min-height: 300px; }
+  }
+}
+
+// ── Hide native "More…" tag nav link inside AvocadoHome ───────────────────────
+.AvocadoHome .AvocadoExtensionNav .sideNav-more,
+.AvocadoHome .AvocadoExtensionNav li.item-more {
+  display: none !important;
+}

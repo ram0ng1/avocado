@@ -1,0 +1,214 @@
+// ─── Team Page ────────────────────────────────────────────────────────────────
+
+.AvocadoTeamPage {
+  max-width: var(--home-max-width, 1320px);
+  margin: 0 auto;
+  padding: 22px 12px 56px;
+  font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--home-title, #202126);
+
+  // ── Nav sidebar (same pattern as TagsPage / AllDiscussionsPage) ───────────
+  .AvocadoNav-helper {
+    float: left;
+  }
+
+  // ── Header ────────────────────────────────────────────────────────────────
+  &-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  &-title {
+    font-size: 38px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    margin: 0;
+    color: var(--home-title, #1a1b21);
+  }
+
+  &-description {
+    width: 100%;
+    color: var(--home-muted, #6b6b72);
+    font-size: 15px;
+    margin: -12px 0 0;
+    line-height: 1.55;
+  }
+
+  &-empty {
+    color: var(--home-muted, #6b6b72);
+    text-align: center;
+    padding: 48px 0;
+    font-size: 15px;
+  }
+
+  // ── Grid ──────────────────────────────────────────────────────────────────
+  &-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+
+  // ── Card ──────────────────────────────────────────────────────────────────
+  &-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 28px 20px 22px;
+    border: 1px solid var(--home-border, #eaeaf0);
+    border-radius: 21px;
+    text-decoration: none !important;
+    color: var(--home-title, #202126);
+    transition: box-shadow 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
+
+    &:hover {
+      box-shadow: var(--home-shadow, 0 10px 24px rgba(22, 22, 33, 0.05));
+      border-color: var(--primary-color);
+      transform: translateY(-2px);
+      text-decoration: none !important;
+    }
+
+    // ── Avatar ──────────────────────────────────────────────────────────────
+    &-avatarWrap {
+      position: relative;
+      margin-bottom: 16px;
+
+      .Avatar {
+        --size: 80px;
+        width: 80px;
+        height: 80px;
+        font-size: 30px;
+        border-radius: 50%;
+        display: block;
+      }
+    }
+
+    &-online {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #2ecc71;
+      border: 2.5px solid var(--body-bg, #fff);
+    }
+
+    // ── Name ─────────────────────────────────────────────────────────────────
+    &-name {
+      font-size: 16px;
+      font-weight: 800;
+      margin: 0 0 8px;
+      color: var(--home-title, #202126);
+      letter-spacing: -0.2px;
+    }
+
+    // ── Role badge ───────────────────────────────────────────────────────────
+    &-role {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin: 0 0 10px;
+      background: color-mix(in srgb, var(--primary-color) 15%, transparent);
+      color: var(--primary-color);
+    }
+
+    // ── Bio ──────────────────────────────────────────────────────────────────
+    &-bio {
+      font-size: 13px;
+      color: var(--home-muted, #6b6b72);
+      margin: 0 0 10px;
+      line-height: 1.6;
+      .avocado-line-clamp(3);
+      flex: 1;
+      width: 100%;
+    }
+
+    // ── Stats ────────────────────────────────────────────────────────────────
+    &-stats {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--home-muted, #6b6b72);
+      margin: 0 0 6px;
+    }
+
+    &-joined {
+      font-size: 11px;
+      color: var(--home-muted, #6b6b72);
+      opacity: 0.7;
+    }
+
+    // ── Skeleton ──────────────────────────────────────────────────────────────
+    &--skeleton {
+      pointer-events: none;
+    }
+  }
+
+  // ── Shimmer ───────────────────────────────────────────────────────────────
+  &-shimmer {
+    border-radius: 8px;
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--home-muted, #6b6b72) 10%, transparent) 25%,
+      color-mix(in srgb, var(--home-muted, #6b6b72) 20%, transparent) 50%,
+      color-mix(in srgb, var(--home-muted, #6b6b72) 10%, transparent) 75%
+    );
+    background-size: 200% 100%;
+    animation: avocado-shimmer 1.4s ease-in-out infinite;
+
+    &--avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin: 0 auto 16px;
+    }
+
+    &--name   { width: 110px; height: 14px; margin: 0 auto 10px; }
+    &--role   { width: 70px;  height: 20px; margin: 0 auto 10px; border-radius: 20px; }
+    &--bio    { width: 85%;   height: 10px; margin: 0 auto 6px; border-radius: 6px; }
+    &--stats  { width: 60%;   height: 10px; margin: 0 auto;     border-radius: 6px; }
+  }
+}
+
+// ── Responsive ────────────────────────────────────────────────────────────────
+@media @tablet {
+  .AvocadoTeamPage-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media @phone {
+  .AvocadoTeamPage {
+    padding: 16px 10px 40px;
+
+    &-title { font-size: 26px; }
+
+    &-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    &-card {
+      padding: 20px 14px 16px;
+      border-radius: 16px;
+
+      &-avatarWrap .Avatar {
+        --size: 60px;
+        width: 60px;
+        height: 60px;
+        font-size: 22px;
+      }
+
+      &-name { font-size: 14px; }
+    }
+
+    &-shimmer--avatar { width: 60px; height: 60px; }
+  }
+}

@@ -1,0 +1,532 @@
+// ─── Avocado Skeletons ────────────────────────────────────────────────────────
+// Single source of truth for ALL skeleton/preloader styles across the theme.
+// JS counterpart: js/src/forum/components/Skeletons.tsx
+//
+// Sections:
+//   1. Shared keyframes
+//   2. Thread card skeleton    (renderThreadSkeleton)
+//   3. Post search skeleton    (renderPostSkeleton)
+//   4. Showcase skeleton       (renderShowcaseSkeleton)
+//   5. Discussion page skeleton (DiscussionPage--skeleton)
+//      5a. Hero + stream
+//      5b. Sidebar nav         (renderDiscussionNavSkeleton)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── 1. Shared keyframes ───────────────────────────────────────────────────────
+
+@keyframes avocado-shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+
+@keyframes avocado-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
+}
+
+// ── 2. Thread card skeleton ───────────────────────────────────────────────────
+// Mirrors ThreadCard layout: head (avatar + meta/title/excerpt) + stats row.
+
+.AvocadoHome-skeletonCard {
+  padding: 16px;
+  border: 1px solid var(--home-border);
+  border-radius: 21px;
+}
+
+.AvocadoHome-skeletonHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+// Shimmer gradient — DarkMode.less overrides these for dark theme
+.AvocadoHome-skeletonAvatar,
+.AvocadoHome-skeletonLine {
+  background: linear-gradient(90deg, #f0f0f4 25%, #e6e6eb 50%, #f0f0f4 75%);
+  background-size: 800px 100%;
+  animation: avocado-shimmer 1.4s infinite;
+}
+
+.AvocadoHome-skeletonAvatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.AvocadoHome-skeletonBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.AvocadoHome-skeletonActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+// Reply button placeholder — pill shape matching .avocado-pill-btn(34px; 13px; 12px)
+// Width is driven by hidden rendered content (icon + translated label) so it
+// naturally matches the real button regardless of locale.
+.AvocadoHome-skeletonActions-reply {
+  height: 34px;
+  border-radius: 100px;
+  background: linear-gradient(90deg, #f0f0f4 25%, #e6e6eb 50%, #f0f0f4 75%);
+  background-size: 800px 100%;
+  animation: avocado-shimmer 1.4s infinite;
+  flex-shrink: 0;
+  // Layout mirrors real button so children drive the natural width
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 13px;
+  box-sizing: border-box;
+  // Children are invisible — they only establish width
+  > * { visibility: hidden; }
+}
+
+.AvocadoHome-skeletonStats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  margin-left: 54px; // mirrors threadStats margin-left: 52px
+}
+
+.AvocadoHome-skeletonLine {
+  border-radius: 6px;
+
+  // ── Thread card lines (mirror actual card sections) ────────────────────────
+  &--meta    { height: 12px; width: 42%; }                      // author + time
+  &--title   { height: 58px; width: 92%; border-radius: 8px; }  // 2-line title at 25px/1.15
+  &--excerpt { height: 16px; width: 78%; }                      // excerpt line 1
+  &--excerpt2 { height: 16px; width: 55%; }                     // excerpt line 2
+  &--stat    { height: 24px; width: 74px; border-radius: 12px; }// like/reply stat pill
+
+  // ── Legacy lines (used by renderPostSkeleton) ──────────────────────────────
+  &--sm      { height: 10px; width: 40%; }
+  &--md      { height: 12px; width: 70%; }
+  &--lg      { height: 20px; width: 90%; }
+  &--heading { height: 22px; width: 140px; border-radius: 8px; }
+}
+
+// ── 3. Post search skeleton ───────────────────────────────────────────────────
+// Mirrors AvocadoSearch-postCard: head (avatar+meta) → pill → excerpt lines.
+
+.AvocadoSearch-postSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--home-border);
+  border-radius: 18px;
+  background: var(--body-bg);
+
+  &-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: linear-gradient(90deg, #f0f0f4 25%, #e6e6eb 50%, #f0f0f4 75%);
+    background-size: 800px 100%;
+    animation: avocado-shimmer 1.4s infinite;
+  }
+
+  &-meta {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &-pill {
+    height: 26px;
+    width: 55%;
+    border-radius: 100px;
+    background: linear-gradient(90deg, #f0f0f4 25%, #e6e6eb 50%, #f0f0f4 75%);
+    background-size: 800px 100%;
+    animation: avocado-shimmer 1.4s infinite;
+    animation-delay: 0.1s;
+  }
+
+  &-excerpt {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+}
+
+// ── 4. Showcase card skeleton ─────────────────────────────────────────────────
+// One block per card slot; mirrors the showcase card proportions.
+
+.AvocadoHome-showcaseSkeleton {
+  border-radius: 16px;
+  border: 1px solid var(--home-border);
+  // 150px image + ~136px body (date + title + excerpt + author + gaps) + 14px padding-bottom
+  min-height: 300px;
+  background: linear-gradient(90deg, var(--avocado-surface-1) 25%, var(--avocado-border-subtle) 50%, var(--avocado-surface-1) 75%);
+  background-size: 800px 100%;
+  animation: avocado-shimmer 1.4s infinite;
+
+  &--cta { display: none; } // CTA slot hidden during loading
+
+  @media @phone {
+    flex: 0 0 72vw;
+    max-width: 260px;
+  }
+}
+
+// Legacy children (skeleton is now a single block)
+.AvocadoHome-showcaseSkeleton-top,
+.AvocadoHome-showcaseSkeleton-bottom { display: none; }
+
+// Phone: reply button becomes icon-only (text hidden via font-size:0 in real button)
+@media @phone {
+  .AvocadoHome-skeletonActions-reply {
+    padding: 0 10px;
+    > span { display: none; }
+    > i { font-size: 14px; }
+  }
+}
+
+// ── 5. Discussion page skeleton ───────────────────────────────────────────────
+// Replaces the full DiscussionPage view while the discussion data is loading.
+
+// ── 5a. Hero + post stream ────────────────────────────────────────────────────
+
+.DiscussionPage--skeleton {
+  background: #fff;
+  --disc-avatar: 48px;
+  --disc-gap: 24px;
+
+  .Page-main { display: block; }
+
+  // Hero area: transparent bg with a bottom border (tag color not yet known)
+  .AvocadoSkeleton-discussionHero {
+    background: transparent;
+    border-bottom: 1px solid var(--avocado-border-subtle);
+
+    // Mirror .DiscussionHero .container: pass-through, no centering of its own
+    .container {
+      padding: 0;
+      max-width: 100%;
+    }
+  }
+
+  // Mirrors .DiscussionHero-inner exactly: block layout, no flex gap
+  // (flex gap + individual margins would double-count spacing, raising total height
+  //  and shifting top:50% of the absolute deco container vs the real hero)
+  .AvocadoSkeleton-heroInner {
+    position: relative;
+    max-width: var(--home-max-width, 1320px);
+    margin: 0 auto;
+    padding: 48px 20px 52px;
+  }
+
+  // Nav row: back circle + tag pill placeholders
+  .AvocadoSkeleton-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .AvocadoSkeleton-backBtn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  .AvocadoSkeleton-tag {
+    height: 26px;
+    width: 72px;
+    border-radius: 100px;
+    background: rgba(0, 0, 0, 0.07);
+  }
+
+  .AvocadoSkeleton-title {
+    height: 32px;
+    width: 45%;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.09);
+  }
+
+  // Meta row: stacked avatars + text chips
+  .AvocadoSkeleton-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .AvocadoSkeleton-avatarStack {
+    display: flex;
+
+    .AvocadoSkeleton-stackItem {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.10);
+      border: 1.5px solid var(--body-bg, #fff);
+      margin-left: -8px;
+      box-sizing: border-box;
+
+      &:first-child { margin-left: 0; }
+
+      // +more chip
+      &--more {
+        background: rgba(0, 0, 0, 0.14);
+      }
+    }
+  }
+
+  .AvocadoSkeleton-metaChip {
+    height: 16px;
+    border-radius: 100px;
+    background: rgba(0, 0, 0, 0.07);
+
+    &--sm { width: 60px; }
+    &--md { width: 90px; }
+  }
+
+
+  // ── Decoration icon skeleton ──────────────────────────────────────────────────
+  // Count mirrors the admin setting (1 or 2). Mirrors .DiscussionHero-decorationsContainer.
+  .AvocadoSkeleton-decoContainer {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 0;
+    pointer-events: none;
+    z-index: 2;
+
+    &.is-two          { right: 0; gap: 16px; }
+    &.is-two.has-divider { gap: 0; } // mirrors --deco-pair-gap: 0px with divider
+  }
+
+  .AvocadoSkeleton-decoIcon {
+    width:  clamp(45px, 11vw, 100px);
+    height: clamp(45px, 11vw, 100px);
+    border-radius: 14px;
+    background: rgba(0, 0, 0, 0.08);
+    animation: avocado-pulse 1.5s ease-in-out infinite;
+    flex-shrink: 1;
+
+    &:last-child { animation-delay: 0.18s; }
+
+    // When the real icon class is known: match .DiscussionHero-decorationIcon exactly
+    // (width:fit-content / height:auto so wide kit icons like Ole Miss render at natural size)
+    &--icon {
+      width: fit-content;
+      height: auto;
+      max-width: unset;
+      background: transparent;
+      border-radius: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: visible;
+
+      i, .fa-kit {
+        font-size: clamp(45px, 11vw, 100px);
+        color: rgba(0, 0, 0, 0.13);
+        line-height: 1;
+        display: block;
+        max-height: none !important;
+        padding: 0 !important;
+        width: auto !important;
+        height: 1em;
+      }
+    }
+  }
+
+  // Mirrors .DiscussionHero-decoSeparator exactly (flex + padding, no box)
+  .AvocadoSkeleton-decoSep {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: clamp(32px, 8vw, 52px);
+    color: rgba(0, 0, 0, 0.10);
+    padding: 0 12px;
+    animation: avocado-pulse 1.5s ease-in-out infinite 0.09s;
+
+    i { display: block; line-height: 1; }
+  }
+
+  // Post stream — inside Page-content (flex child of Page-container.container)
+  // max-width + horizontal centering come from the .container parent
+  .AvocadoSkeleton-stream {
+    display: flex;
+    flex-direction: column;
+    margin-top: 30px;
+  }
+
+  .AvocadoSkeleton-post {
+    display: flex;
+    gap: var(--disc-gap);
+    padding: 32px 0;
+    border-bottom: 1px solid #f0f0f4;
+    animation: avocado-pulse 1.5s ease-in-out infinite;
+
+    &:nth-child(2) { animation-delay: 0.18s; }
+    &:nth-child(3) { animation-delay: 0.36s; }
+  }
+
+  .AvocadoSkeleton-postAvatar {
+    width: var(--disc-avatar);
+    height: var(--disc-avatar);
+    border-radius: 999px;
+    flex-shrink: 0;
+    background: #e8e8f0;
+  }
+
+  .AvocadoSkeleton-postBody {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 2px;
+  }
+
+  // Mobile-only header row — hidden on desktop/tablet
+  .AvocadoSkeleton-postHeader {
+    display: none;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .AvocadoSkeleton-postAvatarSm {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    flex-shrink: 0;
+    background: #e8e8f0;
+  }
+
+  .AvocadoSkeleton-line {
+    border-radius: 6px;
+    background: #e8e8f0;
+
+    &--sm   { height: 12px; width: 36%; }
+    &--md   { height: 12px; width: 65%; }
+    &--lg   { height: 80px; width: 100%; border-radius: 8px; }
+  }
+}
+
+// ── 5b. Discussion page nav skeleton ─────────────────────────────────────────
+// Mirrors DiscussionPage-nav sidebar:
+//   item-controls     → Reply SplitDropdown (primary color)
+//   item-subscription → Follow SplitDropdown (secondary)
+//   item-avocado-stats → Stats row (replies count)
+//   item-scrubber     → PostStreamScrubber button
+
+// ── Layout fix: sidebar on the right ──────────────────────────────────────────
+// Flarum's `.DiscussionPage .Page` selector (child) doesn't match the skeleton
+// root `.Page.DiscussionPage` (same element). Re-apply the same overrides directly.
+// DOM order mirrors containerItems(): Page-sidebar first (priority 100),
+// Page-content second (priority 10). With row-reverse the first child → right side.
+@media @tablet-up {
+  .DiscussionPage--skeleton {
+    --sidebar-width: 180px;
+    --gap: 55px;
+
+    // display:flex is needed here — PageStructure only enables it @desktop-up.
+    .Page-container {
+      display: flex;
+      flex-direction: row-reverse;
+      gap: var(--gap);
+    }
+    .Page-content {
+      flex: 1;
+      min-width: 0;
+      margin-top: 10px;
+    }
+    .Page-sidebar {
+      width: var(--sidebar-width);
+      flex-shrink: 0;
+      margin-top: 0;
+    }
+  }
+}
+
+.DiscussionPage--skeleton .DiscussionPage-nav {
+  // Mirror Flarum's real nav: sticky at top, items spaced, buttons full-width
+  padding-top: 32px;
+
+  > ul > li { margin-bottom: 10px; }
+
+  // ── Button placeholder (full-width, no caret) ────────────────────────────
+  .AvocadoSkeleton-navSplitMain {
+    height: 40px;
+    border-radius: 16px;
+    background: var(--avocado-surface-1);
+    animation: avocado-pulse 1.5s ease-in-out infinite;
+
+    &--secondary { animation-delay: 0.1s; }
+  }
+
+  // ── Scrubber placeholder ──────────────────────────────────────────────────
+  .AvocadoSkeleton-navScrubber {
+    height: 36px;
+    border-radius: 10px;
+    background: var(--avocado-surface-1);
+    animation: avocado-pulse 1.5s ease-in-out infinite;
+    animation-delay: 0.2s;
+  }
+}
+
+// ── Responsive: tablet ────────────────────────────────────────────────────────
+@media @tablet {
+  .DiscussionPage--skeleton {
+    --disc-avatar: 40px;
+    --disc-gap: 18px;
+
+    .AvocadoSkeleton-heroInner { padding: 36px 20px 40px; }
+    .AvocadoSkeleton-post { padding: 24px 0; }
+  }
+}
+
+// ── Responsive: phone ─────────────────────────────────────────────────────────
+@media @phone {
+  .DiscussionPage--skeleton {
+    --disc-avatar: 34px;
+    --disc-gap: 12px;
+
+    .AvocadoSkeleton-heroInner { padding: 32px 20px 36px; }
+    .AvocadoSkeleton-nav   { justify-content: center; }
+    .AvocadoSkeleton-title { width: 85%; margin: 0 auto; }
+    .AvocadoSkeleton-meta  { justify-content: center; }
+    .AvocadoSkeleton-line--lg { height: 56px; }
+
+    // Mobile posts: no side avatar, show inline avatar+username header row
+    .AvocadoSkeleton-post         { display: block; padding: 18px 0; }
+    .AvocadoSkeleton-postAvatar   { display: none; }
+    .AvocadoSkeleton-postBody     { padding-top: 0; }
+    .AvocadoSkeleton-line--user   { display: none; }
+    .AvocadoSkeleton-postHeader   { display: flex; }
+
+    // Nav skeleton hidden on phone (nav moves to header area on mobile)
+    .Page-sidebar { display: none; }
+
+    // Decoration icon skeleton hidden on phone (mirrors real hero behavior)
+    .AvocadoSkeleton-decoContainer { display: none !important; }
+  }
+}

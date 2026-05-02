@@ -1,0 +1,19 @@
+node_modules
+vendor
+js/dist/admin/
+composer.lock
+.vscode/settings.json
+.vscode
+.claude
+.claudeignore
+
+# Documentation files
+DESIGN_SYSTEM.md
+Avocado Design System
+FLARUM_2.0_CORE_PATTERNS.md
+FLARUM_DIRECTORY_STRUCTURE.md
+FLARUM_IMPLEMENTATION_EXAMPLES.md
+INDEX.md
+QUICK_REFERENCE.md
+FLARUM_CSS_FONTS_MANAGEMENT.md
+AGENT.md

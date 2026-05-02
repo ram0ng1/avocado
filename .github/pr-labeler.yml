@@ -1,0 +1,10 @@
+BC: bc/*
+melhoria: melhoria/*
+correcao: ['correcao/*', 'conserto/*', 'ajuste/*']
+dependencias: dependencias/*
+documentacao: ['docs/*', 'documentacao/*']
+manutencao: manutencao/*
+performance: performance/*
+traducao: traducao/*
+refatoracao: refatoracao/*
+'pular changelog': release/*

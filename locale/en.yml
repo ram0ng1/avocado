@@ -1,0 +1,189 @@
+ramon-avocado:
+  admin:
+    loading: "Loading…"
+    settings:
+      section_homepage: Homepage
+      featured_tags_label: Featured Categories
+      featured_tags_help: Selected categories appear highlighted with a star badge on the homepage and categories page.
+      featured_tags_empty: No tags found.
+      section_auth: Login & Registration
+      auth_image_label: Auth Modal Image
+      auth_image_help: Background image shown in the right panel of the login, sign up, and forgot password modals.
+      section_search: Search
+      section_posts: Posts
+      banner_image_label: Banner Image
+      banner_image_help: Upload the hero banner image displayed at the top of the forum.
+      show_auth_buttons_label: Show Login / Sign Up buttons in header for guests
+      show_auth_buttons_help: Display Log In and Sign Up pill buttons in the header secondary nav for guests.
+      hero_image_position_label: Hero Image Position
+      hero_image_position_help: "CSS background-position value, e.g. 'center top' or '50% 20%'."
+      search_v1_label: Enable V1 search bar style
+      search_v1_help: Show the inline search dropdown instead of the V2 modal.
+      show_share_label: Show Share button on posts
+      show_share_help: Add a Share action button to each post.
+      show_action_icons_label: Show icons on Like and Reply buttons
+      show_action_icons_help: Display Font Awesome icons on the Like and Reply action buttons.
+      fixed_avatar_effect_label: Enable fixed avatar effect
+      fixed_avatar_effect_help: Keep the post avatar sticky while reading long comments on desktop.
+      hero_decoration_icon_label: Show secondary tag icon on discussion hero
+      hero_decoration_icon_help: Display the secondary tag icon as a large decorative element on the right side of the discussion header.
+      hero_decoration_icon_opacity_label: Icon opacity (0-100)
+      hero_decoration_icon_opacity_help: Set the opacity of the decoration icon as a percentage. 100 = fully opaque, 0 = invisible.
+      section_logo: Logo
+      logo_svg_label: Logo SVG
+      logo_svg_help: Upload a custom SVG logo for your forum.
+      logo_enabled_label: Enable Custom Logo
+      logo_enabled_help: Display the custom logo in the header.
+      custom_loading_spinner_label: Custom loading spinner
+      custom_loading_spinner_help: Replace the default text loading indicator with an animated SVG spinner.
+      loading_spinner_style_label: Spinner style
+      spinner_custom_code_label: Custom spinner code
+      spinner_custom_code_help: Paste any SVG or HTML to use as the loading spinner.
+      show_online_users_label: Show online users count
+      show_online_users_help: Display the number of currently online users.
+      show_guest_cta_label: Show guest call-to-action
+      show_guest_cta_help: Display a call-to-action message for guests.
+      show_post_cta_label: Show Join CTA after first post for guests
+      show_post_cta_help: Display a Log In / Sign Up card after the first post in a discussion, visible only to guests.
+      hide_links_for_guests_label: Hide links for guests
+      hide_links_for_guests_help: Prevent guests from following links in posts. Clicking a link shows a Login / Sign Up prompt instead.
+      custom_default_avatar_label: Custom Default Avatar
+      custom_default_avatar_help: Upload a custom default avatar image for users without an avatar.
+      section_footer: Footer
+    footer_settings:
+      footer_enabled: Enable Custom Footer
+      footer_company: Company Information
+      footer_company_name: Company Name
+      footer_company_description: Company Description
+      footer_company_description_placeholder: "Brief description about your company or forum..."
+      footer_company_logo_url: Company Logo URL
+      footer_links_config: Footer Links Configuration
+      footer_links_help_json: "Configure the footer link columns in JSON format. Each column should have a title and a list of links with label and url."
+      footer_footer_bottom: Footer Bottom
+      footer_copyright_text: Copyright Text
+      footer_social: Social Links
+      footer_show_social: Show Social Media Links
+      footer_social_help_json: "Configure social media links in JSON format. Use keys: facebook, twitter, linkedin, instagram, youtube."
+      section_team: Team Page
+      team_enabled_label: Enable Team Page
+      team_enabled_help: Shows the /team page with members from the selected groups.
+      team_title_label: Page Title
+      team_desc_label: Page Description
+      team_desc_placeholder: Meet the people behind the community.
+      team_groups_label: Groups to display
+      team_groups_help: Members of the selected groups will appear on the Team page.
+      team_groups_empty: No groups found.
+  forum:
+    actions:
+      share: Share
+    post_cta:
+      text: "Like what you see? Join the discussion!"
+      or: "or"
+    link_cta:
+      placeholder: "Login to view link"
+    search:
+      title: "Search"
+      placeholder: "Search…"
+      placeholder_hero: "Search the forum…"
+      hero_title: "What are you looking for?"
+      hero_sub: "Search discussions, posts and members"
+      tab_discussions: Discussions
+      tab_posts: Posts
+      tab_users: Users
+      search_button: Search
+      clear: Clear
+      sort_relevance: Relevance
+      sort_latest: Latest
+      sort_top: Top
+      sort_newest: Newest
+      sort_oldest: Oldest
+      no_posts_found: "No posts found for \"{q}\"."
+      no_posts_match: "No posts match these filters."
+      no_users_found: "No users found for \"{q}\"."
+      enter_search_term: "Enter a search term to find users."
+      posts_for: "Posts for"
+      posts_filtered_by: "Posts filtered by"
+      posts_title: "Posts search"
+    header:
+      back_home: Back to Home
+      search: Search
+      or: "or"
+    discussion:
+      post_singular: post
+      post_plural: posts
+      participant_singular: participant
+      participant_plural: participants
+    home:
+      all_categories: All categories
+      all_title: All discussions
+      back_home: Home
+      badge_following: Following
+      badge_sticky: Pinned
+      categories_heading: Categories
+      choose_tags: Choose tags
+      composer_body_placeholder: "Share your thoughts…"
+      composer_close: Close
+      composer_post: Post Discussion
+      composer_submitting: "Posting…"
+      composer_title_placeholder: "Discussion title…"
+      discussion_singular: discussion
+      discussions: discussions
+      filter_tags: Filter tags
+      following_heading: Following
+      like: Like
+      like_count_plural: "{count} likes"
+      like_count_singular: "1 like"
+      log_in: Log In
+      more: more
+      new_discussion: New Discussion
+      no_tags_found: No tags found
+      or: "or"
+      popular_heading: Popular discussions
+      popular_no_discussions: "No discussions yet."
+      replies: Replies
+      reply_count_plural: "{count} replies"
+      reply_count_singular: "1 reply"
+      reply_label: Reply
+      reply_singular: "1 reply"
+      reply_plural: "{count} replies"
+      see_all: See all
+      see_other_replies: See other {count} replies
+      see_other_reply_singular: See other {count} reply
+      sign_up: Sign Up
+      sort_trending: Trending
+      start_discussion: "Tell everyone what are you working on..."
+      today_time: "Today, {time}"
+      untitled: Untitled
+      view: View
+      view_post: View post
+      post_singular: "1 post"
+      post_plural: "{count} posts"
+      discussion_singular_card: "1 discussion"
+      discussion_plural_card: "{count} discussions"
+      yesterday_time: "Yesterday, {time}"
+      showcase_heading: "Showcase"
+    discussions:
+      title: All discussions
+      home: Back to Home
+      load_more: Load more
+    post:
+      op_badge: OP
+    tags:
+      title: Categories
+      discussion_singular: discussion
+      discussion_plural: discussions
+      other_tags_label: Other Tags
+      featured: Featured
+      all_discussions: All discussions
+    team:
+      title: Our Team
+      disabled: This page is not available.
+      empty: No members found.
+      no_bio: Community member.
+      discussions: discussions
+      posts: posts
+      member_since: "Since"
+      member_singular: member
+      member_plural: members
+    link:
+      login_to_view: "Login to view link"

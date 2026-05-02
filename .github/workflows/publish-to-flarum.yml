@@ -1,0 +1,92 @@
+name: Publicar Release no Flarum
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Tag da release (ex: v2.1.19-beta)'
+        required: true
+      release_body:
+        description: 'Corpo/descrição da release'
+        required: false
+        default: ''
+      release_url:
+        description: 'URL da release no GitHub'
+        required: false
+        default: ''
+
+permissions: {}
+
+jobs:
+  publish_to_flarum:
+    name: Publicar no Fórum
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validar FLARUM_DISCUSSION_ID
+        env:
+          FLARUM_DISCUSSION_ID: ${{ vars.FLARUM_DISCUSSION_ID }}
+        run: |
+          if [ -z "$FLARUM_DISCUSSION_ID" ]; then
+            echo "❌ Erro: FLARUM_DISCUSSION_ID não está configurado nas variáveis do repositório."
+            echo "Configure em: Settings > Secrets and variables > Actions > Variables"
+            exit 1
+          fi
+          echo "✅ FLARUM_DISCUSSION_ID configurado: $FLARUM_DISCUSSION_ID"
+
+      - name: Postar comentário de release no Flarum
+        env:
+          FLARUM_API_KEY: ${{ secrets.FLARUM_API_KEY }}
+          FLARUM_DISCUSSION_ID: ${{ vars.FLARUM_DISCUSSION_ID }}
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
+          RELEASE_BODY: ${{ github.event.release.body || inputs.release_body }}
+          RELEASE_URL: ${{ github.event.release.html_url || inputs.release_url }}
+        run: |
+          # Extract version from tag (remove leading 'v' if present)
+          VERSION="${RELEASE_TAG#v}"
+
+          # Build the JSON payload using jq to safely handle all special characters
+          PAYLOAD=$(jq -n \
+            --arg tag "$RELEASE_TAG" \
+            --arg body "$RELEASE_BODY" \
+            --arg url "$RELEASE_URL" \
+            --arg version "$VERSION" \
+            --arg discussion_id "$FLARUM_DISCUSSION_ID" \
+            '{
+              "data": {
+                "type": "posts",
+                "attributes": {
+                  "content": ("## 🚀 " + $tag + "\n\n" + $body + "\n\n**Instalação:**\n```\ncomposer require ramon/avocado:" + $version + "\n```\n\n[Ver release no GitHub](" + $url + ")")
+                },
+                "relationships": {
+                  "discussion": {
+                    "data": {
+                      "type": "discussions",
+                      "id": $discussion_id
+                    }
+                  }
+                }
+              }
+            }')
+
+          echo "Payload preview:"
+          echo "$PAYLOAD" | jq '.'
+
+          HTTP_STATUS=$(curl -s -o /tmp/flarum_response.json -w "%{http_code}" \
+            -X POST "https://ramonguilherme.com.br/api/posts" \
+            -H "Authorization: Token ${FLARUM_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD")
+
+          echo "HTTP Status: $HTTP_STATUS"
+
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "✅ Comentário publicado com sucesso no Flarum!"
+            echo "Post ID: $(jq -r '.data.id // empty' /tmp/flarum_response.json)"
+          else
+            echo "❌ Falha ao publicar comentário no Flarum (HTTP $HTTP_STATUS)"
+            echo "Response body:"
+            jq '.' /tmp/flarum_response.json
+            exit 1
+          fi

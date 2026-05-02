@@ -1,0 +1,109 @@
+name: Release Workflow
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build_and_release:
+    name: Build e Publicação Automática
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: js/package-lock.json
+
+      - name: Instalar Dependências JS
+        run: |
+          cd js
+          npm ci
+
+      - name: Build JS (Flarum)
+        run: |
+          cd js
+          npm run build
+
+      - name: Verificar versão no composer.json
+        id: check_version
+        uses: EndBug/version-check@v2
+        with:
+          file-name: composer.json
+          diff-search: true
+
+      - name: Publicar Release em Português
+        id: create_release
+        if: steps.check_version.outputs.changed == 'true'
+        uses: release-drafter/release-drafter@v6
+        with:
+          publish: true
+          tag: v${{ steps.check_version.outputs.version }}
+          name: v${{ steps.check_version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publicar Release no Flarum
+        if: steps.check_version.outputs.changed == 'true' && steps.create_release.outcome == 'success' && steps.create_release.outputs.html_url && vars.FLARUM_DISCUSSION_ID != ''
+        env:
+          FLARUM_API_KEY: ${{ secrets.FLARUM_API_KEY }}
+          FLARUM_DISCUSSION_ID: ${{ vars.FLARUM_DISCUSSION_ID }}
+          RELEASE_TAG: ${{ steps.create_release.outputs.tag_name }}
+          RELEASE_BODY: ${{ steps.create_release.outputs.body }}
+          RELEASE_URL: ${{ steps.create_release.outputs.html_url }}
+        run: |
+          # Extract version from tag (remove leading 'v' if present)
+          VERSION="${RELEASE_TAG#v}"
+
+          PAYLOAD=$(jq -n \
+            --arg tag "$RELEASE_TAG" \
+            --arg body "$RELEASE_BODY" \
+            --arg url "$RELEASE_URL" \
+            --arg version "$VERSION" \
+            --arg discussion_id "$FLARUM_DISCUSSION_ID" \
+            '{
+              "data": {
+                "type": "posts",
+                "attributes": {
+                  "content": ("## 🚀 " + $tag + "\n\n" + $body + "\n\n**Instalação:**\n```\ncomposer require ramon/avocado:" + $version + "\n```\n\n[Ver release no GitHub](" + $url + ")")
+                },
+                "relationships": {
+                  "discussion": {
+                    "data": {
+                      "type": "discussions",
+                      "id": $discussion_id
+                    }
+                  }
+                }
+              }
+            }')
+
+          HTTP_STATUS=$(curl -s -o /tmp/flarum_response.json -w "%{http_code}" \
+            -X POST "https://ramonguilherme.com.br/api/posts" \
+            -H "Authorization: Token ${FLARUM_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD")
+
+          echo "HTTP Status: $HTTP_STATUS"
+
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "✅ Comentário publicado com sucesso no Flarum!"
+            echo "Post ID: $(jq -r '.data.id // empty' /tmp/flarum_response.json)"
+          else
+            echo "❌ Falha ao publicar comentário no Flarum (HTTP $HTTP_STATUS)"
+            echo "Response body:"
+            jq '.' /tmp/flarum_response.json
+            exit 1
+          fi
+
+      - name: Log de Status
+        run: |
+          echo "Versão alterada: ${{ steps.check_version.outputs.changed }}"
+          echo "Nova versão: ${{ steps.check_version.outputs.version }}"

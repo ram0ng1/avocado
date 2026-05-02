@@ -1,0 +1,250 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Avocado – Auth Modal (Login, Sign Up, Forgot Password)
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// The MutationObserver in forum/index.js injects .AvocadoAuth-panel as the
+// FIRST child of .Modal-content whenever a login/sign-up/forgot-password modal
+// opens.  We turn .Modal-content into a flex row:  panel on the left (image /
+// brand) and the original form on the right.
+//
+
+// ─── Modal backdrop: align to top on short viewports so modal never clips ─────
+// Flarum's default is align-items:center which cuts off tall modals.
+// align-items:flex-start + padding lets the ModalManager (overflow-y:auto) scroll.
+// When modal is closed (no .Modal-content), disable pointer-events and z-index
+.Modal-backdrop {
+  pointer-events: none;
+}
+
+// Only when modal is actually open with content, remove all overrides
+// Let Flarum handle z-index and pointer-events natively
+.Modal-backdrop:has(.Modal-content) {
+  pointer-events: auto;
+}
+
+@media @phone {
+  // On mobile the modal is shorter (no side panel), so center it like Flarum default
+  .Modal-backdrop:has(.AvocadoAuth-panel) {
+    align-items: center !important;
+    padding: 12px 0 !important;
+  }
+}
+
+// ─── Side-panel ───────────────────────────────────────────────────────────────
+
+.AvocadoAuth-panel {
+  display: none; // hidden on mobile by default
+  position: relative;
+  flex-shrink: 0;
+  width: 300px;
+  min-height: 420px;
+  border-radius: 0 @border-radius @border-radius 0;
+  overflow: hidden;
+  // Default: rich gradient from primary color
+  background: linear-gradient(145deg, var(--primary-color) 0%, color-mix(in srgb, var(--primary-color) 65%, #000) 100%);
+
+  // Decorative circle blobs
+  &::before {
+    content: '';
+    position: absolute;
+    top: -70px;
+    right: -70px;
+    width: 210px;
+    height: 210px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.10);
+    pointer-events: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -50px;
+    left: -50px;
+    width: 170px;
+    height: 170px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.07);
+    pointer-events: none;
+  }
+}
+
+.AvocadoAuth-panelOverlay {
+  position: absolute;
+  inset: 0;
+  // Primary-color tint over the image — mirrors heroBanner --hasImage overlay
+  background: var(--primary-color);
+  opacity: 0.62;
+  pointer-events: none;
+}
+
+.AvocadoAuth-panelContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+  padding: 32px 28px;
+}
+
+.AvocadoAuth-panelTitle {
+  display: block;
+  font-size: 24px;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.15;
+  margin-bottom: 8px;
+  letter-spacing: -0.4px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.AvocadoAuth-panelDesc {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.80);
+  line-height: 1.55;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.20);
+}
+
+// ─── Modal layout when panel is present ──────────────────────────────────────
+// Panel uses position:absolute so Mithril's block-flow (header+content+footer)
+// remains vertical. The panel is pinned to the right; padding-right makes room for it.
+
+.Modal-content:has(.AvocadoAuth-panel) {
+  position: relative;
+  overflow: hidden;
+  border-radius: @border-radius;
+  padding: 108px 28px 32px; // top: room for form icon (32+48+28)
+  box-sizing: border-box;
+  background: var(--control-bg);
+}
+
+// ─── Panel pinned to the right on tablet+ ────────────────────────────────────
+
+.AvocadoAuth-panel {
+  display: none; // hidden on mobile
+}
+
+@media @tablet-up {
+  .AvocadoAuth-panel {
+    display: block;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 380px;
+    border-radius: 0 @border-radius @border-radius 0;
+    overflow: hidden;
+  }
+
+  // Make room for the panel on the right (380px panel + 28px inner margin)
+  .Modal-content:has(.AvocadoAuth-panel) {
+    padding-right: 408px;
+  }
+
+  // Clip the panel (position:absolute; bottom:0) by constraining Modal-content height
+  // The panel's bottom:0 anchors to Modal-content — so capping Modal-content clips the panel
+  .Modal-content:has(.AvocadoAuth-panel) {
+    max-height: calc(100vh - 60px) !important;
+    overflow: hidden !important;
+  }
+}
+
+
+// ─── Form icon (lock / user-plus / envelope) ──────────────────────────────────
+
+.AvocadoAuth-formIcon {
+  position: absolute;
+  top: 32px;
+  left: 28px;
+  z-index: 2;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--primary-color);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 20px;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+// ─── Wider modal to accommodate panel + form ─────────────────────────────────
+// Flarum's .Modal--small caps .Modal-dialog at 375px. Override via :has().
+
+@media @tablet-up {
+  .LogInModal:has(.AvocadoAuth-panel) .Modal-dialog,
+  .SignUpModal:has(.AvocadoAuth-panel) .Modal-dialog,
+  .ForgotPasswordModal:has(.AvocadoAuth-panel) .Modal-dialog,
+  .LogInModal:has(.AvocadoAuth-panel),
+  .SignUpModal:has(.AvocadoAuth-panel),
+  .ForgotPasswordModal:has(.AvocadoAuth-panel) {
+    max-width: 860px !important;
+    width: 92vw !important;
+  }
+}
+
+// ─── Mobile: modal adapts to small screens ────────────────────────────────────
+
+@media @phone {
+  // Constrain dialog to viewport width with margin
+  .LogInModal .Modal-dialog,
+  .SignUpModal .Modal-dialog,
+  .ForgotPasswordModal .Modal-dialog {
+    width: calc(100vw - 24px) !important;
+    max-width: 100% !important;
+    margin: 12px auto !important;
+  }
+
+  // Ensure the modal fills well on very small screens (e.g. 320px)
+  .Modal--small .Modal-dialog,
+  .LogInModal.Modal--small .Modal-dialog,
+  .SignUpModal.Modal--small .Modal-dialog,
+  .ForgotPasswordModal.Modal--small .Modal-dialog {
+    width: calc(100vw - 24px) !important;
+    min-width: 0 !important;
+  }
+
+  // On mobile: icon centered in-flow, below the absolute Modal-header
+  // The Modal-header is ~72px tall (position:absolute, covers the top).
+  // padding-top pushes the flow start below the header; margin adds the visible gap.
+  .AvocadoAuth-formIcon {
+    position: static;
+    display: flex;
+    margin: 0 auto 20px;
+    width: 52px;
+    height: 52px;
+    font-size: 22px;
+    border-radius: 14px;
+  }
+
+  // padding-top = header height (~72px) + small gap (6px) = 78px
+  .Modal-content:has(.AvocadoAuth-panel) {
+    padding: 78px 20px 28px !important;
+  }
+}
+
+// ─── Admin section headings ───────────────────────────────────────────────────
+
+.AvocadoAdmin-section {
+  padding: 16px 0 4px;
+  border-top: 1px solid var(--control-bg-dark, #e8e8ed);
+  margin-top: 8px;
+
+  &:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted-color);
+  }
+}
