@@ -361,6 +361,25 @@ const addThreadsBackLabel = (root: HTMLElement | null) => {
 app.initializers.add(
   'ramon-avocado',
   () => {
+    // ── 0a. Resolve duplicate id="footer" via Footer override ─────────────────
+    // Core's blade renders TWO <footer id="footer" class="App-footer"> elements:
+    //   1. inside #app as a Mithril mount target (Footer.view() returns null,
+    //      so it stays empty — and core's `.App-footer:empty { display:none }`
+    //      hides it);
+    //   2. outside #app as a sibling of body, populated with the admin's
+    //      `custom_footer` HTML.
+    //
+    // The duplicate id breaks getElementById and confuses layout. Better fix:
+    //   a) override Footer.view so the Mithril mount renders the admin footer
+    //      content itself (no longer empty, no longer hidden by :empty);
+    //   b) remove the external sibling footer at boot, so only one #footer
+    //      exists and core's pane-aware layout (margin-left: var(--pane-width))
+    //      works without conflicts.
+    try {
+      const externalFooter = document.querySelector('body > footer#footer') as HTMLElement | null;
+      if (externalFooter) externalFooter.parentElement?.removeChild(externalFooter);
+    } catch (_) { /* defensive — never block boot */ }
+
     // ── 0. Register custom routes ─────────────────────────────────────────────
     // The /discussions page is always registered so direct links keep working.
     app.routes['avocado-team'] = { path: '/team', component: AvocadoTeamPage };
@@ -1751,9 +1770,54 @@ app.initializers.add(
       return false;
     };
 
-    // ── 25. Footer ────────────────────────────────────────────────────────────
+    // ── 25. Footer — render admin's custom_footer inside the Mithril mount ───
+    // See bootstrap block 0a for the rationale (resolve duplicate id="footer").
+    //
+    // Two transformations on the admin HTML:
+    //   1. <style> blocks are hoisted into <head>. They must be moved out of the
+    //      Mithril-managed subtree because m.trust + Mithril patching can re-insert
+    //      <style> nodes on every redraw, which causes the browser to re-evaluate
+    //      the CSS and triggers a full style recomputation. Hoisting once at boot
+    //      avoids that and guarantees the rules apply (head <style> is always live).
+    //   2. Children of any <footer> wrapper are promoted to the root, since the
+    //      Mithril mount itself is already <footer id="footer">. Avoids invalid
+    //      <footer><footer>…</footer></footer> nesting and duplicate ids.
+    let _avFooterContent: string | null = null;
     override(Footer.prototype, 'view', function () {
-      return null;
+      if (_avFooterContent === null) {
+        const html = (app.forum.attribute('footerHtml') as string) || '';
+        if (!html.trim()) {
+          _avFooterContent = '';
+        } else {
+          const tmp = document.createElement('div');
+          tmp.innerHTML = html;
+
+          // Hoist <style> tags into <head>, deduped by content.
+          tmp.querySelectorAll('style').forEach((styleEl) => {
+            const css = styleEl.textContent || '';
+            const exists = [...document.head.querySelectorAll('style[data-avocado-footer]')]
+              .some((s) => s.textContent === css);
+            if (!exists && css.trim()) {
+              const moved = document.createElement('style');
+              moved.setAttribute('data-avocado-footer', '1');
+              moved.textContent = css;
+              document.head.appendChild(moved);
+            }
+            styleEl.parentNode?.removeChild(styleEl);
+          });
+
+          // Promote any nested <footer>'s children to the root.
+          tmp.querySelectorAll('footer').forEach((f) => {
+            const parent = f.parentNode;
+            if (!parent) return;
+            while (f.firstChild) parent.insertBefore(f.firstChild, f);
+            parent.removeChild(f);
+          });
+
+          _avFooterContent = tmp.innerHTML;
+        }
+      }
+      return _avFooterContent ? m.trust(_avFooterContent) : null;
     });
 
     // ── Guest link gating ─────────────────────────────────────────────────────

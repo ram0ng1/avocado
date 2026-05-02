@@ -31,6 +31,7 @@ import {
   categoryCardStyle,
   safeCssUrl,
 } from '../utils';
+import { bindRealtime, pushPayloadDiscussion } from '../realtime';
 
 // Module-level cache for real showcase item count (persists across SPA navigations).
 let _showcaseRealCount: number | null = null;
@@ -80,12 +81,9 @@ export default class HomePage extends Component {
     this._cachedLatest     = null;
     this._cachedStoreSize  = -1;
     this._sectionHasNew    = false;
-    this._wsHandler        = null;
-    this._likeHandler      = null;
-    this._unlikeHandler    = null;
-    this._deletedHandler   = null;
-    this._pinnedHandler    = null;
+    this._unbindRealtime   = null;
     this._updatedLikeIds   = new Set();
+    this._newDiscIds       = new Set();
     this._selfActionIds    = new Set();
 
     // Showcase grid state
@@ -114,88 +112,70 @@ export default class HomePage extends Component {
   oncreate(vnode) {
     super.oncreate(vnode);
 
-    if (app.pusher) {
-      this._wsHandler = (data) => {
-        const discId = String(data?.discussionId || '');
-        if (!discId) return;
-        app.store
-          .find('discussions', discId, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
-          .then(() => {
-            this._cachedPopular = null;
-            this._cachedLatest  = null;
+    // Refetch the discussion the broadcast refers to so firstPost/lastPost/tags
+    // are populated for the home cards (the realtime payload only includes the
+    // discussion itself).
+    const refresh = (discId, { afterRefresh } = {}) => {
+      this._cachedPopular = null;
+      this._cachedLatest  = null;
+      app.store
+        .find('discussions', discId, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
+        .then(() => { afterRefresh?.(); m.redraw(); })
+        .catch(() => { m.redraw(); });
+    };
+
+    this._unbindRealtime = bindRealtime({
+      onPost: (data) => {
+        const disc = pushPayloadDiscussion(data);
+        const id = disc?.id?.();
+        if (!id) return;
+        const sid = String(id);
+        refresh(id, {
+          afterRefresh: () => {
+            // Section header dot — broad "something happened in this section".
             this._sectionHasNew = true;
-            m.redraw();
             setTimeout(() => { this._sectionHasNew = false; m.redraw(); }, 5000);
-          })
-          .catch(() => { m.redraw(); });
-      };
-
-      const handleLikeEvent = (data) => {
-        const discId = String(data?.discussionId || '');
-        if (!discId) return;
-        const isSelf = this._selfActionIds.has(discId);
-        if (isSelf) this._selfActionIds.delete(discId);
-        this._cachedPopular = null;
-        this._cachedLatest  = null;
-        app.store
-          .find('discussions', discId, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
-          .then(() => {
-            if (!isSelf) {
-              this._updatedLikeIds.add(discId);
-              setTimeout(() => { this._updatedLikeIds.delete(discId); m.redraw(); }, 500);
-            }
-            m.redraw();
-          })
-          .catch(() => { m.redraw(); });
-      };
-      this._likeHandler   = handleLikeEvent;
-      this._unlikeHandler = handleLikeEvent;
-
-      this._deletedHandler = (data) => {
-        const discId = String(data?.discussionId || '');
-        if (!discId) return;
-        app.store
-          .find('discussions', discId, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
-          .then(() => { this._cachedPopular = null; this._cachedLatest = null; m.redraw(); })
-          .catch(() => {});
-      };
-
-      this._pinnedHandler = (data) => {
-        const discId = String(data?.discussionId || '');
-        if (!discId) return;
-        app.store
-          .find('discussions', discId, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
-          .then(() => { this._cachedPopular = null; this._cachedLatest = null; m.redraw(); })
-          .catch(() => {});
-      };
-
-      if (typeof app.pusher?.then === 'function') {
-        app.pusher.then(({ channels }) => {
-          if (channels?.main) {
-            channels.main.bind('newPost',          this._wsHandler);
-            channels.main.bind('postLiked',        this._likeHandler);
-            channels.main.bind('postUnliked',      this._unlikeHandler);
-            channels.main.bind('postDeleted',      this._deletedHandler);
-            channels.main.bind('discussionPinned', this._pinnedHandler);
-          }
+            // Per-thread dot — discreet, fades after the same window.
+            this._newDiscIds.add(sid);
+            setTimeout(() => { this._newDiscIds.delete(sid); m.redraw(); }, 5000);
+          },
         });
-      }
-    }
+      },
+
+      onLike: (data) => {
+        const disc = pushPayloadDiscussion(data);
+        const id = disc?.id?.();
+        if (!id) return;
+        const isSelf = this._selfActionIds.has(id);
+        if (isSelf) this._selfActionIds.delete(id);
+        refresh(id, {
+          afterRefresh: () => {
+            if (!isSelf) {
+              this._updatedLikeIds.add(id);
+              setTimeout(() => { this._updatedLikeIds.delete(id); m.redraw(); }, 500);
+            }
+          },
+        });
+      },
+
+      onPinned: (data) => {
+        const disc = pushPayloadDiscussion(data);
+        const id = disc?.id?.();
+        if (id) refresh(id);
+      },
+
+      onPostRemoved: (data) => {
+        const disc = pushPayloadDiscussion(data);
+        const id = disc?.id?.();
+        if (id) refresh(id);
+      },
+    });
   }
 
   onremove(vnode) {
     super.onremove(vnode);
-    if (app.pusher && typeof app.pusher.then === 'function') {
-      app.pusher.then(({ channels }) => {
-        if (channels?.main) {
-          if (this._wsHandler)      channels.main.unbind('newPost',          this._wsHandler);
-          if (this._likeHandler)    channels.main.unbind('postLiked',        this._likeHandler);
-          if (this._unlikeHandler)  channels.main.unbind('postUnliked',      this._unlikeHandler);
-          if (this._deletedHandler) channels.main.unbind('postDeleted',      this._deletedHandler);
-          if (this._pinnedHandler)  channels.main.unbind('discussionPinned', this._pinnedHandler);
-        }
-      });
-    }
+    this._unbindRealtime?.();
+    this._unbindRealtime = null;
   }
 
   allDiscussions() {
@@ -947,6 +927,7 @@ export default class HomePage extends Component {
                       context={this}
                       likingIds={this.likingIds}
                       updatedLikeIds={this._updatedLikeIds}
+                      newDiscIds={this._newDiscIds}
                       onToggleLike={(disc) => this.toggleLike(disc)}
                       filterTagIds={this._showcaseTagIds()}
                     />

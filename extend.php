@@ -85,6 +85,25 @@ return [
                 ]),
         ]),
 
+    // ── flarum/realtime — post removal/restoration (delete + hide) ───────────
+    // Both events share one channel name (postRemoved): clients always need to
+    // refresh the discussion to reflect the new visible state, so a single
+    // event handler is enough.
+    (new Extend\Conditional())
+        ->whenExtensionEnabled('flarum-realtime', fn () => [
+            (new \Flarum\Realtime\Extend\Realtime())
+                ->broadcastModelEvent(
+                    [
+                        \Flarum\Post\Event\Deleted::class,
+                        \Flarum\Post\Event\Hidden::class,
+                        \Flarum\Post\Event\Restored::class,
+                    ],
+                    fn ($event) => $event->post,
+                    fn ($event) => $event->actor,
+                    'postRemoved',
+                ),
+        ]),
+
     (new Extend\ApiResource(\Flarum\Api\Resource\ForumResource::class))
         ->fields(\Ramon\Avocado\Api\ForumAttributes::class),
 
