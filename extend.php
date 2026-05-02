@@ -26,7 +26,6 @@ return [
         ->content(\Ramon\Avocado\Content\AddCriticalCss::class)
         ->content(\Ramon\Avocado\Content\AddCriticalPreloads::class)
         ->content(\Ramon\Avocado\Content\AddHeroBannerPreload::class)
-        ->content(\Ramon\Avocado\Content\AddShowcaseImagePreload::class)
         ->content(\Ramon\Avocado\Content\CustomLoadingSpinner::class)
         ->content(\Ramon\Avocado\Content\HideLogoFlash::class)
         // DeferMainCss removed: Flarum core already emits async-CSS natively
