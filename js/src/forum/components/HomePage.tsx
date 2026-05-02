@@ -832,7 +832,10 @@ export default class HomePage extends Component {
           {categories.length > 0 && !isFollowingPage && (
             <section className="AvocadoHome-section AvocadoHome-section--categories">
               <div className="AvocadoHome-sectionHead">
-                <h2>{trans('ramon-avocado.forum.home.categories_heading', 'Categories')}</h2>
+                <h2>{
+                  (app.forum?.attribute('avocadoCategoriesHeading') as string)?.trim()
+                    || trans('ramon-avocado.forum.home.categories_heading', 'Categories')
+                }</h2>
                 {(() => {
                   const nav = this.renderNavBar();
                   if (!nav) return null;
@@ -898,9 +901,12 @@ export default class HomePage extends Component {
           {/* ── Popular / Following discussions ───────────────────────────── */}
           <section className="AvocadoHome-section">
             <div className="AvocadoHome-sectionHead">
-              <h2>{isFollowingPage
-                ? trans('ramon-avocado.forum.home.following_heading', 'Following')
-                : trans('ramon-avocado.forum.home.popular_heading', 'Popular discussions')
+              <h2>{
+                isFollowingPage
+                  ? ((app.forum?.attribute('avocadoFollowingHeading') as string)?.trim()
+                      || trans('ramon-avocado.forum.home.following_heading', 'Following'))
+                  : ((app.forum?.attribute('avocadoPopularHeading') as string)?.trim()
+                      || trans('ramon-avocado.forum.home.popular_heading', 'Popular discussions'))
               }</h2>
               <div className="AvocadoHome-sectionHead-right">
                 {this._sectionHasNew && <span className="AvocadoStatDot AvocadoHome-sectionDot" aria-hidden="true" />}
