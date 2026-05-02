@@ -78,6 +78,7 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
     const isLocked        = discussion.isLocked?.() || false;
     const isFollowing     = discussion.subscription?.() === 'follow';
     const isUnread        = discussion.isUnread?.() || false;
+    const unreadCount     = isUnread ? numberOr(discussion.unreadCount?.(), 0) : 0;
     const replies         = numberOr(discussion.replyCount?.(), 0);
     const timeLabel       = formatTimeLabel(discussion.lastPostedAt?.());
     const userProfileHref = userRoute(user);
@@ -176,6 +177,20 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
           {/* Avatar */}
           <div className={isSearch ? `${p}-threadAvatar` : 'AvocadoHome-avatarWrap'}>
             {user && <Avatar user={user} title={displayName(user)} />}
+            {unreadCount > 0 && (
+              <Tooltip
+                text={trans(
+                  'ramon-avocado.forum.home.badge_unread_tooltip',
+                  unreadCount === 1 ? '1 unread post' : '{count} unread posts',
+                  { count: unreadCount }
+                )}
+                position="top"
+              >
+                <span className="AvocadoHome-unreadBadge" aria-hidden="true">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              </Tooltip>
+            )}
           </div>
 
           {/* Main content */}

@@ -10,7 +10,13 @@ import coreHighlight from 'flarum/common/helpers/highlight';
 
 export const trans = (key: string, fallback: string, params: Record<string, any> = {}): string => {
   const out = app.translator?.trans(key, params);
-  return out && out !== key ? (out as string) : fallback;
+  if (out && out !== key) return out as string;
+  // Interpolate {placeholders} into the fallback when the translation key is missing,
+  // so callers don't see literal `{count}` in the UI.
+  return Object.entries(params).reduce<string>(
+    (s, [k, v]) => s.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v)),
+    fallback
+  );
 };
 
 // ─── Number guard ─────────────────────────────────────────────────────────────
@@ -83,19 +89,16 @@ export const displayName = (user: any): string =>
   user?.displayName?.() || user?.username?.() || '';
 
 // ─── Relative time label ──────────────────────────────────────────────────────
+// Delegates to Flarum's core humanTime helper so the output follows the
+// active locale (e.g. "há 5 minutos" in pt-BR, "5 minutes ago" in en, etc.)
+// and matches the rest of the forum's time formatting.
+import humanTime from 'flarum/common/utils/humanTime';
 
 export const formatTimeLabel = (dateValue: Date | string | null | undefined): string => {
   if (!dateValue) return '';
   const date = dateValue instanceof Date ? dateValue : new Date(dateValue as string);
   if (isNaN(date.getTime())) return '';
-  const now  = new Date();
-  const sod  = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const soy  = new Date(sod.getTime() - 86400000);
-  const time = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false });
-  if (date >= sod) return trans('ramon-avocado.forum.home.today_time', 'Today, {time}', { time });
-  if (date >= soy) return trans('ramon-avocado.forum.home.yesterday_time', 'Yesterday, {time}', { time });
-  const dateLabel = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  return `${dateLabel}, ${time}`;
+  return humanTime(date);
 };
 
 // ─── Text truncation ──────────────────────────────────────────────────────────
