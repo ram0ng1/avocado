@@ -1,0 +1,24 @@
+diff --git a/node_modules/flarum-webpack-config/src/OverrideChunkLoaderFunction.cjs b/node_modules/flarum-webpack-config/src/OverrideChunkLoaderFunction.cjs
+index 5de8609..e263b58 100644
+--- a/node_modules/flarum-webpack-config/src/OverrideChunkLoaderFunction.cjs
++++ b/node_modules/flarum-webpack-config/src/OverrideChunkLoaderFunction.cjs
+@@ -22,11 +22,15 @@ class OverrideChunkLoaderFunction {
+         );
+       });
+ 
+-      // log webpack runtime after the final code, the hook isn't requireEnsure
++      // log webpack runtime after the final code — use new webpack 5 API to avoid deprecation warning
+       if (namespace !== 'core') {
+-        compilation.mainTemplate.hooks.require.tap('OverrideChunkLoaderFunction', (source) => {
+-          return 'flarum.reg._webpack_runtimes["' + namespace + '"] ||= __webpack_require__;' + source;
+-        });
++        const { JavascriptModulesPlugin } = require('webpack').javascript;
++        JavascriptModulesPlugin.getCompilationHooks(compilation).renderRequire.tap(
++          'OverrideChunkLoaderFunction',
++          (source) => {
++            return 'flarum.reg._webpack_runtimes["' + namespace + '"] ||= __webpack_require__;' + source;
++          }
++        );
+       }
+     });
+   }

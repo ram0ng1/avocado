@@ -1,0 +1,2143 @@
+// ── Avocado Discussion Page (/d/) — Clean Feed Design ─────────────────────────
+// Light gray hero · clean feed rows (no bubble cards) · avatar column layout
+
+// ── Design tokens ─────────────────────────────────────────────────────────────
+.Page.DiscussionPage {
+  --disc-bg:      #ffffff;
+  --disc-border:  #f0f0f4;
+  --disc-text:    #43454e;
+  --disc-title:   #202126;
+  --disc-muted:   #8f9097;
+  --disc-avatar:  48px;
+  --disc-gap:     24px;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  background: var(--disc-bg);
+}
+
+// ── DiscussionHero — solid tag color, adaptive text contrast ────────────────────
+// JS sets --discussion-color (tag hex) + --disc-hero-text (#fff|#202126 based on
+// WCAG luminance) + --disc-hero-surface (rgba white|dark for buttons/pills).
+.DiscussionHero {
+  position: relative;
+  background: var(--discussion-color, var(--primary-color));
+  overflow: hidden;
+
+  // Diagonal dark overlay for depth and readability (same as AvocadoTagPage)
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.04) 60%);
+    pointer-events: none;
+  }
+
+  .container { padding: 0; max-width: 100%; }
+}
+
+// Centered inner container — wider padding for breathing room
+.DiscussionHero-inner {
+  position: relative;
+  max-width: var(--home-max-width, 1320px);
+  margin: 0 auto;
+  padding: 48px 20px 52px;
+
+  // Reserve space so title never overlaps decoration icons.
+  // 1 icon  (right: 20px): ~100px icon + 20px offset + 40px buffer = 160px
+  // 2 icons (right: 0):    G + sep + Ole Miss + buffer = 380px
+  &.has-deco-icon      { padding-right: 160px; }
+  &.has-two-deco-icons { padding-right: 420px; }
+}
+
+// Desktop to tablet transition: reduce padding gradually
+@media (max-width: 1129px) {
+  .DiscussionHero-inner.has-two-deco-icons {
+    padding-right: 300px !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .DiscussionHero-inner.has-two-deco-icons {
+    padding-right: 260px !important;
+  }
+}
+
+// Tablet: reduce padding-right significantly
+@media (max-width: 900px) {
+  .DiscussionHero-inner.has-two-deco-icons {
+    padding-right: 200px !important;
+  }
+}
+
+// Tablet: reduce padding-right significantly
+@media (max-width: 900px) {
+  .DiscussionHero-inner.has-two-deco-icons {
+    padding-right: 200px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .DiscussionHero-inner {
+    padding: 36px 16px 44px;
+  }
+
+  .DiscussionHero-inner.has-deco-icon {
+    padding-right: 110px !important;
+  }
+
+  .DiscussionHero-inner.has-two-deco-icons {
+    padding-right: 140px !important;
+  }
+}
+
+// Phone: restore normal padding
+@media @phone {
+  .DiscussionHero-inner {
+    padding: 32px 16px 40px !important;
+  }
+
+  .DiscussionHero-inner.has-deco-icon,
+  .DiscussionHero-inner.has-two-deco-icons {
+    padding-right: 16px !important;
+  }
+}
+
+// Nav row: back circle + pills on same line
+.DiscussionHero-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  flex: 1; // Allow to expand
+  max-width: 100%; // Don't constrain width
+  z-index: 1; // Above the decorations
+}
+
+// Back button — identical to .AvocadoTagPage-back
+// Uses --disc-hero-surface for bg so it adapts to light/dark tag colors
+.DiscussionHero-back {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: var(--disc-hero-surface, rgba(255,255,255,0.18));
+  backdrop-filter: blur(3px);
+  color: var(--disc-hero-text, #fff);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+
+  &:hover { opacity: 0.85; }
+}
+
+// Pill group (badges + tag pills)
+.DiscussionHero-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1; // Allow to expand and wrap unlimited tags
+  max-width: 100%;
+}
+
+// ── AvocadoHome-badge inside hero — icon-only circle, same logic as homepage badges ─
+// Dark/saturated backgrounds so badges stand out on any hero color. Tooltip handled in JS.
+// Specificity 0,2,0 wins over .AvocadoHome-badge 0,1,0.
+.DiscussionHero .AvocadoHome-badge {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  border: none;
+
+  &--sticky    { background: rgba(234,120, 0, 0.82); color: #fff5e0; }
+  &--locked    { background: rgba(210, 45, 45, 0.82); color: #fff0f0; }
+  &--hidden    { background: rgba(80, 82, 94, 0.72); color: rgba(255,255,255,0.80); }
+  &--following { background: rgba(202,152, 0, 0.82); color: #fffbe0; }
+  &--ignoring  { background: rgba(80, 82, 94, 0.55); color: rgba(255,255,255,0.65); }
+}
+
+// Tag pills inside hero — white background with the pill's own tag color.
+// Keeps each tag's identity visible regardless of hero background color.
+.DiscussionHero .AvocadoHome-tagPill {
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--tag-color, #b22244);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 11px;
+
+  &:hover { opacity: 0.88; }
+}
+
+// Discussion title — adaptive color, larger and more impactful
+.DiscussionHero-title {
+  color: var(--disc-hero-text, #fff);
+  font-size: clamp(22px, 3.5vw, 36px);
+  font-weight: 900;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  letter-spacing: -0.5px;
+  line-height: 1.12;
+  margin: 0 0 10px;
+  word-break: break-word;
+}
+
+// Meta row (participants + post count)
+.DiscussionHero-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  color: var(--disc-hero-text-muted, rgba(255,255,255,0.78));
+  font-size: 13px;
+  font-weight: 600;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  margin-top: 12px;
+}
+
+.DiscussionHero-participants { display: flex; align-items: center; }
+
+// Stacked participant avatars
+.DiscussionHero-participantAvatar {
+  display: inline-flex;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 2px solid rgba(255,255,255,0.6);
+  margin-left: -8px;
+  overflow: hidden;
+  box-sizing: content-box;
+
+  &:first-child { margin-left: 0; }
+
+  .Avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: none;
+    box-shadow: none;
+    font-size: 10px;
+  }
+}
+
+.DiscussionHero-participantsMore {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--disc-hero-surface, rgba(255,255,255,0.28));
+  backdrop-filter: blur(3px);
+  border: 2px solid rgba(255,255,255,0.6);
+  color: var(--disc-hero-text, #fff);
+  font-size: 9px;
+  font-weight: 800;
+  margin-left: -8px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.DiscussionHero-metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  i { font-size: 13px; }
+}
+
+// ── Dynamic decoration icons system ────────────────────────────────────────────
+// Responsive, flexible sizing that adapts to custom icon sizes automatically
+// No hardcoded dimensions — everything scales based on actual icon content width
+
+.DiscussionHero-decorationIcon {
+  // Use automatic sizing based on content width
+  width: fit-content;
+  height: auto;
+  
+  // Much smaller to not cover content
+  max-width: 100px;
+  min-width: 30px;
+  
+  // Significantly reduced font size
+  font-size: clamp(45px, 11vw, 100px);
+  line-height: 1;
+  text-align: center;
+  
+  // Adaptive color with opacity blending
+  color: color-mix(
+    in srgb,
+    var(--tag-color-secondary, var(--discussion-color, white))
+      calc(var(--decoration-opacity, 0.15) * 100%),
+    transparent
+  );
+  
+  pointer-events: none;
+  display: none;
+  overflow: visible; // Allow icons to show
+  padding: 0 1px;
+  flex-shrink: 1;
+  z-index: 2; // Visible above most content
+
+  &.is-visible {
+    display: flex;
+    align-items: center;   // centers icon vertically within the stretched height
+    justify-content: center;
+  }
+
+  // Undo .fa-kit global overrides that break sizing inside the decoration icons.
+  // .fa-kit has max-height:44px and padding:0 10px globally — both must be reset
+  // so the icon fills the decoration box at the intended font-size.
+  .fa-kit {
+    max-height: none !important;
+    padding: 0 !important;
+    width: auto !important;
+    height: 1em;
+    display: block;
+    line-height: 1;
+  }
+
+  // Standard FA glyphs
+  i:not(.fa-kit) {
+    display: block;
+    line-height: 1;
+  }
+}
+
+// Centered decoration container ────────────────────────────────────────────
+// Positioned absolutely on the right side, vertically centered in the hero.
+// align-items: stretch so all children share the same height — each child
+// then uses flex internally to center its own icon vertically.
+.DiscussionHero-decorationsContainer {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: var(--deco-pair-gap, 0);
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: 75vw;
+  z-index: 2;
+  overflow: visible;
+}
+
+// Wide logos (e.g. Ole Miss script) exceed 100px — let them grow naturally.
+.has-two-deco-icons .DiscussionHero-decorationIcon {
+  max-width: unset;
+}
+
+// Two icons: flush with the inner container's right edge
+.has-two-deco-icons .DiscussionHero-decorationsContainer {
+  right: 0;
+}
+
+// ── Separator icon: flex item between the two decoration icons
+// Uses align-items: center so its icon is centered within the stretched height
+// that it inherits from the container (align-items: stretch on parent).
+.DiscussionHero-decoSeparator {
+  display: flex;
+  align-items: center;     // vertical center within the shared row height
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: clamp(32px, 8vw, 52px);
+  color: var(--deco-sep-color, rgba(255, 255, 255, 0.5));
+  pointer-events: none;
+  z-index: 3; // above icons (z-index: 2) so it's never obscured by overflow
+  padding: 0 12px;
+
+  i,
+  .fa-kit {
+    display: block;
+    max-height: none !important;
+    padding: 0 !important;
+    line-height: 1;
+  }
+}
+
+// ── Two-icon layout: gap between icons (no divider = small gap; divider = none, its own padding handles it)
+.has-two-deco-icons {
+  --deco-pair-gap: 16px;
+
+  &.has-deco-divider {
+    --deco-pair-gap: 0px; // .DiscussionHero-decoSeparator padding: 0 12px handles spacing
+  }
+}
+
+// ── Breakpoint visibility ─────────────────────────────────────────────────────
+
+// Phone: hide large icons, restore padding
+@media @phone {
+  .DiscussionHero-decorationsContainer {
+    display: none !important;
+  }
+}
+
+// 2-icon layout too wide below 1130px — hide it there, single icon is fine.
+// Using an explicit max-width because @desktop in avocado extends up to 1199px
+// (overrides @screen-desktop-hd to 1200px in less/common/variables.less).
+@media (max-width: 1129px) {
+  .has-two-deco-icons .DiscussionHero-decorationsContainer {
+    display: none !important;
+  }
+
+  // 2 icons hidden here — shrink padding-right to 1-icon value
+  .DiscussionHero-inner.has-two-deco-icons {
+    padding-right: 160px !important;
+  }
+}
+
+// Phone reset MUST come after all max-width blocks above to win the cascade.
+// The (max-width: 1129px) block overrides the @phone reset at line ~104 because
+// it appears later in the source with equal specificity and !important.
+// Repeating the reset here guarantees phones always get full-width padding.
+@media @phone {
+  .DiscussionHero-inner.has-deco-icon,
+  .DiscussionHero-inner.has-two-deco-icons {
+    padding-right: 16px !important;
+  }
+}
+
+
+// ── Page container ─────────────────────────────────────────────────────────────
+
+// ── CommentPost: clean feed row — .Page.DiscussionPage .CommentPost has 0,3,0 vs Flarum's 0,1,0
+.Page.DiscussionPage .CommentPost {
+  background: transparent;
+  overflow: visible;
+  box-shadow: none;
+
+  &:hover { box-shadow: none; }
+}
+
+// ── Tablet+: two-column layout (avatar column | content column) ───────────────
+@media @tablet-up {
+  .Page.DiscussionPage {
+
+    .CommentPost .Post-container {
+      display: grid;
+      grid-template-columns: var(--disc-avatar) 1fr;
+      gap: var(--disc-gap);
+      align-items: start;
+      padding: 0;
+
+      // Extra children added by extensions (3rd+) must sit in the content column,
+      // not the avatar column.
+      > *:nth-child(n+3) {
+        grid-column: 2;
+      }
+    }
+
+    .CommentPost .Post-side {
+      position: relative;
+      width: var(--disc-avatar);
+      flex-shrink: 0;
+      top: auto;
+      left: auto;
+    }
+
+    .CommentPost .Post-main {
+      min-width: 0;
+    }
+  }
+}
+
+// ── Desktop: sticky avatar variant ────────────────────────────────────────────
+@media @desktop-up {
+  .Page.DiscussionPage {
+    .CommentPost.CommentPost--fixedAvatar {
+      --avocado-avatar-sticky-top: 76px;
+
+      .Post-container {
+        display: grid;
+        grid-template-columns: var(--disc-avatar) 1fr;
+        gap: var(--disc-gap);
+        align-items: start;
+      }
+
+      .Post-side {
+        position: sticky;
+        top: var(--avocado-avatar-sticky-top);
+        align-self: start;
+      }
+    }
+  }
+}
+
+// ── Tablet: smaller tokens ─────────────────────────────────────────────────────
+@media @tablet {
+  .Page.DiscussionPage {
+    --disc-avatar: 40px;
+    --disc-gap:    18px;
+  }
+}
+
+// ── Phone: compact layout ──────────────────────────────────────────────────────
+@media @phone {
+  .Page.DiscussionPage {
+    --disc-avatar: 34px;
+    --disc-gap:    12px;
+  }
+  // Mobile: no grid — Flarum's original block layout. Post-side hides its avatar
+  // via Flarum's own @phone rule; hide the side entirely so sideClone badges
+  // don't render as a stray block before Post-main.
+  .Page.DiscussionPage .CommentPost .Post-side {
+    display: none;
+  }
+  .Page.DiscussionPage .CommentPost .Post-main {
+    min-width: 0;
+  }
+
+  // DiscussionHero on phone — centered, title as focal point
+  .DiscussionHero-inner {
+    padding: 32px 20px 36px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .DiscussionHero-nav {
+    gap: 8px;
+    margin-bottom: 18px;
+    justify-content: center;
+    width: 100%;
+  }
+  // Pills flex: initial so justify-content:center on the nav actually centers the group
+  .DiscussionHero-pills {
+    flex: initial;
+    justify-content: center;
+  }
+  .DiscussionHero-title {
+    font-size: clamp(20px, 5.5vw, 28px);
+    text-align: center;
+    width: 100%;
+  }
+  .DiscussionHero-meta { justify-content: center; }
+
+}
+
+// ── Avatar — specificity 0,4,0 to 0,5,0 beats Flarum's .Avatar 0,1,0 ──────────
+.Page.DiscussionPage .CommentPost .Post-side .Avatar,
+.Page.DiscussionPage .CommentPost .Post-side a .Avatar {
+  width: var(--disc-avatar);
+  height: var(--disc-avatar);
+  border-radius: 999px;
+  font-size: calc(var(--disc-avatar) * 0.35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid var(--avocado-online-ring);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.10);
+}
+
+.Page.DiscussionPage .CommentPost .Post-side a {
+  display: block;
+  text-decoration: none;
+}
+
+// ── Avatar inside PostUser-name link: hidden on desktop (real avatar is in Post-side)
+// On mobile, Post-side is hidden so this inline avatar IS the user's avatar — keep it visible.
+@media @tablet-up {
+  .Page.DiscussionPage .PostUser-name .Avatar,
+  .Page.DiscussionPage .PostUser-name .Post-avatar,
+  .Page.DiscussionPage .Post-header .PostUser-name .Avatar {
+    display: none !important;
+  }
+}
+
+// ── UserOnline: shown as green border on the avatar ──────────────────────────
+// Same specificity as base rule but comes later in file — cascade wins, no !important needed
+.Page.DiscussionPage .CommentPost .Post-side--online .Avatar,
+.Page.DiscussionPage .CommentPost .Post-side--online a .Avatar {
+  .avocado-online-ring(2.5px);
+}
+
+// Keep the moved UserOnline element hidden (it exists only for the class trigger)
+.Page.DiscussionPage .CommentPost .Post-side > .UserOnline {
+  display: none !important;
+}
+
+// Hide UserOnline dot (detected by JS for the avatar border, not shown as a dot)
+.Page.DiscussionPage .PostUser .UserOnline,
+.Page.DiscussionPage .Post-header .UserOnline {
+  display: none !important;
+}
+
+// ── PostUser-badges — desktop/tablet ─────────────────────────────────────────
+// fixedAvatar OFF: badges no Post-header vão direto no flow
+// fixedAvatar ON : badges do Post-header ficam ocultas, JS cria um clone em Post-side
+@media @tablet-up {
+  .Page.DiscussionPage .PostUser-badges {
+    position: absolute;
+    left: calc(83px - var(--disc-avatar) - var(--disc-gap));
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  // Quando fixed avatar está ativo, esconde o badges original do Post-header
+  .Page.DiscussionPage .CommentPost--fixedAvatar .Post-header .PostUser-badges {
+    display: none !important;
+  }
+
+  // Mostra apenas o clone dos badges que está em Post-side
+  .Page.DiscussionPage .CommentPost--fixedAvatar .PostUser-badges--inSide {
+    display: block !important;
+    position: sticky;
+    top: var(--avocado-avatar-sticky-top);
+    left: auto;
+    margin-left: calc(5px - var(--disc-avatar) - var(--disc-gap));
+    align-self: start;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+}
+
+
+// ── PostUser-badges — editing state ──────────────────────────────────────────
+// When editing a post, reset badge to inline flow (no repositioning sideffects).
+@media @tablet-up {
+  .Page.DiscussionPage .CommentPost.editing .PostUser-badges {
+    display: inline-flex;
+    pointer-events: auto;
+  }
+  .Page.DiscussionPage .CommentPost.editing .PostUser-badges--inSide {
+    display: none !important;
+  }
+}
+
+@media @phone {
+  .Page.DiscussionPage .CommentPost.editing .PostUser .PostUser-badges {
+    display: inline-flex;
+    top: auto;
+    left: auto;
+    pointer-events: auto;
+  }
+}
+
+// ── PostUser-badges — mobile ──────────────────────────────────────────────────
+// Post-side is hidden on mobile; the avatar is inside PostUser-name > a.
+// Since PostUser { display: contents }, PostUser-badges is a sibling of PostUser-name
+// (not a child), so position:relative on PostUser-name doesn't create a containing
+// block for it. Post-header { position:relative } (our rule) would be the containing
+// block, but that mis-aligns the badge vertically.
+// Fix: make li.item-user the containing block — avatar starts at its x=0, so
+// left: 6px / top: -12px overlays the avatar's top-left corner correctly.
+@media @phone {
+  .Page.DiscussionPage .Post-header > ul > li.item-user {
+    position: relative;
+  }
+
+  .Page.DiscussionPage .PostUser .PostUser-badges {
+    position: absolute;
+    top: -12px;
+    left: 6px;
+    width: 32px;
+    pointer-events: none;
+  }
+}
+
+// ── Post header — .Page.DiscussionPage .Post-header has 0,3,0 vs Flarum's 0,1,0
+.Page.DiscussionPage .Post-header {
+  margin-bottom: 10px;
+  border-bottom: none;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  position: relative;
+  overflow: visible;
+}
+
+// On mobile: force the header ul itself to be a flex row so li.item-user and
+// li.item-meta are proper flex children. Without this, only the <ul> is a flex
+// item of Post-header — the lis inside flow as inline and wrap freely.
+@media @phone {
+  .Page.DiscussionPage .Post-header {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0;
+  }
+
+  .Page.DiscussionPage .Post-header > ul {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  // item-user contains avatar + username (and absolute badge — no flex impact)
+  .Page.DiscussionPage .Post-header > ul > li.item-user {
+    flex-shrink: 0;
+  }
+
+  // item-meta (date) shrinks and truncates if needed, never pushes to next line
+  .Page.DiscussionPage .Post-header > ul > li.item-meta {
+    flex-shrink: 1;
+    min-width: 0;
+    white-space: nowrap;
+  }
+}
+
+// PostUser is a <div> in Flarum 2.0 — display:contents makes its children
+// (h3.PostUser-name and ul.PostUser-badges) flex items in Post-header.
+// Specificity 0,3,0 beats Flarum's .PostUser 0,1,0 — no !important needed.
+.Page.DiscussionPage .PostUser {
+  display: contents;
+}
+
+// PostUser-name is an <h3> in Flarum 2.0.
+// Reset h3 defaults; display as inline-flex so it sits on the same line as PostMeta.
+// Specificity 0,3,0 beats Flarum's h3 0,0,1
+.Page.DiscussionPage .PostUser-name {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+// The link wrapping avatar + UserOnline + username inside PostUser-name
+.Page.DiscussionPage .PostUser-name > a,
+.Page.DiscussionPage .PostUser-name .Link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  color: var(--disc-title);
+}
+
+.Page.DiscussionPage .PostUser-name .username {
+  font-weight: 900;
+  font-size: 14px;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  color: var(--disc-title);
+  text-decoration: none;
+}
+
+.Page.DiscussionPage .PostUser-name > a:hover,
+.Page.DiscussionPage .PostUser-name .Link:hover {
+  text-decoration: underline;
+}
+
+// Hide UserOnline dot inside the username link on desktop/tablet — the green border
+// on the Post-side avatar is used instead. On mobile, Post-side is hidden so we
+// show the online indicator as a green border on the inline avatar via sibling CSS.
+.Page.DiscussionPage .PostUser-name .UserOnline {
+  display: none !important;
+}
+
+// Mobile: green border on the inline avatar when the user is online.
+// UserOnline sits as a sibling span inside the <a> tag, right after the Avatar.
+// Use the adjacent sibling combinator to style the Avatar when UserOnline is present.
+@media @phone {
+  // When UserOnline exists inside the link, add green border to the Avatar
+  .Page.DiscussionPage .PostUser-name a:has(.UserOnline) .Avatar {
+    .avocado-online-ring(2.5px);
+  }
+}
+
+// Dot separator between name and timestamp
+.Page.DiscussionPage .PostUser-name + .PostMeta::before {
+  content: "·";
+  color: var(--disc-muted);
+  font-size: 13px;
+  margin-right: 2px;
+}
+
+
+// .Page.DiscussionPage .PostMeta has specificity 0,3,0 vs Flarum's .PostMeta 0,1,0
+.Page.DiscussionPage .PostMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;  // pushes date to right on desktop; overridden on phone below
+  font-size: 12px;
+  font-weight: 600;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  color: var(--disc-muted);
+  list-style: none;
+  padding: 0;
+
+  li {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  a:hover { color: var(--primary-color); }
+}
+
+// On mobile, date flows inline after name (no auto-push to right)
+@media @phone {
+  .Page.DiscussionPage .PostMeta {
+    margin-left: 0;
+  }
+}
+
+// ── Post body — specificity 0,3,0 vs Flarum's .Post-body 0,1,0
+.Page.DiscussionPage .Post-body {
+  background: transparent;
+  border: none;
+  padding-bottom: 15px;;
+  line-height: 1.72;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  color: var(--disc-text);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+
+  p {
+    margin: 0 0 14px;
+    &:last-child { margin-bottom: 0; }
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--disc-title);
+    margin: 20px 0 8px;
+    &:first-child { margin-top: 0; }
+  }
+
+  h1 { font-size: 22px; }
+  h2 { font-size: 19px; }
+  h3 { font-size: 16px; }
+
+  ul, ol {
+    padding-left: 22px;
+    margin: 8px 0 14px;
+    li { margin-bottom: 4px; }
+  }
+
+  code {
+    font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+    font-size: 13px;
+    background: var(--avocado-surface-1);
+    border-radius: 4px;
+    padding: 2px 6px;
+    color: var(--disc-title);
+  }
+
+  pre {
+    // ── Light-mode defaults (JS dark override via [data-theme="dark"]) ──────────
+    --pre-bg:          #f6f8fa;
+    --pre-text:        #24292e;
+    --pre-border:      rgba(0, 0, 0, 0.09);
+    --pre-header-bg:   rgba(0, 0, 0, 0.035);
+    --pre-header-border: rgba(0, 0, 0, 0.07);
+
+    position: relative;
+    background: var(--pre-bg);
+    color: var(--pre-text);
+    border: 1px solid var(--pre-border);
+    border-radius: 12px;
+    padding: 38px 18px 16px;  // top-padding makes room for the header bar
+    overflow-x: auto;
+    margin: 14px 0;
+    font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+    font-size: 13px;
+    line-height: 1.6;
+
+    // ── Top header bar (always visible) ────────────────────────────────────────
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 32px;
+      background: var(--pre-header-bg);
+      border-bottom: 1px solid var(--pre-header-border);
+      border-radius: 11px 11px 0 0;
+      pointer-events: none;
+    }
+
+    code {
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
+      color: inherit;
+    }
+  }
+
+  // ── Copy button — injected by JS as .avocado-code-copy inside <pre> ──────────
+  pre .avocado-code-copy {
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--pre-text);
+    opacity: 0.4;
+    font-size: 11px;
+    cursor: pointer;
+    transition: opacity 0.15s, background 0.15s;
+    z-index: 1;
+    padding: 0;
+
+    &:hover {
+      opacity: 0.85;
+      background: rgba(0, 0, 0, 0.07);
+    }
+
+    &--copied {
+      opacity: 1;
+      color: #2ea043;
+    }
+  }
+
+  blockquote {
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0 0 0 2.8em;
+    margin: 0.8em 0;
+    color: var(--muted-color);
+    font-style: italic;
+    position: relative;
+
+    // fa-quote-right icon, grey, top-left
+    &::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.1em;
+      width: 1.6em;
+      height: 1.6em;
+      background-color: var(--muted-color);
+      opacity: 0.35;
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 448 512'%3E%3Cpath d='M448 296c0 66.3-53.7 120-120 120h-8c-17.7 0-32-14.3-32-32s14.3-32 32-32h8c30.9 0 56-25.1 56-56v-8H320c-35.3 0-64-28.7-64-64V160c0-35.3 28.7-64 64-64h64c35.3 0 64 28.7 64 64v32 32 12zm-256 0c0 66.3-53.7 120-120 120H64c-35.3 0-64-28.7-64-64V288v-32V224C0 157.7 53.7 104 120 104h8c17.7 0 32 14.3 32 32s-14.3 32-32 32h-8c-30.9 0-56 25.1-56 56v8h64c35.3 0 64 28.7 64 64v8z'/%3E%3C/svg%3E");
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 448 512'%3E%3Cpath d='M448 296c0 66.3-53.7 120-120 120h-8c-17.7 0-32-14.3-32-32s14.3-32 32-32h8c30.9 0 56-25.1 56-56v-8H320c-35.3 0-64-28.7-64-64V160c0-35.3 28.7-64 64-64h64c35.3 0 64 28.7 64 64v32 32 12zm-256 0c0 66.3-53.7 120-120 120H64c-35.3 0-64-28.7-64-64V288v-32V224C0 157.7 53.7 104 120 104h8c17.7 0 32 14.3 32 32s-14.3 32-32 32h-8c-30.9 0-56 25.1-56 56v8h64c35.3 0 64 28.7 64 64v8z'/%3E%3C/svg%3E");
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-size: contain;
+      mask-size: contain;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    p { margin-bottom: 0.4em; }
+    & > *:last-child { margin-bottom: 0; }
+
+    // PostMention (quoted username) — italic, slightly primary-tinted
+    .PostMention {
+      font-style: italic;
+      font-weight: 600;
+      color: var(--primary-color);
+      opacity: 0.75;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+  }
+
+  a {
+    color: var(--primary-color) !important;
+  }
+
+  img:not(.Avatar):not(.emoji):not([class*="avatar"]) {
+    max-width: 100%;
+    border-radius: 10px;
+    display: block;
+    margin: 12px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid var(--disc-border);
+    margin: 16px 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin: 12px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--disc-border);
+
+    th {
+      background: rgba(0, 0, 0, 0.03);
+      font-weight: 700;
+      text-align: left;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--disc-border);
+    }
+
+    td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--disc-border);
+    }
+
+    tr:last-child td { border-bottom: none; }
+  }
+
+  .UserMention, .mention-user {
+    display: inline-block;
+    background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+    color: var(--primary-color);
+    border-radius: 4px;
+    padding: 0 4px;
+    font-weight: 700;
+    font-size: 0.9em;
+    text-decoration: none !important;
+
+    &:hover { background: color-mix(in srgb, var(--primary-color) 18%, transparent); }
+  }
+
+  .Spoiler {
+    background: #1f2025;
+    color: transparent;
+    border-radius: 4px;
+    padding: 0 4px;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s;
+
+    &.revealed,
+    &:hover { color: #e4e4e7; }
+  }
+}
+
+// ── Post footer — desktop/tablet: keep Flarum's native inline-block layout ───
+// Flarum core: Post-actions { float: right } + Post-footer { display: inline-block; height: 0 }
+// The inline-block footer sits to the LEFT of the floated actions — do not change display.
+// Only adjust margins to position it relative to Post-body.
+@media @tablet-up {
+  .Page.DiscussionPage .Post-footer {
+    margin-top: 8px;
+    margin-bottom: 0;
+  }
+}
+
+// ── Post footer — mobile: Flarum original inline-block next to floated actions
+@media @phone {
+  .Page.DiscussionPage .Post-footer {
+    display: inline-block;
+    height: auto;        // Flarum uses height:0 which causes overflow; auto fixes it
+    margin-top: 5px;     // Flarum default
+    margin-bottom: 20px; // Flarum default
+
+    .Post-likedBy {
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+  }
+}
+
+
+.Page.DiscussionPage .Post-footer .Button.Button--link,
+.Page.DiscussionPage .Post-footer .avocado-action-btn {
+  background: transparent;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  color: var(--disc-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1;
+  transition: background 0.15s ease, color 0.15s ease;
+  text-decoration: none;
+  border: none;
+  box-shadow: none;
+  cursor: pointer;
+
+  &:hover, &:focus {
+    background: #f0f0f4;
+    color: #4a4c58;
+  }
+
+  &:active { background: #e8e8ef; }
+
+  .Button-icon, i { font-size: 13px; line-height: 1; }
+
+  .Button-label, .avocado-action-label {
+    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    font-weight: 800;
+  }
+}
+
+.Page.DiscussionPage .Post-footer .Button--liked {
+  color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 8%, transparent);
+}
+
+.Page.DiscussionPage .Post-footer .avocado-share-done {
+  color: var(--primary-color);
+}
+
+
+
+// ── EventPost — .Page.DiscussionPage .EventPost has 0,3,0 vs Flarum's 0,1,0 ────
+.Page.DiscussionPage .EventPost {
+  background: transparent;
+  border: none;
+  border-bottom: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 6px 0;
+  margin: 0;
+
+  .Post-container {
+    display: grid;
+    grid-template-columns: var(--disc-avatar) 1fr;
+    gap: var(--disc-gap);
+    align-items: center;
+  }
+
+  // Icon circle in Post-side
+  .Post-side {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--disc-avatar);
+    flex-shrink: 0;
+  }
+
+  .EventPost-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(143, 143, 149, 0.10);
+    color: var(--disc-muted);
+    font-size: 13px;
+    font-style: normal;
+  }
+
+  // display:none !important kept — intentionally hiding Flarum's header/footer on event posts
+  .Post-header { display: none !important; }
+  .Post-footer { display: none !important; }
+  .Post-main   { padding-left: 0; }
+
+  .Post-body {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 2px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--disc-muted);
+    line-height: 1.5;
+
+    p { margin: 0 0 2px; &:last-child { margin: 0; } }
+
+    a {
+      color: var(--disc-muted);
+      text-decoration: none;
+      font-weight: 700;
+      &:hover { color: var(--primary-color); }
+    }
+
+    .TagLabel {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+    }
+  }
+}
+
+
+// ── PostStream load-more button — specificity 0,4,0 vs Flarum's .Button 0,1,0
+.Page.DiscussionPage .PostStream-loadMore {
+  text-align: center;
+  padding: 24px 0 8px;
+
+  .Button {
+    border-radius: 100px;
+    font-weight: 700;
+    padding: 10px 24px;
+    font-size: 13px;
+    background: #f0f0f4;
+    color: #50525e;
+    border: none;
+    box-shadow: none;
+
+    &:hover { background: #e5e6ed; }
+  }
+}
+
+// ── Sidebar ────────────────────────────────────────────────────────────────────
+.Page.DiscussionPage .Page-sidebar {
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+
+  p, span, a, button, label {
+    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  }
+}
+
+.Page.DiscussionPage .Page-sidebar .SplitDropdown {
+  gap: 0;
+  // No overflow:hidden — it can clip the Dropdown-toggle on mobile.
+  // Each child carries its own border-radius instead.
+
+  .SplitDropdown-button {
+    border-radius: 16px 0 0 16px;
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+    border-top: none;
+    border-bottom: none;
+    border-left: none;
+  }
+
+  // .Dropdown wrapper div must participate in flex layout
+  > .Dropdown {
+    display: flex;
+    flex-shrink: 0;
+  }
+
+  .Dropdown-toggle.Button--primary {
+    border-radius: 0;
+    border: none;
+    flex-shrink: 0;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    // On phone, Flarum core intentionally sets:
+    //   App-primaryControl > .Button { background: transparent !important;
+    //                                  color: var(--header-control-color) !important; }
+    // — the button is transparent with the header control color as icon color.
+    // We must NOT override background/color here, or we fight that rule.
+    // Layout-only rules above are sufficient for desktop; phone is handled by Flarum.
+  }
+}
+
+// On phone: Flarum's .App-primaryControl > .Button { background: transparent !important;
+// color: var(--header-control-color) !important } makes the toggle invisible when the
+// DiscussionPage-nav has a white background (it does — no header-bg override here).
+// Additionally, body.colored--active mutates --header-control-color to the tag's contrast
+// color (white for dark tags), further hiding the white icon on white nav.
+// Fix: explicit primary-color background + white icon, which always contrasts.
+@media @phone {
+  .Page.DiscussionPage .DiscussionPage-nav .App-primaryControl .Dropdown-toggle {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-color) !important;
+    color: #fff !important;
+    opacity: 1 !important;
+    border-radius: 0 !important;
+  }
+  // Two Flarum rules suppress the icon/caret inside non-primary-control toggles:
+  //   .Dropdown-toggle:not(.Button--flat) .Button-icon { display: none !important; }  (spec 2)
+  //   .App-primaryControl.Dropdown .Button-caret    { display: none !important; }     (spec 2)
+  // Our selectors have spec 5 so they win.
+  .Page.DiscussionPage .DiscussionPage-nav .App-primaryControl .Dropdown-toggle .icon,
+  .Page.DiscussionPage .DiscussionPage-nav .App-primaryControl .Dropdown-toggle .Button-icon {
+    display: block !important;
+    color: #fff !important;
+  }
+  .Page.DiscussionPage .DiscussionPage-nav .App-primaryControl .Dropdown-toggle .Button-caret {
+    display: none !important;
+  }
+}
+
+.Page.DiscussionPage .Page-sidebar .Scrubber {
+  .Scrubber-index {
+    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    color: var(--disc-title);
+  }
+
+  .Scrubber-description {
+    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--disc-muted);
+  }
+
+  .Scrubber-first, .Scrubber-last {
+    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0.6;
+  }
+
+  .Scrubber-bar { border-radius: 4px; }
+}
+
+// ── Phone: PostStreamScrubber color reset ─────────────────────────────────────
+// On phone, the Scrubber renders inside .App-titleControl which forces
+// color: var(--header-color) !important onto all descendants.
+// Override here so the scrubber text is legible regardless of header color.
+@media @phone {
+  .PostStreamScrubber .Dropdown-menu {
+    color: var(--text-color);
+
+    .Scrubber-index, .Scrubber-first, .Scrubber-last {
+      color: var(--text-color);
+    }
+
+    .Scrubber-description {
+      color: var(--muted-color);
+    }
+
+    .Button {
+      color: var(--link-color);
+    }
+  }
+}
+
+// ── OP badge — appears in Post-header between username (priority 100) and
+//    timestamp (priority 0). Zinc-style chip matching mockup.
+//    .Page.DiscussionPage .AvocadoPost-opBadge has 0,2,0 — no !important needed.
+.Page.DiscussionPage .AvocadoPost-opBadge {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  vertical-align: middle;
+  background: rgba(0, 0, 0, 0.05);
+  color: #8f9097;
+  font-size: 9px;
+  font-weight: 900;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 5px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+// ── TypingUsersContainer → modern floating pill ──────────────────────────────
+// Default core markup: <div class="TypingUsersContainer [-active]">
+//   <div class="TypingUsers"><i class="fas fa-ellipsis-h fa-beat"></i> name está digitando</div>
+// </div>
+.TypingUsersContainer {
+  // Reset core styles (it ships padding/background/border-radius on the container).
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+
+  margin: 0 0 12px 0;
+  min-height: 28px; // reserve room so layout doesn't jump when text appears
+  display: flex;
+  align-items: center;
+
+  @media @phone {
+    margin-bottom: 8px;
+  }
+
+  // Pill itself
+  .TypingUsers {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    padding: 6px 14px 6px 10px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--primary-color) 8%, var(--body-bg, #fff));
+    border: 1px solid color-mix(in srgb, var(--primary-color) 18%, transparent);
+    color: color-mix(in srgb, var(--primary-color) 80%, var(--text-color, #111));
+    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 6px color-mix(in srgb, var(--primary-color) 12%, transparent);
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    // Replace fa-ellipsis-h with three animated dots — keep the <i> as a flex
+    // anchor so we don't fight markup. Hide its glyph and stamp our own dots.
+    > i.fas {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 14px;
+      // hide the FA glyph: it's added via ::before with content from the icon font
+      &::before { content: ''; display: none; }
+
+      // three pulsing dots positioned with absolute children of the pseudo
+      &::after {
+        content: '';
+        position: absolute;
+        left: 0; right: 0; top: 50%;
+        height: 4px;
+        // Three dots painted via a gradient — animating background-position
+        // shifts which dot is "lit" without needing extra DOM.
+        background:
+          radial-gradient(circle at  4px 50%, currentColor 50%, transparent 55%) no-repeat,
+          radial-gradient(circle at 11px 50%, currentColor 50%, transparent 55%) no-repeat,
+          radial-gradient(circle at 18px 50%, currentColor 50%, transparent 55%) no-repeat;
+        opacity: 0.55;
+        transform: translateY(-50%);
+        animation: AvocadoTyping-dots 1.2s ease-in-out infinite;
+      }
+    }
+  }
+
+  // Active state — fade/slide in
+  &.TypingUsersContainer-active .TypingUsers {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  // Idle state ("no-activity" message): muted, no background — keeps the slot
+  // visible without competing with content above the composer.
+  &:not(.TypingUsersContainer-active) .TypingUsers {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    color: var(--muted-color);
+    opacity: 0.7;
+    transform: none;
+    > i.fas::after { animation: none; opacity: 0.4; }
+  }
+}
+
+// Three-dot wave: each dot gets its peak brightness in turn.
+@keyframes AvocadoTyping-dots {
+  0%, 100% { opacity: 0.35; }
+  20%      { opacity: 1;    }
+  60%      { opacity: 0.6;  }
+}
+
+// ── Guest CTA between posts ────────────────────────────────────────────────────
+// The Flarum core adds a 1px ::after divider to every .PostStream-item that has
+// a following sibling .PostStream-item. Suppress those dividers adjacent to the
+// CTA card — the card's own border/background provides visual separation.
+//
+// Position 1: CTA is inside .PostStream-afterFirstPost (post #1 → afterFirstPost → post #2)
+// Position 2-5: CTA is .PostStream-avocadoCta (post N → CTA → post N+1)
+.PostStream-item:has(+ .PostStream-afterFirstPost)::after,
+.PostStream-afterFirstPost::after,
+.PostStream-item:has(+ .PostStream-avocadoCta)::after,
+.PostStream-avocadoCta::after {
+  display: none;
+}
+
+.AvocadoPostCta-wrapper {
+  margin: 12px 0;
+
+  @media @tablet-up {
+    // Align CTA with Post-main: offset by the avatar column so left edge
+    // matches the post content, not the avatar.
+    padding-left: var(--avatar-column-width);
+    padding-right: var(--post-padding);
+  }
+}
+
+.AvocadoPostCta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding: 16px 24px;
+  text-align: center;
+  background: color-mix(in srgb, var(--primary-color) 6%, transparent);
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--primary-color) 15%, transparent);
+}
+
+.AvocadoPostCta-text {
+  font-size: 14px;
+  font-weight: 600;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  color: var(--disc-title);
+}
+
+.AvocadoPostCta-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.AvocadoPostCta-or {
+  font-size: 12px;
+  color: var(--disc-muted);
+}
+
+.AvocadoPostCta-btn {
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s;
+
+  &--login {
+    background: var(--primary-color);
+    color: #fff;
+
+    &:hover { background: color-mix(in srgb, var(--primary-color) 85%, #000); }
+  }
+
+  &--signup {
+    background: transparent;
+    color: var(--primary-color);
+    border: 1.5px solid var(--primary-color);
+
+    &:hover { background: color-mix(in srgb, var(--primary-color) 8%, transparent); }
+  }
+}
+
+@media @phone {
+  .AvocadoPostCta {
+    flex-direction: column;
+  }
+
+  .AvocadoPostCta-buttons {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+// ── Guest link gating ──────────────────────────────────────────────────────────
+// External links replaced by a lock-icon + label pill; clicking opens login modal.
+.AvocadoGuestLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  vertical-align: middle;
+  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary-color) 25%, transparent);
+  border-radius: 4px;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: 0.85em;
+  font-weight: 600;
+  line-height: 1;
+  padding: 2px 7px 2px 5px;
+  transition: background 0.12s;
+  white-space: nowrap;
+
+  &:hover {
+    background: color-mix(in srgb, var(--primary-color) 20%, transparent);
+  }
+
+  .fa-lock { font-size: 0.8em; }
+}
+
+.AvocadoGuestLink-label {
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+}
+
+// ── Sidebar stats card — hidden (kept in JS for data access, not shown in UI)
+.AvocadoSidebar-stats {
+  display: none;
+}
+
+
+
+// ─── Threads Style ─────────────────────────────────────────────────────────────
+// Redesign da página de discussão seguindo o Avocado Design System (kit.css):
+//   OP      → card (border + border-radius:21px + padding:20px) com meta row +
+//             tag row separada + título grande + body + stats bar com border-top
+//   Replies → grupo indentado (margin-left:20px + left-border) com linhas compactas
+//
+// JS injects:
+//   - div.AvocadoThreads-tagRow (pills .AvocadoHome-tagPill) after Post-header
+//   - h2.AvocadoThreads-title after tagRow
+//   - span.DiscussionHero-back-label into .DiscussionHero-back
+//   - class avocado-threads on .Page.DiscussionPage
+
+.avocado-threads.Page.DiscussionPage {
+
+  // ─── DiscussionHero → ghost "← Back" pill only ──────────────────────────────
+
+  .DiscussionHero {
+    background: transparent;
+    &::before { display: none; }
+  }
+
+  .DiscussionHero .container { padding: 0; }
+
+  .DiscussionHero-inner {
+    padding: 16px 0 16px !important;
+    &.has-deco-icon,
+    &.has-two-deco-icons { padding-right: 0 !important; }
+  }
+
+  .DiscussionHero-pills,
+  .DiscussionHero-title,
+  .DiscussionHero-meta,
+  .DiscussionHero-decorationsContainer { display: none !important; }
+
+  .DiscussionHero-nav { margin-bottom: 0; }
+
+  // Back → ghost pill (Avocado-btnGhost)
+  .DiscussionHero-back {
+    width: auto !important;
+    height: 34px !important;
+    border-radius: 999px !important;
+    padding: 0 13px !important;
+    background: var(--avocado-surface-1, #f3f3f6) !important;
+    backdrop-filter: none;
+    color: var(--disc-title, #202126) !important;
+    gap: 7px;
+    font: 800 12px/1 "DM Sans Variable", "DM Sans", sans-serif;
+
+    &:hover {
+      opacity: 1 !important;
+      background: color-mix(in srgb, var(--avocado-surface-1, #f3f3f6) 50%, #d8d8e0) !important;
+      color: var(--primary-color) !important;
+    }
+  }
+
+  .DiscussionHero-back-label {
+    font: 800 12px/1 "DM Sans Variable", "DM Sans", sans-serif;
+  }
+
+  // ─── OP Post: card matching .Avocado-threadView ─────────────────────────────
+  .PostStream > .PostStream-item:first-child > .CommentPost {
+    border: 1px solid var(--avocado-border-subtle, #eaeaf0);
+    border-radius: 21px;
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+
+  // OP: 44px avatar (.Avocado-threadView avatar)
+  @media @tablet-up {
+    .PostStream > .PostStream-item:first-child > .CommentPost {
+      --disc-avatar: 44px;
+    }
+  }
+
+  // ─── OP Post-header → .Avocado-threadView-meta ───────────────────────────────
+  // display:flex + align-items:center + gap:8px + font:700 14px
+  .PostStream > .PostStream-item:first-child > .CommentPost .Post-header {
+    margin-bottom: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    border-bottom: none;
+  }
+
+  // Username: 14px/700 (Avocado-threadView-meta font)
+  .PostStream > .PostStream-item:first-child > .CommentPost .PostUser-name .username {
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  // Time: flows inline (no margin-left:auto push)
+  .PostStream > .PostStream-item:first-child > .CommentPost .PostMeta {
+    margin-left: 0 !important;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  // ─── Tag row (div.AvocadoThreads-tagRow injected by JS) ──────────────────────
+  // .Avocado-threadView-tagRow: display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 8px
+  .AvocadoThreads-tagRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 4px 0 8px;
+  }
+
+  // ─── Title (h2.AvocadoThreads-title injected by JS) ─────────────────────────
+  // .Avocado-threadView-title: font:900 32px/1.15; letter-spacing:-0.5px; margin:0 0 10px
+  .AvocadoThreads-title {
+    display: block;
+    font: 900 32px/1.15 "DM Sans Variable", "DM Sans", sans-serif;
+    letter-spacing: -0.5px;
+    color: var(--disc-title, #202126);
+    margin: 0 0 10px;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  // ─── OP Post-body: .Avocado-threadView-body (17px/1.5, margin-bottom:14px) ───
+  .PostStream > .PostStream-item:first-child > .CommentPost .Post-body {
+    font-size: 17px;
+    line-height: 1.5;
+    padding-bottom: 0;
+    margin-bottom: 14px;
+  }
+
+  // ─── OP Post-footer: .Avocado-threadView-stats ───────────────────────────────
+  // border-top:1px solid var(--divider); padding-top:14px; display:flex; gap:14px
+  .PostStream > .PostStream-item:first-child > .CommentPost .Post-footer {
+    display: flex !important;
+    align-items: center;
+    height: auto !important;
+    overflow: visible !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    border-top: 1px solid var(--disc-border, #f0f0f4);
+    padding-top: 14px;
+    gap: 14px;
+  }
+
+  .PostStream > .PostStream-item:first-child > .CommentPost .Post-actions {
+    float: none;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .PostStream > .PostStream-item:first-child > .CommentPost .Post-likedBy {
+    display: none;
+  }
+
+  // Stat buttons: .Avocado-statBtn (padding:0; background:none; border:0; font:800 13px/1)
+  .PostStream > .PostStream-item:first-child > .CommentPost .Post-footer {
+    .Button.Button--link,
+    .avocado-action-btn {
+      padding: 0 !important;
+      border-radius: 0 !important;
+      background: none !important;
+      border: 0 !important;
+      font-size: 13px !important;
+      font-weight: 800 !important;
+      gap: 6px;
+      color: var(--disc-muted) !important;
+      transition: color 0.12s ease !important;
+
+      &:hover, &:focus {
+        background: none !important;
+        color: var(--disc-title) !important;
+      }
+
+      i { font-size: 13px; }
+    }
+
+    .Button--liked {
+      color: #e84393 !important;
+      background: none !important;
+
+      .fas, .far { color: #e84393 !important; }
+
+      &:hover { background: none !important; color: #e84393 !important; }
+    }
+  }
+
+  // Phone: compact card padding
+  @media @phone {
+    .PostStream > .PostStream-item:first-child > .CommentPost {
+      padding: 14px;
+    }
+  }
+
+  // ─── Reply group: .Avocado-replyGroup ────────────────────────────────────────
+  // margin-left:20px; border-left:2px solid var(--border-soft); padding-left:20px
+  .PostStream > .PostStream-item:not(:first-child) {
+    margin-left: 20px;
+    border-left: 2px solid var(--avocado-border-soft, #efeff4);
+    padding-left: 20px;
+    margin-bottom: 2px;
+  }
+
+  // ─── Reply CommentPost: .Avocado-replyLine ───────────────────────────────────
+  // padding:10px 8px; border-radius:10px; hover:background:var(--surface-1)
+  .PostStream > .PostStream-item:not(:first-child) > .CommentPost {
+    border-radius: 10px;
+    padding: 10px 8px;
+    transition: background 0.12s;
+
+    &:hover { background: var(--avocado-surface-1, #f4f4f7); }
+  }
+
+  // 28px avatar for replies
+  @media @tablet-up {
+    .PostStream > .PostStream-item:not(:first-child) > .CommentPost {
+      --disc-avatar: 28px;
+    }
+  }
+
+  // Thinner ring on 28px avatar
+  .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-side .Avatar {
+    border-width: 1.5px;
+    box-shadow: none;
+  }
+
+  // Reply Post-header: .Avocado-replyLine-head (margin-bottom:3px; gap:8px)
+  .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-header {
+    margin-bottom: 3px;
+    align-items: center;
+    gap: 8px;
+  }
+
+  // Reply username: 13px/700
+  .PostStream > .PostStream-item:not(:first-child) > .CommentPost .PostUser-name .username {
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  // Reply PostMeta: 12px/500
+  .PostStream > .PostStream-item:not(:first-child) > .CommentPost .PostMeta {
+    margin-left: 0 !important;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  // Reply body: .Avocado-replyLine-text (15px/1.45)
+  .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-body {
+    font-size: 15px;
+    line-height: 1.45;
+    padding-bottom: 4px;
+  }
+
+  // ─── Reply Post-footer: .Avocado-replyLine-actions ───────────────────────────
+  .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-footer {
+    display: flex !important;
+    align-items: center;
+    height: auto !important;
+    overflow: visible !important;
+    margin-top: 4px !important;
+    margin-bottom: 0 !important;
+    gap: 14px;
+  }
+
+  .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-actions {
+    float: none;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-likedBy {
+    display: none;
+  }
+
+  // Reply action buttons: .Avocado-replyLine-action (padding:0; bg:none; 11px/800)
+  .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-footer {
+    .Button.Button--link,
+    .avocado-action-btn {
+      padding: 0 !important;
+      border-radius: 0 !important;
+      background: none !important;
+      border: 0 !important;
+      font-size: 11px !important;
+      font-weight: 800 !important;
+      gap: 5px;
+      color: var(--disc-muted) !important;
+      transition: color 0.12s ease !important;
+
+      &:hover, &:focus {
+        background: none !important;
+        color: var(--disc-title) !important;
+      }
+
+      i { font-size: 12px; }
+    }
+  }
+
+  // EventPost in reply area: compact
+  .PostStream > .PostStream-item:not(:first-child) > .EventPost {
+    border-radius: 8px;
+    padding: 4px 8px;
+  }
+
+  // ─── Phone ───────────────────────────────────────────────────────────────────
+  @media @phone {
+    .PostStream > .PostStream-item:not(:first-child) {
+      margin-left: 12px;
+      padding-left: 12px;
+    }
+
+    // Show avatar for replies on phone (base CSS hides all Post-side on phone)
+    .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-side {
+      display: flex !important;
+    }
+  }
+}
+
+// ── DiscussionList sidebar inside DiscussionPage — Avocado design ──────────────
+// Applies to the sliding panel (App-drawer) that shows the discussion list
+// while reading a thread on mobile, and to the sidebar on tablet/desktop.
+
+.DiscussionPage .DiscussionList,
+.App-drawer .DiscussionList {
+
+  background: #f6f6fa;
+  padding: 10px 10px 20px;
+
+  // ── Container: no extra margin ──────────────────────────────────────────────
+  &-discussions > li {
+    list-style: none;
+    margin: 0 0 6px;
+  }
+
+  // ── Each item ───────────────────────────────────────────────────────────────
+  .DiscussionListItem {
+    position: relative;
+    background: #fff;
+    border: 1px solid #eaeaf0;
+    border-radius: 14px;
+    margin: 0;
+    transition: box-shadow 0.18s ease, border-color 0.18s ease;
+    overflow: visible;
+
+    &:hover {
+      border-color: #d8d8e4;
+      box-shadow: 0 4px 14px rgba(26, 26, 36, 0.07);
+    }
+
+    // ── Active / selected ────────────────────────────────────────────────────
+    &.active {
+      border-color: var(--primary-color) !important;
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 18%, transparent) !important;
+    }
+
+    // ── Content wrapper ──────────────────────────────────────────────────────
+    .DiscussionListItem-content {
+      display: flex;
+      align-items: flex-start;
+      padding: 11px 12px 11px 11px !important;
+      gap: 0;
+      overflow: visible;
+      border-radius: 14px;
+    }
+
+    // ── Avatar column ────────────────────────────────────────────────────────
+    .DiscussionListItem-author {
+      flex-shrink: 0;
+      margin-right: 10px;
+      float: none;
+
+      .Avatar {
+        width: 38px !important;
+        height: 38px !important;
+        min-width: 38px;
+        border-radius: 50% !important;
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        // Restore Flarum's own --avatar-bg instead of overriding with body-bg
+        background-color: var(--avatar-bg) !important;
+        box-shadow: none !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+
+      // badges (sticky, locked, etc.)
+      .DiscussionListItem-badges {
+        position: absolute;
+        right: -6px;
+        top: -3px;
+        margin: 0;
+        float: none;
+
+        .Badge {
+          --size: 18px;
+          width: var(--size);
+          height: var(--size);
+          line-height: var(--size);
+          font-size: 9px;
+        }
+      }
+    }
+
+    // ── Main body ────────────────────────────────────────────────────────────
+    .DiscussionListItem-main {
+      flex: 1;
+      min-width: 0;
+      padding: 0;
+      margin: 0;
+    }
+
+    // ── Title ────────────────────────────────────────────────────────────────
+    .DiscussionListItem-title {
+      font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--heading-color, var(--home-title)) !important;
+      line-height: 1.35;
+      margin: 0 0 5px;
+      white-space: normal;
+      text-align: left;
+      .avocado-line-clamp(2);
+    }
+
+    // Unread dot
+    &--unread .DiscussionListItem-title::after {
+      --size: 7px;
+      content: "";
+      display: inline-block;
+      width: var(--size);
+      height: var(--size);
+      border-radius: 50%;
+      background: var(--primary-color);
+      margin-left: 5px;
+      margin-bottom: 1px;
+      vertical-align: middle;
+    }
+
+    // ── Info row (tags, replied by, excerpt) ─────────────────────────────────
+    .DiscussionListItem-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 3px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 11.5px;
+      color: #8f9097;
+      text-align: left;
+
+      li { margin: 0; list-style: none; }
+    }
+
+    // Tags — show max 3, hide the rest
+    .item-tags {
+      text-align: left;
+      width: 100%;
+
+      .TagsLabel {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .TagLabel {
+        font-size: 10.5px;
+        font-weight: 700;
+        border-radius: 999px;
+        padding: 2px 8px 2px 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        line-height: 1.6;
+        flex-shrink: 0;
+        white-space: nowrap;
+
+        .TagLabel-icon { font-size: 9px; }
+
+        // Hide 4th tag onwards
+        &:nth-child(n+4) {
+          display: none !important;
+        }
+      }
+    }
+
+    // "X replied Y ago"
+    .item-terminalPost {
+      color: #8f9097;
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1.4;
+      text-align: left;
+
+      .username { color: #43454e; font-weight: 600; }
+      .icon { font-size: 9px; margin-right: 2px; }
+    }
+
+    // Excerpt
+    .item-excerpt {
+      font-size: 11px;
+      color: #a0a0ac;
+      line-height: 1.45;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin: 0;
+      text-align: left;
+    }
+
+    // ── Stats (comment count) ────────────────────────────────────────────────
+    .DiscussionListItem-stats {
+      flex-shrink: 0;
+      align-self: flex-start;
+      margin-left: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .DiscussionListItem-stats-item {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      color: #a0a0ac;
+      font-size: 11.5px;
+      font-weight: 600;
+      margin: 0;
+
+      .DiscussionListItem-stats-item-icon { font-size: 12px; }
+    }
+
+    // ── Controls (ellipsis "...") — absolute top-right corner ────────────────
+    .DiscussionListItem-controls {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 2;
+
+      .Dropdown-toggle {
+        color: #b0b0bc;
+        border-radius: 8px;
+        padding: 4px 7px;
+        line-height: 1;
+        font-size: 14px;
+
+        &:hover { color: #43454e; background: #f2f2f6; }
+      }
+    }
+  }
+
+  // ── Load more button ─────────────────────────────────────────────────────────
+  .DiscussionList-loadMore .Button {
+    width: 100%;
+    border-radius: 999px;
+    border: 1px solid #eaeaf0;
+    background: #fff;
+    color: #43454e;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 8px 0;
+    margin-top: 4px;
+
+    &:hover {
+      background: #f6f6fa;
+      border-color: #d8d8e4;
+    }
+  }
+}

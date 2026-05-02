@@ -1,0 +1,1069 @@
+// ─── User Profile Pages (/u/{username}, /settings, /u/{username}/*) ──────────
+
+// ── Page wrapper ──────────────────────────────────────────────────────────────
+
+.AvocadoUserPage {
+  min-height: 100vh;
+  background: var(--body-bg);
+  font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--home-title, #202126);
+}
+
+// ── Hero — compact colored banner (same family as AvocadoTagPage-hero) ────────
+
+.AvocadoUserPage-hero {
+  position: relative;
+  background: var(--user-color, #5a6480);
+  // NO overflow:hidden — AvatarEditor dropdown must escape the banner
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0,0,0,0.26) 0%, rgba(0,0,0,0.04) 65%);
+    pointer-events: none;
+  }
+
+  &--skeleton {
+    background: #c4c4cc;
+    &::before { display: none; }
+  }
+}
+
+.AvocadoUserPage-hero-inner {
+  position: relative;
+  max-width: var(--home-max-width, 1320px);
+  margin: 0 auto;
+  padding: 22px 20px 24px;
+}
+
+.AvocadoUserPage-hero-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+// ── Avatar inside the banner ───────────────────────────────────────────────────
+
+.AvocadoUserPage-hero-avatarWrap {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: none;
+  outline: none;
+  position: relative;
+  background: rgba(0, 0, 0, 0.2);
+  box-shadow: none;
+
+  // Non-editable Avatar (<img> or <span>)
+  // Selector specificity 0,2,0 beats Flarum's .Avatar 0,1,0 — no !important needed
+  > .Avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+  }
+
+  // AvatarEditor: <div class="AvatarEditor Dropdown"> containing Avatar + toggle + menu
+  > .AvatarEditor {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    position: relative;
+    display: block;
+
+    // Avatar image/span inside editor — inherits sizing from > .Avatar above (0,2,0)
+    // AvatarEditor wrapper adds one extra class, raising specificity to 0,3,0 — no need to repeat.
+    .Avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    // Pencil overlay button — covers full circle, invisible until hover
+    // Specificity 0,3,0 beats Flarum's .AvatarEditor .Dropdown-toggle 0,2,0
+    .Dropdown-toggle {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0, 0, 0, 0);
+      color: rgba(255, 255, 255, 0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+      box-shadow: none;
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.45);
+        color: #fff;
+      }
+
+      i { position: relative; z-index: 1; }
+    }
+
+    // Dropdown menu — escapes the banner
+    // Specificity 0,3,0 — no !important needed
+    .Dropdown-menu {
+      position: absolute;
+      top: calc(100% + 10px);
+      left: 0;
+      min-width: 160px;
+      z-index: 500;
+      background: var(--body-bg);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+      padding: 4px;
+
+      .Button {
+        border-radius: 8px;
+        font-size: 13px;
+        color: #40424b;
+        background: transparent;
+        border: none;
+        font-weight: 600;
+        width: 100%;
+        text-align: left;
+
+        &:hover { background: #f4f4f7; }
+      }
+    }
+
+    &.loading .Dropdown-toggle {
+      background: rgba(0, 0, 0, 0.35);
+      color: #fff;
+    }
+  }
+}
+
+.AvocadoUserPage-onlineDot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--avocado-online);
+  border: 2.5px solid var(--user-color, #5a6480);
+  z-index: 2;
+}
+
+// ── Hero info (name, badges, stats) ───────────────────────────────────────────
+
+.AvocadoUserPage-hero-info {
+  flex: 1;
+  min-width: 0;
+  color: #fff;
+}
+
+.AvocadoUserPage-hero-name {
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.4px;
+  line-height: 1.1;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.24);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.AvocadoUserPage-hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+
+  li {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+// Stat items inside banner — same plain style as DiscussionHero-metaItem
+.AvocadoUserPage-hero-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.AvocadoUserPage-hero-statPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.78);
+
+  strong { font-weight: 900; color: #fff; }
+
+  i { font-size: 13px; }
+
+  &--online {
+    color: rgba(255, 255, 255, 0.92);
+    .fa-circle { font-size: 8px; color: var(--avocado-online); }
+  }
+}
+
+// ── Controls button ────────────────────────────────────────────────────────────
+
+.AvocadoUserPage-hero-controls {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.AvocadoUserPage-controlsBtn {
+  background: rgba(255, 255, 255, 0.16) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.36) !important;
+  color: #fff !important;
+  border-radius: 999px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(4px) !important;
+
+  &:hover { background: rgba(255, 255, 255, 0.26) !important; }
+}
+
+// ── Skeleton shimmer ──────────────────────────────────────────────────────────
+
+@keyframes AvocadoUserShimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+
+.AvocadoUserPage-shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.12) 25%, rgba(255,255,255,0.24) 50%, rgba(255,255,255,0.12) 75%);
+  background-size: 800px 100%;
+  animation: AvocadoUserShimmer 1.4s infinite;
+  border-radius: 8px;
+
+  &--avatar  { width: 72px; height: 72px; border-radius: 50%; flex-shrink: 0; }
+  &--name    { height: 24px; width: 180px; margin-bottom: 10px; display: block; }
+  &--meta    { height: 13px; width: 130px; display: block; }
+  &--navItem { height: 16px; width: 80px; border-radius: 8px; }
+}
+
+// Nav tab skeleton uses lighter shimmer (white bg)
+.AvocadoUserPage-nav .AvocadoUserPage-shimmer--navItem {
+  background: linear-gradient(90deg, #f0f0f5 25%, #e6e6ec 50%, #f0f0f5 75%);
+  background-size: 800px 100%;
+}
+
+// ── Sticky horizontal nav tabs ─────────────────────────────────────────────────
+
+.AvocadoUserPage-nav {
+  background: var(--body-bg);
+  border-bottom: 1px solid var(--home-border, #eaeaf0);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  width: 100%;
+}
+
+// ── Nav scroll arrows — shown when items overflow ──────────────────────────────
+// position: sticky acts as containing block for absolute children.
+
+.AvocadoUserPage-navArrow {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 48px;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--home-muted, #8f8f95);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, color 0.15s ease;
+  z-index: 3;
+
+  &.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  &:hover { color: var(--avocado-text-dark); }
+
+  &--left {
+    left: 0;
+    background: linear-gradient(to right, var(--body-bg) 50%, transparent);
+  }
+
+  &--right {
+    right: 0;
+    background: linear-gradient(to left, var(--body-bg) 50%, transparent);
+  }
+}
+
+// Back-to-home link — hidden on phone (phone uses the SelectDropdown nav)
+.AvocadoUserPage-homeLink {
+  display: none; // hidden by default, shown on tablet+
+
+  @media @tablet-up {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--home-muted, #8f8f95);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.15s;
+    border-bottom: none;
+
+    i { font-size: 12px; }
+
+    &:hover { color: var(--primary-color); text-decoration: none; }
+  }
+}
+
+.AvocadoUserPage-navInner {
+  max-width: var(--home-max-width, 1320px);
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  list-style: none;
+  padding-left: 20px;
+
+  &::-webkit-scrollbar { display: none; }
+
+  // Each <li> from listItems() is transparent to the flex layout so that
+  // the inner LinkButton itself becomes the flex item.
+  > li {
+    display: contents;
+  }
+
+  // Separator (<li class="Dropdown-separator">) → vertical divider line
+  > li.Dropdown-separator {
+    display: flex;
+    align-self: center;
+    width: 1px;
+    height: 20px;
+    background: var(--home-border, #eaeaf0);
+    margin: 0 8px;
+    flex-shrink: 0;
+  }
+
+  // ── Style native Flarum LinkButton as our horizontal nav tab ──────────────
+  .LinkButton {
+    display: inline-flex;
+    align-items: center;
+    height: 48px;
+    padding: 0 16px;
+    gap: 7px;
+    border: none;
+    border-bottom: 2.5px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--home-muted, #8f8f95);
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: color 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+
+    .Button-icon { font-size: 13px; margin: 0; }
+
+    // Badge wraps icon+label; flatten it for our inline flex layout
+    .Button-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    &:hover, &:focus {
+      color: #2a2b30;
+      text-decoration: none;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    // Flarum sets active="true" attribute on <a> when route matches
+    &[active="true"] {
+      color: var(--primary-color);
+      border-bottom-color: var(--primary-color);
+      font-weight: 700;
+    }
+
+    // Post/discussion count badge
+    .Button-badge {
+      font-size: 12px;
+      font-weight: 700;
+      background: #f0f0f5;
+      border-radius: 999px;
+      padding: 1px 7px;
+      color: #8f8f95;
+      transition: background 0.15s, color 0.15s;
+      margin-left: 0;
+    }
+
+    &[active="true"] .Button-badge {
+      background: rgba(0, 0, 0, 0.06);
+      color: inherit;
+    }
+  }
+}
+
+.AvocadoUserPage-navItem {
+  display: inline-flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 16px;
+  gap: 7px;
+  border-bottom: 2.5px solid transparent;
+  color: var(--home-muted, #8f8f95);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+
+  i { font-size: 13px; }
+
+  &:hover {
+    color: #2a2b30;
+    text-decoration: none;
+  }
+
+  &.is-active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    font-weight: 700;
+  }
+}
+
+.AvocadoUserPage-navCount {
+  font-size: 12px;
+  font-weight: 700;
+  background: #f0f0f5;
+  border-radius: 999px;
+  padding: 1px 7px;
+  color: #8f8f95;
+  transition: background 0.15s, color 0.15s;
+
+  .AvocadoUserPage-navItem.is-active & {
+    background: rgba(0, 0, 0, 0.06);
+  }
+}
+
+.AvocadoUserPage-navDivider {
+  width: 1px;
+  height: 20px;
+  background: var(--home-border, #eaeaf0);
+  margin: 0 8px;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+// ── Body / Content area ────────────────────────────────────────────────────────
+
+.AvocadoUserPage-body {
+  background: var(--body-bg);
+  min-height: 60vh;
+}
+
+.AvocadoUserPage-bodyInner {
+  max-width: var(--home-max-width, 1320px);
+  margin: 0 auto;
+  padding: 28px 20px 56px;
+}
+
+// ── Post card excerpt — styled to distinguish from discussion title ────────────
+
+.AvocadoUserPage-postExcerpt {
+  font-size: 15px;
+  color: #505158;
+  border-left: 2.5px solid var(--home-border, #eaeaf0);
+  padding-left: 10px;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+// ── Override native Flarum components within user pages ───────────────────────
+
+.AvocadoUserPage {
+
+  // Phone nav dropdown: reset Button overrides (button lives inside AvocadoUserPage in DOM
+  // but is visually positioned in the header — it should not look like a pill button)
+  .AvocadoNav-helper .Dropdown-toggle {
+    border-radius: 0 !important;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  // Inputs — .AvocadoUserPage .FormControl has 0,2,0 specificity vs Flarum's 0,1,0
+  .FormControl {
+    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+    border-radius: 10px;
+    border: 1.5px solid var(--home-border, #eaeaf0);
+    background: #f4f4f7;
+    box-shadow: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--avocado-text-dark);
+    padding: 9px 14px;
+    transition: border-color var(--avocado-t-fast), background var(--avocado-t-fast);
+
+    &:focus {
+      background: var(--body-bg);
+      border-color: var(--primary-color);
+      box-shadow: none;
+      outline: none;
+    }
+
+    &::placeholder { color: var(--avocado-muted-placeholder); font-weight: 500; }
+  }
+
+  // Switch toggle — .AvocadoUserPage .Switch has 0,2,0 specificity vs Flarum's 0,1,0
+  .Switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #43454e;
+
+    &-input { display: none; }
+
+    &-slider {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+      min-width: 40px;
+      background: #d8dae8;
+      border-radius: 999px;
+      transition: background 0.2s ease;
+
+      &::before {
+        content: '';
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #fff;
+        top: 3px;
+        left: 3px;
+        transition: transform 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+      }
+    }
+
+    &.on .Switch-slider {
+      background: var(--primary-color);
+      &::before { transform: translateX(18px); }
+    }
+  }
+
+  // Help text
+  .helpText {
+    font-size: 13px;
+    color: var(--home-muted, #8f8f95);
+    font-weight: 500;
+    line-height: 1.5;
+    margin-top: 6px;
+  }
+
+  // Alerts — .AvocadoUserPage .Alert has 0,2,0 vs Flarum's .Alert 0,1,0
+  .Alert {
+    border-radius: 10px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 11px 16px;
+
+    &--warning { background: rgba(249, 115, 22, 0.1); color: #c2590a; }
+    &--error   { background: rgba(220, 50, 50, 0.08); color: #b91c1c; }
+    &--success { background: rgba(34, 197, 94, 0.1);  color: #15803d; }
+  }
+
+  // Notification preference grid
+  .NotificationGrid {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+
+    thead th {
+      padding: 6px 12px 12px;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--home-muted, #8f8f95);
+      text-align: center;
+
+      &:first-child { text-align: left; }
+    }
+
+    tbody td {
+      padding: 10px 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #43454e;
+      border-top: 1px solid #f4f4f8;
+      text-align: center;
+      vertical-align: middle;
+
+      &:first-child { text-align: left; font-weight: 600; color: #2a2b30; }
+    }
+
+    tbody tr:last-child td { border-bottom: 1px solid #f4f4f8; }
+  }
+
+  // Access tokens list
+  .AccessTokensList {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .AccessToken {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f4f4f8;
+
+    &:last-child { border-bottom: 0; }
+
+    &-token {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      background: #f4f4f7;
+      border-radius: 6px;
+      padding: 3px 8px;
+      color: #60616c;
+      word-break: break-all;
+    }
+
+    &-created {
+      font-size: 12px;
+      color: var(--home-muted, #8f8f95);
+      white-space: nowrap;
+    }
+
+    &-actions {
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+  }
+
+}
+
+// ─── Settings & Security pages ────────────────────────────────────────────────
+// Flat layout — no card/border on FieldSet. Sections separated by padding only.
+// Mirrors Flarum's native approach but with DM Sans, avocado colors, and pill buttons.
+
+// Top-level list: no markers, sections stacked with spacing
+.AvocadoUserPage .SettingsPage > ul,
+.AvocadoUserPage .UserSecurityPage > ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  > li { list-style: none; }
+}
+
+// ── FieldSet: flat section (no card/border/bg) ────────────────────────────────
+// !important overrides Flarum core's .FieldSet and any theme dark-mode rules
+// that apply background/border from CSS variables.
+.AvocadoUserPage .FieldSet {
+  background: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  margin: 0;
+  overflow: visible;
+  padding: 0;
+
+  // Section heading: bold, clear
+  .FieldSet-label {
+    display: block;
+    margin-bottom: 16px;
+    padding: 0 0 10px;
+    border: none;
+    border-bottom: 1px solid var(--home-border, #eaeaf0);
+    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.1px;
+    color: #1f2025;
+    text-transform: none;
+  }
+
+  // Items: Flarum handles column vs row via FieldSet--col.
+  // We must NOT set flex-direction here — let Flarum core control it.
+  .FieldSet-items {
+    gap: 14px;
+  }
+}
+
+// ── Settings & Security shared component styles ───────────────────────────────
+.AvocadoUserPage .SettingsPage,
+.AvocadoUserPage .UserSecurityPage {
+
+  // Buttons — pill style
+  .Button {
+    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 13px;
+    box-shadow: none;
+
+    &--primary {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+      color: #fff;
+    }
+
+    &--default {
+      background: #f3f3f6;
+      border-color: transparent;
+      color: #40424b;
+    }
+
+    &--danger {
+      background: transparent;
+      border: 1.5px solid rgba(220, 50, 50, 0.4);
+      color: #dc3232;
+    }
+
+    &-icon { margin-right: 6px; }
+  }
+
+  // Switch toggle
+  .Switch {
+    font-size: 14px;
+    font-weight: 500;
+    color: #43454e;
+    gap: 10px;
+
+    &-slider {
+      background: #d8dae8;
+      &::before { box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    }
+
+    &.on .Switch-slider { background: var(--primary-color); }
+  }
+
+  // Help text below toggles
+  .helpText {
+    font-size: 13px;
+    color: var(--home-muted, #8f8f95);
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  // Controls row (security page button groups)
+  .UserSecurityPage-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  // ThemeMode color scheme grid
+  // FieldSet--col makes .FieldSet-items flex-direction:row already (Flarum core).
+  // We only adjust the card size and typography.
+  // ThemeMode: only customise size, radius, and legend font.
+  // Border logic (inactive = var(--control-bg), active = var(--primary-color)) is
+  // handled entirely by Flarum core's ThemeMode.less — we must NOT override `border`
+  // here or we break the active-state specificity.
+  .ThemeMode {
+    max-width: 120px;
+
+    &-container {
+      border-radius: 12px;
+    }
+
+    &-preview {
+      width: 120px;
+      height: 110px;
+    }
+
+    &-legend {
+      padding: 8px 0 2px;
+      font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted-color);
+    }
+
+    &--active &-legend {
+      color: var(--primary-color);
+      font-weight: 700;
+    }
+  }
+
+  // AccessTokensList — token and session rows
+  .AccessTokensList {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+
+    &--empty {
+      font-size: 13px;
+      color: var(--home-muted, #8f8f95);
+      font-style: italic;
+    }
+  }
+
+  .AccessTokensList-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--home-border, #eaeaf0);
+    background: transparent !important; // Flarum core sets background-color: var(--control-bg)
+    color: inherit;
+
+    &:last-child { border-bottom: 0; }
+
+    &-icon {
+      --font-size: 1.1rem;
+      font-size: var(--font-size);
+      width: 28px;
+      min-width: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--home-muted, #8f8f95);
+    }
+
+    &-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2a2b30;
+      flex: 1;
+      min-width: 0;
+
+      &-sub {
+        display: block;
+        font-size: 12px;
+        font-weight: 500;
+        font-style: normal;
+        color: var(--home-muted, #8f8f95);
+        margin-top: 2px;
+      }
+    }
+
+    &--active &-title-sub { color: #15803d; }
+
+    &-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+      flex-shrink: 0;
+
+      .Button {
+        font-size: 12px;
+        padding: 4px 12px;
+        height: auto;
+      }
+    }
+
+    code {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      background: #f4f4f7;
+      border-radius: 6px;
+      padding: 2px 7px;
+      color: #60616c;
+      word-break: break-all;
+    }
+  }
+}
+
+
+// ── Responsive: tablet ────────────────────────────────────────────────────────
+
+@media @tablet {
+  .AvocadoUserPage-hero-inner    { padding: 18px 16px 22px; }
+  .AvocadoUserPage-bodyInner     { padding: 22px 16px 48px; }
+}
+
+// ── Responsive: phone ─────────────────────────────────────────────────────────
+
+@media @phone {
+  // Hero row stacks: avatar becomes smaller, name wraps
+  .AvocadoUserPage-hero-inner    { padding: 14px 14px 18px; }
+  .AvocadoUserPage-hero-row      { gap: 12px; }
+  .AvocadoUserPage-hero-avatarWrap {
+    width: 56px;
+    height: 56px;
+  }
+  .AvocadoUserPage-hero-avatarWrap > .Avatar,
+  .AvocadoUserPage-hero-avatarWrap > .AvatarEditor {
+    width: 56px;
+    height: 56px;
+  }
+  .AvocadoUserPage-hero-avatarWrap > .AvatarEditor .Avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 20px;
+  }
+  .AvocadoUserPage-onlineDot     { width: 12px; height: 12px; }
+  .AvocadoUserPage-hero-name     { font-size: 18px; }
+  .AvocadoUserPage-shimmer--avatar { width: 56px; height: 56px; }
+
+  // Nav tabs: compact
+  .AvocadoUserPage-navItem,
+  .AvocadoUserPage-navInner .LinkButton { padding: 0 12px; font-size: 13px; }
+
+  // Body
+  .AvocadoUserPage-bodyInner     { padding: 16px 12px 40px; }
+}
+
+// ─── FoF User Bio — hero integration ─────────────────────────────────────────
+// The bio renders inside .AvocadoUserPage-hero (colored banner), so text must
+// be white/light, matching the rest of the hero content.
+.AvocadoUserPage-hero-bio {
+  margin-top: 14px;
+  max-width: 600px;
+
+  // Override extension's dark-background dashed border approach
+  .UserBio {
+    margin: 0;
+    border: 1px dashed transparent;
+    border-radius: 10px;
+    transition: border-color 0.2s ease;
+
+    // Editable state — show a subtle light dashed border on hover
+    &.editable:not(.editing) {
+      cursor: text;
+      border-color: rgba(255, 255, 255, 0.15);
+
+      &:hover, &:focus {
+        border-color: rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.06);
+      }
+    }
+
+    // Editing state — dark input on light translucent card
+    &.editing {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.3);
+      border-style: solid;
+      padding: 8px;
+
+      textarea.FormControl {
+        background: rgba(255, 255, 255, 0.9) !important;
+        color: #1a1b21 !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-size: 13px !important;
+        font-family: 'DM Sans', Inter, "Segoe UI", sans-serif !important;
+        resize: none !important;
+        min-height: 0 !important;
+        height: 72px !important;
+        padding: 8px 12px !important;
+        line-height: 1.5 !important;
+      }
+    }
+
+    // Action buttons (Save / Cancel) while editing
+    &-actions {
+      margin-top: 8px;
+      gap: 6px;
+
+      .Button--primary {
+        background: rgba(255, 255, 255, 0.9) !important;
+        color: #1a1b21 !important;
+        border-radius: 999px !important;
+        font-size: 12px !important;
+        font-weight: 700 !important;
+
+        &:hover { background: #fff !important; }
+      }
+
+      .Button:not(.Button--primary) {
+        background: rgba(255, 255, 255, 0.15) !important;
+        color: rgba(255, 255, 255, 0.85) !important;
+        border-radius: 999px !important;
+        font-size: 12px !important;
+        font-weight: 700 !important;
+        border: none !important;
+
+        &:hover { background: rgba(255, 255, 255, 0.25) !important; }
+      }
+    }
+  }
+
+  // Bio content — white text to match hero
+  .UserBio-content {
+    padding: 6px 2px 1px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    font-weight: 500;
+    max-height: calc(1px + 20px + 21px * 5);
+    overflow-y: auto;
+
+    p { margin: 0 0 4px; color: rgba(255, 255, 255, 0.9); }
+
+    a {
+      color: rgba(255, 255, 255, 0.95) !important;
+      font-weight: 600;
+      text-decoration: underline;
+      text-decoration-color: rgba(255, 255, 255, 0.4);
+
+      &:hover {
+        text-decoration-color: rgba(255, 255, 255, 0.9);
+        border-bottom: none;
+      }
+    }
+  }
+
+  // Placeholder text ("Add a bio...")
+  .UserBio-placeholder {
+    color: rgba(255, 255, 255, 0.45) !important;
+    font-size: 13px;
+    font-style: italic;
+    padding: 4px 2px;
+  }
+
+  // Scrollbar — subtle white
+  .UserBio-content::-webkit-scrollbar { width: 3px; }
+  .UserBio-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); border-radius: 3px; }
+}
