@@ -29,7 +29,11 @@ return [
         ->content(\Ramon\Avocado\Content\AddShowcaseImagePreload::class)
         ->content(\Ramon\Avocado\Content\CustomLoadingSpinner::class)
         ->content(\Ramon\Avocado\Content\HideLogoFlash::class)
-        ->content(\Ramon\Avocado\Content\DeferMainCss::class)
+        // DeferMainCss removed: Flarum core already emits async-CSS natively
+        // (sessionStorage warm-visit cache + <link rel="preload" onload>) since
+        // a recent version. Keeping our own deferral was duplicating <noscript>
+        // tags and creating extra <link> entries on warm visits. The class file
+        // remains in src/Content/ as a no-op until removed in a future cleanup.
         ->content(\Ramon\Avocado\Content\LoadFontAwesomeKit::class)
         ->content(\Ramon\Avocado\Content\InjectOnlineUsers::class)
         ->route('/discussions', 'avocado-discussions')
