@@ -616,12 +616,44 @@
 }
 
 .AvocadoHome-avatarWrap {
+  position: relative; // anchor for .AvocadoHome-unreadBadge
   width: 42px;
   height: 42px;
   border-radius: 999px;
-  overflow: hidden;
   flex-shrink: 0;
   text-decoration: none;
+  // overflow stays visible so the unread badge isn't clipped — the .Avatar
+  // child already provides its own rounding/clipping for the image.
+}
+
+// ── Unread badge — overlays the avatar's top-left corner ─────────────────────
+// Counter pill in the theme primary colour by default; switches to the per-card
+// tag colour only when the admin "Discussion card border style" is enabled
+// (same toggle that drives .AvocadoHome-threadCard--unread tinting).
+.AvocadoHome-unreadBadge {
+  position: absolute;
+  top: -4px;
+  left: -6px;
+  z-index: 2;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--primary-color);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+  // Halo against the card so it pops over the avatar edge regardless of background.
+  box-shadow: 0 0 0 2px var(--card-bg, #fff);
+  pointer-events: auto;
+  cursor: default;
+}
+
+[data-avocado-colored-border="left"] .AvocadoHome-unreadBadge,
+[data-avocado-colored-border="full"] .AvocadoHome-unreadBadge {
+  background: var(--item-tag-color, var(--primary-color));
 }
 
 .AvocadoHome-threadMain {
@@ -1002,13 +1034,29 @@
   font-size: 14px;
 }
 
-// ─── Unread indicator — same card appearance, just bolder title ──────────────
-.AvocadoHome-threadCard--unread .AvocadoHome-threadTitle {
-  font-weight: 900;
-  color: var(--heading-color, var(--home-title));
+// ─── Unread indicator — bolder title + faint tint, no border, no author tint ─
+// Uses --avocado-unread-color, which defaults to the theme's --primary-color
+// and only switches to the discussion's tag colour when the admin enables
+// "Discussion card border style" (data-avocado-colored-border != "none").
+.AvocadoHome-threadCard--unread {
+  --avocado-unread-color: var(--primary-color);
+
+  background: color-mix(in srgb, var(--avocado-unread-color) 4%, transparent);
+
+  .AvocadoHome-threadTitle {
+    font-weight: 900;
+    color: var(--heading-color, var(--home-title));
+  }
 }
 
-// ─── Badges (pinned, following) ──────────────────────────────────────────────
+// When the colored-border admin setting is on, follow the per-card tag colour
+// (matches the existing border tinting behaviour).
+[data-avocado-colored-border="left"] .AvocadoHome-threadCard--unread,
+[data-avocado-colored-border="full"] .AvocadoHome-threadCard--unread {
+  --avocado-unread-color: var(--item-tag-color, var(--primary-color));
+}
+
+// ─── Badges (pinned, following) — unread is now .AvocadoHome-unreadBadge ─────
 .AvocadoHome-badge {
   display: inline-flex;
   align-items: center;

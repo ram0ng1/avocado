@@ -1337,13 +1337,104 @@
   flex-shrink: 0;
 }
 
-// ── TypingUsersContainer → ReplyPlaceholder spacing ──────────────────────────
+// ── TypingUsersContainer → modern floating pill ──────────────────────────────
+// Default core markup: <div class="TypingUsersContainer [-active]">
+//   <div class="TypingUsers"><i class="fas fa-ellipsis-h fa-beat"></i> name está digitando</div>
+// </div>
 .TypingUsersContainer {
-  margin-bottom: 8px;
+  // Reset core styles (it ships padding/background/border-radius on the container).
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+
+  margin: 0 0 12px 0;
+  min-height: 28px; // reserve room so layout doesn't jump when text appears
+  display: flex;
+  align-items: center;
 
   @media @phone {
-    margin-bottom: 6px;
+    margin-bottom: 8px;
   }
+
+  // Pill itself
+  .TypingUsers {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    padding: 6px 14px 6px 10px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--primary-color) 8%, var(--body-bg, #fff));
+    border: 1px solid color-mix(in srgb, var(--primary-color) 18%, transparent);
+    color: color-mix(in srgb, var(--primary-color) 80%, var(--text-color, #111));
+    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 6px color-mix(in srgb, var(--primary-color) 12%, transparent);
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    // Replace fa-ellipsis-h with three animated dots — keep the <i> as a flex
+    // anchor so we don't fight markup. Hide its glyph and stamp our own dots.
+    > i.fas {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 14px;
+      // hide the FA glyph: it's added via ::before with content from the icon font
+      &::before { content: ''; display: none; }
+
+      // three pulsing dots positioned with absolute children of the pseudo
+      &::after {
+        content: '';
+        position: absolute;
+        left: 0; right: 0; top: 50%;
+        height: 4px;
+        // Three dots painted via a gradient — animating background-position
+        // shifts which dot is "lit" without needing extra DOM.
+        background:
+          radial-gradient(circle at  4px 50%, currentColor 50%, transparent 55%) no-repeat,
+          radial-gradient(circle at 11px 50%, currentColor 50%, transparent 55%) no-repeat,
+          radial-gradient(circle at 18px 50%, currentColor 50%, transparent 55%) no-repeat;
+        opacity: 0.55;
+        transform: translateY(-50%);
+        animation: AvocadoTyping-dots 1.2s ease-in-out infinite;
+      }
+    }
+  }
+
+  // Active state — fade/slide in
+  &.TypingUsersContainer-active .TypingUsers {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  // Idle state ("no-activity" message): muted, no background — keeps the slot
+  // visible without competing with content above the composer.
+  &:not(.TypingUsersContainer-active) .TypingUsers {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    color: var(--muted-color);
+    opacity: 0.7;
+    transform: none;
+    > i.fas::after { animation: none; opacity: 0.4; }
+  }
+}
+
+// Three-dot wave: each dot gets its peak brightness in turn.
+@keyframes AvocadoTyping-dots {
+  0%, 100% { opacity: 0.35; }
+  20%      { opacity: 1;    }
+  60%      { opacity: 0.6;  }
 }
 
 // ── Guest CTA between posts ────────────────────────────────────────────────────

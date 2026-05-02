@@ -11,6 +11,7 @@ import {
 import ThreadCard from './shared/ThreadCard';
 import SortDropdown, { SortOption } from './shared/SortDropdown';
 import WsUpdateBanner from './shared/WsUpdateBanner';
+import { bindRealtime, pushPayloadDiscussion } from '../realtime';
 
 const SORT_OPTIONS: SortOption[] = [
   { key: 'latest',   label: () => trans('ramon-avocado.forum.search.sort_latest',   'Latest'),   sort: '-lastPostedAt' },
@@ -31,11 +32,7 @@ export default class AllDiscussionsPage extends Page {
   private offset = 0;
   private likingIds   = new Set<string>();
   private _wsUpdates  = 0;
-  private _wsHandler: ((d: any) => void) | null = null;
-  private _likeHandler: ((d: any) => void) | null = null;
-  private _unlikeHandler: ((d: any) => void) | null = null;
-  private _deletedHandler: ((d: any) => void) | null = null;
-  private _pinnedHandler: ((d: any) => void) | null = null;
+  private _unbindRealtime: (() => void) | null = null;
   private _updatedLikeIds = new Set<string>();
   private _pendingDiscs   = new Map<string, any>();
   private _newDiscIds     = new Set<string>();
@@ -77,86 +74,74 @@ export default class AllDiscussionsPage extends Page {
     };
     document.addEventListener('click', this._tagPickerOutside);
 
-    if (!app.pusher) return;
+    this._unbindRealtime = bindRealtime({
+      onPost: (data: any) => {
+        const disc = pushPayloadDiscussion(data);
+        const id = disc?.id?.();
+        if (!id) return;
+        app.store
+          .find('discussions', id, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
+          .then((d: any) => {
+            if (!d) return;
+            const exists = this.discussions.some((x) => String(x.id?.() || '') === String(id));
+            if (!exists) this._pendingDiscs.set(String(id), d);
+            m.redraw();
+          })
+          .catch(() => { this._wsUpdates++; m.redraw(); });
+      },
 
-    this._wsHandler = (data: any) => {
-      const discId = String(data?.discussionId || '');
-      if (!discId) return;
-      app.store
-        .find('discussions', discId, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
-        .then((disc: any) => {
-          if (!disc) return;
-          const exists = this.discussions.some((d) => String(d.id?.() || '') === discId);
-          if (exists) { m.redraw(); } else { this._pendingDiscs.set(discId, disc); m.redraw(); }
-        })
-        .catch(() => { this._wsUpdates++; m.redraw(); });
-    };
+      onLike: (data: any) => {
+        const disc = pushPayloadDiscussion(data);
+        const id = disc?.id?.();
+        if (!id) return;
+        const sid = String(id);
+        const isSelf = this._selfActionIds.has(sid);
+        if (isSelf) this._selfActionIds.delete(sid);
+        app.store
+          .find('discussions', id, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
+          .then(() => {
+            if (!isSelf) {
+              this._updatedLikeIds.add(sid);
+              setTimeout(() => { this._updatedLikeIds.delete(sid); m.redraw(); }, 500);
+            }
+            m.redraw();
+          })
+          .catch(() => {});
+      },
 
-    const handleLike = (data: any) => {
-      const discId = String(data?.discussionId || '');
-      if (!discId) return;
-      const isSelf = this._selfActionIds.has(discId);
-      if (isSelf) this._selfActionIds.delete(discId);
-      app.store
-        .find('discussions', discId, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
-        .then(() => {
-          if (!isSelf) {
-            this._updatedLikeIds.add(discId);
-            setTimeout(() => { this._updatedLikeIds.delete(discId); m.redraw(); }, 500);
-          }
-          m.redraw();
-        })
-        .catch(() => {});
-    };
-    this._likeHandler   = handleLike;
-    this._unlikeHandler = handleLike;
+      onPinned: (data: any) => {
+        const disc = pushPayloadDiscussion(data);
+        const id = disc?.id?.();
+        if (!id) return;
+        app.store.find('discussions', id, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
+          .then((d: any) => {
+            if (!d) return;
+            if (this.discussions.some((x) => String(x.id?.() || '') === String(id))) {
+              this.discussions.sort((a, b) => (b.isSticky?.() ? 1 : 0) - (a.isSticky?.() ? 1 : 0));
+            }
+            m.redraw();
+          })
+          .catch(() => {});
+      },
 
-    this._deletedHandler = (data: any) => {
-      const discId = String(data?.discussionId || '');
-      if (!discId) return;
-      if (!this.discussions.some((d) => String(d.id?.() || '') === discId) && !this._pendingDiscs.has(discId)) return;
-      app.store.find('discussions', discId, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
-        .then(() => m.redraw()).catch(() => {});
-    };
-
-    this._pinnedHandler = (data: any) => {
-      const discId = String(data?.discussionId || '');
-      if (!discId) return;
-      app.store.find('discussions', discId, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
-        .then((disc: any) => {
-          if (!disc) return;
-          if (this.discussions.some((d) => String(d.id?.() || '') === discId)) {
-            this.discussions.sort((a, b) => (b.isSticky?.() ? 1 : 0) - (a.isSticky?.() ? 1 : 0));
-          }
-          m.redraw();
-        })
-        .catch(() => {});
-    };
-
-    if (typeof app.pusher.then === 'function') {
-      app.pusher.then(({ channels }: any) => {
-        if (!channels?.main) return;
-        channels.main.bind('newPost',          this._wsHandler);
-        channels.main.bind('postLiked',        this._likeHandler);
-        channels.main.bind('postUnliked',      this._unlikeHandler);
-        channels.main.bind('postDeleted',      this._deletedHandler);
-        channels.main.bind('discussionPinned', this._pinnedHandler);
-      });
-    }
+      onPostRemoved: (data: any) => {
+        const disc = pushPayloadDiscussion(data);
+        const id = disc?.id?.();
+        if (!id) return;
+        if (!this.discussions.some((x) => String(x.id?.() || '') === String(id))
+            && !this._pendingDiscs.has(String(id))) return;
+        app.store.find('discussions', id, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
+          .then(() => m.redraw())
+          .catch(() => {});
+      },
+    });
   }
 
   onremove(vnode: any) {
     super.onremove(vnode);
     if (this._tagPickerOutside) document.removeEventListener('click', this._tagPickerOutside);
-    if (!app.pusher || typeof app.pusher.then !== 'function') return;
-    app.pusher.then(({ channels }: any) => {
-      if (!channels?.main) return;
-      if (this._wsHandler)      channels.main.unbind('newPost',          this._wsHandler);
-      if (this._likeHandler)    channels.main.unbind('postLiked',        this._likeHandler);
-      if (this._unlikeHandler)  channels.main.unbind('postUnliked',      this._unlikeHandler);
-      if (this._deletedHandler) channels.main.unbind('postDeleted',      this._deletedHandler);
-      if (this._pinnedHandler)  channels.main.unbind('discussionPinned', this._pinnedHandler);
-    });
+    this._unbindRealtime?.();
+    this._unbindRealtime = null;
   }
 
   // ── Data loading ─────────────────────────────────────────────────────────────
