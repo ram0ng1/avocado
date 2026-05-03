@@ -9,6 +9,23 @@
 
 @avocado-box-shadow:              rgba(0, 0, 0, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;
 
+// ── Typography scale ─────────────────────────────────────────────────────────
+@font-sans:    'DM Sans Variable', 'DM Sans', Inter, "Segoe UI", sans-serif;
+@font-serif:   Georgia, "Times New Roman", serif;
+@font-mono:    ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
+
+@font-xs:      12px;
+@font-sm:      14px;
+@font-base:    16px;
+@font-lg:      18px;
+@font-xl:      20px;
+@font-2xl:     24px;
+@font-3xl:     28px;
+@font-4xl:     32px;
+@font-5xl:     36px;
+@font-6xl:     44px;
+@font-7xl:     56px;
+
 // Extension-specific theme-sensitive CSS variables
 :root {
   // ── Core theme tokens ────────────────────────────────────────────────────────
@@ -50,7 +67,14 @@
   --avocado-z-post-side:          2;
   --avocado-z-sidebar:            10;
   --avocado-z-topbar:             60;
+  --avocado-z-dropdown:           400;
   --avocado-z-modal-backdrop:     500;
+  --avocado-z-tooltip:            9999;
+
+  // ── Elevation / shadow scale ─────────────────────────────────────────────────
+  --shadow-subtle:                0 1px 6px rgba(0, 0, 0, 0.06);
+  --shadow-medium:                0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-lifted:                0 12px 32px rgba(0, 0, 0, 0.18);
 }
 
 [data-theme^=dark] {

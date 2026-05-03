@@ -16,30 +16,31 @@ body.dark-mode {
   // Variables redefined by Flarum Core in [data-theme^=dark] scope:
   // --body-bg, --control-bg, --shadow-color, --heading-color, --muted-color, etc.
   // DiscussionListPane inherits automatically.
+  // Tokens declared in :root never need !important — there is no cascade to defeat.
 
-  --avmsg-bg:            color-mix(in srgb, var(--body-bg) 95%, #000) !important;
-  --avmsg-sidebar-bg:    var(--body-bg) !important;
-  --avmsg-card-bg:       color-mix(in srgb, var(--body-bg) 70%, #fff) !important;
-  --avmsg-header-bg:     rgba(0, 0, 0, 0.3) !important;
-  --avmsg-border:        rgba(255, 255, 255, 0.07) !important;
-  --avmsg-text:          var(--heading-color, #e8e9f2) !important;
-  --avmsg-muted:         var(--muted-color) !important;
-  --avmsg-item-hover:    rgba(255, 255, 255, 0.05) !important;
-  --avmsg-item-active-bg: color-mix(in srgb, var(--primary-color) 14%, transparent) !important;
-  --avmsg-item-active-ring: color-mix(in srgb, var(--primary-color) 25%, transparent) !important;
-  --avmsg-bubble-in:     color-mix(in srgb, var(--body-bg) 55%, #fff) !important;
-  --avmsg-bubble-text:   var(--text-color) !important;
-  --avmsg-input-bg:      rgba(255, 255, 255, 0.07) !important;
-  --avmsg-search-bg:     rgba(255, 255, 255, 0.07) !important;
-  --avmsg-send-btn:      var(--primary-color) !important;
-  --avmsg-send-icon:     #ffffff !important;
-  --avmsg-unread-bg:     var(--primary-color) !important;
-  --avmsg-online:        #22c55e !important;
-  --avmsg-avatar-ring:   var(--body-bg) !important;
-  --avmsg-sk-base:       color-mix(in srgb, var(--body-bg) 60%, #fff) !important;
-  --avmsg-sk-shine:      color-mix(in srgb, var(--body-bg) 40%, #fff) !important;
+  --avmsg-bg:               color-mix(in srgb, var(--body-bg) 95%, #000);
+  --avmsg-sidebar-bg:       var(--body-bg);
+  --avmsg-card-bg:          color-mix(in srgb, var(--body-bg) 70%, #fff);
+  --avmsg-header-bg:        rgba(0, 0, 0, 0.3);
+  --avmsg-border:           rgba(255, 255, 255, 0.07);
+  --avmsg-text:             var(--heading-color, #e8e9f2);
+  --avmsg-muted:            var(--muted-color);
+  --avmsg-item-hover:       rgba(255, 255, 255, 0.05);
+  --avmsg-item-active-bg:   color-mix(in srgb, var(--primary-color) 14%, transparent);
+  --avmsg-item-active-ring: color-mix(in srgb, var(--primary-color) 25%, transparent);
+  --avmsg-bubble-in:        color-mix(in srgb, var(--body-bg) 55%, #fff);
+  --avmsg-bubble-text:      var(--text-color);
+  --avmsg-input-bg:         rgba(255, 255, 255, 0.07);
+  --avmsg-search-bg:        rgba(255, 255, 255, 0.07);
+  --avmsg-send-btn:         var(--primary-color);
+  --avmsg-send-icon:        #ffffff;
+  --avmsg-unread-bg:        var(--primary-color);
+  --avmsg-online:           var(--avocado-online);
+  --avmsg-avatar-ring:      var(--body-bg);
+  --avmsg-sk-base:          color-mix(in srgb, var(--body-bg) 60%, #fff);
+  --avmsg-sk-shine:         color-mix(in srgb, var(--body-bg) 40%, #fff);
 
-  // ── 3. Global Avocado CSS variables ──────────────────────────────────────────
+  // ── 1. Global Avocado CSS variables ──────────────────────────────────────────
 
   --home-border:  rgba(255, 255, 255, 0.08);
   --home-muted:   var(--muted-color);
@@ -52,7 +53,7 @@ body.dark-mode {
     background: var(--body-bg);
   }
 
-  // ── 3. AvocadoHome root ───────────────────────────────────────────────────────
+  // ── 3. AvocadoHome root ──────────────────────────────────────────────────────
 
   .AvocadoHome {
     background: var(--body-bg);
@@ -74,14 +75,14 @@ body.dark-mode {
     border-color: rgba(255, 255, 255, 0.1);
   }
 
-  // ── 9. Section headings ───────────────────────────────────────────────────────
+  // ── 5. Section headings ──────────────────────────────────────────────────────
 
   .AvocadoHome-section > h2,
   .AvocadoHome-sectionHead h2 {
     color: var(--heading-color, #e8e9f2);
   }
 
-  // ── 10. Category cards ────────────────────────────────────────────────────────
+  // ── 6. Category cards ────────────────────────────────────────────────────────
 
   .AvocadoHome-categoryCard {
     &:hover,
@@ -95,7 +96,7 @@ body.dark-mode {
     color: var(--heading-color, #e4e5f0);
   }
 
-  // ── 11. Thread cards ──────────────────────────────────────────────────────────
+  // ── 7. Thread cards ──────────────────────────────────────────────────────────
   // threadCard bg, threadExcerpt, threadTime, threadReplyGroup, replyCard-*,
   // seeReplies, yesterday-label: now use CSS vars that adapt automatically.
 
@@ -116,7 +117,7 @@ body.dark-mode {
     color: var(--heading-color, #f0f1fa);
   }
 
-  // ── 12. Reply button ──────────────────────────────────────────────────────────
+  // ── 8. Reply button ──────────────────────────────────────────────────────────
   // Uses semi-transparent overlay (not --avocado-surface-1) for dark mode
 
   .AvocadoHome-replyBtn {
@@ -134,32 +135,32 @@ body.dark-mode {
     }
   }
 
-  // ── 13. Thread stats bar ──────────────────────────────────────────────────────
+  // ── 9. Thread stats bar ──────────────────────────────────────────────────────
 
   .AvocadoHome-statBtn {
     &:hover { background: rgba(255, 255, 255, 0.07); }
   }
 
-  // ── 14. Reply group ───────────────────────────────────────────────────────────
+  // ── 10. Reply group ──────────────────────────────────────────────────────────
 
   .AvocadoHome-replyCard-line:hover {
     background: rgba(255, 255, 255, 0.04);
   }
 
-  // ── 15. See replies hover ─────────────────────────────────────────────────────
+  // ── 11. See replies hover ────────────────────────────────────────────────────
 
   .AvocadoHome-seeReplies {
     &:hover { color: var(--text-color); }
   }
 
-  // ── 17. Empty state ───────────────────────────────────────────────────────────
+  // ── 12. Empty state ──────────────────────────────────────────────────────────
 
   .AvocadoHome-emptyState {
     border-color: rgba(255, 255, 255, 0.1);
     color: var(--muted-color);
   }
 
-  // ── 18. Skeleton loading ──────────────────────────────────────────────────────
+  // ── 13. Skeleton loading ─────────────────────────────────────────────────────
 
   .AvocadoHome-skeletonCard {
     background: var(--control-bg);
@@ -176,7 +177,7 @@ body.dark-mode {
     background-size: 800px 100%;
   }
 
-  // ── 19. Inline composer ───────────────────────────────────────────────────────
+  // ── 14. Inline composer ──────────────────────────────────────────────────────
 
   .AvocadoHome-composer {
     background: var(--control-bg);
@@ -201,7 +202,7 @@ body.dark-mode {
     background: color-mix(in srgb, var(--control-bg) 90%, #000) !important;
   }
 
-  // ── 20. Tag picker ────────────────────────────────────────────────────────────
+  // ── 15. Tag picker ───────────────────────────────────────────────────────────
 
   .AvocadoHome-tagPickerTrigger {
     background: var(--control-bg);
@@ -223,7 +224,7 @@ body.dark-mode {
   .AvocadoHome-tagPickerSearch {
     background: var(--control-bg);
 
-    > i { color: #555668; }
+    > i { color: var(--avocado-muted-icon); }
 
     > input {
       color: var(--text-color);
@@ -244,7 +245,7 @@ body.dark-mode {
     color: var(--muted-color);
   }
 
-  // ── 21. Home nav bar ──────────────────────────────────────────────────────────
+  // ── 16. Home nav bar ─────────────────────────────────────────────────────────
 
   .AvocadoHomeNav {
     > .Button,
@@ -265,7 +266,7 @@ body.dark-mode {
   }
 
 
-  // ── 22. All Discussions page ──────────────────────────────────────────────────
+  // ── 17. All Discussions page ─────────────────────────────────────────────────
 
   .AvocadoDiscussions-title,
   .AvocadoExtensionPage-title {
@@ -317,7 +318,7 @@ body.dark-mode {
     }
   }
 
-  // ── 23. Search pages (/search, AvocadoSearch) ────────────────────────────────
+  // ── 18. Search pages (/search, AvocadoSearch) ────────────────────────────────
 
   .App--avocadoSearch .App-content,
   .App--search .App-content {
@@ -401,7 +402,7 @@ body.dark-mode {
     border-color: rgba(255, 255, 255, 0.1);
   }
 
-  .AvocadoSearch-barIcon { color: #555668; }
+  .AvocadoSearch-barIcon { color: var(--avocado-muted-icon); }
 
   .AvocadoSearch-barInput {
     color: var(--text-color);
@@ -448,7 +449,7 @@ body.dark-mode {
     border-top-color: rgba(255, 255, 255, 0.07);
   }
 
-  // ── 24. Tags page (/tags) ─────────────────────────────────────────────────────
+  // ── 19. Tags page (/tags) ────────────────────────────────────────────────────
 
   .AvocadoTagsPage-title {
     color: var(--heading-color, #e8e9f2);
@@ -476,7 +477,7 @@ body.dark-mode {
   .AvocadoTagsPage-tagCard-last {
     border-top-color: rgba(255, 255, 255, 0.07);
 
-    i { color: #555668; }
+    i { color: var(--avocado-muted-icon); }
 
     &:hover { background: rgba(255, 255, 255, 0.04); }
   }
@@ -495,7 +496,7 @@ body.dark-mode {
 
   .AvocadoTagsPage-cloud-label { color: var(--muted-color); }
 
-  // ── 25. User profile page (/u/…) ─────────────────────────────────────────────
+  // ── 20. User profile page (/u/…) ─────────────────────────────────────────────
 
   .AvocadoUserPage {
     background: var(--body-bg);
@@ -661,7 +662,7 @@ body.dark-mode {
     }
   }
 
-  // ── 26. Discussion page (/d/…) ────────────────────────────────────────────────
+  // ── 21. Discussion page (/d/…) ───────────────────────────────────────────────
 
   .Page.DiscussionPage {
     --disc-bg:     var(--body-bg);
@@ -671,7 +672,7 @@ body.dark-mode {
     --disc-muted:  var(--muted-color);
   }
 
-  // ── Code blocks: dark theme ───────────────────────────────────────────────────
+  // ── 22. Code blocks: dark theme ──────────────────────────────────────────────
   .Page.DiscussionPage .Post-body pre {
     --pre-bg:            #0d1117;
     --pre-text:          #e6edf3;
@@ -692,7 +693,7 @@ body.dark-mode {
     &:hover { background: rgba(255, 255, 255, 0.12); }
   }
 
-  // ── 27. Discussion page avatar border ─────────────────────────────────────────
+  // ── 23. Discussion page avatar border ────────────────────────────────────────
 
   .Page.DiscussionPage .CommentPost .Post-side .Avatar,
   .Page.DiscussionPage .CommentPost .Post-side a .Avatar {
@@ -706,7 +707,7 @@ body.dark-mode {
   }
 
 
-  // ── 29. Discussion page skeleton (preloader) ──────────────────────────────────
+  // ── 24. Discussion page skeleton (preloader) ─────────────────────────────────
 
   .DiscussionPage--skeleton {
     background: var(--body-bg);
@@ -750,35 +751,18 @@ body.dark-mode {
     }
   }
 
-  // ── MessagesPage ──────────────────────────────────────────────────────────────
-  // Dark tokens for the "Signal" chat design
+  // ── 25. MessagesPage ─────────────────────────────────────────────────────────
+  // Dark tokens for the "Signal" chat design.
+  // Most --avmsg-* tokens are already declared in the :root block above; only the
+  // Messages-specific extras (item-active, bubble-in-border, input-border) are
+  // scoped here so they don't leak globally.
 
   .AvocadoMessages,
   .AvocadoMessages-card,
   .MessagesPage {
-    --avmsg-bg:               color-mix(in srgb, var(--body-bg) 95%, #000);
-    --avmsg-sidebar-bg:       var(--body-bg);
-    --avmsg-card-bg:          color-mix(in srgb, var(--body-bg) 70%, #fff);
-    --avmsg-header-bg:        rgba(0, 0, 0, 0.3);
-    --avmsg-border:           rgba(255, 255, 255, 0.07);
-    --avmsg-text:             var(--heading-color, #e8e9f2);
-    --avmsg-muted:            var(--muted-color);
-    --avmsg-item-hover:          rgba(255, 255, 255, 0.05);
     --avmsg-item-active:         rgba(255, 255, 255, 0.08);
-    --avmsg-item-active-bg:      color-mix(in srgb, var(--primary-color) 14%, transparent);
-    --avmsg-item-active-ring:    color-mix(in srgb, var(--primary-color) 25%, transparent);
-    --avmsg-bubble-in:        color-mix(in srgb, var(--body-bg) 55%, #fff);
-    --avmsg-bubble-in-border: rgba(255, 255, 255, 0.07);
-    --avmsg-bubble-text:      var(--text-color);
-    --avmsg-input-bg:         rgba(255, 255, 255, 0.07);
-    --avmsg-input-border:     rgba(255, 255, 255, 0.18);
-    --avmsg-search-bg:        rgba(255, 255, 255, 0.07);
-    --avmsg-send-btn:         var(--primary-color);
-    --avmsg-send-icon:        #ffffff;
-    --avmsg-unread-bg:        var(--primary-color);
-    --avmsg-avatar-ring:      var(--body-bg);
-    --avmsg-sk-base:          color-mix(in srgb, var(--body-bg) 60%, #fff);
-    --avmsg-sk-shine:         color-mix(in srgb, var(--body-bg) 40%, #fff);
+    --avmsg-bubble-in-border:    rgba(255, 255, 255, 0.07);
+    --avmsg-input-border:        rgba(255, 255, 255, 0.18);
   }
 
   .AvocadoMessages-title { color: var(--heading-color, #e8e9f2); }
@@ -831,7 +815,7 @@ body.dark-mode {
     // Online ring
     .DiscussionListItem-author.is-online .Avatar {
       box-shadow: 0 0 0 2px var(--body-bg),
-                  0 0 0 4px #22c55e !important;
+                  0 0 0 4px var(--avocado-online) !important;
     }
 
     // Title: high contrast — specificity must beat DiscussionPage.less (0,4,0 !important)
@@ -849,18 +833,18 @@ body.dark-mode {
       font-weight: 600 !important;
     }
 
-    // Meta / secondary text
+    // Meta / secondary text — WCAG AA contrast on dark sidebar bg
     .DiscussionListItem-info,
     .DiscussionListItem-info .item-user a,
     .item-excerpt {
-      color: rgba(200, 202, 220, 0.65) !important;
+      color: rgba(200, 202, 220, 0.82) !important;
     }
 
-    // Stats / reply count
+    // Stats / reply count — needs to remain readable
     .DiscussionListItem-stats,
     .DiscussionListItem-stats-item,
     .item-count {
-      color: rgba(200, 202, 220, 0.50) !important;
+      color: rgba(200, 202, 220, 0.70) !important;
     }
 
     // Scrollbar
@@ -1002,7 +986,7 @@ body.dark-mode {
     .TextEditor-editor { color: var(--text-color) !important; }
   }
 
-  // ── 30. Discussion Hero — Page Header ──────────────────────────────────────────
+  // ── 27. Discussion Hero — Page Header ────────────────────────────────────────
 
   // Page container tokens for discussion
   .Page.DiscussionPage {
@@ -1056,27 +1040,27 @@ body.dark-mode {
   // Back button — semi-transparent dark surface in dark mode
   .DiscussionHero-back {
     background: var(--disc-hero-surface, rgba(0,0,0,0.25));
-    color: var(--text-on-light);
-    
-    &:hover { 
+    color: var(--disc-hero-text, var(--text-on-dark));
+
+    &:hover {
       background: var(--disc-hero-surface, rgba(0,0,0,0.35));
     }
   }
 
-  // Discussion title — adaptive color
+  // Discussion title — adaptive: JS sets --disc-hero-text per-tag, fallback to light text
   .DiscussionHero-title {
-    color: var(--text-on-light);
+    color: var(--disc-hero-text, var(--text-on-dark));
   }
 
-  // Meta row (participants + post count) — muted text for dark mode
+  // Meta row (participants + post count)
   .DiscussionHero-meta {
-    color: var(--text-on-light);
+    color: var(--disc-hero-text-muted, var(--text-on-dark-muted));
   }
 
   // Meta items icons and text — ensure visibility
   .DiscussionHero-metaItem {
-    color: var(--text-on-light);
-    
+    color: var(--disc-hero-text-muted, var(--text-on-dark-muted));
+
     i { color: inherit; }
   }
 
@@ -1085,13 +1069,13 @@ body.dark-mode {
     opacity: calc(var(--decoration-opacity, 0.15) * 0.5);
   }
 
-  // Badges inside hero — themed to stand out on any background
+  // Badges inside hero — text always white for contrast on saturated badge bg
   .DiscussionHero .AvocadoHome-badge {
-    &--sticky    { background: rgba(251, 146, 60, 0.90); color: var(--text-on-light); }
-    &--locked    { background: rgba(239, 68, 68, 0.90); color: var(--text-on-light); }
-    &--hidden    { background: rgba(107, 114, 128, 0.90); color: var(--text-on-light); }
-    &--following { background: rgba(217, 119, 6, 0.90); color: var(--text-on-light); }
-    &--ignoring  { background: rgba(107, 114, 128, 0.70); color: var(--text-on-light); }
+    &--sticky    { background: rgba(251, 146, 60, 0.90); color: var(--text-on-dark); }
+    &--locked    { background: rgba(239, 68, 68, 0.90); color: var(--text-on-dark); }
+    &--hidden    { background: rgba(107, 114, 128, 0.90); color: var(--text-on-dark); }
+    &--following { background: rgba(217, 119, 6, 0.90); color: var(--text-on-dark); }
+    &--ignoring  { background: rgba(107, 114, 128, 0.70); color: var(--text-on-dark); }
   }
 
   // Tag pills inside hero — dark mode variant
@@ -1117,7 +1101,7 @@ body.dark-mode {
   .DiscussionHero-participantsMore {
     background: var(--disc-hero-surface, rgba(255,255,255,0.12));
     border-color: rgba(255, 255, 255, 0.15);
-    color: var(--text-on-light);
+    color: var(--disc-hero-text, var(--text-on-dark));
   }
 
   // Decoration icon divider — dark mode: black instead of white
