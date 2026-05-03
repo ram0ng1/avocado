@@ -296,7 +296,9 @@ export default class AvocadoTagPage extends Page {
               <div className="AvocadoTagPage-hero-text">
                 <h1 className="AvocadoTagPage-hero-name">{tagName}</h1>
                 <span className="AvocadoTagPage-hero-count">
-                  {count} {count === 1 ? 'discussion' : 'discussions'}
+                  {count} {count === 1
+                    ? trans('ramon-avocado.forum.tags.discussion_singular', 'discussion')
+                    : trans('ramon-avocado.forum.tags.discussion_plural', 'discussions')}
                 </span>
               </div>
 

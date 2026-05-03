@@ -1268,24 +1268,27 @@
   }
 }
 
-// When there is a hero image: primary-color overlay (::before) + hide decorative blobs
-.AvocadoHome-heroBanner--hasImage .AvocadoHome-heroBannerOverlay {
-  background: transparent;
-
+// When there is a hero image: primary-color tint covers the full banner.
+// Why on the banner (not the overlay): on phone the overlay becomes
+// position:relative and content-driven, so an overlay-bound tint can leave a
+// thin strip of the image exposed at the bottom of the banner.
+.AvocadoHome-heroBanner--hasImage {
   &::before {
-    content: '' !important;
-    display: block !important;
-    position: absolute !important;
-    inset: 0 !important;
-    width: 100% !important; height: 100% !important;
-    border-radius: 0 !important;
-    background: var(--primary-color) !important;
-    opacity: 0.62 !important;
-    z-index: 0 !important;
-    pointer-events: none !important;
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--primary-color);
+    opacity: 0.62;
+    z-index: 0;
+    pointer-events: none;
+    border-radius: inherit;
   }
 
-  &::after { display: none; }
+  .AvocadoHome-heroBannerOverlay {
+    background: transparent;
+
+    &::before, &::after { display: none; }
+  }
 }
 
 .AvocadoHome-heroBannerContent {
