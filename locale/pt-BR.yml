@@ -1,53 +1,145 @@
 ramon-avocado:
   admin:
     loading: "Carregando…"
+    search_tags: "Pesquisar tags…"
     settings:
+      # Sections
       section_homepage: Página Inicial
+      section_auth: Login e Registro
+      section_search: Busca
+      section_posts: Posts
+      section_logo: Logotipo
+      section_footer: Rodapé
+      section_colored: Cores
+      section_team: Página Equipe
+
+      # Featured / categories on homepage
       featured_tags_label: Categorias em destaque
       featured_tags_help: As categorias selecionadas aparecem com um emblema de estrela na página inicial e na página de categorias.
       featured_tags_empty: Nenhuma tag encontrada.
-      section_auth: Login e Registro
+      tag_picker_placeholder: "Selecionar tags…"
+
+      # Showcase / portfolio
+      showcase_enabled_label: Ativar seção Showcase / Portfólio
+      showcase_enabled_help: Mostra um carrossel de showcase na página inicial com discussões das tags selecionadas.
+      showcase_tag_label: Tags do Showcase / Portfólio
+      showcase_tag_help: Discussões dessas tags aparecem no carrossel de showcase na página inicial.
+      showcase_heading_label: Título da seção Showcase
+      showcase_heading_help: Título personalizado para a seção de showcase. Deixe vazio para usar o padrão.
+      showcase_count_label: Número de itens no Showcase
+      showcase_count_help: Exibe de 1 a 5 cards de discussão na seção de showcase.
+      showcase_image_style_label: Estilo de imagem do card
+      showcase_image_style_help: Escolha entre exibição compacta ou em altura completa da imagem.
+      showcase_image_style_default: Padrão (Compacto)
+      showcase_image_style_full: Imagem completa
+
+      # Section title overrides
+      section_titles_heading: Títulos de seção
+      section_titles_help: Substitui os títulos das seções da página inicial. Deixe qualquer campo vazio para usar o padrão do pacote de idiomas.
+      categories_heading_label: Título da seção Categorias
+      popular_heading_label: Título de Discussões populares
+      following_heading_label: Título de Seguindo
+
+      # Online users
+      show_online_users_label: Mostrar usuários online
+      show_online_users_help: Exibir a quantidade de usuários atualmente online.
+      show_online_count_label: Mostrar contador de online
+      show_online_count_help: 'Mostra o rótulo "X online" ao lado dos avatares de usuários online.'
+
+      # Auth & banner
       auth_image_label: Imagem do modal de autenticação
       auth_image_help: Imagem de fundo exibida no painel direito dos modais de login, registro e redefinição de senha.
-      section_search: Busca
-      section_posts: Posts
       banner_image_label: Imagem do banner
       banner_image_help: Envie a imagem do banner hero exibida no topo do fórum.
       show_auth_buttons_label: Mostrar botões Entrar / Cadastrar no header para visitantes
       show_auth_buttons_help: Exibir botões de Entrar e Cadastrar no menu secundário do header para usuários não logados.
+      show_guest_cta_label: Mostrar call-to-action para visitantes
+      show_guest_cta_help: Exibir uma mensagem de call-to-action para usuários não logados.
       hero_image_position_label: Posição da imagem do hero
       hero_image_position_help: "Valor CSS background-position, ex.: 'center top' ou '50% 20%'."
+
+      # Custom hero (HTML)
+      custom_hero_enabled_label: Usar conteúdo personalizado no hero (HTML)
+      custom_hero_enabled_help: "Substitui o conteúdo padrão do hero (ícone, título, descrição, botões Entrar/Cadastrar) pelo seu HTML. O wrapper do banner, a imagem de fundo e o overlay permanecem. Exibido apenas para visitantes — igual ao hero padrão."
+      custom_hero_html_label: HTML do hero personalizado
+      custom_hero_html_help: "HTML injetado dentro do overlay do banner hero (substitui .AvocadoHome-heroBannerContent). Tags <style> inline são suportadas."
+
+      # Search
       search_v1_label: Ativar estilo da busca V1
       search_v1_help: Mostrar o dropdown inline de busca em vez do modal V2.
+
+      # Posts
       show_share_label: Mostrar botão Compartilhar nos posts
       show_share_help: Adicionar um botão de compartilhamento em cada post.
       show_action_icons_label: Mostrar ícones nos botões Curtir e Responder
       show_action_icons_help: Exibir ícones do Font Awesome nas ações de Curtir e Responder.
       fixed_avatar_effect_label: Ativar efeito de avatar fixo
       fixed_avatar_effect_help: Manter o avatar do post fixo ao ler comentários longos no desktop.
+      threads_style_label: Ativar layout estilo Threads para discussões
+      threads_style_help: Exibe o post original como um card e indenta as respostas com uma borda à esquerda, no estilo do app Threads.
+
+      # Discussion hero decoration icon
       hero_decoration_icon_label: Mostrar ícone de tag secundária no hero da discussão
       hero_decoration_icon_help: Exibir o ícone da tag secundária como um elemento decorativo grande no lado direito do cabeçalho da discussão.
       hero_decoration_icon_opacity_label: Opacidade do ícone (0-100)
       hero_decoration_icon_opacity_help: Define a opacidade do ícone decorativo como uma porcentagem. 100 = totalmente opaco, 0 = invisível.
-      section_logo: Logotipo
+      hero_decoration_icon_count_label: Número de ícones decorativos
+      hero_decoration_icon_count_help: 1 ícone usa a primeira tag filha. 2 ícones também mostra o ícone da segunda tag filha, deslocado à esquerda.
+      hero_decoration_icon_count_one: 1 ícone (primeira tag filha)
+      hero_decoration_icon_count_two: 2 ícones (primeira e segunda tag filha)
+      hero_deco_divider_label: Mostrar divisor entre os ícones decorativos
+      hero_deco_divider_help: 'Exibe um ícone no espaço entre os dois ícones decorativos (ex.: um símbolo "vs" para sites de esportes).'
+      hero_deco_divider_icon_label: Classe do ícone divisor
+      hero_deco_divider_icon_help: 'Classe do Font Awesome para o ícone divisor, ex.: "fas fa-times" ou "fas fa-circle".'
+
+      # Colored accents
+      colored_enabled_label: Ativar destaques coloridos
+      colored_enabled_help: Aplica a cor da tag ou discussão ativa em botões primários, links e outros acentos visuais do fórum.
+      colored_border_style_label: Estilo da borda do card de discussão
+      colored_border_style_help: Adiciona uma borda colorida aos cards de discussão usando a cor primária da tag.
+      colored_border_style_none: Nenhuma
+      colored_border_style_left: Borda à esquerda
+      colored_border_style_full: Borda completa
+
+      # Post CTA
+      show_post_cta_label: Mostrar CTA "Junte-se" após o primeiro post para visitantes
+      show_post_cta_help: Exibe um card de Login / Cadastro após o primeiro post de uma discussão, visível apenas para visitantes.
+      post_cta_position_label: Posição do CTA (após qual número de post)
+      post_cta_position_help: Insere o banner de CTA entre este número de post e o próximo.
+      post_cta_position_1: "Após o post #1"
+      post_cta_position_2: "Após o post #2"
+      post_cta_position_3: "Após o post #3"
+      post_cta_position_4: "Após o post #4"
+      post_cta_position_5: "Após o post #5"
+
+      # Logo
       logo_svg_label: Logotipo SVG
       logo_svg_help: Envie um logotipo SVG personalizado para seu fórum.
       logo_enabled_label: Ativar logotipo personalizado
       logo_enabled_help: Exibir o logotipo personalizado no cabeçalho.
+
+      # Loading spinner
       custom_loading_spinner_label: Spinner de carregamento personalizado
       custom_loading_spinner_help: Substituir o indicador de carregamento padrão por um spinner SVG animado.
       loading_spinner_style_label: Estilo do spinner
       spinner_custom_code_label: Código do spinner personalizado
       spinner_custom_code_help: Cole qualquer SVG ou HTML para usar como spinner de carregamento.
-      show_online_users_label: Mostrar usuários online
-      show_online_users_help: Exibir a quantidade de usuários atualmente online.
-      show_guest_cta_label: Mostrar call-to-action para visitantes
-      show_guest_cta_help: Exibir uma mensagem de call-to-action para usuários não logados.
-      custom_default_avatar_label: Avatar padrão personalizado
-      custom_default_avatar_help: Envie uma imagem de avatar padrão personalizada para usuários sem foto.
+
+      # Links / avatar
       hide_links_for_guests_label: Ocultar links para visitantes
       hide_links_for_guests_help: Impedir que visitantes acessem links nos posts. Ao clicar em um link, é exibido um botão de Login / Cadastro.
-      section_footer: Rodapé
+      custom_default_avatar_label: Avatar padrão personalizado
+      custom_default_avatar_help: Envie uma imagem de avatar padrão personalizada para usuários sem foto.
+
+      # Team page
+      team_enabled_label: Ativar página Equipe
+      team_enabled_help: Mostra a página /team com os membros dos grupos selecionados.
+      team_title_label: Título da página
+      team_desc_label: Descrição da página
+      team_desc_placeholder: Conheça as pessoas por trás da comunidade.
+      team_groups_label: Grupos a exibir
+      team_groups_help: Os membros dos grupos selecionados aparecerão na página Equipe.
+      team_groups_empty: Nenhum grupo encontrado.
     footer_settings:
       footer_enabled: Ativar rodapé personalizado
       footer_company: Informações da empresa
@@ -62,26 +154,7 @@ ramon-avocado:
       footer_social: Links sociais
       footer_show_social: Mostrar links de mídias sociais
       footer_social_help_json: "Configure links de mídias sociais em formato JSON. Use as chaves: facebook, twitter, linkedin, instagram, youtube."
-      section_team: Página Equipe
-      team_enabled_label: Ativar página Equipe
-      team_enabled_help: Exibe a página /team com os membros dos grupos selecionados.
-      team_title_label: Título da página
-      team_desc_label: Descrição da página
-      team_desc_placeholder: Conheça as pessoas por trás da comunidade.
-      team_groups_label: Grupos a exibir
-      team_groups_help: Os membros dos grupos selecionados aparecerão na página Equipe.
-      team_groups_empty: Nenhum grupo encontrado.
   forum:
-    team:
-      title: Nossa Equipe
-      disabled: Esta página não está disponível.
-      empty: Nenhum membro encontrado.
-      no_bio: Membro da comunidade.
-      discussions: discussões
-      posts: posts
-      member_since: "Desde"
-      member_singular: membro
-      member_plural: membros
     actions:
       share: Compartilhar
     post_cta:
@@ -108,11 +181,17 @@ ramon-avocado:
       no_posts_found: "Nenhum post encontrado para \"{q}\"."
       no_posts_match: "Nenhum post corresponde a esses filtros."
       no_users_found: "Nenhum usuário encontrado para \"{q}\"."
+      no_discussions_query: "Nenhuma discussão encontrada para \"{q}\"."
+      no_discussions_filter: "Nenhuma discussão corresponde a esses filtros."
       enter_search_term: "Digite um termo de busca para encontrar usuários."
       posts_for: "Posts para"
       posts_filtered_by: "Posts filtrados por"
       posts_title: "Busca de posts"
+      filtered_by: "Filtrado por"
+      results: "Resultados da busca"
+      results_for: "Resultados para"
     header:
+      back: Voltar
       back_home: Voltar para o Início
       search: Pesquisar
       or: "ou"
@@ -127,11 +206,15 @@ ramon-avocado:
       back_home: Voltar
       badge_following: Seguindo
       badge_sticky: Fixada
+      badge_unread_tooltip: "{count} posts não lidos"
       categories_heading: Categorias
       choose_tags: Escolher tags
       composer_body_placeholder: "Compartilhe seus pensamentos..."
       composer_close: Fechar
+      composer_edit: Editar
       composer_post: Publicar discussão
+      composer_preview: Pré-visualizar
+      composer_preview_empty: "Nada para pré-visualizar."
       composer_submitting: "Publicando..."
       composer_title_placeholder: "Título da discussão..."
       discussion_singular: discussão
@@ -174,14 +257,26 @@ ramon-avocado:
       title: Todas as discussões
       home: Voltar para o Início
       load_more: Carregar mais
+      empty: "Nenhuma discussão encontrada."
     post:
       op_badge: POST ORIGINAL
     tags:
       title: Categorias
+      home: Início
       discussion_singular: discussão
       discussion_plural: discussões
       other_tags_label: Outras tags
       featured: Destaque
       all_discussions: Todas as discussões
+    team:
+      title: Nossa Equipe
+      disabled: Esta página não está disponível.
+      empty: Nenhum membro encontrado.
+      no_bio: Membro da comunidade.
+      discussions: discussões
+      posts: posts
+      member_since: "Desde"
+      member_singular: membro
+      member_plural: membros
     link:
       login_to_view: "Faça login para ver o link"
