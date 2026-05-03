@@ -602,23 +602,70 @@
 }
 
 
-// ── PostUser-badges — editing state ──────────────────────────────────────────
-// When editing a post, reset badge to inline flow (no repositioning sideffects).
+// ── Editing state (ReplyPlaceholder composer preview) ────────────────────────
+// While editing/composing, core renders <article class="Post CommentPost
+// editing"> with avatar + badges directly inside .Post-side (no .Post-side-
+// inner wrapper, no --inSide class — those only exist for our JS-extended
+// regular posts). Our base rule above absolutely positions every
+// .PostUser-badges with a left offset based on the sticky-avatar layout —
+// applied to the editing preview it floats the badge to a wrong containing
+// block. Re-anchor everything so the editing preview matches a regular post:
+// avatar centered in Post-side, badge overlapping the avatar's bottom-right
+// corner.
 @media @tablet-up {
-  .Page.DiscussionPage .CommentPost.editing .PostUser-badges {
-    display: inline-flex;
-    pointer-events: auto;
-  }
-  .Page.DiscussionPage .CommentPost.editing .PostUser-badges--inSide {
-    display: none !important;
+  .Page.DiscussionPage .CommentPost.editing {
+    // Make Post-side a positioning context AND keep the avatar flush-left so
+    // the badge anchored to top-left of Post-side actually lands on the
+    // avatar's top-left corner (with `justify-content: center` the avatar
+    // would slide to the middle, leaving the badge stranded in empty space).
+    .Post-side {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+    }
+
+    // Badge overlapping the avatar's top-left corner — same visual idea
+    // as the --inSide variant on regular posts but using absolute positioning
+    // since there's no .Post-side-inner wrapper to anchor against.
+    .Post-side > .PostUser-badges {
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      bottom: auto;
+      right: auto;
+      width: auto;
+      margin: 0;
+      padding: 0;
+      display: inline-flex;
+      pointer-events: auto;
+      z-index: 2;
+    }
+
+    // Keep core's PostUser-name avatar hidden (the real avatar is in Post-side)
+    .PostUser > .PostUser-badges {
+      position: static;
+      left: auto;
+      top: auto;
+      width: auto;
+      display: inline-flex;
+      pointer-events: auto;
+    }
+
+    // Hide our --inSide clone (only relevant when JS injects it on real posts)
+    .PostUser-badges--inSide { display: none !important; }
   }
 }
 
 @media @phone {
+  // Phone hides .Post-side entirely (see @phone rule for .CommentPost
+  // .Post-side); the badge inside PostUser-name renders inline in the header.
   .Page.DiscussionPage .CommentPost.editing .PostUser .PostUser-badges {
-    display: inline-flex;
+    position: static;
     top: auto;
     left: auto;
+    width: auto;
+    display: inline-flex;
     pointer-events: auto;
   }
 }

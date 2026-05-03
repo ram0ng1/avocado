@@ -200,6 +200,11 @@
 
   @media @phone {
     flex-direction: column !important;
+    // Why: parent .AvocadoMessages uses height: calc(100vh - header) and is a
+    // column flex; an explicit height here guarantees the chat column has a
+    // resolved height to fill via flex:1 + height:100%, instead of collapsing
+    // to its content size (which left the body empty on mobile).
+    height: 100% !important;
 
     // Default: show list, hide chat
     .AvocadoMessages-chatCol { display: none !important; }
@@ -816,11 +821,34 @@
         left: auto !important;
         top: calc(100% + 6px) !important;
 
+        // On phone, Flarum core forces every .Dropdown .Dropdown-menu into a
+        // "bottom-sheet" (position:fixed; bottom:0; transform:translate(0,70vh);
+        // visibility:hidden; transition; width:auto !important; max-height:70vh;
+        // padding-bottom:40px !important; display:block always rendered).
+        // For the chat header dropdown that's wrong — we want a regular
+        // anchored popover under the trigger. Reset every conflicting property
+        // here, otherwise the menu renders as an empty animated bar far below.
+        // Note: position stays `absolute` (anchored to the .DialogSection-
+        // controls wrapper which is position:relative), NOT `fixed` — fixed
+        // positioning required hardcoded `top: calc(header + dialogHeader)`
+        // which wasn't accurate for all viewports.
         @media @phone {
-          position: fixed !important;
-          right: 12px !important;
+          position: absolute !important;
+          right: 0 !important;
           left: auto !important;
-          top: calc(var(--header-height, 56px) + 56px) !important;
+          top: calc(100% + 6px) !important;
+          bottom: auto !important;
+          width: auto !important;
+          max-height: none !important;
+          padding-bottom: 6px !important;
+          transform: none !important;
+          transition: none !important;
+          overflow: visible !important;
+          // Flarum keeps the menu always-rendered on mobile (display:block) and
+          // toggles visibility via .open + transform animation. Since we
+          // disabled the animation above, switch to the desktop show/hide
+          // model: hidden by default, shown when wrapper has .open.
+          visibility: hidden;
         }
         border-radius: 14px !important;
         border: 1px solid var(--avmsg-border) !important;
@@ -861,6 +889,15 @@
           }
         }
       }
+
+      // Open state: Flarum's wrapper gets `.open` when dropdown is showing.
+      // On phone we set visibility:hidden by default (replacing core's bottom-
+      // sheet animation), so we need to flip it back here.
+      @media @phone {
+        &.open .Dropdown-menu {
+          visibility: visible !important;
+        }
+      }
     }
   }
 
@@ -891,13 +928,13 @@
   }
 
   > .LoadingIndicator { display: none !important; }
+}
 
 // ── Suppress ALL Flarum native spinners inside the messages page ──────────────
 // Our skeleton preloaders handle every loading state instead.
 .AvocadoMessages .LoadingIndicator,
 .MessagesPage .LoadingIndicator {
   display: none !important;
-}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
