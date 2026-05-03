@@ -1959,48 +1959,54 @@ app.initializers.add(
       });
 
       extend(StreamClass.prototype, 'content', function (items) {
-        // Replace the ReplyPlaceholder item (key='reply') with our inline box
-        const idx = items.findIndex(i => i && i.key === 'reply');
-        if (idx >= 0 && app.session.user?.canSendAnyMessage?.()) {
-          const dialog = this.attrs.dialog;
-          const scrollToBottom = () => { try { this.scrollToBottom(); } catch (_) {} };
-          items[idx] = (
-            <div className="MessageStream-item" key="reply">
-              <AvocadoInlineReply
-                dialog={dialog}
-                onSent={(response) => {
-                  const state  = this.attrs.state;
-                  const dialog = this.attrs.dialog;
-                  // Use state.push() to append the sent message without a full reload.
-                  // Falls back to state.refresh() only if push is unavailable.
-                  try {
-                    const msgId  = response?.data?.id;
-                    const msg    = msgId ? app.store.getById('dialog-messages', msgId) : null;
-                    if (msg && state.hasItems() && typeof state.push === 'function') {
-                      state.push(msg);
-                      // Keep dialog.lastMessage in sync so sidebar shows latest message
-                      if (dialog.data?.relationships?.lastMessage) {
-                        dialog.data.relationships.lastMessage.data = { type: 'dialog-messages', id: msg.id() };
-                      }
-                      setTimeout(scrollToBottom, 60);
-                      m.redraw();
-                    } else {
-                      state.refresh().then(() => {
-                        setTimeout(scrollToBottom, 60);
-                        m.redraw();
-                      });
+        if (!app.session.user?.canSendAnyMessage?.()) return items;
+
+        const dialog = this.attrs.dialog;
+        const scrollToBottom = () => { try { this.scrollToBottom(); } catch (_) {} };
+        const replyItem = (
+          <div className="MessageStream-item" key="reply">
+            <AvocadoInlineReply
+              dialog={dialog}
+              onSent={(response) => {
+                const state  = this.attrs.state;
+                const dialog = this.attrs.dialog;
+                // Use state.push() to append the sent message without a full reload.
+                // Falls back to state.refresh() only if push is unavailable.
+                try {
+                  const msgId  = response?.data?.id;
+                  const msg    = msgId ? app.store.getById('dialog-messages', msgId) : null;
+                  if (msg && state.hasItems() && typeof state.push === 'function') {
+                    state.push(msg);
+                    // Keep dialog.lastMessage in sync so sidebar shows latest message
+                    if (dialog.data?.relationships?.lastMessage) {
+                      dialog.data.relationships.lastMessage.data = { type: 'dialog-messages', id: msg.id() };
                     }
-                  } catch (_) {
+                    setTimeout(scrollToBottom, 60);
+                    m.redraw();
+                  } else {
                     state.refresh().then(() => {
                       setTimeout(scrollToBottom, 60);
                       m.redraw();
                     });
                   }
-                }}
-              />
-            </div>
-          );
-        }
+                } catch (_) {
+                  state.refresh().then(() => {
+                    setTimeout(scrollToBottom, 60);
+                    m.redraw();
+                  });
+                }
+              }}
+            />
+          </div>
+        );
+
+        // ReplyPlaceholder is lazy-loaded inside core MessageStream.oninit, so
+        // on the first render the 'reply' item is absent. Replace if present,
+        // otherwise append — guarantees the input box always renders.
+        const idx = items.findIndex(i => i && i.key === 'reply');
+        if (idx >= 0) items[idx] = replyItem;
+        else items.push(replyItem);
+
         return items;
       });
     };
