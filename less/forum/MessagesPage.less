@@ -28,7 +28,7 @@
   --avmsg-send-btn:      var(--primary-color);
   --avmsg-send-icon:     #ffffff;
   --avmsg-unread-bg:     var(--primary-color);
-  --avmsg-online:        #22c55e;
+  --avmsg-online:        var(--avocado-online);
   --avmsg-avatar-ring:   #ffffff;
   // Skeleton shimmer colors (overridden in dark mode)
   --avmsg-sk-base:       #e8eaf0;
@@ -173,7 +173,7 @@
 
 .AvocadoMessages-title {
   font-size: 24px;
-  font-weight: 900;
+  font-weight: 800;
   color: var(--avmsg-text);
   letter-spacing: -0.4px;
   margin: 0;
@@ -269,10 +269,10 @@
       content: 'Messages';
       display: block !important;
       font-size: 16px !important;
-      font-weight: 900 !important;
+      font-weight: 700 !important;
       color: var(--avmsg-text) !important;
       letter-spacing: -0.3px !important;
-      font-family: 'DM Sans', Inter, "Segoe UI", sans-serif !important;
+      font-family: @font-sans !important;
       flex: 1 !important;
       margin: 0 !important;
     }

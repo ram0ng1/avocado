@@ -211,7 +211,7 @@
   &:first-child { margin-left: 0; }
 
   // Green ring — box-shadow avoids the overflow/clipping issue of ::after
-  box-shadow: 0 0 0 2px #22c55e;
+  box-shadow: 0 0 0 2px var(--avocado-online);
 
   // Clip the avatar image to the circle without overflow:hidden on the anchor
   > img {
@@ -691,7 +691,7 @@
   text-decoration: none;
   font-size: 25px;
   line-height: 1.15;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: -0.3px;
   word-break: normal;
   overflow-wrap: break-word;
@@ -915,7 +915,7 @@
   text-transform: uppercase;
   letter-spacing: 1.2px;
   color: var(--muted-color);
-  font-weight: 900;
+  font-weight: 700;
   margin-bottom: 12px;
 }
 
@@ -2092,7 +2092,7 @@
 // Tippy tooltip — force above all card layers
 .AvocadoHome-showcaseCard [data-tippy-root],
 .AvocadoHome-showcaseCard .tippy-box {
-  z-index: 99999 !important;
+  z-index: var(--avocado-z-tooltip) !important;
 }
 
 // The <a> IS the card — border, bg, radius all here
