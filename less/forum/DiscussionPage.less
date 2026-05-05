@@ -710,11 +710,18 @@
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
-    gap: 6px;
     width: 100%;
     list-style: none;
     margin: 0;
     padding: 0;
+  }
+
+  // Every li becomes its own flex row so its content is vertically centered
+  // (otherwise small badges sit at the top of the li, not its center).
+  .Page.DiscussionPage .Post-header > ul > li {
+    display: flex;
+    align-items: center;
+    line-height: 1;
   }
 
   // item-user contains avatar + username (and absolute badge — no flex impact)
@@ -727,6 +734,31 @@
     flex-shrink: 1;
     min-width: 0;
     white-space: nowrap;
+  }
+
+  // PostMeta's Dropdown-toggle is a Flarum .Button which ships with
+  // padding 8px 12px. That doubles the visual gap between it and the
+  // previous item; strip it so the ul gap controls spacing.
+  .Page.DiscussionPage .Post-header > ul > li.item-meta .Dropdown-toggle {
+    padding: 0;
+  }
+
+  // Flarum core ships .Avatar / .username / time with margin-right: 5px
+  // (less/forum/Post.less). Combined with the ul's flex gap they create
+  // 9-10px of visible space between items. Reset them inside Post-header so
+  // only the gap controls spacing.
+  .Page.DiscussionPage .Post-header .PostUser-name .Avatar,
+  .Page.DiscussionPage .Post-header .PostUser-name .username,
+  .Page.DiscussionPage .Post-header .PostMeta time {
+    margin-right: 0;
+  }
+
+  // VerifiedPopover-anchor / VerifiedBadge ship with margin-left: 5px which
+  // doubles up with the ul's gap. Reset inside the post header so spacing
+  // stays uniform across all items.
+  .Page.DiscussionPage .Post-header > ul > li.item-verified .VerifiedPopover-anchor,
+  .Page.DiscussionPage .Post-header > ul > li.item-verified > .VerifiedBadge {
+    margin-left: 0;
   }
 }
 
