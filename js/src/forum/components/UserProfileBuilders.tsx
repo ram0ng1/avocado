@@ -168,11 +168,6 @@ export function buildHero(user: any, isEditable: boolean, controls: any[] = []) 
               <ul className="AvocadoUserPage-hero-badges badges">{listItems(badges)}</ul>
             )}
             <div className="AvocadoUserPage-hero-stats">
-              {isOnline && (
-                <span className="AvocadoUserPage-hero-statPill AvocadoUserPage-hero-statPill--online">
-                  <i className="fas fa-circle" aria-hidden="true" />Online
-                </span>
-              )}
               {joinLabel && (
                 <span className="AvocadoUserPage-hero-statPill">Joined {joinLabel}</span>
               )}
