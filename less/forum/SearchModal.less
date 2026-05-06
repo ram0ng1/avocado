@@ -1,151 +1,342 @@
-// ─── Flarum v2 GlobalSearch / SearchModal — Avocado design system ─────────────
-// Applied when the v1 inline Search is disabled and the native v2 SearchModal
-// is shown instead.  We only override visual presentation; the modal JS
-// behaviour (keyboard nav, source switching, etc.) is untouched.
+// ─── Avocado SearchModal — Flarum v2 GlobalSearch ─────────────────────────────
+// Replaces the default Bootstrap modal chrome with the Avocado spotlight-style
+// search dialog (pill tabs, FA icons, ESC kbd, footer with arrow keys).
 //
-// Structure quick-ref:
+// Trigger flow:
+//   GlobalSearch (input in header) → onclick → app.modal.show(SearchModal)
+//   SearchModal renders into <#modal> with class
+//     `Modal SearchModal Modal--flat modal-dialog`
+//
+// DOM produced by core (after our JS overrides):
 //   .Modal.SearchModal.Modal--flat
 //     .Modal-content
-//       .Modal-header         ← "Search" title + close button
-//       .Modal-body.SearchModal-body
-//         .SearchModal-form   ← Input wrapper
-//         .Tabs
-//           .Tabs-nav         ← Discussions / Posts / Users tab buttons
-//           .Tabs-content.SearchModal-tabs-content
-//             .SearchModal-section (×N)
-//               .Modal-divider
-//               .Dropdown-menu.SearchModal-fullPage  ← "Search all …" link
-//               .Dropdown-menu.SearchModal-results
-//                 .Dropdown-header                  ← "SEARCH PREVIEW"
-//                 li.DiscussionSearchResult          ← discussion hit
-//                 li.PostSearchResult                ← post hit
-//                 li.UserSearchResult                ← user hit
+//       .Modal-close (hidden — ESC kbd is the visual close hint)
+//       <form>
+//         .Modal-body.SearchModal-body
+//           .SearchModal-form  (search input + ESC kbd row)
+//           .Tabs
+//             .Tabs-nav        (pill-style tab buttons w/ FA icons)
+//             .Tabs-content.SearchModal-tabs-content
+//               .SearchModal-section ×N
+//                 .Modal-divider (hidden)
+//                 ul.Dropdown-menu.SearchModal-results / -fullPage
+//                   .Dropdown-header
+//                   li.DiscussionSearchResult / .PostSearchResult / .UserSearchResult
+//           .Avocado-searchModal-foot  (injected by JS: tip + arrow keys)
 
-// ── Modal shell ───────────────────────────────────────────────────────────────
-.SearchModal.Modal--flat {
+// ── Backdrop ────────────────────────────────────────────────────────────────
+// Flarum 2.x renders a single .Modal-backdrop element as a sibling of
+// .ModalManager nodes. We give it the spotlight-style blur + dim ONLY when
+// the active modal is a SearchModal (so other modals like LogIn/SignUp keep
+// their default chrome). Uses :has() — supported in all browsers Flarum 2 ships
+// to (Chrome 105+, Safari 15.4+, Firefox 121+).
+body:has(.ModalManager .SearchModal.Modal--flat) .Modal-backdrop {
+  background: rgba(15, 15, 20, 0.42) !important;
+  backdrop-filter: blur(4px);
+  opacity: 1 !important;
+}
+
+// ── Modal positioning & shell ───────────────────────────────────────────────
+// Flarum places the modal inside #modal which is centered by core CSS.
+// We override to top-anchor and constrain to 640px.
+.Modal.SearchModal.Modal--flat {
+  // Override the default core max-width (modal-dialog defaults vary)
+  max-width: 640px !important;
+  width: 100%;
+  margin: 80px auto 16px !important;
+
+  // Subtle "pop" entrance — matches the mockup's keyframes
+  animation: avocadoSearchPop 0.22s cubic-bezier(.2, .9, .3, 1.1);
+
   .Modal-content {
-    border-radius: 20px;
+    border-radius: 18px !important;
     overflow: hidden;
+    background: #fff;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.18);
+    border: 0;
   }
 
+  // Hide the default close button — ESC kbd inside the input row replaces it
+  .Modal-close {
+    display: none !important;
+  }
+
+  // Hide the default "Search" title header — the input row IS the header
   .Modal-header {
-    padding: 20px 20px 0;
-
-    h3 {
-      font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--text-color);
-      letter-spacing: -0.2px;
-      text-align: left;
-    }
+    display: none !important;
   }
 
+  // Reset body padding — each section provides its own
   .Modal-body {
-    padding: 12px 16px 20px;
+    padding: 0 !important;
   }
 
-  // Dividers between sections are a bit too prominent — soften them
+  // Hide the inter-section dividers — visual separators come from borders
   .Modal-divider {
-    border-color: var(--avocado-border-soft, #efeff4);
-    margin-left: 0;
-    margin-right: 0;
-    margin-bottom: 8px;
+    display: none !important;
   }
 }
 
-// Mobile: full-screen sheet — keep it looking like a sheet, not a page
+@keyframes avocadoSearchPop {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+// Mobile: full-screen sheet
 @media @phone {
-  .SearchModal.Modal--flat {
+  .Modal.SearchModal.Modal--flat {
+    max-width: 100% !important;
+    margin: 0 !important;
+    height: 100vh;
+
     .Modal-content {
-      border-radius: 0;
+      border-radius: 0 !important;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
   }
 }
 
-// ── Search input ──────────────────────────────────────────────────────────────
+// ── Search input row ─────────────────────────────────────────────────────────
 .SearchModal {
-  &-form .Input {
-    border-radius: @border-radius;
-  }
+  &-form {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--avocado-border-subtle, #eaeaf0);
 
-  &-input {
-    height: 46px;
-    border-radius: @border-radius !important;
-    border-color: var(--avocado-border-subtle, #eaeaf0) !important;
-    background: var(--avocado-surface-1, #f4f4f7) !important;
-    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
-    font-size: 15px;
-    transition: border-color var(--avocado-t-normal), box-shadow var(--avocado-t-normal);
+    // Flarum's <Input> renders <div class="Input Input--withPrefix">. We want it
+    // to behave as a borderless flex row inside the form.
+    > .Input {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: transparent !important;
+      border: 0 !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      height: auto;
+      min-width: 0;
+    }
 
-    &:focus {
-      border-color: var(--primary-color) !important;
-      background: var(--body-bg) !important;
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 12%, transparent) !important;
+    // Prefix search icon
+    .Input-prefix-icon,
+    .Input-icon {
+      position: static !important;
+      color: var(--muted-color);
+      font-size: 16px;
+      flex-shrink: 0;
+      margin: 0 !important;
+      padding: 0 !important;
+      height: auto !important;
+      width: auto !important;
+      pointer-events: none;
+      background: transparent !important;
+    }
+
+    // Hide the clear button — ESC kbd handles dismissal
+    .Input-clear,
+    .Button.Input-clear {
+      display: none !important;
+    }
+
+    // The actual input element. FormControl ships with a default border-radius
+    // and padding that fight the spotlight layout — flatten it completely.
+    input.SearchModal-input,
+    .SearchModal-input,
+    input[type="search"].FormControl {
+      flex: 1;
+      width: 100%;
+      border: 0 !important;
+      border-radius: 0 !important;
+      outline: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      font-family: @font-sans !important;
+      font-size: 18px !important;
+      font-weight: 500 !important;
+      color: var(--text-color) !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      height: auto !important;
+      line-height: 1.3 !important;
+      -webkit-appearance: none;
+      appearance: none;
+
+      &::placeholder {
+        color: var(--avocado-muted-placeholder, #b2b2bb);
+      }
+
+      // Strip the WebKit "search" decorations (cancel/results buttons) — the
+      // ESC kbd is our only close affordance.
+      &::-webkit-search-decoration,
+      &::-webkit-search-cancel-button,
+      &::-webkit-search-results-button,
+      &::-webkit-search-results-decoration {
+        display: none;
+      }
+    }
+
+    // Loading indicator (input.loading)
+    .LoadingIndicator {
+      flex-shrink: 0;
+    }
+
+    // Visual gambit overlay — keep its baseline aligned with input
+    .SearchModal-visual-wrapper {
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      pointer-events: none;
+    }
+
+    .SearchModal-visual-input {
+      font-family: @font-sans;
+      font-size: 18px;
+      font-weight: 500;
+      color: transparent;
+
+      mark {
+        background: rgba(240, 178, 19, 0.32);
+        color: transparent;
+        padding: 0 2px;
+        border-radius: 3px;
+      }
     }
   }
 
-  // ── Tabs ──────────────────────────────────────────────────────────────────
-  .Tabs-nav {
-    padding: 0 2px;
-    margin-bottom: -1px;
-    gap: 2px;
+  // ── Tabs (pill style) ─────────────────────────────────────────────────────
+  .Tabs {
+    display: flex;
+    flex-direction: column;
+  }
 
-    > .Button {
-      font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      padding: 9px 12px;
-      color: var(--muted-color);
-      border-bottom-width: 2px;
-      border-color: transparent;
-      transition: color var(--avocado-t-fast), border-color var(--avocado-t-fast);
+  .Tabs-nav {
+    display: flex;
+    gap: 4px;
+    padding: 10px 22px;
+    border-bottom: 1px solid var(--avocado-border-soft, #f0f0f4);
+    margin: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar { display: none; }
+
+    > .Button,
+    > .Button.Button--link {
+      border: 0 !important;
+      background: transparent !important;
+      padding: 8px 14px !important;
+      border-radius: 999px !important;
+      font: 800 12px/1 @font-sans !important;
+      color: var(--muted-color) !important;
+      cursor: pointer;
+      transition: background var(--avocado-t-fast), color var(--avocado-t-fast);
+      display: inline-flex !important;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      box-shadow: none !important;
+      text-transform: none;
+      letter-spacing: 0;
+
+      .Button-icon,
+      > i.icon {
+        font-size: 11px !important;
+        margin: 0 !important;
+        color: inherit !important;
+      }
+
+      .Button-label {
+        font: inherit !important;
+        color: inherit !important;
+      }
 
       &:hover {
-        color: var(--text-color);
+        color: var(--text-color) !important;
+        background: var(--control-bg) !important;
       }
 
-      &[active] {
-        --button-color: var(--primary-color);
-        --link-color: var(--primary-color);
-        color: var(--primary-color);
-        font-weight: 700;
+      // Active pill uses Flarum's primary color so the modal inherits the
+      // forum's brand (and the colored extension overrides per-tag).
+      // --button-primary-* are auto-contrast variables Flarum sets at :root
+      // based on the primary's YIQ luminance, so light primaries get dark text
+      // and vice-versa.
+      &[active],
+      &.active {
+        background: var(--button-primary-bg, var(--primary-color)) !important;
+        color: var(--button-primary-color, #fff) !important;
+        --button-color: var(--button-primary-color, #fff);
+        --link-color: var(--button-primary-color, #fff);
       }
     }
   }
 
-  // ── Section heading ("SEARCH PREVIEW") ────────────────────────────────────
+  // ── Tabs content (results scroll area) ────────────────────────────────────
+  &-tabs-content {
+    max-height: 380px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 8px 12px;
+
+    &::-webkit-scrollbar { width: 4px; }
+    &::-webkit-scrollbar-thumb {
+      background: var(--avocado-border-subtle, #eaeaf0);
+      border-radius: 2px;
+    }
+  }
+
+  // ── Sections inside the scroll area ───────────────────────────────────────
+  &-section {
+    margin: 0;
+    padding: 0;
+  }
+
+  // ── Section heading ("Search Preview", "Recent searches", etc.) ───────────
   .Dropdown-header {
-    font-family: @font-sans;
-    font-size: 10px;
-    font-weight: 700;
+    font: 800 10px/1 @font-sans !important;
+    letter-spacing: 0.8px;
     text-transform: uppercase;
-    letter-spacing: 1.1px;
-    color: var(--avocado-muted-icon, #767680);
-    padding: 6px 0 4px;
+    color: var(--avocado-muted-icon, #a2a3ac) !important;
+    padding: 10px 10px 6px !important;
+    margin: 0 !important;
+    list-style: none;
   }
 
   // ── "Search all …" full-page link ─────────────────────────────────────────
   &-fullPage {
+    list-style: none;
+    margin: 0;
     padding: 0;
     box-shadow: none;
     background: none;
 
-    .LinkButton {
-      font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
-      font-size: 14px;
-      font-weight: 700;
+    .LinkButton,
+    .Button {
+      display: flex !important;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      font: 700 14px/1.2 @font-sans !important;
       color: var(--primary-color) !important;
-      padding: 8px 10px;
-      border-radius: @border-radius;
+      padding: 10px !important;
+      border-radius: 10px !important;
+      background: transparent !important;
+      border: 0 !important;
       transition: background var(--avocado-t-fast);
 
-      .Button-icon {
-        color: var(--primary-color);
+      .Button-icon,
+      > i.icon {
+        color: var(--primary-color) !important;
+        font-size: 14px;
       }
 
       &:hover {
-        background: color-mix(in srgb, var(--primary-color) 8%, transparent);
+        background: var(--avocado-surface-1, #f4f4f7) !important;
         text-decoration: none;
       }
     }
@@ -153,135 +344,368 @@
 
   // ── Results list ──────────────────────────────────────────────────────────
   &-results {
+    list-style: none;
+    margin: 0;
     padding: 0;
     box-shadow: none;
     background: none;
     display: flex;
     flex-direction: column;
-    gap: 6px;
 
     mark {
-      background: none;
-      padding: 0;
-      font-weight: 700;
-      color: var(--primary-color);
+      background: rgba(240, 178, 19, 0.32);
+      color: inherit;
+      padding: 0 2px;
+      border-radius: 3px;
+      font-weight: inherit;
     }
 
-    // ── Empty / loading states ─────────────────────────────────────────────
+    // ── Empty / loading messages ───────────────────────────────────────────
     .Dropdown-message {
-      padding: 20px 0;
+      padding: 30px;
       text-align: center;
       color: var(--muted-color);
+      font: 600 13px @font-sans;
+      list-style: none;
+
+      .InfoTile {
+        background: transparent;
+        border: 0;
+        padding: 0;
+        color: inherit;
+        font: inherit;
+        text-align: center;
+      }
+
+      .LoadingIndicator {
+        margin: 0 auto;
+      }
     }
 
-    // ── Discussion & Post result cards ─────────────────────────────────────
+    // ── Discussion / Post / User result rows ───────────────────────────────
     .DiscussionSearchResult,
-    .PostSearchResult {
-      border: 1px solid var(--avocado-border-subtle, #eaeaf0);
-      border-radius: 14px;
-      overflow: hidden;
+    .PostSearchResult,
+    .UserSearchResult {
+      list-style: none;
       margin: 0;
-      transition: border-color var(--avocado-t-normal), box-shadow var(--avocado-t-normal);
+      padding: 0;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      transition: background var(--avocado-t-fast);
+      cursor: pointer;
 
       &:hover,
       &.active {
-        border-color: var(--avocado-border-soft, #dfdfe6);
-        box-shadow: 0 4px 16px rgba(26, 26, 36, 0.07);
+        background: var(--avocado-surface-1, #f4f4f7);
+        box-shadow: none;
       }
 
-      // The DiscussionListItem inside — flatten it to fit the card
+      // Discussion / Post: contains a MinimalDiscussionListItem inside
       > .DiscussionListItem,
       > .MinimalDiscussionListItem {
-        margin: 0;
-        border-radius: 0;
-        background: transparent;
-        --discussion-list-item-bg-hover: var(--control-bg);
+        margin: 0 !important;
+        padding: 10px !important;
+        border-radius: 10px;
+        background: transparent !important;
+        gap: 12px;
+        align-items: flex-start;
+        --discussion-list-item-bg-hover: transparent;
+        box-shadow: none !important;
 
-        // Remove the inner hover background since we style the card wrapper
-        &:hover {
-          background: transparent;
+        &:hover { background: transparent !important; }
+
+        // Avatar
+        .DiscussionListItem-author,
+        .Avatar {
+          flex-shrink: 0;
+          margin-top: 2px;
+        }
+
+        .Avatar {
+          --size: 30px;
+          width: 30px;
+          height: 30px;
+          font-size: 12px;
+        }
+
+        // Hide author/badges in compact rows — title + meta is enough
+        .DiscussionListItem-controls,
+        .DiscussionListItem-count,
+        .DiscussionListItem-stub { display: none !important; }
+
+        // Title
+        .DiscussionListItem-title {
+          font: 800 14px/1.3 @font-sans !important;
+          color: var(--text-color) !important;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          margin: 0 !important;
+          padding: 0 !important;
+
+          a, > div {
+            color: inherit !important;
+            text-decoration: none;
+          }
+        }
+
+        // Meta (info row: author · time · replies)
+        .DiscussionListItem-info {
+          font: 500 12px/1.4 @font-sans !important;
+          color: var(--muted-color) !important;
+          margin: 2px 0 0 !important;
+          padding: 0 !important;
+          gap: 6px;
+          list-style: none;
+
+          li, > * {
+            list-style: none;
+            display: inline;
+          }
+
+          .username, strong {
+            color: var(--text-color);
+            font-weight: 700;
+          }
         }
       }
     }
 
-    // ── User result cards ──────────────────────────────────────────────────
+    // User row layout
     .UserSearchResult {
-      border: 1px solid var(--avocado-border-subtle, #eaeaf0);
-      border-radius: 14px;
-      overflow: hidden;
-      margin: 0;
-      transition: border-color var(--avocado-t-normal), box-shadow var(--avocado-t-normal);
-
-      &:hover,
-      &.active {
-        border-color: var(--avocado-border-soft, #dfdfe6);
-        box-shadow: 0 4px 16px rgba(26, 26, 36, 0.07);
-      }
-
-      // Flatten the inner link
       > a {
-        border-radius: 0;
-        padding: 12px 14px;
-        gap: 10px;
+        display: flex !important;
+        align-items: center;
+        gap: 12px;
+        padding: 10px !important;
+        border-radius: 10px;
+        background: transparent !important;
+        text-decoration: none !important;
 
-        &:hover {
-          background: var(--control-bg);
-          text-decoration: none;
+        &:hover { background: transparent !important; }
+
+        .Avatar {
+          --size: 30px;
+          width: 30px;
+          height: 30px;
+          font-size: 12px;
+          flex-shrink: 0;
         }
-      }
 
-      .Avatar {
-        --size: 36px;
-      }
-
-      .username {
-        font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
-        font-size: 14px;
-        font-weight: 700;
-        color: var(--text-color);
+        .username {
+          font: 800 14px/1.3 @font-sans !important;
+          color: var(--text-color) !important;
+          margin: 0;
+        }
       }
     }
   }
 
-  // ── Tabs content scrollable area ───────────────────────────────────────────
-  &-tabs-content {
-    max-height: 55vh;
-    overflow-y: auto;
-    overscroll-behavior: contain;
+  // ── Gambit options dropdown ───────────────────────────────────────────────
+  &-options {
+    list-style: none;
+    margin: 0;
     padding: 0;
-    // Smooth scrollbar on WebKit
-    &::-webkit-scrollbar { width: 4px; }
-    &::-webkit-scrollbar-thumb {
-      background: var(--avocado-border-subtle, #eaeaf0);
-      border-radius: 2px;
+    background: none;
+    box-shadow: none;
+
+    > li:not(.Dropdown-header) {
+      padding: 8px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      font: 600 13px @font-sans;
+      color: var(--text-color);
+
+      &:hover, &.active {
+        background: var(--avocado-surface-1, #f4f4f7);
+      }
     }
   }
 }
 
-// ── Dark mode adjustments ─────────────────────────────────────────────────────
+// ── ESC kbd badge / close button (injected by JS) ───────────────────────────
+.Avocado-searchModal-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: 800 10px/1 @font-sans;
+  color: var(--muted-color);
+  border: 1px solid var(--avocado-border-subtle, #eaeaf0);
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: var(--avocado-surface-1, #f4f4f7);
+  min-width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  cursor: default;
+  user-select: none;
+  pointer-events: none;
+}
+
+// The ESC kbd inside the input row is a real <button> that closes the modal.
+// Override the no-pointer default and give it hover/focus affordances.
+button.Avocado-searchModal-kbd--close {
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background var(--avocado-t-fast), color var(--avocado-t-fast),
+              border-color var(--avocado-t-fast), transform var(--avocado-t-fast);
+
+  &:hover {
+    color: var(--text-color);
+    background: var(--control-bg);
+    border-color: var(--avocado-border-soft, #dfdfe6);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+}
+
+// ── Footer (injected by JS) ─────────────────────────────────────────────────
+.Avocado-searchModal-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 22px;
+  border-top: 1px solid var(--avocado-border-soft, #f0f0f4);
+  background: var(--avocado-surface-1, #f4f4f7);
+  font: 700 11px/1 @font-sans;
+  color: var(--muted-color);
+  flex-wrap: wrap;
+  gap: 10px;
+
+  strong {
+    color: var(--text-color);
+  }
+
+  &-keys {
+    display: inline-flex;
+    gap: 6px;
+  }
+}
+
+// ── Loading skeleton ────────────────────────────────────────────────────────
+// Replaces the default core LoadingIndicator while a search request is in
+// flight. Mirrors the result-row layout so the modal height stays steady.
+// Reuses @keyframes avocado-shimmer from Skeletons.less.
+.SearchModal-results--skeleton {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.Avocado-searchSkeleton {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 10px;
+
+  &-av {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: linear-gradient(90deg, #f0f0f4 25%, #e6e6eb 50%, #f0f0f4 75%);
+    background-size: 800px 100%;
+    animation: avocado-shimmer 1.4s infinite;
+  }
+
+  &-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  &-line {
+    height: 12px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #f0f0f4 25%, #e6e6eb 50%, #f0f0f4 75%);
+    background-size: 800px 100%;
+    animation: avocado-shimmer 1.4s infinite;
+    display: block;
+
+    &--title { width: 62%; height: 13px; }
+    &--meta  { width: 40%; height: 10px; }
+  }
+
+  // Stagger the rows slightly so the shimmer doesn't pulse in lockstep
+  &:nth-child(2) &-line--title { width: 78%; }
+  &:nth-child(2) &-line--meta  { width: 32%; }
+  &:nth-child(3) &-line--title { width: 50%; }
+  &:nth-child(3) &-line--meta  { width: 46%; }
+  &:nth-child(4) &-line--title { width: 70%; }
+  &:nth-child(4) &-line--meta  { width: 36%; }
+  &:nth-child(5) &-line--title { width: 56%; }
+  &:nth-child(5) &-line--meta  { width: 38%; }
+}
+
+// ── Dark mode adjustments ───────────────────────────────────────────────────
 [data-theme^=dark] {
+  body:has(.ModalManager .SearchModal.Modal--flat) .Modal-backdrop {
+    background: rgba(0, 0, 0, 0.55) !important;
+  }
+
+  .Modal.SearchModal.Modal--flat .Modal-content {
+    background: var(--body-bg);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  }
+
   .SearchModal {
+    &-form { border-bottom-color: var(--avocado-border-subtle); }
+    .Tabs-nav { border-bottom-color: var(--avocado-border-soft); }
+
+    // Active pill in dark mode keeps the primary color (Flarum brand) so the
+    // colored extension's per-tag overrides also apply.
+    .Tabs-nav > .Button[active],
+    .Tabs-nav > .Button.active {
+      background: var(--button-primary-bg, var(--primary-color)) !important;
+      color: var(--button-primary-color, #fff) !important;
+    }
+
     &-results {
       .DiscussionSearchResult,
       .PostSearchResult,
       .UserSearchResult {
-        border-color: var(--avocado-border-subtle);
-
-        &:hover,
-        &.active {
-          border-color: var(--avocado-border-soft);
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+        &:hover, &.active {
+          background: rgba(255, 255, 255, 0.04);
         }
       }
     }
   }
-}
 
-// ── Global Tabs override — bottom border only ─────────────────────────────────
-// Flarum core sets border-color on all sides for [active]; restrict to bottom.
-.Tabs-nav > .Button[active] {
-  border-top-color: transparent !important;
-  border-left-color: transparent !important;
-  border-right-color: transparent !important;
-  border-bottom-color: var(--primary-color) !important;
+  .Avocado-searchModal-kbd {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--avocado-border-subtle);
+    color: var(--muted-color);
+  }
+
+  .Avocado-searchModal-foot {
+    background: rgba(255, 255, 255, 0.04);
+    border-top-color: var(--avocado-border-soft);
+  }
+
+  // Skeleton shimmer colors for dark mode (mirrors Skeletons.less DarkMode rule)
+  .Avocado-searchSkeleton {
+    &-av,
+    &-line {
+      background: linear-gradient(90deg,
+        rgba(255, 255, 255, 0.05) 25%,
+        rgba(255, 255, 255, 0.10) 50%,
+        rgba(255, 255, 255, 0.05) 75%);
+      background-size: 800px 100%;
+    }
+  }
 }
