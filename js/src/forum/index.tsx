@@ -1366,6 +1366,193 @@ app.initializers.add(
       });
     }).catch(() => {});
 
+    // ── 14d. SearchModal: Avocado spotlight UI (V2 search) ────────────────────
+    // The native v2 SearchModal (flarum/common/components/SearchModal) is the
+    // dialog opened when the user clicks the header search input.  We re-skin
+    // it as an Avocado spotlight panel: pill tabs with FA icons, an ESC kbd
+    // badge inside the input row, and a footer with arrow-key hints.
+    //
+    // Layout (CSS) lives in less/forum/SearchModal.less.  Here we only inject
+    // the extra DOM that mockup requires.  SearchModal is lazy-loaded by
+    // AbstractGlobalSearch.openSearchModal() — the string-based extend() defers
+    // until flarum.reg.onLoad fires for that module.
+    {
+      const TAB_ICONS: Record<string, string> = {
+        discussions: 'fas fa-comments',
+        posts:       'fas fa-comment-dots',
+        users:       'fas fa-user',
+        tags:        'fas fa-tag',
+      };
+
+      const hasClass = (node: any, cls: string) =>
+        typeof node?.attrs?.className === 'string' &&
+        node.attrs.className.split(/\s+/).includes(cls);
+
+      const findVnode = (root: any, predicate: (n: any) => boolean): any => {
+        if (!root) return null;
+        if (Array.isArray(root)) {
+          for (const child of root) {
+            const found = findVnode(child, predicate);
+            if (found) return found;
+          }
+          return null;
+        }
+        if (typeof root !== 'object') return null;
+        if (predicate(root)) return root;
+        if (Array.isArray(root.children)) return findVnode(root.children, predicate);
+        return null;
+      };
+
+      // 1. tabItems — give each tab Button an FA icon.  The Button component
+      //    renders <Icon name={...} className="Button-icon"/> automatically
+      //    when its `icon` attr is a string.
+      extend('flarum/common/components/SearchModal', 'tabItems', function (items) {
+        if (!items || typeof items.has !== 'function') return;
+        const sources = (this as any).sources || [];
+        sources.forEach((source: any) => {
+          if (!items.has(source.resource)) return;
+          const tab = items.get(source.resource);
+          if (!tab || typeof tab !== 'object') return;
+          tab.attrs = tab.attrs || {};
+          tab.attrs.icon = TAB_ICONS[source.resource] || 'fas fa-search';
+        });
+      });
+
+      // 2. content — append ESC kbd to the input row, footer to the body.
+      //    Mithril memoises children arrays by reference, so we mutate in place
+      //    and guard against double-injection across redraws.
+      extend('flarum/common/components/SearchModal', 'content', function (vnode) {
+        if (!vnode || typeof vnode !== 'object') return;
+        const self: any = this;
+
+        // Inject ESC button (acts as a real close button) inside .SearchModal-form
+        const formRow = findVnode(vnode, (n) => hasClass(n, 'SearchModal-form'));
+        if (formRow && Array.isArray(formRow.children)) {
+          const already = formRow.children.some((c: any) => hasClass(c, 'Avocado-searchModal-kbd'));
+          if (!already) {
+            formRow.children.push(
+              <button
+                type="button"
+                className="Avocado-searchModal-kbd Avocado-searchModal-kbd--close"
+                aria-label={trans('ramon-avocado.forum.search.close', 'Close (Escape)')}
+                onclick={(e: Event) => { e.preventDefault(); self.hide?.(); }}
+              >
+                ESC
+              </button>
+            );
+          }
+        }
+
+        // Append footer to the modal body
+        if (Array.isArray(vnode.children)) {
+          const already = vnode.children.some((c: any) => hasClass(c, 'Avocado-searchModal-foot'));
+          if (!already) {
+            vnode.children.push(
+              <div className="Avocado-searchModal-foot">
+                <span>
+                  {trans('ramon-avocado.forum.search.tip', 'Tip: prefix ')}
+                  <strong>tag:</strong>
+                  {trans('ramon-avocado.forum.search.tip_suffix', ' to filter by tag')}
+                </span>
+                <div className="Avocado-searchModal-foot-keys">
+                  <span className="Avocado-searchModal-kbd" aria-hidden="true">↑</span>
+                  <span className="Avocado-searchModal-kbd" aria-hidden="true">↓</span>
+                  <span className="Avocado-searchModal-kbd" aria-hidden="true">↵</span>
+                </div>
+              </div>
+            );
+          }
+        }
+      });
+
+      // 3. activeTabItems — when a search is in flight, replace the default
+      //    LoadingIndicator with skeleton placeholder rows so the layout doesn't
+      //    collapse to a single spinner.  Only fires when the user has typed —
+      //    empty query keeps the "start typing" empty state.
+      extend('flarum/common/components/SearchModal', 'activeTabItems', function (items) {
+        if (!items || typeof items.has !== 'function') return;
+        const self: any = this;
+        const activeResource = self.activeSource?.()?.resource;
+        const loading = (self.loadingSources || []).includes(activeResource);
+        const query = typeof self.query === 'function' ? (self.query() || '').trim() : '';
+        if (!loading || !query) return;
+
+        const skeletonRow = (i: number) => (
+          <li key={`skel-${i}`} className="Avocado-searchSkeleton" aria-hidden="true">
+            <span className="Avocado-searchSkeleton-av" />
+            <div className="Avocado-searchSkeleton-body">
+              <span className="Avocado-searchSkeleton-line Avocado-searchSkeleton-line--title" />
+              <span className="Avocado-searchSkeleton-line Avocado-searchSkeleton-line--meta" />
+            </div>
+          </li>
+        );
+
+        if (!items.has('results')) return;
+        items.setContent(
+          'results',
+          <div className="SearchModal-section">
+            <hr className="Modal-divider" />
+            <ul
+              className="Dropdown-menu SearchModal-results SearchModal-results--skeleton"
+              aria-busy="true"
+              aria-live="polite"
+            >
+              {[0, 1, 2, 3, 4].map(skeletonRow)}
+            </ul>
+          </div>
+        );
+      });
+
+      // 4. clear — ESC inside the input is bound to KeyboardNavigatable.onCancel
+      //    which calls clear().  Core's clear just empties the query; the user
+      //    expects ESC to close the modal entirely (matches the kbd badge in
+      //    the input row).  We dismiss instead of clearing.
+      override('flarum/common/components/SearchModal', 'clear', function (_orig) {
+        const self: any = this;
+        self.hide?.();
+      });
+
+      // 5. setIndex — core's keyboard navigator scrolls $items.parent() into
+      //    view, but our scroll container is `.SearchModal-tabs-content` (the
+      //    Tabs body), not `.Dropdown-menu`. Without this override pressing ↑/↓
+      //    moves focus correctly but the focused row stays off-screen.  We
+      //    replicate core's algorithm against the right container.
+      override('flarum/common/components/SearchModal', 'setIndex', function (_orig, index: number, scrollToItem: boolean = false) {
+        const self: any = this;
+        const $items = self.selectableItems();
+        const $scroll = self.$('.SearchModal-tabs-content');
+
+        let fixedIndex = index;
+        if (index < 0) fixedIndex = $items.length - 1;
+        else if (index >= $items.length) fixedIndex = 0;
+
+        const $item = $items.removeClass('active').eq(fixedIndex).addClass('active');
+        self.index = parseInt($item.attr('data-index') as string) || fixedIndex;
+
+        if (!scrollToItem || !$scroll.length || !$item.length) return;
+
+        const scrollTop      = $scroll.scrollTop()!;
+        const containerTop   = $scroll.offset()!.top;
+        const containerH     = $scroll.outerHeight()!;
+        const containerBot   = containerTop + containerH;
+        const itemTop        = $item.offset()!.top;
+        const itemBot        = itemTop + $item.outerHeight()!;
+        const padTop         = parseInt($scroll.css('padding-top'), 10) || 0;
+        const padBot         = parseInt($scroll.css('padding-bottom'), 10) || 0;
+
+        let target: number | undefined;
+        if (itemTop < containerTop + padTop) {
+          target = scrollTop + (itemTop - containerTop) - padTop;
+        } else if (itemBot > containerBot - padBot) {
+          target = scrollTop + (itemBot - containerBot) + padBot;
+        }
+
+        if (typeof target === 'number') {
+          $scroll.stop(true).animate({ scrollTop: target }, 100);
+        }
+      });
+    }
+
     // ── 15. GlobalSearch view override (V1 search) ────────────────────────────
     override(GlobalSearch.prototype, 'view', function (original, ...args) {
       if (!settingEnabled('avocadoSearchV1')) return original.apply(this, args);
