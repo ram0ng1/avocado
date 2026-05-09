@@ -5,12 +5,20 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── CSS tokens (light defaults) ───────────────────────────────────────────────
-// Note: DiscussionListPane uses Flarum global vars (--body-bg, --control-bg, --shadow-color)
-// which automatically adapt to light/dark themes.
+// IMPORTANT: declared at :root so the dark overrides in DarkMode.less (also at
+// :root via [data-theme^=dark]) win via cascade. If these are scoped to
+// .AvocadoMessages/.MessagesPage they override the dark tokens by proximity
+// (closest ancestor with the custom property wins) and dark mode breaks.
+//
+// Note: DiscussionListPane uses Flarum global vars (--body-bg, --control-bg,
+// --shadow-color) which automatically adapt to light/dark themes.
+:root {
+  // Match the actual Avocado topbar height (72px). MessagesPage's
+  // calc(100vh - var(--header-height)) was using the 52px fallback and
+  // making .AvocadoMessages 20px too tall, pushing the sidebar bottom
+  // off-screen.
+  --header-height: 72px;
 
-.AvocadoMessages,
-.AvocadoMessages-card,
-.MessagesPage {
   --avmsg-bg:            #f0f2f7;
   --avmsg-sidebar-bg:    #ffffff;
   --avmsg-card-bg:       #ffffff;
@@ -1289,18 +1297,37 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // AvocadoInlineReply — inline message composer
 // ─────────────────────────────────────────────────────────────────────────────
+// Pin the inline reply to the bottom of the MessageStream scroll container.
+// position:sticky must live on the actual flex-child of the scroller, which
+// is the .MessageStream-item wrapper (added by index.tsx) — applying it on
+// the inner <div className="AvocadoMessages-inlineReply"> doesn't take
+// effect because the wrapper flows normally above it. `margin-top: auto`
+// pushes the wrapper to the bottom of the flex column when content is short.
+.AvocadoMessages-chatCol .MessageStream > .MessageStream-item:has(> .AvocadoMessages-inlineReply) {
+  position: sticky !important;
+  bottom: 0 !important;
+  margin-top: auto !important;
+  z-index: 10 !important;
+  background: var(--avmsg-bg) !important;
+
+  @media @phone {
+    position: static !important;
+    margin-top: 0 !important;
+  }
+}
+
 .AvocadoMessages-inlineReply {
   display: flex !important;
   align-items: flex-end !important;
   gap: 12px !important;
-  padding: 14px 24px 28px !important;
+  padding: 14px 24px 20px !important;
   background: var(--avmsg-bg) !important;
   border-top: 1px solid var(--avmsg-border) !important;
 
   @media @phone {
     padding: 10px 12px env(safe-area-inset-bottom, 14px) !important;
     padding-bottom: 12px !important;
-    // Stick to the bottom of the viewport on mobile so user never has to scroll down
+    // On mobile, pin to the viewport (above the OS keyboard / safe area).
     position: fixed !important;
     bottom: 0 !important;
     left: 0 !important;
@@ -1328,83 +1355,185 @@
     color: #fff !important;
   }
 
+  // Card-shaped wrap hosting Flarum's TextEditor. Top row keeps the pill
+  // feel (textarea + round submit overlay on the right). Bottom row reveals
+  // the MarkdownToolbar (heading, bold, italic, …). All living inside a
+  // single rounded container.
   &-wrap {
     flex: 1 !important;
     min-width: 0 !important;
     position: relative !important;
     display: flex !important;
-    align-items: flex-end !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
     background: var(--avmsg-input-bg) !important;
     border: 1.5px solid var(--avmsg-border) !important;
-    border-radius: 999px !important;
+    border-radius: 22px !important;
     box-shadow: 0 2px 12px rgba(0,0,0,0.06) !important;
     transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
-    padding: 0 56px 0 20px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
     box-sizing: border-box !important;
 
     &:focus-within {
       border-color: color-mix(in srgb, var(--primary-color) 50%, transparent) !important;
       box-shadow: 0 2px 20px rgba(0,0,0,0.08) !important;
     }
-  }
 
-  &-input {
-    flex: 1 !important;
-    background: transparent !important;
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    resize: none !important;
-    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif !important;
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    line-height: 1.5 !important;
-    color: var(--avmsg-text) !important;
-    padding: 13px 0 !important;
-    min-height: 48px !important;
-    max-height: 120px !important;
-    overflow-y: auto !important;
-    width: 100% !important;
-    display: block !important;
-
-    &::placeholder {
-      color: var(--avmsg-muted) !important;
-      font-weight: 400 !important;
-    }
-
-    &::-webkit-scrollbar { width: 0; }
-  }
-
-  &-send {
-    position: absolute !important;
-    right: 6px !important;
-    bottom: 6px !important;
-    width: 38px !important;
-    height: 38px !important;
-    border-radius: 50% !important;
-    background: var(--primary-color) !important;
-    border: none !important;
-    outline: none !important;
-    cursor: pointer !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    color: #fff !important;
-    font-size: 14px !important;
-    transition: opacity 0.15s ease, transform 0.15s ease !important;
-    box-shadow: 0 4px 14px color-mix(in srgb, var(--primary-color) 36%, transparent) !important;
-
-    i { color: #fff !important; font-size: 13px !important; }
-
-    &:hover:not(.disabled) {
-      opacity: 0.9 !important;
-      transform: scale(1.06) !important;
-    }
-
-    &.disabled, &:disabled {
-      opacity: 0.35 !important;
-      cursor: default !important;
+    // ── TextEditor: collapse Flarum's chrome so the textarea sits in the pill
+    .TextEditor {
+      flex: 1 !important;
+      min-width: 0 !important;
+      background: transparent !important;
+      border: 0 !important;
+      border-radius: 0 !important;
       box-shadow: none !important;
+      display: flex !important;
+      flex-direction: column !important;
+    }
+
+    .TextEditor-editorContainer,
+    .ComposerBody-mentionsWrapper {
+      flex: 1 !important;
+      min-width: 0 !important;
+      display: block !important;
+      position: relative !important;
+    }
+
+    .TextEditor-editor {
+      flex: 1 !important;
+      background: transparent !important;
+      border: 0 !important;
+      outline: 0 !important;
+      box-shadow: none !important;
+      resize: none !important;
+      width: 100% !important;
+      // right-padding leaves room for the absolutely-positioned round submit
+      padding: 13px 56px 10px 20px !important;
+      min-height: 48px !important;
+      max-height: 200px !important;
+      overflow-y: auto !important;
+      font: 500 14px/1.5 'DM Sans', Inter, "Segoe UI", sans-serif !important;
+      color: var(--avmsg-text) !important;
+      box-sizing: border-box !important;
+
+      &::placeholder { color: var(--avmsg-muted) !important; font-weight: 400 !important; }
+      &::-webkit-scrollbar { width: 0; }
+    }
+
+    // ── Controls row: MarkdownToolbar lives in the bottom strip; the submit
+    // button is plucked out of the flow and pinned to the top-right corner of
+    // the textarea (round paper-plane overlay, matching the original pill
+    // aesthetic the user asked to keep).
+    ul.TextEditor-controls {
+      display: flex !important;
+      flex-wrap: nowrap !important;
+      align-items: center !important;
+      list-style: none !important;
+      margin: 0 !important;
+      padding: 4px 8px !important;
+      border-top: 1px solid var(--avmsg-border) !important;
+      background: var(--avmsg-search-bg) !important;
+      overflow-x: auto !important;
+      overflow-y: visible !important;
+      scrollbar-width: none !important;
+      gap: 0 !important;
+
+      &::-webkit-scrollbar { display: none; }
+
+      > li {
+        display: inline-flex !important;
+        align-items: center !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        list-style: none !important;
+        flex-shrink: 0 !important;
+      }
+
+      > li.TextEditor-toolbar {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+      }
+
+      > li.item-submit.App-primaryControl {
+        position: absolute !important;
+        right: 6px !important;
+        top: 6px !important;
+        margin: 0 !important;
+        z-index: 2 !important;
+      }
+    }
+
+    // ── MarkdownToolbar (inside li.TextEditor-toolbar)
+    .MarkdownToolbar {
+      display: inline-flex !important;
+      align-items: center !important;
+      flex-wrap: nowrap !important;
+      gap: 0 !important;
+      overflow-x: auto !important;
+      scrollbar-width: none !important;
+
+      &::-webkit-scrollbar { display: none; }
+
+      .Button.Button--icon {
+        width: 30px !important;
+        height: 30px !important;
+        padding: 0 !important;
+        background: transparent !important;
+        border: 0 !important;
+        border-radius: 8px !important;
+        color: var(--avmsg-muted) !important;
+        box-shadow: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+
+        .Button-icon { font-size: 12px !important; color: inherit !important; margin: 0 !important; }
+        .Button-label { display: none !important; }
+
+        &:hover { background: color-mix(in srgb, var(--avmsg-muted) 12%, transparent) !important; color: var(--avmsg-text) !important; }
+        &:active { transform: scale(0.94) !important; }
+      }
+    }
+
+    // Mention button — sibling of MarkdownToolbar inside li.TextEditor-toolbar
+    > .TextEditor > ul.TextEditor-controls > li.TextEditor-toolbar > .Button.Button--icon {
+      width: 30px !important;
+      height: 30px !important;
+      padding: 0 !important;
+      background: transparent !important;
+      border: 0 !important;
+      border-radius: 8px !important;
+      color: var(--avmsg-muted) !important;
+      margin-left: 4px !important;
+
+      .Button-icon { font-size: 12px !important; margin: 0 !important; }
+      .Button-label { display: none !important; }
+
+      &:hover { background: color-mix(in srgb, var(--avmsg-muted) 12%, transparent) !important; color: var(--avmsg-text) !important; }
+    }
+
+    // ── Submit button — round paper-plane overlay (matches original design)
+    li.item-submit.App-primaryControl .Button.Button--primary {
+      width: 36px !important;
+      height: 36px !important;
+      min-width: 0 !important;
+      padding: 0 !important;
+      border-radius: 50% !important;
+      background: var(--primary-color) !important;
+      color: #fff !important;
+      border: 0 !important;
+      box-shadow: 0 4px 14px color-mix(in srgb, var(--primary-color) 36%, transparent) !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      transition: opacity 0.15s ease, transform 0.15s ease !important;
+
+      .Button-icon { color: #fff !important; font-size: 13px !important; margin: 0 !important; }
+      .Button-label { display: none !important; }
+
+      &:hover:not(:disabled) { opacity: 0.9 !important; transform: scale(1.06) !important; }
+      &:disabled { opacity: 0.35 !important; cursor: default !important; box-shadow: none !important; transform: none !important; }
     }
   }
 }

@@ -186,26 +186,13 @@ body:has(.ModalManager .SearchModal.Modal--flat) .Modal-backdrop {
       flex-shrink: 0;
     }
 
-    // Visual gambit overlay — keep its baseline aligned with input
+    // Visual gambit overlay — Flarum core wraps gambit matches in <mark> via
+    // app.search.gambits.match(). The matcher uses ASCII word boundaries which
+    // misfire on accented input (e.g. "discussão:39" gets a partial highlight
+    // around "ão:39"). The overlay itself is hidden — gambit filters still
+    // apply, only the cosmetic highlight is suppressed.
     .SearchModal-visual-wrapper {
-      position: absolute;
-      left: 22px;
-      right: 22px;
-      pointer-events: none;
-    }
-
-    .SearchModal-visual-input {
-      font-family: @font-sans;
-      font-size: 18px;
-      font-weight: 500;
-      color: transparent;
-
-      mark {
-        background: rgba(240, 178, 19, 0.32);
-        color: transparent;
-        padding: 0 2px;
-        border-radius: 3px;
-      }
+      display: none;
     }
   }
 
