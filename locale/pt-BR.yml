@@ -190,6 +190,8 @@ ramon-avocado:
       filtered_by: "Filtrado por"
       results: "Resultados da busca"
       results_for: "Resultados para"
+      tip: "Dica: use o prefixo "
+      tip_suffix: " para filtrar por tag"
     header:
       back: Voltar
       back_home: Voltar para o Início
