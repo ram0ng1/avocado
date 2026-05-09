@@ -65,6 +65,7 @@ import {
   safeCssUrl,
   renderThreadSkeleton,
   renderDiscussionNavSkeleton,
+  displayName,
 } from './utils';
 import TextEditor from 'flarum/common/components/TextEditor';
 import listItems from 'flarum/common/helpers/listItems';
@@ -2019,49 +2020,69 @@ app.initializers.add(
     // after this initializer runs.
 
     // ── Inline reply component ───────────────────────────────────────────────
-    // Replaces the ReplyPlaceholder+Composer combo with a real in-place textarea.
+    // Uses Flarum's native TextEditor so the markdown toolbar (bold, italic,
+    // headings, code, lists, mentions, …) is wired in automatically — same
+    // editor surface as the discussion composer.
+    //
+    // Module-level tracker so the per-message Quote button (extended on
+    // flarum-messages's Message.actionItems below) can push a quote into the
+    // currently-mounted inline reply without prop drilling.
+    let _currentInlineReply: any = null;
+
     class AvocadoInlineReply {
       oninit() {
         this.value   = '';
         this.sending = false;
+        // Minimal composer proxy expected by TextEditor / its toolbar items.
+        this.composerProxy = {
+          isVisible: () => true,
+          fields: { content: () => this.value },
+        };
+        _currentInlineReply = this;
       }
+      oncreate() { _currentInlineReply = this; }
+      onremove() { if (_currentInlineReply === this) _currentInlineReply = null; }
       view(vnode) {
         const { dialog, onSent } = vnode.attrs;
         const user = app.session.user;
-        const disabled = this.sending || !this.value.trim();
         return (
           <div className="AvocadoMessages-inlineReply">
             {user && <Avatar user={user} />}
             <div className="AvocadoMessages-inlineReply-wrap">
-              <textarea
-                className="AvocadoMessages-inlineReply-input"
-                placeholder={app.translator.trans('flarum-messages.forum.composer.placeholder')}
+              <TextEditor
+                composer={this.composerProxy}
                 value={this.value}
-                rows="1"
-                oninput={(e) => {
-                  this.value = e.target.value;
-                  // auto-grow
-                  e.target.style.height = 'auto';
-                  e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
-                }}
-                onkeydown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    this._send(dialog, onSent);
-                  }
-                }}
+                placeholder={app.translator.trans('flarum-messages.forum.composer.placeholder') as string}
+                disabled={this.sending}
+                onchange={(value) => { this.value = value; m.redraw(); }}
+                onsubmit={() => this._send(dialog, onSent)}
+                submitLabel={app.translator.trans('flarum-messages.forum.messages_page.send_message_button')}
               />
-              <button
-                className={'AvocadoMessages-inlineReply-send' + (disabled ? ' disabled' : '')}
-                disabled={disabled}
-                onclick={() => this._send(dialog, onSent)}
-                aria-label={app.translator.trans('flarum-messages.forum.messages_page.send_message_button')}
-              >
-                <i className="fas fa-paper-plane" aria-hidden="true" />
-              </button>
             </div>
           </div>
         );
+      }
+      // Insert a Flarum-style BBCode quote at the top of the editor and focus
+      // the textarea. Used by the per-message Quote button.
+      insertQuote(quotedText: string, authorName: string) {
+        const cleanText = String(quotedText || '').trim();
+        const cleanAuthor = String(authorName || '').trim() || 'user';
+        const block = `[quote=${cleanAuthor}]\n${cleanText}\n[/quote]\n\n`;
+        const next = block + (this.value || '');
+        this.value = next;
+        m.redraw();
+        // Sync the textarea: TextEditor reads `value` only on initial create,
+        // so external mutations need to be pushed through the DOM directly so
+        // BasicEditorDriver/onchange picks up the new content.
+        setTimeout(() => {
+          const ta = document.querySelector<HTMLTextAreaElement>('.AvocadoMessages-inlineReply .TextEditor-editor');
+          if (!ta) return;
+          ta.value = next;
+          ta.dispatchEvent(new Event('input', { bubbles: true }));
+          ta.focus();
+          // Place caret at end so user can immediately type their reply.
+          try { ta.setSelectionRange(next.length, next.length); } catch (_) {}
+        }, 30);
       }
       _send(dialog, onSent) {
         const text = this.value.trim();
@@ -2239,6 +2260,40 @@ app.initializers.add(
                 }
               }
             });
+
+            // Add a per-message "Quote" button that pushes a BBCode quote into
+            // the inline reply (uses Flarum's standard [quote=name]...[/quote]
+            // syntax so flarum-mentions / flarum-bbcode render it correctly).
+            extend(MessageClass.prototype, 'actionItems', function (items) {
+              const msg = this.attrs.message;
+              if (!msg) return;
+              if (!app.session.user?.canSendAnyMessage?.()) return;
+              if (items.has?.('quote')) return;
+
+              items.add('quote', (
+                <Button
+                  className="Button Button--link AvocadoMessages-quoteBtn"
+                  icon="fas fa-reply"
+                  onclick={() => {
+                    const author = displayName(msg.user?.()) || msg.user?.()?.username?.() || '';
+                    // Prefer the raw markdown source so the quote round-trips
+                    // formatting; fall back to plaintext if the model only
+                    // exposes the rendered version.
+                    const content = msg.attribute?.('content')
+                      ?? msg.contentPlain?.()
+                      ?? '';
+                    if (_currentInlineReply) {
+                      _currentInlineReply.insertQuote(content, author);
+                    }
+                  }}
+                  aria-label={app.translator.trans('flarum-mentions.forum.post.reply_link', {}, true) || 'Reply'}
+                  title={app.translator.trans('flarum-mentions.forum.post.reply_link', {}, true) || 'Reply'}
+                >
+                  {app.translator.trans('flarum-mentions.forum.post.reply_link', {}, true) || 'Reply'}
+                </Button>
+              ), 50);
+            });
+
             MessageClass._avocadoPatched = true;
           }
           const StreamClass = flarum.reg.get('flarum-messages', 'forum/components/MessageStream');
