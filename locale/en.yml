@@ -262,6 +262,8 @@ ramon-avocado:
       empty: "No discussions found."
     post:
       op_badge: OP
+    messages:
+      deleted_message: Message deleted
     tags:
       title: Categories
       home: Home

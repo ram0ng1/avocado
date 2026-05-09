@@ -1178,19 +1178,24 @@
     .Button {
       font-size: 11px !important;
       height: 26px !important;
-      padding: 0 8px !important;
+      padding: 0 10px !important;
       border-radius: 999px !important;
-      background: transparent !important;
-      border: none !important;
+      background: var(--avmsg-search-bg) !important;
+      border: 1px solid var(--avmsg-border) !important;
       box-shadow: none !important;
-      color: var(--avmsg-muted) !important;
-      font-weight: 600 !important;
+      color: var(--avmsg-text) !important;
+      font-weight: 700 !important;
       display: inline-flex !important;
       align-items: center !important;
-      gap: 4px !important;
+      gap: 5px !important;
 
-      .Button-icon { font-size: 11px !important; }
-      &:hover { background: var(--avmsg-search-bg) !important; color: var(--avmsg-text) !important; }
+      .Button-icon { font-size: 11px !important; color: var(--avmsg-muted) !important; }
+      &:hover {
+        background: var(--avmsg-input-bg) !important;
+        border-color: var(--primary-color) !important;
+        color: var(--primary-color) !important;
+        .Button-icon { color: var(--primary-color) !important; }
+      }
     }
   }
 
@@ -1234,9 +1239,49 @@
 
   .Post-actions .Button,
   .Post-footer .Button {
-    color: rgba(255,255,255,0.65) !important;
-    &:hover { background: rgba(255,255,255,0.15) !important; color: #fff !important; }
+    background: rgba(255,255,255,0.14) !important;
+    border-color: rgba(255,255,255,0.22) !important;
+    color: rgba(255,255,255,0.92) !important;
+
+    .Button-icon { color: rgba(255,255,255,0.85) !important; }
+
+    &:hover {
+      background: rgba(255,255,255,0.24) !important;
+      border-color: rgba(255,255,255,0.35) !important;
+      color: #fff !important;
+      .Button-icon { color: #fff !important; }
+    }
   }
+}
+
+// ── Deleted message placeholder ────────────────────────────────────────────
+.AvocadoMessages-chatCol .MessageStream .Post.Post--deleted .Post-body,
+.AvocadoMessages-chatCol .MessageStream .Message.Post--deleted .Post-body {
+  background: var(--avmsg-search-bg) !important;
+  border: 1px dashed var(--avmsg-border) !important;
+  color: var(--avmsg-muted) !important;
+  box-shadow: none !important;
+  font-style: italic !important;
+}
+
+.AvocadoMessages-deletedNotice {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 13px/1.4 'DM Sans', Inter, "Segoe UI", sans-serif;
+  color: var(--avmsg-muted);
+
+  i { font-size: 11px; opacity: 0.7; }
+}
+
+// On own (sent) deleted bubbles, keep the dashed-grey treatment so it reads
+// as deleted rather than a pink bubble with strange content.
+.AvocadoMessages-chatCol .MessageStream .Post--byCurrentUser.Post--deleted .Post-body,
+.AvocadoMessages-chatCol .MessageStream .Post--by-actor.Post--deleted .Post-body {
+  background: var(--avmsg-search-bg) !important;
+  border: 1px dashed var(--avmsg-border) !important;
+  color: var(--avmsg-muted) !important;
+  p, a { color: var(--avmsg-muted) !important; }
 }
 
 // ── Badges — hidden in chat (avatars convey identity; badges add visual clutter) ──
@@ -1411,7 +1456,11 @@
       // right-padding leaves room for the absolutely-positioned round submit
       padding: 13px 56px 10px 20px !important;
       min-height: 48px !important;
-      max-height: 200px !important;
+      // Cap at half-viewport so a long draft never eats the whole chat area.
+      // Below the cap the textarea grows naturally with its content (Flarum's
+      // Composer-flexible class drives the height from scrollHeight on input).
+      max-height: 50vh !important;
+      height: auto !important;
       overflow-y: auto !important;
       font: 500 14px/1.5 'DM Sans', Inter, "Segoe UI", sans-serif !important;
       color: var(--avmsg-text) !important;
