@@ -262,6 +262,8 @@ ramon-avocado:
       empty: "Nenhuma discussão encontrada."
     post:
       op_badge: POST ORIGINAL
+    messages:
+      deleted_message: Mensagem apagada
     tags:
       title: Categorias
       home: Início
