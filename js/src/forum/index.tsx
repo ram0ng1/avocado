@@ -2301,7 +2301,7 @@ app.initializers.add(
                 const cls = node.attrs?.className;
                 if (typeof cls === 'string' && cls.split(' ').includes('Post-body')) {
                   node.children = [
-                    <span className="AvocadoMessages-deletedNotice">
+                    <span key="deleted" className="AvocadoMessages-deletedNotice">
                       <i className="fas fa-ban" aria-hidden="true" />
                       {' '}
                       {trans('ramon-avocado.forum.messages.deleted_message', 'Mensagem apagada')}
