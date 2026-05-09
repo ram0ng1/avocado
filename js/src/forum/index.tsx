@@ -2107,6 +2107,15 @@ app.initializers.add(
           try { app.store.pushPayload(response); } catch (_) {}
           this.value   = '';
           this.sending = false;
+          // Force the DOM textarea to clear too — TextEditor's BasicEditorDriver
+          // is the source of truth after mount, so resetting `this.value` alone
+          // won't empty the visible <textarea>.
+          const ta = document.querySelector<HTMLTextAreaElement>('.AvocadoMessages-inlineReply .TextEditor-editor');
+          if (ta) {
+            ta.value = '';
+            ta.style.height = ''; // reset auto-grown height
+            ta.dispatchEvent(new Event('input', { bubbles: true }));
+          }
           if (typeof onSent === 'function') onSent(response);
           m.redraw();
         }).catch(() => {
@@ -2259,6 +2268,51 @@ app.initializers.add(
                   if (!classes.includes('Post--grouped')) classes.push('Post--grouped');
                 }
               }
+              // Mark deleted messages so CSS / view can render the placeholder.
+              if (msg) {
+                const isDeleted = !!(msg.isHidden?.()
+                  || msg.attribute?.('isHidden')
+                  || msg.attribute?.('hiddenAt')
+                  || msg.attribute?.('deletedAt'));
+                const hasContent = !!(msg.contentHtml?.() || msg.attribute?.('content'));
+                if (isDeleted || !hasContent) {
+                  if (!classes.includes('Post--deleted')) classes.push('Post--deleted');
+                }
+              }
+            });
+
+            // Replace the body with a "mensagem apagada" placeholder when the
+            // message is deleted/hidden. We override the rendered content via
+            // the ItemList Flarum exposes for the message body.
+            extend(MessageClass.prototype, 'view', function (vdom) {
+              const msg = this.attrs.message;
+              if (!msg) return;
+              const isDeleted = !!(msg.isHidden?.()
+                || msg.attribute?.('isHidden')
+                || msg.attribute?.('hiddenAt')
+                || msg.attribute?.('deletedAt'));
+              const hasContent = !!(msg.contentHtml?.() || msg.attribute?.('content'));
+              if (!isDeleted && hasContent) return;
+
+              // Walk the vdom tree to find .Post-body and swap its children.
+              const replace = (node: any): boolean => {
+                if (!node || typeof node !== 'object') return false;
+                if (Array.isArray(node)) { node.forEach(replace); return false; }
+                const cls = node.attrs?.className;
+                if (typeof cls === 'string' && cls.split(' ').includes('Post-body')) {
+                  node.children = [
+                    <span key="deleted" className="AvocadoMessages-deletedNotice">
+                      <i className="fas fa-ban" aria-hidden="true" />
+                      {' '}
+                      {trans('ramon-avocado.forum.messages.deleted_message', 'Mensagem apagada')}
+                    </span>,
+                  ];
+                  return true;
+                }
+                if (Array.isArray(node.children)) return node.children.some(replace);
+                return false;
+              };
+              replace(vdom);
             });
 
             // Add a per-message "Quote" button that pushes a BBCode quote into
