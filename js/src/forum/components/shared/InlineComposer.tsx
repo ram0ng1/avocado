@@ -2,7 +2,7 @@ import app from 'flarum/forum/app';
 import Component from 'flarum/common/Component';
 import type { ComponentAttrs } from 'flarum/common/Component';
 import Avatar from 'flarum/common/components/Avatar';
-import { trans, displayName } from '../../utils';
+import { trans, displayName, tagsRequireHeroImage } from '../../utils';
 import InlineComposerState from '../../states/InlineComposerState';
 import TagPicker from './TagPicker';
 import ComposerTextEditor from './ComposerTextEditor';
@@ -96,6 +96,8 @@ export default class InlineComposer<
           <TagPicker state={state} />
         </div>
 
+        {tagsRequireHeroImage(state.tags) && this.renderHeroImageField()}
+
         <div className={`AvocadoHome-composerBody${state.preview ? ' is-preview' : ''}`}>
           <ComposerTextEditor
             composer={state.composerProxy}
@@ -123,6 +125,61 @@ export default class InlineComposer<
             </article>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // ── Hero image field (minimal chip) ────────────────────────────────────
+  // Sits as a single inline button that toggles between "Imagem do hero" and
+  // a chip showing the picked file's thumbnail + filename + remove (×).
+  // Stays one row tall (32px) so it never breaks the composer's layout.
+
+  private renderHeroImageField() {
+    const state = this.state;
+    const previewUrl = state.heroImagePreview;
+
+    const onPick = (e: Event) => {
+      const input = e.target as HTMLInputElement;
+      const file = input.files?.[0] || null;
+      if (file && file.type.startsWith('image/')) state.setHeroImageFile(file);
+      input.value = '';
+      m.redraw();
+    };
+
+    if (previewUrl) {
+      return (
+        <div className="AvocadoHome-composerHeroChipRow">
+          <span className="AvocadoHome-composerHeroChip is-set" title={state.heroImageFile?.name || ''}>
+            <span
+              className="AvocadoHome-composerHeroChip-thumb"
+              style={{ backgroundImage: `url(${JSON.stringify(previewUrl)})` }}
+              aria-hidden="true"
+            />
+            <span className="AvocadoHome-composerHeroChip-label">
+              {state.heroImageFile?.name || trans('ramon-avocado.forum.home.composer_hero_image_picked', 'Image selected')}
+            </span>
+            <button
+              type="button"
+              className="AvocadoHome-composerHeroChip-remove"
+              aria-label={trans('ramon-avocado.forum.home.composer_hero_image_remove', 'Remove image')}
+              onclick={() => { state.setHeroImageFile(null); m.redraw(); }}
+            >
+              <i className="fas fa-times" aria-hidden="true" />
+            </button>
+          </span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="AvocadoHome-composerHeroChipRow">
+        <label className="AvocadoHome-composerHeroChip">
+          <input type="file" accept="image/*" onchange={onPick} />
+          <i className="fas fa-image" aria-hidden="true" />
+          <span>
+            {trans('ramon-avocado.forum.home.composer_hero_image_label', 'Hero image (optional)')}
+          </span>
+        </label>
       </div>
     );
   }

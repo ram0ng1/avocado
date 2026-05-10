@@ -40,6 +40,96 @@
   .container { padding: 0; max-width: 100%; }
 }
 
+// ── Hero image controls (visible only to OP / mods) ─────────────────────────
+// Floats in the top-right of the inner container. Buttons reuse the hero's
+// surface variable so they read on both flat-color and image variants.
+.DiscussionHero-imageControls {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+}
+
+.DiscussionHero-imageBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid rgba(255,255,255,0.32);
+  border-radius: 999px;
+  background: rgba(0,0,0,0.35);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+
+  i { font-size: 12px; }
+
+  &:hover:not(:disabled) {
+    background: rgba(0,0,0,0.55);
+    border-color: rgba(255,255,255,0.55);
+  }
+
+  &:active:not(:disabled) { transform: translateY(1px); }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  // Compact: hide label on phones, keep icon-only.
+  @media (max-width: 600px) {
+    span { display: none; }
+    padding: 0;
+    width: 32px;
+    justify-content: center;
+  }
+}
+
+.DiscussionHero-imageBtn--danger {
+  // Always icon-only; the trash icon is self-explanatory and saves space.
+  width: 32px;
+  padding: 0;
+  justify-content: center;
+
+  &:hover:not(:disabled) {
+    background: rgba(189, 50, 50, 0.7);
+    border-color: rgba(255,180,180,0.6);
+  }
+}
+
+// ── Variant: tag-defined background image ───────────────────────────────────
+// JS sets `backgroundImage` inline when the discussion's first tag has a
+// custom hero image. The dark overlay is intensified so the title and meta
+// text remain legible regardless of the photo's exposure.
+.DiscussionHero--withImage {
+  background-color: var(--discussion-color, var(--primary-color));
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  &::before {
+    background:
+      linear-gradient(180deg, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.55) 100%),
+      linear-gradient(135deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.10) 70%);
+  }
+
+  // Make the inner content sit on top of the overlay.
+  .DiscussionHero-inner { position: relative; z-index: 1; }
+
+  // Pills/badges read better with a slightly stronger surface tint.
+  .AvocadoHome-badge,
+  .AvocadoHome-tagPill {
+    backdrop-filter: blur(2px);
+  }
+}
+
 // Centered inner container — wider padding for breathing room
 .DiscussionHero-inner {
   position: relative;

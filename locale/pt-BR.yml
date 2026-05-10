@@ -12,6 +12,7 @@ ramon-avocado:
       section_footer: Rodapé
       section_colored: Cores
       section_team: Página Equipe
+      section_hero_image_tags: Imagem do hero nas discussões
 
       # Featured / categories on homepage
       featured_tags_label: Categorias em destaque
@@ -131,6 +132,10 @@ ramon-avocado:
       custom_default_avatar_label: Avatar padrão personalizado
       custom_default_avatar_help: Envie uma imagem de avatar padrão personalizada para usuários sem foto.
 
+      # Hero image on discussions (per-tag opt-in)
+      hero_image_tags_label: Tags que pedem imagem de hero
+      hero_image_tags_help: "Quando o usuário adiciona uma dessas tags a uma nova discussão, o composer revela um campo opcional para enviar uma imagem. A imagem enviada é mostrada como fundo do cabeçalho da discussão e como a primeira imagem no showcase da página inicial."
+
       # Team page
       team_enabled_label: Ativar página Equipe
       team_enabled_help: Mostra a página /team com os membros dos grupos selecionados.
@@ -202,6 +207,10 @@ ramon-avocado:
       post_plural: posts
       participant_singular: participante
       participant_plural: participantes
+      hero_image_add: Adicionar imagem
+      hero_image_replace: Trocar imagem
+      hero_image_remove: Remover imagem
+      hero_image_remove_confirm: Remover a imagem do hero desta discussão?
     home:
       all_categories: Todas as categorias
       all_title: Todas as discussões
@@ -219,6 +228,10 @@ ramon-avocado:
       composer_preview_empty: "Nada para pré-visualizar."
       composer_submitting: "Publicando..."
       composer_title_placeholder: "Título da discussão..."
+      composer_hero_image_label: Imagem do hero (opcional)
+      composer_hero_image_picked: Imagem selecionada
+      composer_hero_image_remove: Remover imagem
+      composer_hero_image_upload_failed: "Não foi possível enviar a imagem do hero. Você pode tentar novamente na página da discussão."
       discussion_singular: discussão
       discussions: discussões
       filter_tags: Filtrar tags

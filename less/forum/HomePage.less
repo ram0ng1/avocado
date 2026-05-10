@@ -1561,6 +1561,115 @@
   gap: 6px;
 }
 
+// ─── Hero image chip (composer) ───────────────────────────────────────────────
+// Single-line, 32px tall — sits flush with the rest of the composer chrome
+// without altering vertical rhythm. Shown only when one of the selected tags
+// is configured (in admin) to request a hero image.
+.AvocadoHome-composerHeroChipRow {
+  padding: 8px 16px;
+  border-bottom: 1px solid #f0f0f4;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.AvocadoHome-composerHeroChip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--control-bg, #f3f4f8);
+  color: var(--text-color, #43454e);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  border: 1px dashed transparent;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  max-width: 100%;
+
+  i { font-size: 12px; color: var(--muted-color, #8f9097); }
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &:hover:not(.is-set) {
+    background: #fff;
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    i { color: var(--primary-color); }
+  }
+
+  // The hidden file input fills the chip so the entire pill is the click target.
+  input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+
+  // ── Active state: a thumbnail-led chip with a remove button ────────────
+  &.is-set {
+    cursor: default;
+    padding-left: 4px;
+    background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+    border-color: color-mix(in srgb, var(--primary-color) 28%, transparent);
+    color: var(--text-color);
+  }
+}
+
+.AvocadoHome-composerHeroChip-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background-color: #1d1e22;
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+}
+
+.AvocadoHome-composerHeroChip-label {
+  max-width: 220px;
+}
+
+.AvocadoHome-composerHeroChip-remove {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted-color, #8f9097);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 999px;
+
+  i { font-size: 10px; }
+
+  &:hover {
+    background: rgba(0,0,0,0.08);
+    color: #c43d3d;
+  }
+}
+
+// Modal variant (core DiscussionComposer) lives inside ComposerBody-header
+// (an existing <ul>), so flatten the row paddings/borders to inherit the
+// composer's spacing instead of stacking our own.
+.AvocadoHome-composerHeroChipRow--modal {
+  padding: 0;
+  border-bottom: none;
+}
+
 .AvocadoHome-composer-cancel {
   border-radius: 999px;
 }
