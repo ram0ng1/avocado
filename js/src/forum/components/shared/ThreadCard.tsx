@@ -1,6 +1,6 @@
-// @ts-nocheck
 import app from 'flarum/forum/app';
-import Component, { ComponentAttrs } from 'flarum/common/Component';
+import Component from 'flarum/common/Component';
+import type { ComponentAttrs } from 'flarum/common/Component';
 import Avatar from 'flarum/common/components/Avatar';
 import Tooltip from 'flarum/common/components/Tooltip';
 import Dropdown from 'flarum/common/components/Dropdown';

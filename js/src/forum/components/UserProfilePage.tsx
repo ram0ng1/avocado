@@ -1,29 +1,24 @@
-// @ts-nocheck
 import app from 'flarum/forum/app';
 import UserPage from 'flarum/forum/components/UserPage';
-import Tooltip from 'flarum/common/components/Tooltip';
 import UserControls from 'flarum/forum/utils/UserControls';
+
 import {
-  trans,
-  displayName,
-  navigate,
-  userRoute,
   renderThreadSkeleton,
   renderLoadMore,
   renderEmpty,
 } from '../utils';
+import { toggleDiscussionLike } from '../utils/likes';
+
 import ThreadCard from './shared/ThreadCard';
 import PostCard from './shared/PostCard';
 import { buildHero, buildSidebar, buildUserPhoneNav } from './UserProfileBuilders';
 
 const PAGE_SIZE = 20;
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 const findBySlug = (slug: string): any => {
-  const l = slug.toLowerCase();
+  const lowered = slug.toLowerCase();
   return app.store.all('users').find(
-    (u: any) => (u.slug?.() || '').toLowerCase() === l || (u.username?.() || '').toLowerCase() === l
+    (u: any) => (u.slug?.() || '').toLowerCase() === lowered || (u.username?.() || '').toLowerCase() === lowered
   ) || null;
 };
 
@@ -31,7 +26,7 @@ const findBySlug = (slug: string): any => {
 
 class AvocadoUserBase extends UserPage {
   protected userLoading = true;
-  protected _user: any  = null;
+  protected _user: any = null;
 
   oninit(vnode: any) {
     super.oninit(vnode);
@@ -41,6 +36,7 @@ class AvocadoUserBase extends UserPage {
 
   loadUser(slug: string) {
     if (!slug) return;
+
     const cached = findBySlug(slug);
     if (cached?.joinTime?.()) {
       this.user = cached;
@@ -49,7 +45,9 @@ class AvocadoUserBase extends UserPage {
       this.onUserLoaded(cached);
       return;
     }
-    app.store.find('users', slug, { bySlug: true })
+
+    app.store
+      .find('users', slug, { bySlug: true })
       .then((user: any) => {
         this.user = user;
         app.current.set('user', user);
@@ -57,7 +55,10 @@ class AvocadoUserBase extends UserPage {
         this.onUserLoaded(user);
         m.redraw();
       })
-      .catch(() => { this.userLoading = false; m.redraw(); });
+      .catch(() => {
+        this.userLoading = false;
+        m.redraw();
+      });
   }
 
   onUserLoaded(_user: any) {}
@@ -65,9 +66,10 @@ class AvocadoUserBase extends UserPage {
   content(): any { return null; }
 
   view() {
-    const user       = (this as any).user;
+    const user = (this as any).user;
     const isEditable = user && (user.canEdit?.() || user === app.session.user);
-    const controls   = user ? UserControls.controls(user, this).toArray() : [];
+    const controls = user ? UserControls.controls(user, this).toArray() : [];
+
     return (
       <div className="AvocadoUserPage">
         <div className="AvocadoNav-helper">{buildUserPhoneNav(this)}</div>
@@ -89,34 +91,53 @@ class AvocadoUserBase extends UserPage {
 // ─── Posts page ───────────────────────────────────────────────────────────────
 
 export class AvocadoUserPostsPage extends AvocadoUserBase {
-  private posts: any[]  = [];
+  private posts: any[] = [];
   private loading = false;
   private hasMore = false;
-  private offset  = 0;
+  private offset = 0;
 
-  oninit(vnode: any) { this.posts = []; this.loading = false; this.hasMore = false; this.offset = 0; super.oninit(vnode); }
+  oninit(vnode: any) {
+    this.posts = [];
+    this.loading = false;
+    this.hasMore = false;
+    this.offset = 0;
+    super.oninit(vnode);
+  }
+
   activeKey() { return 'posts'; }
   onUserLoaded(user: any) { this._user = user; this.loadPosts(true); }
 
   loadPosts(reset: boolean) {
     const user = this._user;
     if (!user || this.loading) return;
-    if (reset) { this.posts = []; this.offset = 0; this.hasMore = false; }
+
+    if (reset) {
+      this.posts = [];
+      this.offset = 0;
+      this.hasMore = false;
+    }
     this.loading = true;
     m.redraw();
-    app.store.find('posts', {
-      filter: { author: user.username(), type: 'comment' },
-      sort: '-createdAt',
-      page: { offset: this.offset, limit: PAGE_SIZE },
-      include: 'user,discussion,discussion.tags,discussion.firstPost',
-    }).then((results: any) => {
-      const items  = Array.isArray(results) ? results : [];
-      this.posts   = reset ? [...items] : [...this.posts, ...items];
-      this.hasMore = !!(results.payload?.links?.next);
-      this.offset += items.length;
-      this.loading = false;
-      m.redraw();
-    }).catch(() => { this.loading = false; m.redraw(); });
+
+    app.store
+      .find('posts', {
+        filter: { author: user.username(), type: 'comment' },
+        sort: '-createdAt',
+        page: { offset: this.offset, limit: PAGE_SIZE },
+        include: 'user,discussion,discussion.tags,discussion.firstPost',
+      })
+      .then((results: any) => {
+        const items = Array.isArray(results) ? results : [];
+        this.posts = reset ? [...items] : [...this.posts, ...items];
+        this.hasMore = !!(results.payload?.links?.next);
+        this.offset += items.length;
+        this.loading = false;
+        m.redraw();
+      })
+      .catch(() => {
+        this.loading = false;
+        m.redraw();
+      });
   }
 
   content() {
@@ -137,45 +158,52 @@ export class AvocadoUserDiscussionsPage extends AvocadoUserBase {
   private discussions: any[] = [];
   private loading = false;
   private hasMore = false;
-  private offset  = 0;
+  private offset = 0;
   private likingIds = new Set<string>();
 
-  oninit(vnode: any) { this.discussions = []; this.loading = false; this.hasMore = false; this.offset = 0; this.likingIds = new Set(); super.oninit(vnode); }
+  oninit(vnode: any) {
+    this.discussions = [];
+    this.loading = false;
+    this.hasMore = false;
+    this.offset = 0;
+    this.likingIds = new Set();
+    super.oninit(vnode);
+  }
+
   activeKey() { return 'discussions'; }
   onUserLoaded(user: any) { this._user = user; this.loadDiscussions(true); }
 
   loadDiscussions(reset: boolean) {
     const user = this._user;
     if (!user || this.loading) return;
-    if (reset) { this.discussions = []; this.offset = 0; this.hasMore = false; }
+
+    if (reset) {
+      this.discussions = [];
+      this.offset = 0;
+      this.hasMore = false;
+    }
     this.loading = true;
     m.redraw();
-    app.store.find('discussions', {
-      filter: { author: user.username() },
-      sort: '-createdAt',
-      page: { offset: this.offset, limit: PAGE_SIZE },
-      include: 'user,firstPost,lastPostedUser,lastPost,tags',
-    }).then((results: any) => {
-      const items       = Array.isArray(results) ? results : [];
-      this.discussions  = reset ? [...items] : [...this.discussions, ...items];
-      this.hasMore      = !!(results.payload?.links?.next);
-      this.offset      += items.length;
-      this.loading      = false;
-      m.redraw();
-    }).catch(() => { this.loading = false; m.redraw(); });
-  }
 
-  toggleLike(discussion: any) {
-    const firstPost = discussion.firstPost?.();
-    if (!firstPost) return;
-    const id = discussion.id?.() as string;
-    if (this.likingIds.has(id)) return;
-    const isLiked = app.session.user && (firstPost.likes?.() || []).some((u: any) => u === app.session.user);
-    this.likingIds.add(id);
-    m.redraw();
-    firstPost.save({ isLiked: !isLiked })
-      .then(() => { this.likingIds.delete(id); m.redraw(); })
-      .catch(() => { this.likingIds.delete(id); m.redraw(); });
+    app.store
+      .find('discussions', {
+        filter: { author: user.username() },
+        sort: '-createdAt',
+        page: { offset: this.offset, limit: PAGE_SIZE },
+        include: 'user,firstPost,lastPostedUser,lastPost,tags',
+      })
+      .then((results: any) => {
+        const items = Array.isArray(results) ? results : [];
+        this.discussions = reset ? [...items] : [...this.discussions, ...items];
+        this.hasMore = !!(results.payload?.links?.next);
+        this.offset += items.length;
+        this.loading = false;
+        m.redraw();
+      })
+      .catch(() => {
+        this.loading = false;
+        m.redraw();
+      });
   }
 
   content() {
@@ -187,7 +215,7 @@ export class AvocadoUserDiscussionsPage extends AvocadoUserBase {
             discussion={d}
             context={this}
             likingIds={this.likingIds}
-            onToggleLike={(disc: any) => this.toggleLike(disc)}
+            onToggleLike={(disc: any) => toggleDiscussionLike(disc, this.likingIds)}
           />
         ))}
         {this.loading && renderThreadSkeleton()}
@@ -201,34 +229,53 @@ export class AvocadoUserDiscussionsPage extends AvocadoUserBase {
 // ─── Likes page ───────────────────────────────────────────────────────────────
 
 export class AvocadoUserLikesPage extends AvocadoUserBase {
-  private posts: any[]  = [];
+  private posts: any[] = [];
   private loading = false;
   private hasMore = false;
-  private offset  = 0;
+  private offset = 0;
 
-  oninit(vnode: any) { this.posts = []; this.loading = false; this.hasMore = false; this.offset = 0; super.oninit(vnode); }
+  oninit(vnode: any) {
+    this.posts = [];
+    this.loading = false;
+    this.hasMore = false;
+    this.offset = 0;
+    super.oninit(vnode);
+  }
+
   activeKey() { return 'likes'; }
   onUserLoaded(user: any) { this._user = user; this.loadPosts(true); }
 
   loadPosts(reset: boolean) {
     const user = this._user;
     if (!user || this.loading) return;
-    if (reset) { this.posts = []; this.offset = 0; this.hasMore = false; }
+
+    if (reset) {
+      this.posts = [];
+      this.offset = 0;
+      this.hasMore = false;
+    }
     this.loading = true;
     m.redraw();
-    app.store.find('posts', {
-      filter: { type: 'comment', likedBy: user.id() },
-      sort: '-createdAt',
-      page: { offset: this.offset, limit: PAGE_SIZE },
-      include: 'user,discussion,discussion.tags,discussion.firstPost',
-    }).then((results: any) => {
-      const items  = Array.isArray(results) ? results : [];
-      this.posts   = reset ? [...items] : [...this.posts, ...items];
-      this.hasMore = !!(results.payload?.links?.next);
-      this.offset += items.length;
-      this.loading = false;
-      m.redraw();
-    }).catch(() => { this.loading = false; m.redraw(); });
+
+    app.store
+      .find('posts', {
+        filter: { type: 'comment', likedBy: user.id() },
+        sort: '-createdAt',
+        page: { offset: this.offset, limit: PAGE_SIZE },
+        include: 'user,discussion,discussion.tags,discussion.firstPost',
+      })
+      .then((results: any) => {
+        const items = Array.isArray(results) ? results : [];
+        this.posts = reset ? [...items] : [...this.posts, ...items];
+        this.hasMore = !!(results.payload?.links?.next);
+        this.offset += items.length;
+        this.loading = false;
+        m.redraw();
+      })
+      .catch(() => {
+        this.loading = false;
+        m.redraw();
+      });
   }
 
   content() {
@@ -246,34 +293,53 @@ export class AvocadoUserLikesPage extends AvocadoUserBase {
 // ─── Mentions page ────────────────────────────────────────────────────────────
 
 export class AvocadoUserMentionsPage extends AvocadoUserBase {
-  private posts: any[]  = [];
+  private posts: any[] = [];
   private loading = false;
   private hasMore = false;
-  private offset  = 0;
+  private offset = 0;
 
-  oninit(vnode: any) { this.posts = []; this.loading = false; this.hasMore = false; this.offset = 0; super.oninit(vnode); }
+  oninit(vnode: any) {
+    this.posts = [];
+    this.loading = false;
+    this.hasMore = false;
+    this.offset = 0;
+    super.oninit(vnode);
+  }
+
   activeKey() { return 'mentions'; }
   onUserLoaded(user: any) { this._user = user; this.loadPosts(true); }
 
   loadPosts(reset: boolean) {
     const user = this._user;
     if (!user || this.loading) return;
-    if (reset) { this.posts = []; this.offset = 0; this.hasMore = false; }
+
+    if (reset) {
+      this.posts = [];
+      this.offset = 0;
+      this.hasMore = false;
+    }
     this.loading = true;
     m.redraw();
-    app.store.find('posts', {
-      filter: { type: 'comment', mentioned: user.id() },
-      sort: '-createdAt',
-      page: { offset: this.offset, limit: PAGE_SIZE },
-      include: 'user,discussion,discussion.tags,discussion.firstPost',
-    }).then((results: any) => {
-      const items  = Array.isArray(results) ? results : [];
-      this.posts   = reset ? [...items] : [...this.posts, ...items];
-      this.hasMore = !!(results.payload?.links?.next);
-      this.offset += items.length;
-      this.loading = false;
-      m.redraw();
-    }).catch(() => { this.loading = false; m.redraw(); });
+
+    app.store
+      .find('posts', {
+        filter: { type: 'comment', mentioned: user.id() },
+        sort: '-createdAt',
+        page: { offset: this.offset, limit: PAGE_SIZE },
+        include: 'user,discussion,discussion.tags,discussion.firstPost',
+      })
+      .then((results: any) => {
+        const items = Array.isArray(results) ? results : [];
+        this.posts = reset ? [...items] : [...this.posts, ...items];
+        this.hasMore = !!(results.payload?.links?.next);
+        this.offset += items.length;
+        this.loading = false;
+        m.redraw();
+      })
+      .catch(() => {
+        this.loading = false;
+        m.redraw();
+      });
   }
 
   content() {

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import app from 'flarum/forum/app';
 import Page from 'flarum/common/components/Page';
 import Avatar from 'flarum/common/components/Avatar';
@@ -7,6 +6,7 @@ import PostListState from 'flarum/forum/states/PostListState';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
 import extractText from 'flarum/common/utils/extractText';
+
 import {
   trans,
   displayName,
@@ -18,18 +18,20 @@ import {
   renderPostSkeleton,
   renderLoadMore,
 } from '../utils';
+import { POST_SEARCH_SORT, getSortLabel } from '../utils/sortOptions';
+
 import SortDropdown, { SortOption } from './shared/SortDropdown';
 
-const SORT_LABELS: Record<string, () => string> = {
-  relevance: () => trans('ramon-avocado.forum.search.sort_relevance', 'Relevance'),
-  newest:    () => trans('ramon-avocado.forum.search.sort_newest',    'Newest'),
-  oldest:    () => trans('ramon-avocado.forum.search.sort_oldest',    'Oldest'),
-};
-
+/**
+ * AvocadoPostsSearchPage — list view for `/posts?q=…`.
+ *
+ * Wraps Flarum's `PostListState` with a custom card layout, the shared
+ * sort dropdown and the search-query highlight helper.
+ */
 export default class AvocadoPostsSearchPage extends Page {
   static providesInitialSearch = true;
+
   private postsState!: PostListState;
-  private sortOpen = false;
 
   oninit(vnode: any) {
     super.oninit(vnode);
@@ -51,27 +53,110 @@ export default class AvocadoPostsSearchPage extends Page {
     app.setTitleCount(0);
   }
 
+  view() {
+    const params = (app.search as any).state.params();
+    const q = params.q || '';
+    const state = this.postsState;
+    const isLoading = state.isInitialLoading() || state.isLoadingNext();
+    const allPosts = state.getPages().flatMap((pg: any) => pg.items) as any[];
+
+    const sortMap = state.sortMap() as Record<string, string>;
+    const currentKey = params.sort || Object.keys(sortMap)[0];
+    const sortOpts: SortOption[] = Object.keys(sortMap).map((key) => ({
+      key,
+      label: POST_SEARCH_SORT.find((o) => o.key === key)?.label || (() => getSortLabel(key)),
+    }));
+
+    return (
+      <div className="AvocadoSearch AvocadoSearch--posts">
+        <div className="AvocadoNav-helper"><IndexSidebar /></div>
+
+        <div className="AvocadoSearch-header">
+          <h1 className="AvocadoSearch-title">{this.renderTitle()}</h1>
+          {Object.keys(sortMap).length > 1 && (
+            <SortDropdown
+              options={sortOpts}
+              currentKey={currentKey}
+              onChange={(key: string) => {
+                (app.search as any).state.changeSort(key);
+                m.redraw();
+              }}
+            />
+          )}
+        </div>
+
+        {isLoading && allPosts.length === 0 ? (
+          <div className="AvocadoSearch-postStack">{renderPostSkeleton()}</div>
+        ) : allPosts.length === 0 ? (
+          <div className="AvocadoSearch-empty">
+            <i className="far fa-frown-open" aria-hidden="true" />
+            <p>
+              {q
+                ? trans('ramon-avocado.forum.search.no_posts_found', 'No posts found for "{q}".', { q })
+                : trans('ramon-avocado.forum.search.no_posts_match', 'No posts match these filters.')}
+            </p>
+          </div>
+        ) : (
+          <div className="AvocadoSearch-postStack">
+            {allPosts.map((post: any) => this.renderPostCard(post))}
+            {isLoading && renderPostSkeleton()}
+            {!isLoading && state.hasNext() &&
+              renderLoadMore(trans('ramon-avocado.forum.discussions.load_more', 'Load more'), () => state.loadNext())}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── Subviews ────────────────────────────────────────────────────────────────
+
+  private renderTitle() {
+    const params = (app.search as any).state.params();
+    const q = params.q || '';
+    const filter = params.filter || {};
+
+    if (q) {
+      return (
+        <>
+          {trans('ramon-avocado.forum.search.posts_for', 'Posts for')}{' '}
+          <span className="AvocadoSearch-query">"{q}"</span>
+        </>
+      );
+    }
+
+    const parts = Object.entries(filter as Record<string, string>)
+      .filter(([k]) => !k.startsWith('-'))
+      .map(([k, v]) => `${k}:${v}`);
+
+    if (parts.length > 0) {
+      return (
+        <>
+          {trans('ramon-avocado.forum.search.posts_filtered_by', 'Posts filtered by')}{' '}
+          <span className="AvocadoSearch-query">{parts.join(', ')}</span>
+        </>
+      );
+    }
+
+    return trans('ramon-avocado.forum.search.posts_title', 'Posts search');
+  }
+
   private renderPostCard(post: any) {
-    const q          = (app.search as any).state.params().q || '';
+    const q = (app.search as any).state.params().q || '';
     const discussion = post.discussion?.();
-    const user       = post.user?.();
-    const content    = (post.contentPlain?.() || '') as string;
-    const href       = app.route.post(post);
-    const userHref   = userRoute(user);
-    const timeLabel  = formatTimeLabel(post.createdAt?.());
-    const excerptNode = content
-      ? (q ? highlight(content, q, 220) : truncate(content, 220))
-      : null;
+    const user = post.user?.();
+    const content = (post.contentPlain?.() || '') as string;
+    const href = app.route.post(post);
+    const userHref = userRoute(user);
+    const timeLabel = formatTimeLabel(post.createdAt?.());
+    const excerptNode = content ? (q ? highlight(content, q, 220) : truncate(content, 220)) : null;
     const discussionTitle = (discussion?.title?.() || '') as string;
-    const discussionNode  = q ? highlight(discussionTitle, q) : discussionTitle;
-    const controls        = discussion ? DiscussionControls.controls(discussion, this).toArray() : [];
+    const discussionNode = q ? highlight(discussionTitle, q) : discussionTitle;
+    const controls = discussion ? DiscussionControls.controls(discussion, this).toArray() : [];
 
     return (
       <article key={post.id()} className="AvocadoSearch-postCard">
         <div className="AvocadoSearch-postHead">
-          <div className="AvocadoSearch-postAvatar">
-            {user && <Avatar user={user} />}
-          </div>
+          <div className="AvocadoSearch-postAvatar">{user && <Avatar user={user} />}</div>
           <div className="AvocadoSearch-postMeta">
             <a
               href={userHref}
@@ -83,6 +168,7 @@ export default class AvocadoPostsSearchPage extends Page {
             {timeLabel && <span className="AvocadoSearch-postTime">{timeLabel}</span>}
           </div>
         </div>
+
         {discussion && (
           <a
             href={href}
@@ -93,7 +179,9 @@ export default class AvocadoPostsSearchPage extends Page {
             {discussionNode}
           </a>
         )}
+
         {excerptNode && <p className="AvocadoSearch-postExcerpt">{excerptNode}</p>}
+
         <div className="AvocadoSearch-postFooter">
           {controls.length > 0 && (
             <Dropdown
@@ -115,75 +203,6 @@ export default class AvocadoPostsSearchPage extends Page {
           </a>
         </div>
       </article>
-    );
-  }
-
-  private renderTitle() {
-    const params = (app.search as any).state.params();
-    const q      = params.q || '';
-    const filter = params.filter || {};
-    if (q) {
-      return <>{trans('ramon-avocado.forum.search.posts_for', 'Posts for')} <span className="AvocadoSearch-query">"{q}"</span></>;
-    }
-    const parts = Object.entries(filter as Record<string, string>)
-      .filter(([k]) => !k.startsWith('-'))
-      .map(([k, v]) => `${k}:${v}`);
-    if (parts.length > 0) {
-      return <>{trans('ramon-avocado.forum.search.posts_filtered_by', 'Posts filtered by')} <span className="AvocadoSearch-query">{parts.join(', ')}</span></>;
-    }
-    return trans('ramon-avocado.forum.search.posts_title', 'Posts search');
-  }
-
-  view() {
-    const params    = (app.search as any).state.params();
-    const q         = params.q || '';
-    const state     = this.postsState;
-    const isLoading = state.isInitialLoading() || state.isLoadingNext();
-    const allPosts  = state.getPages().flatMap((pg: any) => pg.items) as any[];
-
-    const sortMap    = state.sortMap() as Record<string, string>;
-    const currentKey = params.sort || Object.keys(sortMap)[0];
-    const sortOpts: SortOption[] = Object.keys(sortMap).map((key) => ({
-      key,
-      label: SORT_LABELS[key] ?? key,
-    }));
-
-    return (
-      <div className="AvocadoSearch AvocadoSearch--posts">
-        <div className="AvocadoNav-helper"><IndexSidebar /></div>
-
-        <div className="AvocadoSearch-header">
-          <h1 className="AvocadoSearch-title">{this.renderTitle()}</h1>
-          {Object.keys(sortMap).length > 1 && (
-            <SortDropdown
-              options={sortOpts}
-              currentKey={currentKey}
-              onChange={(key: string) => { (app.search as any).state.changeSort(key); m.redraw(); }}
-            />
-          )}
-        </div>
-
-        {isLoading && allPosts.length === 0 ? (
-          <div className="AvocadoSearch-postStack">{renderPostSkeleton()}</div>
-        ) : allPosts.length === 0 ? (
-          <div className="AvocadoSearch-empty">
-            <i className="far fa-frown-open" aria-hidden="true" />
-            <p>{q
-            ? trans('ramon-avocado.forum.search.no_posts_found', 'No posts found for "{q}".', { q })
-            : trans('ramon-avocado.forum.search.no_posts_match', 'No posts match these filters.')
-          }</p>
-          </div>
-        ) : (
-          <div className="AvocadoSearch-postStack">
-            {allPosts.map((post: any) => this.renderPostCard(post))}
-            {isLoading && renderPostSkeleton()}
-            {!isLoading && state.hasNext() && renderLoadMore(
-              trans('ramon-avocado.forum.discussions.load_more', 'Load more'),
-              () => state.loadNext()
-            )}
-          </div>
-        )}
-      </div>
     );
   }
 }

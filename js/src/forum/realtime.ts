@@ -1,4 +1,3 @@
-// @ts-nocheck — flarum/* path mappings only resolve in a full Flarum install, not the workbench
 // Avocado realtime adapter for flarum/realtime.
 //
 // Wraps app.websocket_channels.{public,user} so theme components can subscribe

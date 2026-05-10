@@ -1,63 +1,59 @@
-// @ts-nocheck
 import app from 'flarum/forum/app';
 import Page from 'flarum/common/components/Page';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
-import { trans, tagRoute, navigate, renderThreadSkeleton, renderLoadMore, renderEmpty } from '../utils';
+
+import {
+  trans,
+  tagRoute,
+  navigate,
+  renderThreadSkeleton,
+  renderLoadMore,
+  renderEmpty,
+} from '../utils';
+import { toggleDiscussionLike } from '../utils/likes';
+import { DISCUSSION_LIST_SORT } from '../utils/sortOptions';
+import { bindDiscussionFeedRealtime } from '../utils/discussionRealtime';
 import { applyColor, clearColor } from '../colored';
+
+import DiscussionFeedState from '../states/DiscussionFeedState';
+
 import ThreadCard from './shared/ThreadCard';
-import SortDropdown, { SortOption } from './shared/SortDropdown';
+import SortDropdown from './shared/SortDropdown';
 import WsUpdateBanner from './shared/WsUpdateBanner';
-import { bindRealtime, pushPayloadDiscussion } from '../realtime';
-
-const SORT_OPTIONS: SortOption[] = [
-  { key: 'latest',  label: 'Latest',  sort: '-lastPostedAt' },
-  { key: 'top',     label: 'Top',     sort: '-commentCount' },
-  { key: 'newest',  label: 'Newest',  sort: '-createdAt'    },
-  { key: 'oldest',  label: 'Oldest',  sort: 'createdAt'     },
-];
-
-const PAGE_SIZE = 20;
 
 const findTagBySlug = (slug: string): any =>
   app.store.all('tags').find(
     (t: any) => t.slug?.().localeCompare(slug, undefined, { sensitivity: 'base' }) === 0
   ) || null;
 
+/**
+ * AvocadoTagPage — list of discussions filtered by a single tag.
+ *
+ * Uses `DiscussionFeedState` for pagination + realtime queue, then layers a
+ * tag-aware filter on top of the realtime handlers so only events for
+ * discussions in the current tag affect this view.
+ */
 export default class AvocadoTagPage extends Page {
   private tag: any = null;
   private tagLoading = false;
-  private discussions: any[] = [];
-  private loading = false;
-  private hasMore = false;
-  private sort = 'latest';
-  private offset = 0;
-  private likingIds     = new Set<string>();
-  private _wsUpdates    = 0;
-  private _unbindRealtime: (() => void) | null = null;
-  private _updatedLikeIds = new Set<string>();
-  private _pendingDiscs   = new Map<string, any>();
-  private _newDiscIds     = new Set<string>();
-  private _selfActionIds  = new Set<string>();
-  private _currentSlug    = '';
+  private feedState!: DiscussionFeedState;
+  private likingIds = new Set<string>();
+  private unbindRealtime: (() => void) | null = null;
+  private currentSlug = '';
 
   oninit(vnode: any) {
     super.oninit(vnode);
-    this.bodyClass    = 'App--index';
-    this._currentSlug = m.route.param('tags');
-    this.loadTag(this._currentSlug);
+    this.bodyClass = 'App--index';
+    this.currentSlug = m.route.param('tags');
+    this.loadTag(this.currentSlug);
   }
 
   onbeforeupdate() {
     const newSlug = m.route.param('tags');
-    if (newSlug && newSlug !== this._currentSlug) {
-      this._currentSlug  = newSlug;
-      this.tag           = null;
-      this.discussions   = [];
-      this.hasMore       = false;
-      this.offset        = 0;
-      this.sort          = 'latest';
-      this._pendingDiscs.clear();
-      this._newDiscIds.clear();
+    if (newSlug && newSlug !== this.currentSlug) {
+      this.currentSlug = newSlug;
+      this.tag = null;
+      this.feedState?.clear();
       this.loadTag(newSlug);
     }
     return true;
@@ -65,209 +61,104 @@ export default class AvocadoTagPage extends Page {
 
   oncreate(vnode: any) {
     super.oncreate(vnode);
-
-    // Filter broadcasts to those whose discussion belongs to the current tag.
-    // The realtime payload only carries the Discussion (not the original event
-    // metadata), so check the discussion's tag relationships directly.
-    const belongsToCurrentTag = (disc: any): boolean => {
-      const tagId = String(this.tag?.id?.() || '');
-      if (!tagId) return false;
-      const tags: any[] = disc?.tags?.() || [];
-      return tags.some((t: any) => String(t?.id?.() || '') === tagId);
-    };
-
-    this._unbindRealtime = bindRealtime({
-      onPost: (data: any) => {
-        const disc = pushPayloadDiscussion(data);
-        const id = disc?.id?.();
-        if (!id || !belongsToCurrentTag(disc)) return;
-        app.store
-          .find('discussions', id, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
-          .then((d: any) => {
-            if (!d) return;
-            const exists = this.discussions.some((x) => String(x.id?.() || '') === String(id));
-            if (!exists) this._pendingDiscs.set(String(id), d);
-            m.redraw();
-          })
-          .catch(() => { this._wsUpdates++; m.redraw(); });
-      },
-
-      onLike: (data: any) => {
-        const disc = pushPayloadDiscussion(data);
-        const id = disc?.id?.();
-        if (!id || !belongsToCurrentTag(disc)) return;
-        const sid = String(id);
-        const isSelf = this._selfActionIds.has(sid);
-        if (isSelf) this._selfActionIds.delete(sid);
-        app.store
-          .find('discussions', id, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
-          .then(() => {
-            if (!isSelf) {
-              this._updatedLikeIds.add(sid);
-              setTimeout(() => { this._updatedLikeIds.delete(sid); m.redraw(); }, 500);
-            }
-            m.redraw();
-          })
-          .catch(() => {});
-      },
-
-      onPinned: (data: any) => {
-        const disc = pushPayloadDiscussion(data);
-        const id = disc?.id?.();
-        if (!id || !belongsToCurrentTag(disc)) return;
-        app.store.find('discussions', id, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
-          .then((d: any) => {
-            if (!d) return;
-            if (this.discussions.some((x) => String(x.id?.() || '') === String(id))) {
-              this.discussions.sort((a, b) => (b.isSticky?.() ? 1 : 0) - (a.isSticky?.() ? 1 : 0));
-            }
-            m.redraw();
-          })
-          .catch(() => {});
-      },
-
-      onPostRemoved: (data: any) => {
-        const disc = pushPayloadDiscussion(data);
-        const id = disc?.id?.();
-        if (!id || !belongsToCurrentTag(disc)) return;
-        // Only refetch if the discussion is currently rendered on this tag — avoids
-        // wasted requests when a moderator hides a post in an unrelated tag.
-        if (!this.discussions.some((x) => String(x.id?.() || '') === String(id))
-            && !this._pendingDiscs.has(String(id))) return;
-        app.store.find('discussions', id, { include: 'user,firstPost,lastPostedUser,lastPost,tags' })
-          .then(() => m.redraw())
-          .catch(() => {});
-      },
-    });
+    this.bindRealtime();
   }
 
   onremove(vnode: any) {
     super.onremove(vnode);
     clearColor();
-    this._unbindRealtime?.();
-    this._unbindRealtime = null;
+    this.unbindRealtime?.();
+    this.unbindRealtime = null;
   }
+
+  private bindRealtime() {
+    this.unbindRealtime = bindDiscussionFeedRealtime({
+      // Only react to broadcasts whose discussion belongs to the current tag.
+      filter: (disc: any) => {
+        const tagId = String(this.tag?.id?.() || '');
+        if (!tagId) return false;
+        const tags: any[] = disc?.tags?.() || [];
+        return tags.some((t: any) => String(t?.id?.() || '') === tagId);
+      },
+      selfActionIds: this.feedState?.selfActionIds,
+      updatedLikeIds: this.feedState?.updatedLikeIds,
+      pendingDiscs: this.feedState?.pendingDiscs,
+      currentItems: () => this.feedState?.flatItems() || [],
+      onFetchFailure: () => {
+        if (this.feedState) this.feedState.wsFetchFailures++;
+      },
+    });
+  }
+
+  // ── Data loading ────────────────────────────────────────────────────────────
 
   private loadTag(slug: string) {
     if (!slug) return;
+
     const cached = findTagBySlug(slug);
     if (cached) {
       this.tag = cached;
       if (app.forum.attribute('avocadoColoredEnabled')) applyColor(cached.color?.() || null);
-      this.loadDiscussions(true);
+      this.initFeed();
       return;
     }
+
     this.tagLoading = true;
-    app.store.find('tags', slug, { include: 'children,children.parent,parent' })
+    app.store
+      .find('tags', slug, { include: 'children,children.parent,parent' })
       .then(() => {
         this.tag = findTagBySlug(slug);
         this.tagLoading = false;
         if (this.tag) {
           if (app.forum.attribute('avocadoColoredEnabled')) applyColor(this.tag.color?.() || null);
-          this.loadDiscussions(true);
+          this.initFeed();
         }
         m.redraw();
       })
-      .catch(() => { this.tagLoading = false; m.redraw(); });
-  }
-
-  private getSortParam(): string {
-    return SORT_OPTIONS.find((o) => o.key === this.sort)?.sort || '-lastPostedAt';
-  }
-
-  private loadDiscussions(reset: boolean) {
-    if (this.loading || !this.tag) return;
-    if (reset) { this.discussions = []; this.offset = 0; this.hasMore = false; }
-    this.loading = true;
-    app.store
-      .find('discussions', {
-        sort:    this.getSortParam(),
-        page:    { offset: this.offset, limit: PAGE_SIZE },
-        include: 'user,firstPost,lastPostedUser,lastPost,tags',
-        filter:  { tag: this.tag.slug() },
-      })
-      .then((results: any) => {
-        const items    = Array.isArray(results) ? results : [];
-        const combined = reset ? [...items] : [...this.discussions, ...items];
-        combined.sort((a, b) => (b.isSticky?.() ? 1 : 0) - (a.isSticky?.() ? 1 : 0));
-        this.discussions = combined;
-        this.hasMore     = !!(results.payload?.links?.next);
-        this.offset     += items.length;
-        this.loading     = false;
+      .catch(() => {
+        this.tagLoading = false;
         m.redraw();
-      })
-      .catch(() => { this.loading = false; m.redraw(); });
+      });
   }
 
-  private toggleLike(discussion: any) {
-    const firstPost = discussion.firstPost?.();
-    if (!firstPost) return;
-    const id = discussion.id?.() as string;
-    if (this.likingIds.has(id)) return;
-    const likes   = firstPost.likes?.() || [];
-    const isLiked = app.session.user && likes.some((u: any) => u === app.session.user);
-    this.likingIds.add(id);
-    this._selfActionIds.add(id);
-    m.redraw();
-    firstPost.save({ isLiked: !isLiked })
-      .then(() => { this.likingIds.delete(id); m.redraw(); })
-      .catch(() => { this.likingIds.delete(id); this._selfActionIds.delete(id); m.redraw(); });
+  /** Build (or reset) the feed state filtered to the current tag's slug. */
+  private initFeed() {
+    if (!this.tag) return;
+    this.feedState = new DiscussionFeedState({
+      sort: 'latest',
+      filter: { tag: this.tag.slug() },
+    } as any);
+    this.feedState.refresh();
   }
 
-  private flushPending() {
-    const pending = Array.from(this._pendingDiscs.values());
-    this._pendingDiscs.clear();
-    this._wsUpdates = 0;
-    pending.forEach((disc) => {
-      const discId = String(disc.id?.() || '');
-      const existingIdx = this.discussions.findIndex((d) => String(d.id?.() || '') === discId);
-      if (existingIdx >= 0) this.discussions.splice(existingIdx, 1);
-      const insertPos = this.discussions.findIndex((d) => !d.isSticky?.());
-      this.discussions.splice(insertPos >= 0 ? insertPos : 0, 0, disc);
-      this._newDiscIds.add(discId);
-    });
-    m.redraw();
-    setTimeout(() => { this._newDiscIds.clear(); m.redraw(); }, 4000);
-  }
+  // ── View ────────────────────────────────────────────────────────────────────
 
   view() {
     app.currentTag?.(true);
 
-    if (this.tagLoading) {
-      return (
-        <div className="AvocadoTagPage">
-          <div className="AvocadoTagPage-hero" style={{ '--tag-color': '#8f8f99' }}>
-            <div className="AvocadoTagPage-hero-inner">
-              <div className="AvocadoTagPage-hero-body">
-                <div style={{ flex: 1 }}>
-                  <div className="AvocadoTagsPage-shimmer AvocadoTagsPage-shimmer--name" style={{ width: '200px', height: '30px' }} />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="AvocadoTagPage-body">{renderThreadSkeleton()}</div>
-        </div>
-      );
-    }
+    if (this.tagLoading) return this.renderLoading();
+    if (!this.tag) return this.renderNotFound();
 
-    if (!this.tag) {
-      return (
-        <div className="AvocadoTagPage">
-          <div className="AvocadoTagPage-body">
-            <div className="AvocadoDiscussions-empty">Tag not found.</div>
-          </div>
-        </div>
-      );
-    }
+    return this.renderTagPage();
+  }
 
-    const tag      = this.tag;
-    const color    = tag.color?.()        || '';
-    const tagName  = tag.name?.()         || '';
-    const tagDesc  = tag.description?.()  || '';
-    const tagIcon  = tag.icon?.()         || null;
-    const count    = tag.discussionCount?.() || 0;
+  private renderTagPage() {
+    const tag = this.tag;
+    const color = tag.color?.() || '';
+    const tagName = tag.name?.() || '';
+    const tagDesc = tag.description?.() || '';
+    const tagIcon = tag.icon?.() || null;
+    const count = tag.discussionCount?.() || 0;
     const children = ((tag.children?.() || []) as any[]).filter(Boolean);
-    const discHref = (() => { try { return app.route('avocado-discussions'); } catch { return '/discussions'; } })();
+    const discHref = (() => {
+      try { return app.route('avocado-discussions'); }
+      catch { return '/discussions'; }
+    })();
+
+    const discussions = this.feedState?.flatItems() ?? [];
+    const isLoadingNext = !!this.feedState?.isLoadingNext();
+    const isInitialLoading = !!this.feedState?.isInitialLoading();
+    const currentSort = (this.feedState?.getParams() as any)?.sort || 'latest';
 
     return (
       <div className="AvocadoTagPage">
@@ -296,7 +187,8 @@ export default class AvocadoTagPage extends Page {
               <div className="AvocadoTagPage-hero-text">
                 <h1 className="AvocadoTagPage-hero-name">{tagName}</h1>
                 <span className="AvocadoTagPage-hero-count">
-                  {count} {count === 1
+                  {count}{' '}
+                  {count === 1
                     ? trans('ramon-avocado.forum.tags.discussion_singular', 'discussion')
                     : trans('ramon-avocado.forum.tags.discussion_plural', 'discussions')}
                 </span>
@@ -320,20 +212,7 @@ export default class AvocadoTagPage extends Page {
                 </div>
               )}
 
-              <button
-                className="AvocadoTagPage-newBtn"
-                onclick={() => {
-                  if (!app.session.user) {
-                    app.modal.show(() => (flarum as any).reg.asyncModuleImport('flarum/forum/components/LogInModal'));
-                    return;
-                  }
-                  const parent = tag.parent?.();
-                  const selectedTags = parent ? [parent, tag] : [tag];
-                  app.composer
-                    .load(() => (flarum as any).reg.asyncModuleImport('flarum/forum/components/DiscussionComposer'), { user: app.session.user })
-                    .then(() => { app.composer.fields.tags = selectedTags; app.composer.show(); m.redraw(); });
-                }}
-              >
+              <button className="AvocadoTagPage-newBtn" onclick={() => this.openComposer(tag)}>
                 <i className="fas fa-plus" aria-hidden="true" />
                 {trans('ramon-avocado.forum.home.new_discussion', 'New discussion')}
               </button>
@@ -346,9 +225,11 @@ export default class AvocadoTagPage extends Page {
         <div className="AvocadoTagPage-body">
           <div className="AvocadoTagPage-controls">
             <SortDropdown
-              options={SORT_OPTIONS}
-              currentKey={this.sort}
-              onChange={(key: string) => { this.sort = key; this.loadDiscussions(true); }}
+              options={DISCUSSION_LIST_SORT}
+              currentKey={currentSort}
+              onChange={(key: string) =>
+                this.feedState.refreshParams({ sort: key, filter: { tag: tag.slug() } } as any, 1)
+              }
             />
             <a
               className="AvocadoTagPage-allDiscLink"
@@ -361,30 +242,84 @@ export default class AvocadoTagPage extends Page {
           </div>
 
           <WsUpdateBanner
-            pendingCount={this._pendingDiscs.size + this._wsUpdates}
-            onFlush={() => this.flushPending()}
+            pendingCount={this.feedState?.pendingCount() ?? 0}
+            onFlush={() => this.feedState?.flushPending()}
           />
 
           <div className="AvocadoHome-threadStack">
-            {this.discussions.map((d) => (
+            {discussions.map((d: any) => (
               <ThreadCard
                 key={d.id?.()}
                 discussion={d}
                 context={this}
                 likingIds={this.likingIds}
-                updatedLikeIds={this._updatedLikeIds}
-                newDiscIds={this._newDiscIds}
+                updatedLikeIds={this.feedState.updatedLikeIds}
+                newDiscIds={this.feedState.newDiscIds}
                 currentTag={this.tag}
-                onToggleLike={(disc: any) => this.toggleLike(disc)}
+                onToggleLike={(disc: any) => toggleDiscussionLike(disc, this.likingIds, this.feedState.selfActionIds)}
               />
             ))}
-            {this.loading && renderThreadSkeleton()}
-            {!this.loading && this.discussions.length === 0 && renderEmpty('No discussions in this category yet.')}
+            {isLoadingNext && renderThreadSkeleton()}
+            {!isLoadingNext && discussions.length === 0 && !isInitialLoading &&
+              renderEmpty('No discussions in this category yet.')}
+            {isInitialLoading && discussions.length === 0 && renderThreadSkeleton()}
           </div>
 
-          {this.hasMore && !this.loading && renderLoadMore('Load more', () => this.loadDiscussions(false))}
+          {this.feedState?.hasNext() && !isLoadingNext &&
+            renderLoadMore('Load more', () => this.feedState.loadNext())}
         </div>
       </div>
     );
+  }
+
+  // ── View helpers ────────────────────────────────────────────────────────────
+
+  private renderLoading() {
+    return (
+      <div className="AvocadoTagPage">
+        <div className="AvocadoTagPage-hero" style={{ '--tag-color': '#8f8f99' }}>
+          <div className="AvocadoTagPage-hero-inner">
+            <div className="AvocadoTagPage-hero-body">
+              <div style={{ flex: 1 }}>
+                <div
+                  className="AvocadoTagsPage-shimmer AvocadoTagsPage-shimmer--name"
+                  style={{ width: '200px', height: '30px' }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="AvocadoTagPage-body">{renderThreadSkeleton()}</div>
+      </div>
+    );
+  }
+
+  private renderNotFound() {
+    return (
+      <div className="AvocadoTagPage">
+        <div className="AvocadoTagPage-body">
+          <div className="AvocadoDiscussions-empty">Tag not found.</div>
+        </div>
+      </div>
+    );
+  }
+
+  private openComposer(tag: any) {
+    if (!app.session.user) {
+      app.modal.show(() => (flarum as any).reg.asyncModuleImport('flarum/forum/components/LogInModal'));
+      return;
+    }
+    const parent = tag.parent?.();
+    const selectedTags = parent ? [parent, tag] : [tag];
+    app.composer
+      .load(
+        () => (flarum as any).reg.asyncModuleImport('flarum/forum/components/DiscussionComposer'),
+        { user: app.session.user }
+      )
+      .then(() => {
+        app.composer.fields.tags = selectedTags;
+        app.composer.show();
+        m.redraw();
+      });
   }
 }

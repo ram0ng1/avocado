@@ -7,6 +7,7 @@
   "include": [
       "src/**/*",
       "../vendor/*/*/js/dist-typings/@types/**/*",
+      "../../../vendor/*/*/js/dist-typings/@types/**/*",
 // <CUSTOM-1>
 // </CUSTOM-1>
       "@types/**/*"
@@ -18,7 +19,16 @@
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
-      "flarum/*": ["../vendor/flarum/core/js/dist-typings/*"],
+      "flarum/*": [
+        "../vendor/flarum/core/js/dist-typings/*",
+        "../../../vendor/flarum/core/js/dist-typings/*"
+      ],
+      "ext:flarum/realtime/*": [
+        "../../../vendor/flarum/realtime/js/dist-typings/*"
+      ],
+      "ext:flarum/tags/*": [
+        "../../../vendor/flarum/tags/js/dist-typings/*"
+      ]
 // <CUSTOM-2>
 // </CUSTOM-2>
     }
