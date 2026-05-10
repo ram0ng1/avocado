@@ -1,4 +1,5 @@
 import app from 'flarum/forum/app';
+import { trans, uploadDiscussionHeroImage } from '../utils';
 
 /**
  * State backing the inline new-discussion composer.
@@ -20,6 +21,14 @@ export default class InlineComposerState {
   tagBypassReqs = false;
   tagPickerOpen = false;
   tagFilter = '';
+
+  // Optional hero image attached to the new discussion when one of the
+  // selected tags is in `app.forum.attribute('avocadoHeroImageTags')`.
+  // Lives only on the client until submit() succeeds — at that point the
+  // file is POSTed to /api/avocado/discussion-hero and the discussion model
+  // is patched in the local store so the next page load already shows it.
+  heroImageFile: File | null = null;
+  heroImagePreview: string | null = null;
 
   /** Required by Flarum's TextEditor — proxies the live composer body. */
   composerProxy = {
@@ -65,6 +74,16 @@ export default class InlineComposerState {
     this.tags = this.tags.filter((t) => t !== tag && t.parent?.()?.id?.() !== tag.id?.());
   }
 
+  // ── Hero image attachment ──────────────────────────────────────────────
+
+  setHeroImageFile(file: File | null): void {
+    if (this.heroImagePreview) {
+      try { URL.revokeObjectURL(this.heroImagePreview); } catch { /* noop */ }
+    }
+    this.heroImageFile    = file;
+    this.heroImagePreview = file ? URL.createObjectURL(file) : null;
+  }
+
   // ── Lifecycle ──────────────────────────────────────────────────────────
 
   reset(): void {
@@ -76,6 +95,7 @@ export default class InlineComposerState {
     this.tagBypassReqs = false;
     this.tagPickerOpen = false;
     this.tagFilter = '';
+    this.setHeroImageFile(null);
   }
 
   /**
@@ -100,7 +120,37 @@ export default class InlineComposerState {
     return app.store
       .createRecord('discussions')
       .save(data)
-      .then((discussion: any) => {
+      .then(async (discussion: any) => {
+        // If the user picked a hero image, upload it now that we have an ID.
+        // Failures here don't roll the discussion back — we just keep it
+        // imageless and surface an alert so the user can retry from the
+        // discussion page later.
+        if (this.heroImageFile) {
+          try {
+            const result = await uploadDiscussionHeroImage(
+              discussion.id(),
+              this.heroImageFile
+            );
+            // Patch the local store so the next render of the discussion
+            // already shows the hero image without a refresh.
+            const data = (discussion as any).data;
+            if (data?.attributes) {
+              data.attributes.heroImagePath = result.heroImagePath;
+              data.attributes.heroImageUrl  = result.heroImageUrl;
+            }
+          } catch (err) {
+            try {
+              app.alerts.show(
+                { type: 'error' },
+                trans(
+                  'ramon-avocado.forum.home.composer_hero_image_upload_failed',
+                  'Could not upload the hero image. You can try again on the discussion page.'
+                )
+              );
+            } catch { /* alerts may be unavailable in some contexts */ }
+          }
+        }
+
         this.submitting = false;
         return discussion;
       })
