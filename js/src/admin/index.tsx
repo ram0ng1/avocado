@@ -912,6 +912,26 @@ app.initializers.add('ramon-avocado', (app) => {
     </AdminCard>
   ), 45)
 
+  // ── Discussion hero image ────────────────────────────────────────────────────
+  // Picks which tags trigger an "upload an image" prompt in the composer.
+  // Each discussion stores its own image (column added by the migration), and
+  // it's rendered as the discussion hero background + as the first showcase
+  // image. The setting is a JSON array of tag IDs (same shape as featured_tags)
+  // and is read on the forum side via `app.forum.attribute('avocadoHeroImageTags')`.
+  .registerSetting(() => (
+    <AdminCard
+      title={trans('ramon-avocado.admin.settings.section_hero_image_tags', 'Hero image on discussions')}
+      icon="fas fa-image"
+    >
+      <AdminTagPicker
+        settingKey="avocado.hero_image_tags"
+        label={trans('ramon-avocado.admin.settings.hero_image_tags_label', 'Tags that ask for a hero image')}
+        help={trans('ramon-avocado.admin.settings.hero_image_tags_help', 'When the user adds one of these tags to a new discussion, the composer reveals an optional image upload field. The uploaded image is shown as the discussion header background and as the first image in the homepage showcase.')}
+        placeholder={trans('ramon-avocado.admin.settings.tag_picker_placeholder', 'Select tags…')}
+      />
+    </AdminCard>
+  ), 42)
+
   // ── Team Page ────────────────────────────────────────────────────────────────
   .registerSetting(() => (
     <AdminCard title={trans('ramon-avocado.admin.settings.section_team', 'Team Page')} icon="fas fa-users">

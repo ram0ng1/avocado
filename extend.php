@@ -110,6 +110,9 @@ return [
     (new Extend\ApiResource(\Flarum\Api\Resource\ForumResource::class))
         ->fields(\Ramon\Avocado\Api\ForumAttributes::class),
 
+    (new Extend\ApiResource(\Flarum\Api\Resource\DiscussionResource::class))
+        ->fields(\Ramon\Avocado\Api\DiscussionFields::class),
+
     (new Extend\Routes('api'))
         ->get('/avocado/optimize-image', 'avocado.optimize_image', \Ramon\Avocado\Controller\OptimizeImageController::class)
         ->post('/avocado/banner', 'avocado.banner.upload', \Ramon\Avocado\Controller\UploadBannerController::class)
@@ -117,7 +120,9 @@ return [
         ->post('/avocado/auth-image', 'avocado.auth_image.upload', \Ramon\Avocado\Controller\UploadAuthImageController::class)
         ->delete('/avocado/auth-image', 'avocado.auth_image.delete', \Ramon\Avocado\Controller\DeleteAuthImageController::class)
         ->post('/avocado/logo-svg', 'avocado.logo_svg.upload', \Ramon\Avocado\Controller\UploadLogoSvgController::class)
-        ->delete('/avocado/logo-svg', 'avocado.logo_svg.delete', \Ramon\Avocado\Controller\DeleteLogoSvgController::class),
+        ->delete('/avocado/logo-svg', 'avocado.logo_svg.delete', \Ramon\Avocado\Controller\DeleteLogoSvgController::class)
+        ->post('/avocado/discussion-hero', 'avocado.discussion_hero.upload', \Ramon\Avocado\Controller\UploadDiscussionHeroController::class)
+        ->delete('/avocado/discussion-hero', 'avocado.discussion_hero.delete', \Ramon\Avocado\Controller\DeleteDiscussionHeroController::class),
 
     (new Extend\Settings())
         ->serializeToForum('avocadoHeroImage', 'avocado.hero_image')
@@ -136,6 +141,7 @@ return [
         ->serializeToForum('avocadoHeroDecoDivider', 'avocado.hero_deco_divider', 'boolval')
         ->serializeToForum('avocadoHeroDecoDividerIcon', 'avocado.hero_deco_divider_icon')
         ->serializeToForum('avocadoFeaturedTags', 'avocado.featured_tags')
+        ->serializeToForum('avocadoHeroImageTags', 'avocado.hero_image_tags')
         ->serializeToForum('avocadoLogoSvg', 'avocado.logo_svg')
         ->serializeToForum('avocadoLogoEnabled', 'avocado.logo_enabled', 'boolval')
         ->serializeToForum('avocadoCustomDefaultAvatar', 'avocado.custom_default_avatar', 'boolval')
@@ -171,6 +177,7 @@ return [
         ->default('avocado.hero_decoration_icon', false)
         ->default('avocado.hero_decoration_icon_opacity', '15')
         ->default('avocado.featured_tags', '[]')
+        ->default('avocado.hero_image_tags', '[]')
         ->default('avocado.logo_enabled', false)
         ->default('avocado.custom_default_avatar', true)
         ->default('avocado.show_guest_cta', true)
