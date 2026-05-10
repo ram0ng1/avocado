@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Shared utilities for ramon/avocado forum components.
  */
@@ -10,7 +9,10 @@ import coreHighlight from 'flarum/common/helpers/highlight';
 
 export const trans = (key: string, fallback: string, params: Record<string, any> = {}): string => {
   const out = app.translator?.trans(key, params);
-  if (out && out !== key) return out as string;
+  // `trans()` may return Mithril children (array) or a string. Only treat
+  // primitive string output as a successful translation; anything else falls
+  // back to the literal we passed in.
+  if (typeof out === 'string' && out !== key) return out;
   // Interpolate {placeholders} into the fallback when the translation key is missing,
   // so callers don't see literal `{count}` in the UI.
   return Object.entries(params).reduce<string>(

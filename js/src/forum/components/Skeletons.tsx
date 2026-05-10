@@ -1,7 +1,8 @@
-// @ts-nocheck
 // ─── Avocado skeleton render functions ───────────────────────────────────────
 // Single source of truth for all preloader skeletons across the theme.
 // Import from utils.ts (which re-exports everything here) for backward compat.
+
+import app from 'flarum/forum/app';
 
 // ── Thread card skeleton ──────────────────────────────────────────────────────
 // Mirrors ThreadCard: head (avatar + main + actions) + stats row.

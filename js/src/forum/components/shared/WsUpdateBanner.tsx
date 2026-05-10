@@ -1,5 +1,5 @@
-// @ts-nocheck
-import Component, { ComponentAttrs } from 'flarum/common/Component';
+import Component from 'flarum/common/Component';
+import type { ComponentAttrs } from 'flarum/common/Component';
 
 export interface WsUpdateBannerAttrs extends ComponentAttrs {
   pendingCount: number;
