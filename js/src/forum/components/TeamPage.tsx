@@ -1,4 +1,3 @@
-// @ts-nocheck
 import app from 'flarum/forum/app';
 import Page from 'flarum/common/components/Page';
 import Avatar from 'flarum/common/components/Avatar';
@@ -19,14 +18,14 @@ export default class TeamPage extends Page {
     super.oninit(vnode);
     this.bodyClass = 'App--index';
 
-    const title = app.forum.attribute('avocadoTeamPageTitle') || trans('ramon-avocado.forum.team.title', 'Our Team');
+    const title = app.forum.attribute<string>('avocadoTeamPageTitle') || trans('ramon-avocado.forum.team.title', 'Our Team');
     app.setTitle(title);
 
     this.load();
   }
 
   async load() {
-    const raw = app.forum.attribute('avocadoTeamPageGroups') || '[]';
+    const raw = app.forum.attribute<string>('avocadoTeamPageGroups') || '[]';
     let groupIds: string[];
     try {
       const parsed = JSON.parse(raw);

@@ -1,4 +1,7 @@
-// @ts-nocheck — large bootstrap file; components are typed individually
+// @ts-nocheck — bootstrap file: dozens of extend/override callbacks with
+// implicit `any` parameters. Properly typing each would require pinning down
+// every patched core component's shape. The page components this file wires
+// together are individually type-checked.
 import { extend, override } from 'flarum/common/extend';
 import Button from 'flarum/common/components/Button';
 import Tooltip from 'flarum/common/components/Tooltip';
