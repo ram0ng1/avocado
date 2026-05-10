@@ -115,7 +115,7 @@
   position: relative;
   overflow: hidden;
   border-radius: @border-radius;
-  padding: 108px 28px 32px; // top: room for form icon (32+48+28)
+  padding: 10px 8px 28px 32px;
   box-sizing: border-box;
   background: var(--control-bg);
 }
@@ -224,6 +224,21 @@
   // padding-top = header height (~72px) + small gap (6px) = 78px
   .Modal-content:has(.AvocadoAuth-panel) {
     padding: 78px 20px 28px !important;
+  }
+}
+
+// ─── LogIn provider buttons (passkey, GitHub, Google, …) ─────────────────────
+// .LogInButton extends .Button--block (display:flex, width:100%) and the .Button
+// rule sets justify-content:center. With the wider auth modal the icon ends up
+// pinned left while the label sits centered, leaving a large gap between them.
+// Force icon + label to sit adjacent and centered as a group.
+
+.LogInButton.hasIcon {
+  justify-content: center;
+  gap: 8px;
+
+  .Button-icon {
+    margin-right: 0; // override core's 5px (we use gap instead)
   }
 }
 

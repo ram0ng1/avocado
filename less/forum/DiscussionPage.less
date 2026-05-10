@@ -12,6 +12,12 @@
   --disc-gap:     24px;
   font-family: "DM Sans Variable", "DM Sans", sans-serif;
   background: var(--disc-bg);
+
+  // Core sets .Page-content { margin-top: 10px } on tablet+, which leaves a
+  // 10px body-bg strip between the App-header and DiscussionHero. Remove it.
+  @media @tablet-up {
+    .Page-content { margin-top: 0; }
+  }
 }
 
 // ── DiscussionHero — solid tag color, adaptive text contrast ────────────────────
