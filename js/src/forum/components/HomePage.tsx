@@ -23,6 +23,7 @@ import {
   renderShowcaseSkeleton,
   renderEmpty,
   getFeaturedTagIds,
+  getDiscussionHeroImageUrl,
   categoryCardStyle,
   safeCssUrl,
 } from '../utils';
@@ -451,7 +452,10 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
     const otherTags = allTags.filter((t: any) => !showcaseTagIds.has(String(t.id?.())));
     const primaryTag = allTags.find((t: any) => showcaseTagIds.has(String(t.id?.()))) || allTags[0] || null;
     const tagColor = primaryTag?.color?.() || null;
-    const imageUrl = this.extractFirstImage(firstPost);
+    // Image priority: discussion's own hero image (uploaded at creation when
+    // the tag asked for one) → first inline image from the post → tag-color
+    // gradient (handled by `noImgBg` below).
+    const imageUrl = getDiscussionHeroImageUrl(discussion) || this.extractFirstImage(firstPost);
     const excerpt = postPreview(discussion, 140);
 
     const noImgBg = tagColor

@@ -15,8 +15,10 @@
   border: 1px solid var(--control-bg-dark, #e8e8ed);
   border-radius: 16px;
   background: var(--body-bg, #fff);
-  overflow: hidden;
   margin-bottom: 16px;
+  // No `overflow: hidden` — the AdminTagPicker dropdown is absolutely
+  // positioned and needs to escape the card on the Y-axis. The rounded
+  // header look is preserved by giving the header itself top-rounded corners.
 }
 
 .AvocadoAdmin-card-header {
@@ -26,6 +28,8 @@
   padding: 14px 20px 12px;
   border-bottom: 1px solid var(--control-bg-dark, #f0f0f5);
   background: var(--control-bg, #f8f8fc);
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
 }
 
 .AvocadoAdmin-card-icon {

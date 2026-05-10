@@ -69,6 +69,11 @@ import {
   renderThreadSkeleton,
   renderDiscussionNavSkeleton,
   displayName,
+  getDiscussionHeroImageUrl,
+  tagsRequireHeroImage,
+  uploadDiscussionHeroImage,
+  deleteDiscussionHeroImage,
+  canEditDiscussionHero,
 } from './utils';
 import TextEditor from 'flarum/common/components/TextEditor';
 import listItems from 'flarum/common/helpers/listItems';
@@ -602,10 +607,83 @@ app.initializers.add(
       const tagColor = firstTag?.color?.() || null;
       const color = tagColor || 'var(--primary-color)';
 
-      // WCAG relative-luminance text contrast for hero
-      const heroTextColor = (tagColor && tagColor.startsWith('#') && tagColor.replace('#', '').length === 6)
-        ? (hexLuminance(tagColor) > 0.35 ? '#202126' : '#ffffff')
-        : '#ffffff';
+      // Optional per-discussion hero image set at creation time when the
+      // selected tag was configured to ask for one. When present, the header
+      // shows it as background with a darkening overlay so the title/meta
+      // stay legible regardless of the photo's exposure.
+      const discHeroUrl = getDiscussionHeroImageUrl(discussion);
+
+      // The discussion's tag may grant the owner/mod the right to attach,
+      // replace or remove the image. We only render the controls when:
+      //  - at least one of the discussion's tags is in the admin allow-list
+      //    (so this isn't a misplaced control on unrelated discussions); AND
+      //  - the actor has rename permission (matches the backend check).
+      const canManageHero = tagsRequireHeroImage(tags) && canEditDiscussionHero(discussion);
+
+      // Avoid double-firing the upload while a request is in flight. Stored on
+      // the component instance so it survives redraws.
+      const startHeroUpload = () => {
+        if ((this as any)._heroBusy) return;
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.style.display = 'none';
+        document.body.appendChild(input);
+        input.addEventListener('change', () => {
+          const file = input.files?.[0];
+          document.body.removeChild(input);
+          if (!file) return;
+          (this as any)._heroBusy = true;
+          m.redraw();
+          uploadDiscussionHeroImage(discussion.id(), file)
+            .then((result) => {
+              const attrs = (discussion as any).data?.attributes;
+              if (attrs) {
+                attrs.heroImagePath = result.heroImagePath;
+                attrs.heroImageUrl  = result.heroImageUrl;
+              }
+            })
+            .catch(() => {
+              try {
+                app.alerts.show(
+                  { type: 'error' },
+                  trans('ramon-avocado.forum.home.composer_hero_image_upload_failed', 'Could not upload the hero image.')
+                );
+              } catch { /* noop */ }
+            })
+            .finally(() => { (this as any)._heroBusy = false; m.redraw(); });
+        });
+        input.click();
+      };
+
+      const removeHeroImage = () => {
+        if ((this as any)._heroBusy) return;
+        const ok = window.confirm(
+          trans('ramon-avocado.forum.discussion.hero_image_remove_confirm', 'Remove the hero image from this discussion?')
+        );
+        if (!ok) return;
+        (this as any)._heroBusy = true;
+        m.redraw();
+        deleteDiscussionHeroImage(discussion.id())
+          .then(() => {
+            const attrs = (discussion as any).data?.attributes;
+            if (attrs) {
+              attrs.heroImagePath = null;
+              attrs.heroImageUrl  = null;
+            }
+          })
+          .catch(() => { /* keep the image, the next render will reflect actual state */ })
+          .finally(() => { (this as any)._heroBusy = false; m.redraw(); });
+      };
+
+      // WCAG relative-luminance text contrast for hero. When the discussion
+      // has a background image, the LESS layer adds a darkening overlay so
+      // we always want white text regardless of tag color.
+      const heroTextColor = discHeroUrl
+        ? '#ffffff'
+        : (tagColor && tagColor.startsWith('#') && tagColor.replace('#', '').length === 6)
+          ? (hexLuminance(tagColor) > 0.35 ? '#202126' : '#ffffff')
+          : '#ffffff';
       const heroTextMuted = heroTextColor === '#ffffff' ? 'rgba(255,255,255,0.78)' : 'rgba(0,0,0,0.55)';
       const heroSurface   = heroTextColor === '#ffffff' ? 'rgba(255,255,255,0.20)' : 'rgba(0,0,0,0.10)';
 
@@ -705,10 +783,64 @@ app.initializers.add(
         showDecoDivider  ? 'has-deco-divider'   : '',
       ].filter(Boolean).join(' ');
 
+      const heroClass = ['DiscussionHero', discHeroUrl ? 'DiscussionHero--withImage' : ''].filter(Boolean).join(' ');
+      const heroStyle = {
+        '--discussion-color': color,
+        '--disc-hero-text': heroTextColor,
+        '--disc-hero-text-muted': heroTextMuted,
+        '--disc-hero-surface': heroSurface,
+        ...(discHeroUrl ? { backgroundImage: safeCssUrl(discHeroUrl) } : {}),
+      };
+
+      const heroBusy = !!(this as any)._heroBusy;
+
       return (
-        <header className="DiscussionHero" style={{ '--discussion-color': color, '--disc-hero-text': heroTextColor, '--disc-hero-text-muted': heroTextMuted, '--disc-hero-surface': heroSurface }}>
+        <header className={heroClass} style={heroStyle}>
           <div className="container">
             <div className={innerClass} style={decorationIconStyle}>
+              {/* Hero image controls — only for users with rename permission
+                  on a discussion whose tag asks for an image. */}
+              {canManageHero && (
+                <div className="DiscussionHero-imageControls">
+                  {discHeroUrl ? (
+                    <>
+                      <button
+                        type="button"
+                        className="DiscussionHero-imageBtn"
+                        onclick={startHeroUpload}
+                        disabled={heroBusy}
+                        aria-label={trans('ramon-avocado.forum.discussion.hero_image_replace', 'Replace image')}
+                        title={trans('ramon-avocado.forum.discussion.hero_image_replace', 'Replace image')}
+                      >
+                        <i className={heroBusy ? 'fas fa-spinner fa-spin' : 'fas fa-camera'} aria-hidden="true" />
+                        <span>{trans('ramon-avocado.forum.discussion.hero_image_replace', 'Replace image')}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="DiscussionHero-imageBtn DiscussionHero-imageBtn--danger"
+                        onclick={removeHeroImage}
+                        disabled={heroBusy}
+                        aria-label={trans('ramon-avocado.forum.discussion.hero_image_remove', 'Remove image')}
+                        title={trans('ramon-avocado.forum.discussion.hero_image_remove', 'Remove image')}
+                      >
+                        <i className="fas fa-trash" aria-hidden="true" />
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      className="DiscussionHero-imageBtn"
+                      onclick={startHeroUpload}
+                      disabled={heroBusy}
+                      aria-label={trans('ramon-avocado.forum.discussion.hero_image_add', 'Add image')}
+                      title={trans('ramon-avocado.forum.discussion.hero_image_add', 'Add image')}
+                    >
+                      <i className={heroBusy ? 'fas fa-spinner fa-spin' : 'fas fa-camera'} aria-hidden="true" />
+                      <span>{trans('ramon-avocado.forum.discussion.hero_image_add', 'Add image')}</span>
+                    </button>
+                  )}
+                </div>
+              )}
               {/* Decoration icons wrapper — flexbox container for dynamic sizing */}
               {(showDecorationIcon && decorationIconClass) || (showDecorationIcon && showDecoDivider) || (showDecorationIcon && isTwoIconScreen && iconCount >= 2 && decorationIconClass2) ? (
                 <div 
@@ -1102,6 +1234,133 @@ app.initializers.add(
         const params = app.search?.state?.params?.() || {};
         m.route.set(app.route('avocado-search', params), null, { replace: true });
       }
+    });
+
+    // ── 9c. DiscussionComposer (modal flow used by TagPage) ────────────────────
+    // The core component is async-loaded by Flarum's chunk system, so a static
+    // import returns undefined at boot. `asyncModuleImport` would force-load
+    // the chunk during initializer time, which fails because `app.forum` is
+    // still undefined at that point (chunkUrl reads `app.forum.attribute`).
+    // `flarum.reg.onLoad` waits passively until the chunk loads on its own
+    // (i.e. when the user opens the composer), then patches the prototype.
+    // Adds an optional hero-image upload field below the title when one of
+    // the selected tags is in `avocadoHeroImageTags`; on submit the file is
+    // POSTed to /api/avocado/discussion-hero?discussionId=<id> and the user
+    // is routed to the new discussion.
+    flarum.reg.onLoad('core', 'forum/components/DiscussionComposer', (DiscussionComposer) => {
+      extend(DiscussionComposer.prototype, 'oninit', function () {
+        this._avocadoHeroFile    = null;
+        this._avocadoHeroPreview = null;
+      });
+
+      extend(DiscussionComposer.prototype, 'onremove', function () {
+        if (this._avocadoHeroPreview) {
+          try { URL.revokeObjectURL(this._avocadoHeroPreview); } catch { /* noop */ }
+          this._avocadoHeroPreview = null;
+        }
+      });
+
+      extend(DiscussionComposer.prototype, 'headerItems', function (items) {
+        const tags = this.composer?.fields?.tags || [];
+        if (!tagsRequireHeroImage(tags)) return;
+
+        const setFile = (file) => {
+          if (this._avocadoHeroPreview) {
+            try { URL.revokeObjectURL(this._avocadoHeroPreview); } catch { /* noop */ }
+          }
+          this._avocadoHeroFile    = file || null;
+          this._avocadoHeroPreview = file ? URL.createObjectURL(file) : null;
+          m.redraw();
+        };
+
+        const previewUrl = this._avocadoHeroPreview;
+        const file       = this._avocadoHeroFile;
+
+        // Minimal chip: a single 32px-tall control that drops cleanly into the
+        // composer header without disturbing layout. Toggles between an empty
+        // "pick" button and a chip with a thumbnail + filename + remove.
+        const chip = previewUrl
+          ? (
+            <span className="AvocadoHome-composerHeroChip is-set" title={file?.name || ''}>
+              <span
+                className="AvocadoHome-composerHeroChip-thumb"
+                style={{ backgroundImage: `url(${JSON.stringify(previewUrl)})` }}
+                aria-hidden="true"
+              />
+              <span className="AvocadoHome-composerHeroChip-label">
+                {file?.name || trans('ramon-avocado.forum.home.composer_hero_image_picked', 'Image selected')}
+              </span>
+              <button
+                type="button"
+                className="AvocadoHome-composerHeroChip-remove"
+                onclick={() => setFile(null)}
+                aria-label={trans('ramon-avocado.forum.home.composer_hero_image_remove', 'Remove image')}
+              >
+                <i className="fas fa-times" aria-hidden="true" />
+              </button>
+            </span>
+          )
+          : (
+            <label className="AvocadoHome-composerHeroChip">
+              <input
+                type="file"
+                accept="image/*"
+                onchange={(e) => {
+                  const f = (e.target).files?.[0];
+                  if (f && f.type.startsWith('image/')) setFile(f);
+                  (e.target).value = '';
+                }}
+              />
+              <i className="fas fa-image" aria-hidden="true" />
+              <span>{trans('ramon-avocado.forum.home.composer_hero_image_label', 'Hero image (optional)')}</span>
+            </label>
+          );
+
+        items.add('avocadoHeroImage',
+          <div className="AvocadoHome-composerHeroChipRow AvocadoHome-composerHeroChipRow--modal">{chip}</div>,
+          50, // between 'title' (100) and the editor
+        );
+      });
+
+      override(DiscussionComposer.prototype, 'onsubmit', function (original) {
+        const file = this._avocadoHeroFile;
+        // No image picked — preserve original behavior verbatim.
+        if (!file) {
+          return original();
+        }
+
+        // Replicate core's flow but intercept the success branch so we can
+        // upload the image before navigating to the new discussion.
+        this.loading = true;
+        const data = this.data();
+
+        app.store.createRecord('discussions').save(data).then(
+          async (discussion) => {
+            try {
+              const result = await uploadDiscussionHeroImage(discussion.id(), file);
+              const attrs = (discussion).data?.attributes;
+              if (attrs) {
+                attrs.heroImagePath = result.heroImagePath;
+                attrs.heroImageUrl  = result.heroImageUrl;
+              }
+            } catch (_err) {
+              try {
+                app.alerts.show(
+                  { type: 'error' },
+                  trans(
+                    'ramon-avocado.forum.home.composer_hero_image_upload_failed',
+                    'Could not upload the hero image. You can try again on the discussion page.'
+                  )
+                );
+              } catch { /* alerts may be unavailable */ }
+            }
+            this.composer.hide();
+            app.discussions?.refresh?.();
+            m.route.set(app.route.discussion(discussion));
+          },
+          this.loaded.bind(this),
+        );
+      });
     });
 
     // ── 9b. IndexPage contentItems: swap to HomePage ──────────────────────────

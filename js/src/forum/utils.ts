@@ -210,6 +210,87 @@ export const getFeaturedTagIds = (): Set<string> => {
   }
 };
 
+// ─── Tags requiring hero image at creation ────────────────────────────────────
+// Set of tag IDs the admin marked as "asks for a hero image" — when one of
+// these tags is selected in the composer, the user gets an upload field for
+// the discussion's hero image.
+export const getHeroImageTagIds = (): Set<string> => {
+  try {
+    const raw = app.forum?.attribute('avocadoHeroImageTags');
+    return new Set(((raw ? JSON.parse(raw as string) : []) as string[]).map(String));
+  } catch {
+    return new Set();
+  }
+};
+
+// Resolve the hero image URL stored on a discussion (if any).
+export const getDiscussionHeroImageUrl = (discussion: any): string | null => {
+  if (!discussion) return null;
+  const url =
+    discussion.attribute?.('heroImageUrl') ||
+    discussion.data?.attributes?.heroImageUrl ||
+    null;
+  if (url) return String(url);
+  const path =
+    discussion.attribute?.('heroImagePath') ||
+    discussion.data?.attributes?.heroImagePath ||
+    null;
+  return path ? resolveAssetUrl(String(path)) : null;
+};
+
+// True when at least one of the given tags is configured (in admin) to ask
+// for a hero image when a discussion is being created with that tag.
+export const tagsRequireHeroImage = (tags: any[] | null | undefined): boolean => {
+  if (!Array.isArray(tags) || tags.length === 0) return false;
+  const wanted = getHeroImageTagIds();
+  if (wanted.size === 0) return false;
+  return tags.some((t) => wanted.has(String(t?.id?.() ?? '')));
+};
+
+// POST a single image file to /api/avocado/discussion-hero?discussionId=<id>.
+// Resolves with the JSON body returned by the server (`{ heroImagePath, heroImageUrl }`)
+// so callers can update the discussion model in-place.
+export const uploadDiscussionHeroImage = async (
+  discussionId: string | number,
+  file: File,
+): Promise<{ heroImagePath: string; heroImageUrl: string | null }> => {
+  const apiUrl = (app.forum?.attribute('apiUrl') || '/api').replace(/\/+$/, '');
+  const body = new FormData();
+  body.append('avocado-discussion-hero', file);
+  const resp: any = await app.request({
+    method: 'POST',
+    url: `${apiUrl}/avocado/discussion-hero?discussionId=${encodeURIComponent(String(discussionId))}`,
+    serialize: (raw: any) => raw,
+    body,
+  });
+  return {
+    heroImagePath: resp?.heroImagePath ?? '',
+    heroImageUrl:  resp?.heroImageUrl  ?? null,
+  };
+};
+
+// DELETE the discussion's hero image. Resolves once the server clears it.
+export const deleteDiscussionHeroImage = async (
+  discussionId: string | number,
+): Promise<void> => {
+  const apiUrl = (app.forum?.attribute('apiUrl') || '/api').replace(/\/+$/, '');
+  await app.request({
+    method: 'DELETE',
+    url: `${apiUrl}/avocado/discussion-hero?discussionId=${encodeURIComponent(String(discussionId))}`,
+  });
+};
+
+// True when the actor is allowed to set/remove the hero image of a discussion.
+// Mirrors the backend permission check (`can('rename', $discussion)`), so the
+// controls only appear for the OP and moderators.
+export const canEditDiscussionHero = (discussion: any): boolean => {
+  if (!discussion) return false;
+  if (typeof discussion.canRename === 'function') {
+    return !!discussion.canRename();
+  }
+  return !!discussion.attribute?.('canRename');
+};
+
 // ─── Skeleton cards — re-exported from the dedicated Skeletons module ─────────
 export {
   renderThreadSkeleton,
