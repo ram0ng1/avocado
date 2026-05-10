@@ -1,4 +1,3 @@
-// @ts-nocheck
 import app from 'flarum/forum/app';
 import humanTime from 'flarum/common/helpers/humanTime';
 import sortTags from 'ext:flarum/tags/common/utils/sortTags';

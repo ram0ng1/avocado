@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * UserProfileBuilders — statically imported by index.tsx.
  *
@@ -94,9 +93,9 @@ class ScrollableNav {
   onremove() {
     if (this._el) {
       this._el.removeEventListener('scroll',    this._handleScroll!);
-      this._el.removeEventListener('mousedown', this._handleMouseDown!);
+      this._el.removeEventListener('mousedown', this._handleMouseDown! as EventListener);
     }
-    window.removeEventListener('mousemove', this._handleMouseMove!);
+    window.removeEventListener('mousemove', this._handleMouseMove! as EventListener);
     window.removeEventListener('mouseup',   this._handleMouseUp!);
     this._ro?.disconnect();
     this._el = null;
