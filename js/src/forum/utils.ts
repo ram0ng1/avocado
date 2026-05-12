@@ -8,10 +8,12 @@ import coreHighlight from 'flarum/common/helpers/highlight';
 // ─── Translation helper ────────────────────────────────────────────────────────
 
 export const trans = (key: string, fallback: string, params: Record<string, any> = {}): string => {
-  const out = app.translator?.trans(key, params);
-  // `trans()` may return Mithril children (array) or a string. Only treat
-  // primitive string output as a successful translation; anything else falls
-  // back to the literal we passed in.
+  // Flarum 2.x's Translator.trans(id, params) returns a NestedStringArray
+  // (Mithril children) when the key is found. Passing `extract: true` forces
+  // a plain string back; without it, `typeof out === 'string'` would always
+  // be false for resolved translations and we'd permanently fall back to the
+  // English literal, breaking locale switching.
+  const out = app.translator?.trans(key, params, true);
   if (typeof out === 'string' && out !== key) return out;
   // Interpolate {placeholders} into the fallback when the translation key is missing,
   // so callers don't see literal `{count}` in the UI.
