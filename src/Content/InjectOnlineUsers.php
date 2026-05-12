@@ -44,7 +44,13 @@ class InjectOnlineUsers
             ->values()
             ->toArray();
 
-        $json = json_encode($users, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        // JSON_HEX_* flags prevent `</script>` / quote break-outs when a username
+        // (or display_name, with nickname extensions installed) embeds HTML.
+        $json = json_encode(
+            $users,
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+        );
         $document->head[] = "<script>window.__avocadoOnlineUsers={$json};</script>";
     }
 }

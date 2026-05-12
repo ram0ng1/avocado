@@ -171,8 +171,64 @@ export const resolveAssetUrl = (assetPath: string | null | undefined): string | 
 
 export const safeCssUrl = (url: string | null | undefined): string => {
   if (!url) return 'none';
-  const escaped = String(url).replace(/[\\()'";]/g, '');
+  const trimmed = String(url).trim();
+  // Defense-in-depth: only http(s), absolute paths, or `./...`/`../...` relatives.
+  // `data:`, `javascript:`, `file:` etc. are rejected even though current callers
+  // only feed admin-validated URLs.
+  if (!/^(https?:\/\/|\/[^/]|\.\.?\/)/i.test(trimmed)) return 'none';
+  const escaped = trimmed.replace(/[\\()'";]/g, '');
   return `url('${escaped}')`;
+};
+
+// ─── Admin-HTML sanitizer ─────────────────────────────────────────────────────
+// Defense-in-depth scrub for admin-pasted HTML (custom hero, footer, …) before
+// it lands in `m.trust()` / `innerHTML`. Removes <script>, <iframe>, etc.; strips
+// on*=, javascript:/vbscript:/data:text/html in href/src; neutralizes inline
+// styles using expression()/@import. Not a full allow-list — relies on the
+// "admin == HTML" Flarum convention but ensures admin-account compromise does
+// not become guest-visible XSS.
+const SANITIZE_STRIP_ELS = ['script', 'iframe', 'object', 'embed', 'link', 'meta', 'base', 'form'];
+const SANITIZE_URL_ATTRS = ['href', 'src', 'action', 'formaction', 'xlink:href', 'srcset', 'background', 'poster'];
+const SANITIZE_DANGER_SCHEME = /^\s*(?:javascript|vbscript|data:text\/html)/i;
+const SANITIZE_DANGER_STYLE = /expression\s*\(|javascript:|vbscript:|@import/i;
+
+export const sanitizeAdminHtml = (html: string | null | undefined): string => {
+  const raw = (html ?? '').toString().trim();
+  if (!raw) return '';
+  let doc: Document;
+  try {
+    doc = new DOMParser().parseFromString(
+      `<div id="__avs_root__">${raw}</div>`,
+      'text/html',
+    );
+  } catch {
+    return '';
+  }
+  const root = doc.getElementById('__avs_root__');
+  if (!root) return '';
+
+  root.querySelectorAll(SANITIZE_STRIP_ELS.join(',')).forEach((el) => el.remove());
+
+  root.querySelectorAll('*').forEach((el) => {
+    // Array.from instead of spread — `NamedNodeMap` lacks Symbol.iterator under
+    // older TS lib targets. Snapshot is needed because removeAttribute mutates.
+    Array.from(el.attributes).forEach((attr) => {
+      const name = attr.name.toLowerCase();
+      if (name.startsWith('on')) {
+        el.removeAttribute(attr.name);
+        return;
+      }
+      if (SANITIZE_URL_ATTRS.includes(name) && SANITIZE_DANGER_SCHEME.test(attr.value)) {
+        el.removeAttribute(attr.name);
+        return;
+      }
+      if (name === 'style' && SANITIZE_DANGER_STYLE.test(attr.value)) {
+        el.removeAttribute(attr.name);
+      }
+    });
+  });
+
+  return root.innerHTML;
 };
 
 // ─── Clipboard helper ─────────────────────────────────────────────────────────
@@ -201,27 +257,30 @@ export const navigate = (e: Event, href: string): void => {
 
 // ─── Featured tag IDs ─────────────────────────────────────────────────────────
 
-export const getFeaturedTagIds = (): Set<string> => {
+const TAG_IDS_MAX_BYTES = 4096;
+
+/** Parse an admin-controlled JSON array of tag-id strings, with size cap. */
+const parseTagIdSet = (raw: unknown): Set<string> => {
+  if (typeof raw !== 'string' || raw.length === 0) return new Set();
+  if (raw.length > TAG_IDS_MAX_BYTES) return new Set();
   try {
-    const raw = app.forum?.attribute('avocadoFeaturedTags');
-    return new Set(((raw ? JSON.parse(raw as string) : []) as string[]).map(String));
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return new Set();
+    return new Set(parsed.map((v) => String(v)));
   } catch {
     return new Set();
   }
 };
 
+export const getFeaturedTagIds = (): Set<string> =>
+  parseTagIdSet(app.forum?.attribute('avocadoFeaturedTags'));
+
 // ─── Tags requiring hero image at creation ────────────────────────────────────
 // Set of tag IDs the admin marked as "asks for a hero image" — when one of
 // these tags is selected in the composer, the user gets an upload field for
 // the discussion's hero image.
-export const getHeroImageTagIds = (): Set<string> => {
-  try {
-    const raw = app.forum?.attribute('avocadoHeroImageTags');
-    return new Set(((raw ? JSON.parse(raw as string) : []) as string[]).map(String));
-  } catch {
-    return new Set();
-  }
-};
+export const getHeroImageTagIds = (): Set<string> =>
+  parseTagIdSet(app.forum?.attribute('avocadoHeroImageTags'));
 
 // Resolve the hero image URL stored on a discussion (if any).
 export const getDiscussionHeroImageUrl = (discussion: any): string | null => {
