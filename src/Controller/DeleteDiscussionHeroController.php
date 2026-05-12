@@ -29,14 +29,14 @@ class DeleteDiscussionHeroController implements RequestHandlerInterface
         $actor = RequestUtil::getActor($request);
         $actor->assertRegistered();
 
-        $discussionId = (string) Arr::get($request->getQueryParams(), 'discussionId', '');
-        $discussionId = preg_replace('/[^0-9]/', '', $discussionId);
-        if ($discussionId === '') {
+        $rawId = Arr::get($request->getQueryParams(), 'discussionId');
+        $discussionId = filter_var($rawId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if ($discussionId === false) {
             throw new ValidationException(['discussionId' => 'Invalid discussion id.']);
         }
 
         /** @var Discussion|null $discussion */
-        $discussion = Discussion::query()->find((int) $discussionId);
+        $discussion = Discussion::query()->find($discussionId);
         if (! $discussion) {
             throw new ValidationException(['discussionId' => 'Discussion not found.']);
         }

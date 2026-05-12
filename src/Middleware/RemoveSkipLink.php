@@ -29,7 +29,10 @@ class RemoveSkipLink implements MiddlewareInterface
             $body
         );
 
-        if ($cleaned === $body) {
+        // preg_replace returns null on PCRE backtrack-limit failure or compile error.
+        // Falling through with `null` would produce a 0-byte body and a `Content-Length: 0`
+        // header — yield the original response instead so callers see the unmodified page.
+        if ($cleaned === null || $cleaned === $body) {
             return $response;
         }
 

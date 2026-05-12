@@ -26,6 +26,7 @@ import {
   getDiscussionHeroImageUrl,
   categoryCardStyle,
   safeCssUrl,
+  sanitizeAdminHtml,
 } from '../utils';
 import { toggleDiscussionLike } from '../utils/likes';
 import { bindDiscussionFeedRealtime } from '../utils/discussionRealtime';
@@ -176,11 +177,13 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
     const forumDesc = app.forum?.attribute<string>('welcomeMessage') || app.forum?.attribute<string>('description') || '';
 
     const customEnabled = !!app.forum?.attribute('avocadoCustomHeroEnabled');
-    const customHtml = (app.forum?.attribute('avocadoCustomHeroHtml') as string || '').trim();
+    const customHtml = sanitizeAdminHtml(app.forum?.attribute('avocadoCustomHeroHtml') as string);
 
     // Custom HTML replaces the inner content only — wrapper, background image
     // and overlay stay so all hero settings keep working with custom content.
-    // Note: `welcomeMessage` is HTML by Flarum convention, hence m.trust.
+    // Admin-pasted HTML follows Flarum's "admin == HTML" convention but is
+    // scrubbed via sanitizeAdminHtml to keep an admin-account compromise from
+    // becoming guest-visible XSS.
     const innerContent = customEnabled && customHtml ? (
       <div className="AvocadoHome-heroBannerContent AvocadoHome-heroBannerContent--custom">
         {m.trust(customHtml)}
@@ -613,12 +616,13 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
 
     if (html && typeof html === 'string') {
       try {
-        const div = document.createElement('div');
-        div.innerHTML = html;
-        const imgs = div.querySelectorAll('img[src]');
+        // DOMParser instead of innerHTML: isolated document context, no script
+        // execution risk, and makes intent explicit to security scanners.
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const imgs = doc.querySelectorAll('img[src]');
         for (const img of imgs as any) {
           const src = img.getAttribute('src') || '';
-          if (!src || /^javascript:/i.test(src)) continue;
+          if (!src || /^(javascript|data|vbscript):/i.test(src.trim())) continue;
           const w = parseInt(img.getAttribute('width') || '999', 10);
           const h = parseInt(img.getAttribute('height') || '999', 10);
           if (w <= 32 && h <= 32) continue;
