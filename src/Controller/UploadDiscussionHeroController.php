@@ -28,19 +28,25 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
         $this->uploadDir = $filesystemFactory->disk('flarum-assets');
     }
 
+    /** Hero source images larger than this are rejected before the decoder runs. */
+    private const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+
+    /** MIME types accepted as hero-image source uploads. */
+    private const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $actor = RequestUtil::getActor($request);
         $actor->assertRegistered();
 
-        $discussionId = (string) Arr::get($request->getQueryParams(), 'discussionId', '');
-        $discussionId = preg_replace('/[^0-9]/', '', $discussionId);
-        if ($discussionId === '') {
+        $rawId = Arr::get($request->getQueryParams(), 'discussionId');
+        $discussionId = filter_var($rawId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if ($discussionId === false) {
             throw new ValidationException(['discussionId' => 'Invalid discussion id.']);
         }
 
         /** @var Discussion|null $discussion */
-        $discussion = Discussion::query()->find((int) $discussionId);
+        $discussion = Discussion::query()->find($discussionId);
         if (! $discussion) {
             throw new ValidationException(['discussionId' => 'Discussion not found.']);
         }
@@ -52,8 +58,22 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
             throw new ValidationException(['file' => 'No file uploaded.']);
         }
 
+        // Size guard: hero source images are never multi-megabyte; reject before
+        // Intervention attempts to decode the bitmap into memory (OOM/DoS).
+        $size = $file->getSize();
+        if ($size === null || $size > self::MAX_UPLOAD_BYTES) {
+            throw new ValidationException(['file' => 'File is too large (max 8 MB).']);
+        }
+
+        // MIME guard: don't trust the client's Content-Type. Sniff on disk.
+        $tmpPath = $file->getStream()->getMetadata('uri');
+        $mime = is_string($tmpPath) ? (mime_content_type($tmpPath) ?: '') : '';
+        if (! in_array($mime, self::ALLOWED_MIMES, true)) {
+            throw new ValidationException(['file' => 'Unsupported image type.']);
+        }
+
         $encoded = $this->imageManager
-            ->read($file->getStream()->getMetadata('uri'))
+            ->read($tmpPath)
             ->scaleDown(width: 1600)
             ->toWebp(quality: 78);
 

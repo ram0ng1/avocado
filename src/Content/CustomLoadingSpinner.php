@@ -7,9 +7,12 @@ namespace Ramon\Avocado\Content;
 use Flarum\Frontend\Document;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Ramon\Avocado\Support\HtmlSanitizer;
 
 class CustomLoadingSpinner
 {
+    private const DEFAULT_COLOR = '#5c7cfa';
+
     public function __construct(protected SettingsRepositoryInterface $settings) {}
 
     public function __invoke(Document $document, ServerRequestInterface $request): void
@@ -18,7 +21,7 @@ class CustomLoadingSpinner
             return;
         }
 
-        $primaryColor = trim((string) ($this->settings->get('theme_primary_color') ?: '#5c7cfa'));
+        $primaryColor = $this->safeColor((string) ($this->settings->get('theme_primary_color') ?: ''));
 
         $style = (string) ($this->settings->get('avocado.loading_spinner_style') ?: 'avocado');
 
@@ -30,7 +33,12 @@ class CustomLoadingSpinner
         if ($style === 'custom') {
             $raw = trim((string) ($this->settings->get('avocado.loading_spinner_custom') ?? ''));
             if ($raw === '') return;
-            $this->injectSpinner($document, '<div class="AvocadoSpinner">' . $raw . '</div>', $primaryColor);
+            // Defense-in-depth: scrub admin-pasted HTML before it lands in innerHTML.
+            // Inline scripts created via innerHTML do not run, but `<img onerror>`,
+            // `<svg onload>`, and the like do.
+            $clean = HtmlSanitizer::sanitize($raw);
+            if ($clean === '') return;
+            $this->injectSpinner($document, '<div class="AvocadoSpinner">' . $clean . '</div>', $primaryColor);
             return;
         }
 
@@ -47,9 +55,35 @@ class CustomLoadingSpinner
 
     // ── Shared injection ─────────────────────────────────────────────────────
 
-    private function injectSpinner(Document $document, string $html, string $color = '#5c7cfa'): void
+    /**
+     * Accept only `#rgb` / `#rgba` / `#rrggbb` / `#rrggbbaa` hex or `rgb()/rgba()`
+     * with numeric args. Anything else (including `</style><script>…`-style
+     * break-out attempts) falls back to the default — admin-only setting but
+     * the value lands raw inside a `<style>` block at boot, so this must be
+     * narrow.
+     */
+    private function safeColor(string $raw): string
     {
-        $json = json_encode($html, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $raw = trim($raw);
+        if ($raw === '') {
+            return self::DEFAULT_COLOR;
+        }
+        if (preg_match('/^#[0-9a-fA-F]{3,8}$/', $raw)) {
+            return $raw;
+        }
+        if (preg_match('/^rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*(?:0|1|0?\.\d+)\s*)?\)$/i', $raw)) {
+            return $raw;
+        }
+        return self::DEFAULT_COLOR;
+    }
+
+    private function injectSpinner(Document $document, string $html, string $color = self::DEFAULT_COLOR): void
+    {
+        $json = json_encode(
+            $html,
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+        );
         $document->head[] = <<<HTML
 <style>
 #flarum-loading[data-av-spinner]{position:fixed!important;inset:0!important;padding:0!important;margin:0!important}
@@ -60,11 +94,12 @@ HTML;
         $document->head[] = $this->buildObserverScript($json);
     }
 
-    private function injectCssOrbital(Document $document, string $color = '#5c7cfa'): void
+    private function injectCssOrbital(Document $document, string $color = self::DEFAULT_COLOR): void
     {
         $json = json_encode(
             '<div class="AvocadoSpinner"><div class="LoadingIndicator"><i></i></div></div>',
             JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
         );
         $document->head[] = <<<HTML
 <style>

@@ -13,6 +13,8 @@ namespace Ramon\Avocado;
 
 use Flarum\Foundation\AbstractServiceProvider;
 use Flarum\Foundation\Paths;
+use Psr\Log\LoggerInterface;
+use Throwable;
 
 class AvocadoServiceProvider extends AbstractServiceProvider
 {
@@ -45,7 +47,7 @@ class AvocadoServiceProvider extends AbstractServiceProvider
             $src  = $extDir . '/' . $relSrc;
             $dest = $assets . '/' . $destFile;
             if (file_exists($src) && (! file_exists($dest) || filemtime($src) > filemtime($dest))) {
-                @copy($src, $dest);
+                $this->safeCopy($src, $dest);
             }
         }
 
@@ -56,8 +58,11 @@ class AvocadoServiceProvider extends AbstractServiceProvider
             if (! is_dir($srcDir)) {
                 continue;
             }
-            if (! is_dir($destDir)) {
-                @mkdir($destDir, 0755, true);
+            if (! is_dir($destDir) && ! @mkdir($destDir, 0755, true) && ! is_dir($destDir)) {
+                $this->logger()?->warning('[avocado] failed to create assets directory', [
+                    'dir' => $destDir,
+                ]);
+                continue;
             }
             foreach (new \DirectoryIterator($srcDir) as $file) {
                 if ($file->isDot() || ! $file->isFile()) {
@@ -65,9 +70,43 @@ class AvocadoServiceProvider extends AbstractServiceProvider
                 }
                 $dest = $destDir . '/' . $file->getFilename();
                 if (! file_exists($dest) || $file->getMTime() > filemtime($dest)) {
-                    @copy($file->getPathname(), $dest);
+                    $this->safeCopy($file->getPathname(), $dest);
                 }
             }
+        }
+    }
+
+    /**
+     * Copy with logging. Failures don't crash the request (assets being missing
+     * degrades the UI but the forum still works), but they DO surface in the
+     * Flarum log so silent 0-byte files can be diagnosed.
+     */
+    private function safeCopy(string $src, string $dest): void
+    {
+        try {
+            if (! @copy($src, $dest)) {
+                $err = error_get_last()['message'] ?? 'copy() returned false';
+                $this->logger()?->warning('[avocado] asset copy failed', [
+                    'src'   => $src,
+                    'dest'  => $dest,
+                    'error' => $err,
+                ]);
+            }
+        } catch (Throwable $e) {
+            $this->logger()?->warning('[avocado] asset copy threw', [
+                'src'  => $src,
+                'dest' => $dest,
+                'ex'   => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function logger(): ?LoggerInterface
+    {
+        try {
+            return $this->container->make(LoggerInterface::class);
+        } catch (Throwable) {
+            return null;
         }
     }
 }
