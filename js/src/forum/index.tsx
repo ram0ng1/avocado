@@ -74,6 +74,7 @@ import {
   uploadDiscussionHeroImage,
   deleteDiscussionHeroImage,
   canEditDiscussionHero,
+  sanitizeAdminHtml,
 } from './utils';
 import TextEditor from 'flarum/common/components/TextEditor';
 import listItems from 'flarum/common/helpers/listItems';
@@ -2235,7 +2236,11 @@ app.initializers.add(
     let _avFooterContent: string | null = null;
     override(Footer.prototype, 'view', function () {
       if (_avFooterContent === null) {
-        const html = (app.forum.attribute('footerHtml') as string) || '';
+        // Sanitize the admin-pasted HTML before parsing so on*= handlers and
+        // dangerous schemes are stripped before any inner walk runs. <style>
+        // blocks survive sanitization (the field's contract) and are still
+        // hoisted into <head> below.
+        const html = sanitizeAdminHtml(app.forum.attribute('footerHtml') as string);
         if (!html.trim()) {
           _avFooterContent = '';
         } else {
