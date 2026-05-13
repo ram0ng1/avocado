@@ -1,0 +1,36 @@
+# §35.13 R1 — Dependabot para composer, npm e github-actions.
+version: 2
+updates:
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencias
+    commit-message:
+      prefix: "deps"
+
+  - package-ecosystem: npm
+    directory: /js
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencias
+    commit-message:
+      prefix: "deps"
+
+  # Mantém os SHAs dos uses: atualizados (Dependabot rebumpa preservando o pin).
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencias
+    commit-message:
+      prefix: "ci"

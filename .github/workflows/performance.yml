@@ -1,0 +1,244 @@
+name: Performance Benchmark
+
+# Mede o tempo dos 3 primeiros carregamentos (/, /tags, /all) em um Flarum
+# de teste com a extensao instalada. Em PR, compara contra a baseline do
+# ultimo push em master.
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+# §35.13 C1 — default-deny do GITHUB_TOKEN.
+permissions: {}
+
+concurrency:
+  group: perf-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLARUM_TEST_DIR: /tmp/flarum-test
+  EXT_DIR: ${{ github.workspace }}/extension
+
+jobs:
+  benchmark:
+    name: Lighthouse (3 paginas)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: flarum
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481  # v2.11.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout (extensao)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          path: extension
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f  # v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+          extensions: bcmath, ctype, curl, dom, fileinfo, gd, intl, mbstring, mysqlnd, openssl, pdo, pdo_mysql, tokenizer, xml, zip
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: extension/js/package-lock.json
+
+      - name: Build dos assets JS da extensao
+        working-directory: extension/js
+        run: |
+          npm ci
+          npm run build
+
+      - name: Esperar MariaDB
+        run: |
+          for i in $(seq 1 30); do
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -proot --silent 2>/dev/null; then
+              echo "MariaDB pronto"; break
+            fi
+            echo "Esperando MariaDB... ($i)"
+            sleep 2
+          done
+
+      - name: Criar projeto Flarum + apontar a extensao por path
+        run: |
+          composer create-project --no-interaction --prefer-dist \
+            "flarum/flarum:^2.0.0@beta" "${FLARUM_TEST_DIR}"
+          cd "${FLARUM_TEST_DIR}"
+          composer config repositories.local path "${EXT_DIR}"
+          composer require "ramon/avocado:*@dev" --no-interaction --prefer-stable
+
+      - name: Instalar Flarum (nao-interativo)
+        working-directory: ${{ env.FLARUM_TEST_DIR }}
+        run: |
+          cat > install.yml <<-EOF
+          baseUrl: http://127.0.0.1:8080
+          databaseConfiguration:
+            driver: mysql
+            host: 127.0.0.1
+            port: 3306
+            database: flarum
+            username: root
+            password: root
+            prefix: flarum_
+          adminUser:
+            username: admin
+            password: admin12345
+            email: admin@test.local
+          settings:
+            forum_title: Avocado Perf Test
+          EOF
+          php flarum install --file=install.yml
+
+      - name: Ativar a extensao Avocado + flarum/tags
+        working-directory: ${{ env.FLARUM_TEST_DIR }}
+        run: |
+          php flarum extension:enable flarum-tags || true
+          php flarum extension:enable ramon-avocado || true
+          php flarum cache:clear
+          php flarum assets:publish
+
+      - name: Semear dados (3 tags, 30 discussoes)
+        working-directory: ${{ env.FLARUM_TEST_DIR }}
+        run: |
+          cp "${EXT_DIR}/.github/scripts/flarum-seed.php" ./seed.php
+          php seed.php || echo "Seed falhou — continuando com base vazia"
+
+      - name: Subir servidor PHP embutido
+        working-directory: ${{ env.FLARUM_TEST_DIR }}
+        run: |
+          php -S 127.0.0.1:8080 -t public > /tmp/php.log 2>&1 &
+          echo $! > /tmp/php.pid
+          for i in $(seq 1 15); do
+            code=$(curl -sf -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/ || true)
+            if [ "$code" = "200" ] || [ "$code" = "302" ]; then
+              echo "PHP server pronto (HTTP $code)"; break
+            fi
+            sleep 1
+          done
+          curl -sI http://127.0.0.1:8080/ | head -1
+
+      - name: Rodar Lighthouse CI (3 URLs)
+        uses: treosh/lighthouse-ci-action@512cc908a55bfb0ad231facca52adf3d3a651df4  # v12
+        with:
+          urls: |
+            http://127.0.0.1:8080/
+            http://127.0.0.1:8080/tags
+            http://127.0.0.1:8080/all
+          configPath: ${{ env.EXT_DIR }}/.github/lighthouserc.json
+          uploadArtifacts: false
+          temporaryPublicStorage: false
+
+      - name: Mover resultados para fora do workspace do flarum
+        run: |
+          mkdir -p /tmp/lhci-out
+          if [ -d "${FLARUM_TEST_DIR}/.lighthouseci" ]; then
+            cp -r "${FLARUM_TEST_DIR}/.lighthouseci/." /tmp/lhci-out/
+          elif [ -d "${GITHUB_WORKSPACE}/.lighthouseci" ]; then
+            cp -r "${GITHUB_WORKSPACE}/.lighthouseci/." /tmp/lhci-out/
+          fi
+          ls -la /tmp/lhci-out
+
+      - name: Tornar log do PHP visivel em caso de falha
+        if: failure()
+        run: |
+          echo "---- /tmp/php.log ----"
+          tail -200 /tmp/php.log || true
+
+      - name: Subir artefato com resultados (PR)
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b  # v4.5.0
+        with:
+          name: lhci-pr-${{ github.event.pull_request.number }}
+          path: /tmp/lhci-out
+          retention-days: 14
+
+      - name: Subir artefato com resultados (master baseline)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b  # v4.5.0
+        with:
+          name: lhci-master
+          path: /tmp/lhci-out
+          retention-days: 90
+
+  compare:
+    name: Comparar PR vs master
+    needs: benchmark
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+    steps:
+      - name: Checkout (extensao — para o script de compare)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
+        with:
+          node-version: 20
+
+      - name: Baixar resultados desta PR
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16  # v4.1.8
+        with:
+          name: lhci-pr-${{ github.event.pull_request.number }}
+          path: pr-results
+
+      # Cross-workflow-run: baixa o ultimo artifact 'lhci-master' do
+      # ultimo run com sucesso do performance.yml no branch master.
+      - name: Baixar baseline do master
+        uses: dawidd6/action-download-artifact@bf251b5aa9c2f7eeb574a96ee720e24f801b7c11  # v6
+        with:
+          workflow: performance.yml
+          workflow_conclusion: success
+          branch: master
+          name: lhci-master
+          path: baseline
+          if_no_artifact_found: warn
+
+      - name: Gerar markdown comparativo
+        run: |
+          node .github/scripts/compare-lhci.mjs pr-results baseline > comparison.md
+          echo "----"
+          cat comparison.md
+
+      - name: Encontrar comentario existente
+        id: find_comment
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e  # v3.1.0
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: github-actions[bot]
+          body-includes: 'Performance benchmark'
+
+      - name: Comentar (criar ou atualizar)
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043  # v4.0.0
+        with:
+          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: comparison.md
+          edit-mode: replace
