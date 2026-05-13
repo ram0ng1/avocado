@@ -4,6 +4,9 @@ on:
   pull_request:
     types: [opened, reopened, synchronize]
 
+# §35.13 C1 — default-deny.
+permissions: {}
+
 jobs:
   label_pr:
     name: Aplicar Labels no PR
@@ -13,7 +16,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Aplicar label baseada na branch
-        uses: TimonVS/pr-labeler-action@v5
+        uses: TimonVS/pr-labeler-action@f9c084306ce8b3f488a8f3ee1ccedc6da131d1af  # v5.0.0
         with:
           configuration-path: .github/pr-labeler.yml
         env:

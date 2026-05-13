@@ -17,13 +17,25 @@ on:
         required: false
         default: ''
 
+# §35.13 C1 — default-deny do GITHUB_TOKEN. Esse workflow só chama API externa.
 permissions: {}
+
+concurrency:
+  group: publish-flarum-${{ github.event.release.tag_name || inputs.release_tag }}
+  cancel-in-progress: false
 
 jobs:
   publish_to_flarum:
     name: Publicar no Fórum
     runs-on: ubuntu-latest
     steps:
+      # §35.13 I3 — auditar egress. Esse job toca em FLARUM_API_KEY,
+      # então harden-runner é especialmente importante aqui.
+      - name: Harden Runner
+        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481  # v2.11.0
+        with:
+          egress-policy: audit
+
       - name: Validar FLARUM_DISCUSSION_ID
         env:
           FLARUM_DISCUSSION_ID: ${{ vars.FLARUM_DISCUSSION_ID }}
@@ -43,10 +55,8 @@ jobs:
           RELEASE_BODY: ${{ github.event.release.body || inputs.release_body }}
           RELEASE_URL: ${{ github.event.release.html_url || inputs.release_url }}
         run: |
-          # Extract version from tag (remove leading 'v' if present)
           VERSION="${RELEASE_TAG#v}"
 
-          # Build the JSON payload using jq to safely handle all special characters
           PAYLOAD=$(jq -n \
             --arg tag "$RELEASE_TAG" \
             --arg body "$RELEASE_BODY" \
