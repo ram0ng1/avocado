@@ -24,6 +24,22 @@
     pointer-events: none;
   }
 
+  // forumaker/profile-cover compat — quando o usuário tem uma capa (--user-cover
+  // setado pelo buildHero), camada da cor sólida fica abaixo (visível enquanto
+  // a imagem carrega) e a foto cobre por cima. O ::before vira um overlay
+  // escuro mais forte para garantir legibilidade do nome/badges sobre qualquer
+  // imagem clara.
+  &--hasCover {
+    background-image: var(--user-cover, none);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    &::before {
+      background: linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.6) 100%);
+    }
+  }
+
   &--skeleton {
     background: #c4c4cc;
     &::before { display: none; }
