@@ -35,7 +35,7 @@ jobs:
           fetch-depth: 0
 
       - name: Configurar Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
         with:
           node-version: 20
           cache: 'npm'
@@ -72,7 +72,7 @@ jobs:
       # §35.13 R4 — provenance assinada (SLSA) para os artefatos do release.
       - name: Atestar provenance dos artefatos
         if: steps.check_version.outputs.changed == 'true' && steps.create_release.outcome == 'success'
-        uses: actions/attest-build-provenance@520d128f165991a6c774bcb264f323e3d70747f4  # v2.2.0
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32  # v4.1.0
         with:
           subject-path: |
             composer.json
