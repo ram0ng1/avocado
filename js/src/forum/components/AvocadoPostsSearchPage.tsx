@@ -7,17 +7,7 @@ import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
 import extractText from 'flarum/common/utils/extractText';
 
-import {
-  trans,
-  displayName,
-  formatTimeLabel,
-  truncate,
-  highlight,
-  navigate,
-  userRoute,
-  renderPostSkeleton,
-  renderLoadMore,
-} from '../utils';
+import { trans, displayName, formatTimeLabel, truncate, highlight, navigate, userRoute, renderPostSkeleton, renderLoadMore } from '../utils';
 import { POST_SEARCH_SORT, getSortLabel } from '../utils/sortOptions';
 
 import SortDropdown, { SortOption } from './shared/SortDropdown';
@@ -37,10 +27,7 @@ export default class AvocadoPostsSearchPage extends Page {
     super.oninit(vnode);
 
     this.postsState = new PostListState({});
-    this.postsState.refreshParams(
-      (app.search as any).state.params(),
-      (m.route.param('page') && Number(m.route.param('page'))) || 1,
-    );
+    this.postsState.refreshParams((app.search as any).state.params(), (m.route.param('page') && Number(m.route.param('page'))) || 1);
 
     app.history.push('posts', extractText(app.translator.trans('core.forum.header.back_to_index_tooltip')));
     this.bodyClass = 'App--posts App--avocadoSearch';
@@ -69,7 +56,9 @@ export default class AvocadoPostsSearchPage extends Page {
 
     return (
       <div className="AvocadoSearch AvocadoSearch--posts">
-        <div className="AvocadoNav-helper"><IndexSidebar /></div>
+        <div className="AvocadoNav-helper">
+          <IndexSidebar />
+        </div>
 
         <div className="AvocadoSearch-header">
           <h1 className="AvocadoSearch-title">{this.renderTitle()}</h1>
@@ -100,8 +89,7 @@ export default class AvocadoPostsSearchPage extends Page {
           <div className="AvocadoSearch-postStack">
             {allPosts.map((post: any) => this.renderPostCard(post))}
             {isLoading && renderPostSkeleton()}
-            {!isLoading && state.hasNext() &&
-              renderLoadMore(trans('ramon-avocado.forum.discussions.load_more', 'Load more'), () => state.loadNext())}
+            {!isLoading && state.hasNext() && renderLoadMore(trans('ramon-avocado.forum.discussions.load_more', 'Load more'), () => state.loadNext())}
           </div>
         )}
       </div>
@@ -118,8 +106,7 @@ export default class AvocadoPostsSearchPage extends Page {
     if (q) {
       return (
         <>
-          {trans('ramon-avocado.forum.search.posts_for', 'Posts for')}{' '}
-          <span className="AvocadoSearch-query">"{q}"</span>
+          {trans('ramon-avocado.forum.search.posts_for', 'Posts for')} <span className="AvocadoSearch-query">"{q}"</span>
         </>
       );
     }
@@ -131,8 +118,7 @@ export default class AvocadoPostsSearchPage extends Page {
     if (parts.length > 0) {
       return (
         <>
-          {trans('ramon-avocado.forum.search.posts_filtered_by', 'Posts filtered by')}{' '}
-          <span className="AvocadoSearch-query">{parts.join(', ')}</span>
+          {trans('ramon-avocado.forum.search.posts_filtered_by', 'Posts filtered by')} <span className="AvocadoSearch-query">{parts.join(', ')}</span>
         </>
       );
     }
@@ -161,7 +147,10 @@ export default class AvocadoPostsSearchPage extends Page {
             <a
               href={userHref}
               className="AvocadoSearch-postAuthor"
-              onclick={(e: Event) => { e.stopPropagation(); navigate(e as MouseEvent, userHref); }}
+              onclick={(e: Event) => {
+                e.stopPropagation();
+                navigate(e as MouseEvent, userHref);
+              }}
             >
               {displayName(user)}
             </a>
@@ -170,11 +159,7 @@ export default class AvocadoPostsSearchPage extends Page {
         </div>
 
         {discussion && (
-          <a
-            href={href}
-            className="AvocadoSearch-postDiscussion"
-            onclick={(e: Event) => navigate(e as MouseEvent, href)}
-          >
+          <a href={href} className="AvocadoSearch-postDiscussion" onclick={(e: Event) => navigate(e as MouseEvent, href)}>
             <i className="far fa-comments" aria-hidden="true" />
             {discussionNode}
           </a>
@@ -193,11 +178,7 @@ export default class AvocadoPostsSearchPage extends Page {
               {controls}
             </Dropdown>
           )}
-          <a
-            href={href}
-            className="AvocadoSearch-postViewBtn"
-            onclick={(e: Event) => navigate(e as MouseEvent, href)}
-          >
+          <a href={href} className="AvocadoSearch-postViewBtn" onclick={(e: Event) => navigate(e as MouseEvent, href)}>
             {trans('ramon-avocado.forum.home.view_post', 'View post')}
             <i className="fas fa-arrow-right" aria-hidden="true" />
           </a>

@@ -48,46 +48,40 @@ export interface PostCardAttrs extends ComponentAttrs {
  */
 export default class PostCard extends Component<PostCardAttrs> {
   view() {
-    const {
-      post,
-      context,
-      searchQuery = '',
-      showBadges = true,
-    } = this.attrs;
+    const { post, context, searchQuery = '', showBadges = true } = this.attrs;
 
     if (!post) return null;
 
     const discussion = post.discussion?.();
     if (!discussion) return null;
 
-    const id         = post.id?.() as string;
-    const user       = post.user?.();
-    const title      = (discussion.title?.() || 'Untitled') as string;
-    const postNum    = post.number?.();
-    const href       = (() => {
-      try { return app.route.discussion(discussion, postNum); } catch { return discussionRoute(discussion); }
+    const id = post.id?.() as string;
+    const user = post.user?.();
+    const title = (discussion.title?.() || 'Untitled') as string;
+    const postNum = post.number?.();
+    const href = (() => {
+      try {
+        return app.route.discussion(discussion, postNum);
+      } catch {
+        return discussionRoute(discussion);
+      }
     })();
-    const tags       = ((discussion.tags?.() || []) as any[]).filter(Boolean);
-    const timeLabel  = formatTimeLabel(post.createdAt?.());
-    const userHref   = userRoute(user);
-    const plain      = (post.contentPlain?.() || '') as string;
-    const excerpt    = plain
-      ? (searchQuery ? highlight(plain, searchQuery, 200) : truncate(plain, 200))
-      : null;
-    const titleNode  = searchQuery ? highlight(title, searchQuery) : title;
-    const replies    = numberOr(discussion.replyCount?.(), 0);
-    const isSticky   = discussion.isSticky?.() || false;
-    const isLocked   = discussion.isLocked?.() || false;
-    const controls   = DiscussionControls.controls(discussion, context).toArray();
+    const tags = ((discussion.tags?.() || []) as any[]).filter(Boolean);
+    const timeLabel = formatTimeLabel(post.createdAt?.());
+    const userHref = userRoute(user);
+    const plain = (post.contentPlain?.() || '') as string;
+    const excerpt = plain ? (searchQuery ? highlight(plain, searchQuery, 200) : truncate(plain, 200)) : null;
+    const titleNode = searchQuery ? highlight(title, searchQuery) : title;
+    const replies = numberOr(discussion.replyCount?.(), 0);
+    const isSticky = discussion.isSticky?.() || false;
+    const isLocked = discussion.isLocked?.() || false;
+    const controls = DiscussionControls.controls(discussion, context).toArray();
 
     return (
       <article key={id} className="AvocadoHome-threadCard">
         <div className="AvocadoHome-threadHead">
-
           {/* Avatar */}
-          <div className="AvocadoHome-avatarWrap">
-            {user && <Avatar user={user} title={displayName(user)} />}
-          </div>
+          <div className="AvocadoHome-avatarWrap">{user && <Avatar user={user} title={displayName(user)} />}</div>
 
           {/* Main content */}
           <div className="AvocadoHome-threadMain">
@@ -95,7 +89,10 @@ export default class PostCard extends Component<PostCardAttrs> {
               <a
                 className="AvocadoHome-threadAuthor"
                 href={userHref}
-                onclick={(e: Event) => { e.stopPropagation(); navigate(e as MouseEvent, userHref); }}
+                onclick={(e: Event) => {
+                  e.stopPropagation();
+                  navigate(e as MouseEvent, userHref);
+                }}
               >
                 {displayName(user)}
               </a>
@@ -110,10 +107,7 @@ export default class PostCard extends Component<PostCardAttrs> {
                 </Tooltip>
               )}
               {showBadges && isLocked && (
-                <Tooltip
-                  text={app.translator.trans('flarum-lock.forum.badge.locked_tooltip') as string}
-                  position="top"
-                >
+                <Tooltip text={app.translator.trans('flarum-lock.forum.badge.locked_tooltip') as string} position="top">
                   <span className="AvocadoHome-badge AvocadoHome-badge--locked">
                     <i className="fas fa-lock" aria-hidden="true" />
                   </span>
@@ -126,7 +120,10 @@ export default class PostCard extends Component<PostCardAttrs> {
                   key={tag.id?.()}
                   className="AvocadoHome-tagPill"
                   href={tagRoute(tag)}
-                  onclick={(e: Event) => { e.stopPropagation(); navigate(e as MouseEvent, tagRoute(tag)); }}
+                  onclick={(e: Event) => {
+                    e.stopPropagation();
+                    navigate(e as MouseEvent, tagRoute(tag));
+                  }}
                   style={tagPillStyle(tag.color?.())}
                 >
                   {tag.icon?.() && <i className={tag.icon()} aria-hidden="true" />}
@@ -136,18 +133,12 @@ export default class PostCard extends Component<PostCardAttrs> {
             </div>
 
             {/* Discussion title */}
-            <a
-              className="AvocadoHome-threadTitle"
-              href={href}
-              onclick={(e: Event) => navigate(e as MouseEvent, href)}
-            >
+            <a className="AvocadoHome-threadTitle" href={href} onclick={(e: Event) => navigate(e as MouseEvent, href)}>
               {titleNode}
             </a>
 
             {/* Post excerpt */}
-            {excerpt && (
-              <p className="AvocadoHome-threadExcerpt AvocadoUserPage-postExcerpt">{excerpt}</p>
-            )}
+            {excerpt && <p className="AvocadoHome-threadExcerpt AvocadoUserPage-postExcerpt">{excerpt}</p>}
           </div>
 
           {/* Actions: controls dropdown + view button */}
@@ -157,9 +148,7 @@ export default class PostCard extends Component<PostCardAttrs> {
                 className="AvocadoHome-threadControls"
                 icon="fas fa-ellipsis-v"
                 buttonClassName="Button Button--icon Button--flat AvocadoHome-threadControls-toggle"
-                accessibleToggleLabel={
-                  app.translator.trans('core.forum.discussion_controls.toggle_dropdown_accessible_label') as string
-                }
+                accessibleToggleLabel={app.translator.trans('core.forum.discussion_controls.toggle_dropdown_accessible_label') as string}
               >
                 {controls}
               </Dropdown>
@@ -167,7 +156,10 @@ export default class PostCard extends Component<PostCardAttrs> {
             <a
               className="AvocadoHome-replyBtn"
               href={href}
-              onclick={(e: Event) => { e.stopPropagation(); navigate(e as MouseEvent, href); }}
+              onclick={(e: Event) => {
+                e.stopPropagation();
+                navigate(e as MouseEvent, href);
+              }}
             >
               <i className="fas fa-arrow-right" aria-hidden="true" />
               {trans('ramon-avocado.forum.home.view', 'View')}
@@ -179,7 +171,10 @@ export default class PostCard extends Component<PostCardAttrs> {
         <div className="AvocadoHome-threadStats">
           <span
             className="AvocadoHome-statBtn AvocadoHome-statBtn--replies"
-            onclick={(e: Event) => { e.stopPropagation(); m.route.set(href); }}
+            onclick={(e: Event) => {
+              e.stopPropagation();
+              m.route.set(href);
+            }}
           >
             <i className="far fa-comment" aria-hidden="true" />
             <span>

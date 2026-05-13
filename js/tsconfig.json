@@ -24,9 +24,11 @@
         "../../../vendor/flarum/core/js/dist-typings/*"
       ],
       "ext:flarum/realtime/*": [
+        "../vendor/flarum/realtime/js/dist-typings/*",
         "../../../vendor/flarum/realtime/js/dist-typings/*"
       ],
       "ext:flarum/tags/*": [
+        "../vendor/flarum/tags/js/dist-typings/*",
         "../../../vendor/flarum/tags/js/dist-typings/*"
       ]
 // <CUSTOM-2>

@@ -2,11 +2,7 @@ import app from 'flarum/forum/app';
 import UserPage from 'flarum/forum/components/UserPage';
 import UserControls from 'flarum/forum/utils/UserControls';
 
-import {
-  renderThreadSkeleton,
-  renderLoadMore,
-  renderEmpty,
-} from '../utils';
+import { renderThreadSkeleton, renderLoadMore, renderEmpty } from '../utils';
 import { toggleDiscussionLike } from '../utils/likes';
 
 import ThreadCard from './shared/ThreadCard';
@@ -17,9 +13,9 @@ const PAGE_SIZE = 20;
 
 const findBySlug = (slug: string): any => {
   const lowered = slug.toLowerCase();
-  return app.store.all('users').find(
-    (u: any) => (u.slug?.() || '').toLowerCase() === lowered || (u.username?.() || '').toLowerCase() === lowered
-  ) || null;
+  return (
+    app.store.all('users').find((u: any) => (u.slug?.() || '').toLowerCase() === lowered || (u.username?.() || '').toLowerCase() === lowered) || null
+  );
 };
 
 // ─── Base page ────────────────────────────────────────────────────────────────
@@ -63,7 +59,9 @@ class AvocadoUserBase extends UserPage {
 
   onUserLoaded(_user: any) {}
 
-  content(): any { return null; }
+  content(): any {
+    return null;
+  }
 
   view() {
     const user = (this as any).user;
@@ -77,10 +75,7 @@ class AvocadoUserBase extends UserPage {
         {buildSidebar(this)}
         <div className="AvocadoUserPage-body">
           <div className="AvocadoUserPage-bodyInner">
-            {this.userLoading
-              ? <div className="AvocadoHome-threadStack">{renderThreadSkeleton()}</div>
-              : this.content()
-            }
+            {this.userLoading ? <div className="AvocadoHome-threadStack">{renderThreadSkeleton()}</div> : this.content()}
           </div>
         </div>
       </div>
@@ -104,8 +99,13 @@ export class AvocadoUserPostsPage extends AvocadoUserBase {
     super.oninit(vnode);
   }
 
-  activeKey() { return 'posts'; }
-  onUserLoaded(user: any) { this._user = user; this.loadPosts(true); }
+  activeKey() {
+    return 'posts';
+  }
+  onUserLoaded(user: any) {
+    this._user = user;
+    this.loadPosts(true);
+  }
 
   loadPosts(reset: boolean) {
     const user = this._user;
@@ -129,7 +129,7 @@ export class AvocadoUserPostsPage extends AvocadoUserBase {
       .then((results: any) => {
         const items = Array.isArray(results) ? results : [];
         this.posts = reset ? [...items] : [...this.posts, ...items];
-        this.hasMore = !!(results.payload?.links?.next);
+        this.hasMore = !!results.payload?.links?.next;
         this.offset += items.length;
         this.loading = false;
         m.redraw();
@@ -170,8 +170,13 @@ export class AvocadoUserDiscussionsPage extends AvocadoUserBase {
     super.oninit(vnode);
   }
 
-  activeKey() { return 'discussions'; }
-  onUserLoaded(user: any) { this._user = user; this.loadDiscussions(true); }
+  activeKey() {
+    return 'discussions';
+  }
+  onUserLoaded(user: any) {
+    this._user = user;
+    this.loadDiscussions(true);
+  }
 
   loadDiscussions(reset: boolean) {
     const user = this._user;
@@ -195,7 +200,7 @@ export class AvocadoUserDiscussionsPage extends AvocadoUserBase {
       .then((results: any) => {
         const items = Array.isArray(results) ? results : [];
         this.discussions = reset ? [...items] : [...this.discussions, ...items];
-        this.hasMore = !!(results.payload?.links?.next);
+        this.hasMore = !!results.payload?.links?.next;
         this.offset += items.length;
         this.loading = false;
         m.redraw();
@@ -242,8 +247,13 @@ export class AvocadoUserLikesPage extends AvocadoUserBase {
     super.oninit(vnode);
   }
 
-  activeKey() { return 'likes'; }
-  onUserLoaded(user: any) { this._user = user; this.loadPosts(true); }
+  activeKey() {
+    return 'likes';
+  }
+  onUserLoaded(user: any) {
+    this._user = user;
+    this.loadPosts(true);
+  }
 
   loadPosts(reset: boolean) {
     const user = this._user;
@@ -267,7 +277,7 @@ export class AvocadoUserLikesPage extends AvocadoUserBase {
       .then((results: any) => {
         const items = Array.isArray(results) ? results : [];
         this.posts = reset ? [...items] : [...this.posts, ...items];
-        this.hasMore = !!(results.payload?.links?.next);
+        this.hasMore = !!results.payload?.links?.next;
         this.offset += items.length;
         this.loading = false;
         m.redraw();
@@ -306,8 +316,13 @@ export class AvocadoUserMentionsPage extends AvocadoUserBase {
     super.oninit(vnode);
   }
 
-  activeKey() { return 'mentions'; }
-  onUserLoaded(user: any) { this._user = user; this.loadPosts(true); }
+  activeKey() {
+    return 'mentions';
+  }
+  onUserLoaded(user: any) {
+    this._user = user;
+    this.loadPosts(true);
+  }
 
   loadPosts(reset: boolean) {
     const user = this._user;
@@ -331,7 +346,7 @@ export class AvocadoUserMentionsPage extends AvocadoUserBase {
       .then((results: any) => {
         const items = Array.isArray(results) ? results : [];
         this.posts = reset ? [...items] : [...this.posts, ...items];
-        this.hasMore = !!(results.payload?.links?.next);
+        this.hasMore = !!results.payload?.links?.next;
         this.offset += items.length;
         this.loading = false;
         m.redraw();

@@ -26,8 +26,7 @@ export default class AvocadoDiscussionsSearchPage extends Component<ComponentAtt
     if (q) {
       return (
         <>
-          {trans('ramon-avocado.forum.search.results_for', 'Results for')}{' '}
-          <span className="AvocadoSearch-query">"{q}"</span>
+          {trans('ramon-avocado.forum.search.results_for', 'Results for')} <span className="AvocadoSearch-query">"{q}"</span>
         </>
       );
     }
@@ -39,8 +38,7 @@ export default class AvocadoDiscussionsSearchPage extends Component<ComponentAtt
     if (parts.length > 0) {
       return (
         <>
-          {trans('ramon-avocado.forum.search.filtered_by', 'Filtered by')}{' '}
-          <span className="AvocadoSearch-query">{parts.join(', ')}</span>
+          {trans('ramon-avocado.forum.search.filtered_by', 'Filtered by')} <span className="AvocadoSearch-query">{parts.join(', ')}</span>
         </>
       );
     }
@@ -100,8 +98,7 @@ export default class AvocadoDiscussionsSearchPage extends Component<ComponentAtt
               />
             ))}
             {isLoading && renderThreadSkeleton()}
-            {!isLoading && state.hasNext() &&
-              renderLoadMore(trans('ramon-avocado.forum.discussions.load_more', 'Load more'), () => state.loadNext())}
+            {!isLoading && state.hasNext() && renderLoadMore(trans('ramon-avocado.forum.discussions.load_more', 'Load more'), () => state.loadNext())}
           </div>
         )}
       </div>

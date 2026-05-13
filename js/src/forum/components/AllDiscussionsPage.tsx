@@ -3,15 +3,7 @@ import Page from 'flarum/common/components/Page';
 import Avatar from 'flarum/common/components/Avatar';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 
-import {
-  trans,
-  navigate,
-  displayName,
-  safeRoute,
-  renderThreadSkeleton,
-  renderLoadMore,
-  renderEmpty,
-} from '../utils';
+import { trans, navigate, displayName, safeRoute, renderThreadSkeleton, renderLoadMore, renderEmpty } from '../utils';
 import { toggleDiscussionLike } from '../utils/likes';
 import { DISCUSSION_LIST_SORT } from '../utils/sortOptions';
 import { bindDiscussionFeedRealtime } from '../utils/discussionRealtime';
@@ -99,23 +91,19 @@ export default class AllDiscussionsPage extends Page {
 
     return (
       <div className="AvocadoDiscussions">
-        <div className="AvocadoNav-helper"><IndexSidebar /></div>
+        <div className="AvocadoNav-helper">
+          <IndexSidebar />
+        </div>
 
         <div className="AvocadoDiscussions-header">
-          <h1 className="AvocadoDiscussions-title">
-            {trans('ramon-avocado.forum.discussions.title', 'All discussions')}
-          </h1>
+          <h1 className="AvocadoDiscussions-title">{trans('ramon-avocado.forum.discussions.title', 'All discussions')}</h1>
           <div className="AvocadoDiscussions-controls">
             <SortDropdown
               options={DISCUSSION_LIST_SORT}
               currentKey={currentSort}
               onChange={(key: string) => this.feedState.refreshParams({ sort: key } as any, 1)}
             />
-            <a
-              className="AvocadoDiscussions-homeLink"
-              href={homeHref}
-              onclick={(e: Event) => navigate(e as MouseEvent, homeHref)}
-            >
+            <a className="AvocadoDiscussions-homeLink" href={homeHref} onclick={(e: Event) => navigate(e as MouseEvent, homeHref)}>
               <i className="fas fa-arrow-left" aria-hidden="true" />
               {trans('ramon-avocado.forum.discussions.home', 'Home')}
             </a>
@@ -128,17 +116,10 @@ export default class AllDiscussionsPage extends Page {
 
         {user && !this.composerOpen && this.renderComposerTrigger(user)}
         {this.composerOpen && (
-          <InlineComposer
-            user={user}
-            onClose={() => this.closeComposer()}
-            onSubmitted={(disc: any) => this.onDiscussionSubmitted(disc)}
-          />
+          <InlineComposer user={user} onClose={() => this.closeComposer()} onSubmitted={(disc: any) => this.onDiscussionSubmitted(disc)} />
         )}
 
-        <WsUpdateBanner
-          pendingCount={this.feedState.pendingCount()}
-          onFlush={() => this.feedState.flushPending()}
-        />
+        <WsUpdateBanner pendingCount={this.feedState.pendingCount()} onFlush={() => this.feedState.flushPending()} />
 
         <div className="AvocadoHome-threadStack">
           {discussions.length === 0 && isInitialLoading
@@ -159,7 +140,8 @@ export default class AllDiscussionsPage extends Page {
           {discussions.length > 0 && isLoadingNext && renderThreadSkeleton(3)}
         </div>
 
-        {this.feedState.hasNext() && !isLoadingNext &&
+        {this.feedState.hasNext() &&
+          !isLoadingNext &&
           renderLoadMore(trans('ramon-avocado.forum.discussions.load_more', 'Load more'), () => this.feedState.loadNext())}
       </div>
     );

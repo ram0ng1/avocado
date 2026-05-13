@@ -13,11 +13,7 @@ let lastAppliedColor: string | null | undefined = undefined;
 // (prevents accent-color, header-bg, etc. from visibly animating on navigation).
 function suppressTransitions(): void {
   document.documentElement.classList.add('colored--instant');
-  requestAnimationFrame(() =>
-    requestAnimationFrame(() =>
-      document.documentElement.classList.remove('colored--instant')
-    )
-  );
+  requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.remove('colored--instant')));
 }
 
 function updateThemeColor(color: string | null): void {

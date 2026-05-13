@@ -3,26 +3,23 @@ import humanTime from 'flarum/common/helpers/humanTime';
 import sortTags from 'ext:flarum/tags/common/utils/sortTags';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import Tooltip from 'flarum/common/components/Tooltip';
-import {
-  trans,
-  iconColors,
-  tagRoute,
-  navigate,
-  getFeaturedTagIds,
-  resolveAssetUrl,
-} from '../utils';
+import { trans, iconColors, tagRoute, navigate, getFeaturedTagIds, resolveAssetUrl } from '../utils';
 
 function renderTagCard(tag: any, featured = false) {
-  const color    = tag.color?.();
+  const color = tag.color?.();
   const { bg: iconBg, color: iconColor } = iconColors(color, 0.12);
-  const href     = tagRoute(tag);
+  const href = tagRoute(tag);
   const lastDisc = tag.lastPostedDiscussion?.();
   const children = sortTags(((tag.children?.() || []) as any[]).filter(Boolean)) as any[];
-  const count    = tag.discussionCount?.() || 0;
+  const count = tag.discussionCount?.() || 0;
 
   const lastDiscHref = (() => {
     if (!lastDisc) return href;
-    try { return app.route.discussion(lastDisc, lastDisc.lastPostNumber?.()); } catch { return href; }
+    try {
+      return app.route.discussion(lastDisc, lastDisc.lastPostNumber?.());
+    } catch {
+      return href;
+    }
   })();
 
   return (
@@ -42,7 +39,8 @@ function renderTagCard(tag: any, featured = false) {
           <div className="AvocadoTagsPage-tagCard-info">
             <h2 className="AvocadoTagsPage-tagCard-name">{tag.name?.()}</h2>
             <span className="AvocadoTagsPage-tagCard-count">
-              {count} {count === 1
+              {count}{' '}
+              {count === 1
                 ? trans('ramon-avocado.forum.tags.discussion_singular', 'discussion')
                 : trans('ramon-avocado.forum.tags.discussion_plural', 'discussions')}
             </span>
@@ -55,14 +53,17 @@ function renderTagCard(tag: any, featured = false) {
         <div className="AvocadoTagsPage-tagCard-children">
           {children.map((child: any) => {
             const childColor = child.color?.() || color;
-            const childHref  = tagRoute(child);
-            const ic         = iconColors(childColor, 0.1);
+            const childHref = tagRoute(child);
+            const ic = iconColors(childColor, 0.1);
             return (
               <a
                 key={child.id()}
                 className="AvocadoTagsPage-childPill"
                 href={childHref}
-                onclick={(e: Event) => { e.stopPropagation(); navigate(e as MouseEvent, childHref); }}
+                onclick={(e: Event) => {
+                  e.stopPropagation();
+                  navigate(e as MouseEvent, childHref);
+                }}
                 style={{ '--cp-bg': ic.bg, '--cp-color': ic.color }}
               >
                 {child.icon?.() && <i className={child.icon()} aria-hidden="true" />}
@@ -77,7 +78,10 @@ function renderTagCard(tag: any, featured = false) {
         <a
           className="AvocadoTagsPage-tagCard-last"
           href={lastDiscHref}
-          onclick={(e: Event) => { e.stopPropagation(); navigate(e as MouseEvent, lastDiscHref); }}
+          onclick={(e: Event) => {
+            e.stopPropagation();
+            navigate(e as MouseEvent, lastDiscHref);
+          }}
         >
           <i className="far fa-clock" aria-hidden="true" />
           <span className="AvocadoTagsPage-tagCard-last-title">{lastDisc.title?.()}</span>
@@ -107,7 +111,7 @@ function renderSkeleton() {
 
 /** Override target for TagsPage.prototype.view — `this` = native Flarum TagsPage instance */
 export function tagPageView(this: any, _original: () => any) {
-  const tags    = (this.tags || []) as any[];
+  const tags = (this.tags || []) as any[];
   const loading = !!this.loading;
 
   const featuredIds = getFeaturedTagIds();
@@ -123,12 +127,26 @@ export function tagPageView(this: any, _original: () => any) {
 
   const cloudTags = tags.filter((t: any) => t.position?.() === null);
 
-  const homeHref = (() => { try { return app.route('index'); } catch { return '/'; } })();
-  const discHref = (() => { try { return app.route('avocado-discussions'); } catch { return '/discussions'; } })();
+  const homeHref = (() => {
+    try {
+      return app.route('index');
+    } catch {
+      return '/';
+    }
+  })();
+  const discHref = (() => {
+    try {
+      return app.route('avocado-discussions');
+    } catch {
+      return '/discussions';
+    }
+  })();
 
   return (
     <div className="AvocadoTagsPage">
-      <div className="AvocadoNav-helper"><IndexSidebar /></div>
+      <div className="AvocadoNav-helper">
+        <IndexSidebar />
+      </div>
 
       <div className="AvocadoTagsPage-header">
         <h1 className="AvocadoTagsPage-title">{trans('ramon-avocado.forum.tags.title', 'Categories')}</h1>
@@ -145,9 +163,7 @@ export function tagPageView(this: any, _original: () => any) {
       </div>
 
       <ul className="AvocadoTagsPage-grid">
-        {loading
-          ? renderSkeleton()
-          : primaryTags.map((tag: any) => renderTagCard(tag, featuredIds.has(String(tag.id()))))}
+        {loading ? renderSkeleton() : primaryTags.map((tag: any) => renderTagCard(tag, featuredIds.has(String(tag.id()))))}
       </ul>
 
       {!loading && cloudTags.length > 0 && (
@@ -156,9 +172,9 @@ export function tagPageView(this: any, _original: () => any) {
           <div className="AvocadoTagsPage-cloud-pills">
             {cloudTags.map((tag: any) => {
               const color = tag.color?.();
-              const href  = tagRoute(tag);
+              const href = tagRoute(tag);
               const count = tag.discussionCount?.() || 0;
-              const ic    = iconColors(color, 0.1);
+              const ic = iconColors(color, 0.1);
               return (
                 <a
                   key={tag.id()}

@@ -1,6 +1,6 @@
 {
     "name": "ramon/avocado",
-    "version": "2.0.15",
+    "version": "2.0.16",
     "description": "A modern, feature-rich Flarum theme with advanced search, real-time messaging, and comprehensive multi-language support. Built on the Avocado foundation with significant enhancements.",
     "keywords": [
         "flarum",
@@ -35,6 +35,9 @@
     ],
     "require": {
         "flarum/core": "^2.0.0"
+    },
+    "require-dev": {
+        "flarum/tags": "^2.0.0"
     },
     "autoload": {
         "psr-4": {
@@ -71,5 +74,7 @@
                 "editorConfig": true
             }
         }
-    }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }

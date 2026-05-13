@@ -24,14 +24,14 @@ export default class AvocadoDiscussionStats extends Component<AvocadoDiscussionS
     if (!discussion) return <div className="AvocadoSidebar-stats" />;
 
     const replyCount = Number(discussion.replyCount?.()) || 0;
-    const viewCount  = Number(discussion.attribute?.('viewCount') ?? discussion.viewCount?.() ?? 0);
-    const firstPost  = discussion.firstPost?.();
-    const likeCount  = Number(firstPost?.attribute?.('likesCount') ?? firstPost?.likesCount?.() ?? 0);
+    const viewCount = Number(discussion.attribute?.('viewCount') ?? discussion.viewCount?.() ?? 0);
+    const firstPost = discussion.firstPost?.();
+    const likeCount = Number(firstPost?.attribute?.('likesCount') ?? firstPost?.likesCount?.() ?? 0);
 
     const rows: StatRow[] = [
-      viewCount > 0 && { key: 'views',   icon: 'far fa-eye',       label: 'Views',   value: viewCount.toLocaleString() },
-      true           && { key: 'replies', icon: 'far fa-comment',   label: 'Replies', value: String(replyCount)         },
-      likeCount > 0  && { key: 'likes',   icon: 'far fa-thumbs-up', label: 'Likes',   value: String(likeCount)          },
+      viewCount > 0 && { key: 'views', icon: 'far fa-eye', label: 'Views', value: viewCount.toLocaleString() },
+      true && { key: 'replies', icon: 'far fa-comment', label: 'Replies', value: String(replyCount) },
+      likeCount > 0 && { key: 'likes', icon: 'far fa-thumbs-up', label: 'Likes', value: String(likeCount) },
     ].filter(Boolean) as StatRow[];
 
     return (
