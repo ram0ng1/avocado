@@ -1,0 +1,63 @@
+name: Security Scan
+
+# Cobertura de SAST para PHP (CodeQL nao suporta) via Semgrep.
+# Audits de dependencias adicionais ficam no ci.yml (composer audit, npm audit, dependency-review).
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  schedule:
+    - cron: '0 7 * * 1'  # toda segunda, 07:00 UTC
+  workflow_dispatch:
+
+# §35.13 C1 — default-deny.
+permissions: {}
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  semgrep:
+    name: Semgrep (PHP + OWASP + secrets)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write   # upload SARIF
+      actions: read
+    container:
+      image: semgrep/semgrep:1.96.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Semgrep scan
+        # Conjuntos de regras curadas pelo time Semgrep:
+        # p/php, p/security-audit, p/owasp-top-ten, p/secrets, p/javascript.
+        env:
+          SEMGREP_RULES: >-
+            p/php
+            p/security-audit
+            p/owasp-top-ten
+            p/secrets
+            p/javascript
+        run: |
+          set +e
+          semgrep scan \
+            --sarif --sarif-output=semgrep.sarif \
+            --metrics=off
+          EXIT=$?
+          echo "Semgrep exit code: $EXIT"
+          # Em PR/push/schedule nao falhamos o job — relatorio sobe ao Security tab.
+          # Trocar para "exit $EXIT" quando o baseline estiver limpo.
+          exit 0
+
+      - name: Upload SARIF para o GitHub Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@a65a038433a26f4363cf9f029e3b9ceac831ad5d  # v3.28.10
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
