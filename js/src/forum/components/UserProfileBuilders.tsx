@@ -16,6 +16,7 @@ import AvatarEditor from 'flarum/forum/components/AvatarEditor';
 import Dropdown from 'flarum/common/components/Dropdown';
 import listItems from 'flarum/common/helpers/listItems';
 import SelectDropdown from 'flarum/common/components/SelectDropdown';
+import { safeCssUrl } from '../utils';
 
 // ─── Scrollable nav ───────────────────────────────────────────────────────────
 
@@ -151,8 +152,20 @@ export function buildHero(user: any, isEditable: boolean, controls: any[] = []) 
   const joinTime = user.joinTime?.();
   const joinLabel = joinTime ? new Date(joinTime as string).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
 
+  // forumaker/profile-cover compat — a extensão estende UserCard.prototype.view,
+  // mas o Avocado renderiza um hero próprio (não usa UserCard aqui). Lemos
+  // user.cover() diretamente; se a extensão não estiver instalada o método
+  // não existe e o optional-call retorna undefined. safeCssUrl rejeita
+  // protocolos perigosos (data:, javascript:).
+  const coverUrl = user.cover?.();
+  const coverCss = coverUrl ? safeCssUrl(coverUrl) : null;
+  const hasCover = coverCss !== null && coverCss !== 'none';
+
+  const heroStyle: Record<string, string> = { '--user-color': color };
+  if (hasCover) heroStyle['--user-cover'] = coverCss as string;
+
   return (
-    <div className="AvocadoUserPage-hero" style={{ '--user-color': color }}>
+    <div className={'AvocadoUserPage-hero' + (hasCover ? ' AvocadoUserPage-hero--hasCover' : '')} style={heroStyle}>
       <div className="AvocadoUserPage-hero-inner">
         <div className="AvocadoUserPage-hero-row">
           <div className="AvocadoUserPage-hero-avatarWrap">
