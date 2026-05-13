@@ -42,11 +42,20 @@ import { buildUserPhoneNav, buildHero, buildSidebar } from './components/UserPro
 // webpackChunkName comments so each import() becomes its own JS chunk
 // registered with flarum.reg.addChunkModule().
 
-const AllDiscussionsPage = () => import('./components/AllDiscussionsPage');
+// `webpackPrefetch: true` faz o webpack emitir `<link rel="prefetch">` para
+// AllDiscussionsPage e TagPage (rotas mais prováveis após a home/tags). O
+// browser baixa esses chunks em idle, sem bloquear o first paint. Search*
+// e TeamPage ficam sem prefetch — só baixam quando o usuário navega.
+//
+// Como adicionamos o magic comment manualmente, o autoChunkNameLoader do
+// flarum-webpack-config não injeta mais o `webpackChunkName` automático,
+// então declaramos explicitamente para manter o padrão `forum/components/*`.
+const AllDiscussionsPage = () =>
+  import(/* webpackChunkName: "forum/components/AllDiscussionsPage", webpackPrefetch: true */ './components/AllDiscussionsPage');
+const AvocadoTagPage = () => import(/* webpackChunkName: "forum/components/TagPage", webpackPrefetch: true */ './components/TagPage');
 const AvocadoTeamPage = () => import('./components/TeamPage');
 const AvocadoPostsSearchPage = () => import('./components/AvocadoPostsSearchPage');
 const AvocadoSearchPage = () => import('./components/AvocadoSearchPage');
-const AvocadoTagPage = () => import('./components/TagPage');
 
 // UserProfilePage uses named exports — wrap each into { default: Comp } shape.
 // All four share the same webpack chunk so the module is only fetched once.
@@ -418,14 +427,11 @@ app.initializers.add(
     // initialize() runs before store.pushPayload() and before app.forum is set.
     // app.beforeMount() callbacks run after app.forum is set, before Mithril mounts.
     app.beforeMount(() => {
-      // ── 0b. Preload lazy chunks ────────────────────────────────────────────
-      // Must run inside beforeMount — ExportRegistry.chunkUrl() needs app.forum
-      // to build the chunk URL and app.forum is only set after store.pushPayload().
-      // Fires before Mithril mounts so chunks are cached before first navigation.
-      import('./components/AvocadoSearchPage').catch(() => {});
-      import('./components/AvocadoPostsSearchPage').catch(() => {});
-      import('./components/TagPage').catch(() => {});
-      import('./components/AllDiscussionsPage').catch(() => {});
+      // Preload eager removido — Lighthouse acusava ~537 KB de "JS não usado"
+      // porque os 4 chunks baixavam mesmo em rotas que nunca os consomem
+      // (home, /discussions, /tags). Em vez disso, AllDiscussionsPage e
+      // TagPage têm `webpackPrefetch: true` na declaração (browser baixa em
+      // idle); Search* e TeamPage carregam só na navegação.
 
       // Theme class on <html> — added whenever V2 is active
       document.documentElement.classList.add('avocado-theme');
