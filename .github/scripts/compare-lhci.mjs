@@ -130,7 +130,7 @@ function loadResults(dir) {
         try { lhr = JSON.parse(readFileSync(full, 'utf8')); } catch { continue; }
         const rawUrl = lhr.finalUrl || lhr.requestedUrl;
         if (!rawUrl) continue;
-        let pathKey = '/';
+        let pathKey;
         try { pathKey = new URL(rawUrl).pathname || '/'; } catch { pathKey = rawUrl; }
         if (pathKey.length > 1) pathKey = pathKey.replace(/\/$/, '');
         byUrl.set(pathKey, lhr);
