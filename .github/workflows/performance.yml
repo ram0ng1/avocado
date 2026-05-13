@@ -171,7 +171,7 @@ jobs:
 
       - name: Subir artefato com resultados (PR)
         if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b  # v4.5.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: lhci-pr-${{ github.event.pull_request.number }}
           path: /tmp/lhci-out
@@ -179,7 +179,7 @@ jobs:
 
       - name: Subir artefato com resultados (master baseline)
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b  # v4.5.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: lhci-master
           path: /tmp/lhci-out
