@@ -1,0 +1,29 @@
+{
+  "ci": {
+    "collect": {
+      "numberOfRuns": 1,
+      "settings": {
+        "preset": "desktop",
+        "throttling": {
+          "rttMs": 40,
+          "throughputKbps": 10240,
+          "cpuSlowdownMultiplier": 1
+        },
+        "screenEmulation": { "disabled": false },
+        "skipAudits": ["uses-http2"]
+      }
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance":   ["warn", { "minScore": 0.70 }],
+        "categories:accessibility": ["warn", { "minScore": 0.85 }],
+        "categories:best-practices":["warn", { "minScore": 0.80 }],
+        "categories:seo":           ["warn", { "minScore": 0.80 }]
+      }
+    },
+    "upload": {
+      "target": "filesystem",
+      "outputDir": ".lighthouseci"
+    }
+  }
+}

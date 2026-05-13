@@ -5,18 +5,37 @@ on:
     branches:
       - master
 
+# §35.13 C1 — default-deny. Job declara o que precisa.
+permissions: {}
+
+# §35.13 I4 — fila releases; nunca cancele um em andamento.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build_and_release:
     name: Build e Publicação Automática
     runs-on: ubuntu-latest
+    permissions:
+      contents: write          # cria tag/release
+      pull-requests: read      # release-drafter lê PRs mesclados
+      id-token: write          # §35.13 R4 — attest-build-provenance
+      attestations: write      # §35.13 R4
     steps:
+      # §35.13 I3 — auditar todo egress (em modo audit; promover a block depois).
+      - name: Harden Runner
+        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481  # v2.11.0
+        with:
+          egress-policy: audit
+
       - name: Checkout do código
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
           fetch-depth: 0
 
       - name: Configurar Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
         with:
           node-version: 20
           cache: 'npm'
@@ -34,7 +53,7 @@ jobs:
 
       - name: Verificar versão no composer.json
         id: check_version
-        uses: EndBug/version-check@v2
+        uses: EndBug/version-check@d17247dd94ca7b39d0b0691399be8d7c510622c9  # v2
         with:
           file-name: composer.json
           diff-search: true
@@ -42,13 +61,22 @@ jobs:
       - name: Publicar Release em Português
         id: create_release
         if: steps.check_version.outputs.changed == 'true'
-        uses: release-drafter/release-drafter@v6
+        uses: release-drafter/release-drafter@6a93d829887aa2e0748befe2e808c66c0ec6e4c7  # v6
         with:
           publish: true
           tag: v${{ steps.check_version.outputs.version }}
           name: v${{ steps.check_version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # §35.13 R4 — provenance assinada (SLSA) para os artefatos do release.
+      - name: Atestar provenance dos artefatos
+        if: steps.check_version.outputs.changed == 'true' && steps.create_release.outcome == 'success'
+        uses: actions/attest-build-provenance@520d128f165991a6c774bcb264f323e3d70747f4  # v2.2.0
+        with:
+          subject-path: |
+            composer.json
+            js/dist/*.js
 
       - name: Publicar Release no Flarum
         if: steps.check_version.outputs.changed == 'true' && steps.create_release.outcome == 'success' && steps.create_release.outputs.html_url && vars.FLARUM_DISCUSSION_ID != ''
@@ -59,7 +87,6 @@ jobs:
           RELEASE_BODY: ${{ steps.create_release.outputs.body }}
           RELEASE_URL: ${{ steps.create_release.outputs.html_url }}
         run: |
-          # Extract version from tag (remove leading 'v' if present)
           VERSION="${RELEASE_TAG#v}"
 
           PAYLOAD=$(jq -n \
