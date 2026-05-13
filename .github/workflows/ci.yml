@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+
+# Avoid stacking redundant runs for the same PR or branch.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  php:
+    name: PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.3', '8.4']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          tools: composer:v2
+
+      - name: Validar composer.json
+        # `--no-check-version` silencia o aviso "version field is present" —
+        # mantemos o campo de propósito (lido pelo EndBug/version-check no
+        # workflow de release). Todos os outros warnings continuam fatais.
+        run: composer validate --strict --no-check-publish --no-check-version
+
+      - name: Lint PHP (php -l)
+        run: |
+          set -euo pipefail
+          mapfile -d '' files < <(find src migrations extend.php -name '*.php' -print0 2>/dev/null)
+          [ "${#files[@]}" -gt 0 ] || { echo "Nenhum arquivo PHP encontrado"; exit 1; }
+          printf '%s\0' "${files[@]}" | xargs -0 -n1 -P4 php -l
+
+  js:
+    name: JS (typecheck, format, build)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Setup PHP + composer for the Flarum core typings. The js/tsconfig
+      # resolves `flarum/*` imports through `../vendor/flarum/core/js/dist-typings/*`,
+      # so without composer install the type-check fails with TS2307.
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+
+      - name: Cache do composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.json') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - name: Instalar dependências PHP (para os typings do core)
+        # `composer update` (em vez de install) porque a extensão é uma
+        # lib e mantém composer.lock no .gitignore.
+        run: composer update --no-interaction --no-progress --prefer-dist --no-scripts
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: js/package-lock.json
+
+      - name: Instalar dependências JS
+        working-directory: js
+        run: npm ci
+
+      - name: Verificar formatação (Prettier)
+        working-directory: js
+        run: npm run format-check
+
+      - name: Type-check (TypeScript)
+        working-directory: js
+        run: npm run check-typings
+
+      - name: Build (webpack production)
+        working-directory: js
+        run: npm run build
