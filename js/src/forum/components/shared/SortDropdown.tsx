@@ -23,13 +23,16 @@ export default class SortDropdown extends Component<SortDropdownAttrs> {
   view() {
     const { options, currentKey, onChange } = this.attrs;
     const current = options.find((o) => o.key === currentKey) || options[0];
-    const label   = typeof current?.label === 'function' ? current.label() : (current?.label ?? currentKey);
+    const label = typeof current?.label === 'function' ? current.label() : (current?.label ?? currentKey);
 
     return (
       <div className="AvocadoDiscussions-sortWrap">
         <button
           className={`AvocadoDiscussions-sortTrigger${this.open ? ' is-open' : ''}`}
-          onclick={() => { this.open = !this.open; m.redraw(); }}
+          onclick={() => {
+            this.open = !this.open;
+            m.redraw();
+          }}
         >
           {label}
           <i className={`fas fa-chevron-${this.open ? 'up' : 'down'}`} aria-hidden="true" />

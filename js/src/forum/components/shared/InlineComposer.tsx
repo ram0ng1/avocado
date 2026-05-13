@@ -31,9 +31,10 @@ export interface IInlineComposerAttrs extends ComponentAttrs {
  *
  * Re-uses the existing `.AvocadoHome-composer*` CSS so visuals don't shift.
  */
-export default class InlineComposer<
-  CustomAttrs extends IInlineComposerAttrs = IInlineComposerAttrs
-> extends Component<CustomAttrs, InlineComposerState> {
+export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = IInlineComposerAttrs> extends Component<
+  CustomAttrs,
+  InlineComposerState
+> {
   state!: InlineComposerState;
   private outsideClickHandler: ((e: Event) => void) | null = null;
   private lastPreviewedContent: string | undefined;
@@ -78,9 +79,7 @@ export default class InlineComposer<
     return (
       <div className="AvocadoHome-composer">
         <div className="AvocadoHome-composer-header">
-          <div className="AvocadoHome-composer-avatar">
-            {user && <Avatar user={user} title={displayName(user)} />}
-          </div>
+          <div className="AvocadoHome-composer-avatar">{user && <Avatar user={user} title={displayName(user)} />}</div>
           <input
             className="AvocadoHome-composerTitle"
             type="text"
@@ -116,11 +115,7 @@ export default class InlineComposer<
           <div className="AvocadoHome-composerPreviewArea">
             <article className="CommentPost Post">
               <div className="Post-container">
-                <div
-                  className="Post-body"
-                  oncreate={(v: any) => this.renderPreview(v.dom)}
-                  onupdate={(v: any) => this.renderPreview(v.dom)}
-                />
+                <div className="Post-body" oncreate={(v: any) => this.renderPreview(v.dom)} onupdate={(v: any) => this.renderPreview(v.dom)} />
               </div>
             </article>
           </div>
@@ -162,7 +157,10 @@ export default class InlineComposer<
               type="button"
               className="AvocadoHome-composerHeroChip-remove"
               aria-label={trans('ramon-avocado.forum.home.composer_hero_image_remove', 'Remove image')}
-              onclick={() => { state.setHeroImageFile(null); m.redraw(); }}
+              onclick={() => {
+                state.setHeroImageFile(null);
+                m.redraw();
+              }}
             >
               <i className="fas fa-times" aria-hidden="true" />
             </button>
@@ -176,9 +174,7 @@ export default class InlineComposer<
         <label className="AvocadoHome-composerHeroChip">
           <input type="file" accept="image/*" onchange={onPick} />
           <i className="fas fa-image" aria-hidden="true" />
-          <span>
-            {trans('ramon-avocado.forum.home.composer_hero_image_label', 'Hero image (optional)')}
-          </span>
+          <span>{trans('ramon-avocado.forum.home.composer_hero_image_label', 'Hero image (optional)')}</span>
         </label>
       </div>
     );
@@ -188,9 +184,7 @@ export default class InlineComposer<
 
   private renderPreviewButton() {
     const isPreview = this.state.preview;
-    const label = isPreview
-      ? trans('ramon-avocado.forum.home.composer_edit', 'Edit')
-      : trans('ramon-avocado.forum.home.composer_preview', 'Preview');
+    const label = isPreview ? trans('ramon-avocado.forum.home.composer_edit', 'Edit') : trans('ramon-avocado.forum.home.composer_preview', 'Preview');
     const iconCls = isPreview ? 'icon fas fa-pen' : 'icon far fa-eye';
 
     return (
@@ -212,11 +206,7 @@ export default class InlineComposer<
 
   private renderCloseButton() {
     return (
-      <button
-        type="button"
-        className="Button AvocadoHome-composer-cancel"
-        onclick={() => this.attrs.onClose()}
-      >
+      <button type="button" className="Button AvocadoHome-composer-cancel" onclick={() => this.attrs.onClose()}>
         {trans('ramon-avocado.forum.home.composer_close', 'Close')}
       </button>
     );
@@ -231,12 +221,7 @@ export default class InlineComposer<
     const cls = `Button Button--primary AvocadoHome-composer-submit${isSubmitting ? ' is-loading' : ''}${!isValid ? ' is-disabled' : ''}`;
 
     return (
-      <button
-        type="button"
-        className={cls}
-        disabled={isSubmitting || !isValid}
-        onclick={() => this.submit()}
-      >
+      <button type="button" className={cls} disabled={isSubmitting || !isValid} onclick={() => this.submit()}>
         {label}
       </button>
     );

@@ -17,13 +17,15 @@ export const renderThreadSkeleton = (count = 3): any[] =>
           m('div', { className: 'AvocadoHome-skeletonLine AvocadoHome-skeletonLine--excerpt' }),
           m('div', { className: 'AvocadoHome-skeletonLine AvocadoHome-skeletonLine--excerpt2' }),
         ]),
-        m('div', { className: 'AvocadoHome-skeletonActions' },
+        m(
+          'div',
+          { className: 'AvocadoHome-skeletonActions' },
           // Hidden content drives natural width — the shimmer bg on the wrapper shows,
           // children are invisible via CSS (> * { visibility: hidden }).
           m('div', { className: 'AvocadoHome-skeletonActions-reply', 'aria-hidden': 'true' }, [
             m('i', { className: 'fas fa-reply', 'aria-hidden': 'true' }),
             m('span', {}, app.translator.trans('ramon-avocado.forum.home.reply_label')),
-          ]),
+          ])
         ),
       ]),
       m('div', { className: 'AvocadoHome-skeletonStats' }, [
@@ -64,30 +66,32 @@ export const renderPostSkeleton = (count = 3): any[] =>
 // ── Showcase card skeleton ────────────────────────────────────────────────────
 // Used by renderShowcaseSlider() in HomePage.
 export const renderShowcaseSkeleton = (count: number): any[] =>
-  Array.from({ length: count }, (_, i) =>
-    m('div', { key: i, className: 'AvocadoHome-showcaseSkeleton' })
-  );
+  Array.from({ length: count }, (_, i) => m('div', { key: i, className: 'AvocadoHome-showcaseSkeleton' }));
 
 // ── Discussion page nav skeleton ──────────────────────────────────────────────
 // Mirrors Page-sidebar > DiscussionPage-nav.
 // isLoggedIn=false → guest view: no Reply or Subscription dropdowns.
 export const renderDiscussionNavSkeleton = (isLoggedIn = true): any =>
-  m('div', { className: 'Page-sidebar' },
-    m('nav', { className: 'DiscussionPage-nav' },
+  m(
+    'div',
+    { className: 'Page-sidebar' },
+    m(
+      'nav',
+      { className: 'DiscussionPage-nav' },
       m('ul', {}, [
-      // Reply / controls + Subscription — logged-in users only
-      ...(isLoggedIn ? [
-        m('li', { className: 'item-controls' },
-          m('div', { className: 'AvocadoSkeleton-navSplitMain AvocadoSkeleton-navSplitMain--primary' })
-        ),
-        m('li', { className: 'item-subscription' },
-          m('div', { className: 'AvocadoSkeleton-navSplitMain AvocadoSkeleton-navSplitMain--secondary' })
-        ),
-      ] : []),
-      // Scrubber — always shown
-      m('li', { className: 'item-scrubber' },
-        m('div', { className: 'AvocadoSkeleton-navScrubber' })
-      ),
-    ])  // ul
-  )   // nav
-  );  // Page-sidebar
+        // Reply / controls + Subscription — logged-in users only
+        ...(isLoggedIn
+          ? [
+              m('li', { className: 'item-controls' }, m('div', { className: 'AvocadoSkeleton-navSplitMain AvocadoSkeleton-navSplitMain--primary' })),
+              m(
+                'li',
+                { className: 'item-subscription' },
+                m('div', { className: 'AvocadoSkeleton-navSplitMain AvocadoSkeleton-navSplitMain--secondary' })
+              ),
+            ]
+          : []),
+        // Scrubber — always shown
+        m('li', { className: 'item-scrubber' }, m('div', { className: 'AvocadoSkeleton-navScrubber' })),
+      ]) // ul
+    ) // nav
+  ); // Page-sidebar

@@ -32,18 +32,9 @@ export interface DiscussionFeedHandlers {
  * Returns the unbind function from `bindRealtime` — call it from `onremove`.
  */
 export function bindDiscussionFeedRealtime(handlers: DiscussionFeedHandlers): () => void {
-  const {
-    filter = () => true,
-    selfActionIds,
-    updatedLikeIds,
-    pendingDiscs,
-    currentItems = () => [],
-    onFetchFailure,
-    onHydrated,
-  } = handlers;
+  const { filter = () => true, selfActionIds, updatedLikeIds, pendingDiscs, currentItems = () => [], onFetchFailure, onHydrated } = handlers;
 
-  const refetch = (id: string | number) =>
-    app.store.find('discussions', String(id), { include: INCLUDE });
+  const refetch = (id: string | number) => app.store.find('discussions', String(id), { include: INCLUDE });
 
   return bindRealtime({
     onPost: (data) => {
@@ -111,9 +102,7 @@ export function bindDiscussionFeedRealtime(handlers: DiscussionFeedHandlers): ()
 
       // Only refetch if this discussion is currently rendered or pending —
       // avoids wasted requests when a moderator hides a post elsewhere.
-      const isVisible =
-        currentItems().some((x) => String(x.id?.() || '') === String(id)) ||
-        !!pendingDiscs?.has(String(id));
+      const isVisible = currentItems().some((x) => String(x.id?.() || '') === String(id)) || !!pendingDiscs?.has(String(id));
       if (!isVisible) return;
 
       refetch(id)

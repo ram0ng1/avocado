@@ -17,10 +17,7 @@ export const trans = (key: string, fallback: string, params: Record<string, any>
   if (typeof out === 'string' && out !== key) return out;
   // Interpolate {placeholders} into the fallback when the translation key is missing,
   // so callers don't see literal `{count}` in the UI.
-  return Object.entries(params).reduce<string>(
-    (s, [k, v]) => s.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v)),
-    fallback
-  );
+  return Object.entries(params).reduce<string>((s, [k, v]) => s.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v)), fallback);
 };
 
 // ─── Number guard ─────────────────────────────────────────────────────────────
@@ -89,8 +86,7 @@ export const tagPillStyle = (hex: string | null | undefined, alpha = 0.1): Recor
 
 // ─── User display name ────────────────────────────────────────────────────────
 
-export const displayName = (user: any): string =>
-  user?.displayName?.() || user?.username?.() || '';
+export const displayName = (user: any): string => user?.displayName?.() || user?.username?.() || '';
 
 // ─── Relative time label ──────────────────────────────────────────────────────
 // Delegates to Flarum's core humanTime helper so the output follows the
@@ -107,8 +103,7 @@ export const formatTimeLabel = (dateValue: Date | string | null | undefined): st
 
 // ─── Text truncation ──────────────────────────────────────────────────────────
 
-export const truncate = (str: string | null | undefined, max = 150): string =>
-  str ? coreTruncate(str, max) : '';
+export const truncate = (str: string | null | undefined, max = 150): string => (str ? coreTruncate(str, max) : '');
 
 // ─── Search highlight ─────────────────────────────────────────────────────────
 
@@ -130,19 +125,30 @@ export const postPreview = (discussion: any, max = 150): string => {
 // ─── Route helpers ────────────────────────────────────────────────────────────
 
 export const safeRoute = (name: string, params: Record<string, any> = {}, fallback = '#'): string => {
-  try { return app.route(name, params); } catch { return fallback; }
+  try {
+    return app.route(name, params);
+  } catch {
+    return fallback;
+  }
 };
 
 export const discussionRoute = (discussion: any, near?: number): string => {
-  try { return app.route.discussion(discussion, near); } catch { return '#'; }
+  try {
+    return app.route.discussion(discussion, near);
+  } catch {
+    return '#';
+  }
 };
 
 export const tagRoute = (tag: any): string => {
-  try { return app.route('tag', { tags: tag.slug() }); } catch { return '#'; }
+  try {
+    return app.route('tag', { tags: tag.slug() });
+  } catch {
+    return '#';
+  }
 };
 
-export const userRoute = (user: any): string =>
-  safeRoute('user', { username: user?.username?.() || '' });
+export const userRoute = (user: any): string => safeRoute('user', { username: user?.username?.() || '' });
 
 // ─── Path normalization (prevent traversal) ───────────────────────────────────
 
@@ -199,10 +205,7 @@ export const sanitizeAdminHtml = (html: string | null | undefined): string => {
   if (!raw) return '';
   let doc: Document;
   try {
-    doc = new DOMParser().parseFromString(
-      `<div id="__avs_root__">${raw}</div>`,
-      'text/html',
-    );
+    doc = new DOMParser().parseFromString(`<div id="__avs_root__">${raw}</div>`, 'text/html');
   } catch {
     return '';
   }
@@ -245,10 +248,7 @@ export const copyTextToClipboard = async (text: string): Promise<void> => {
 
 export const FALLBACK_COLORS: string[] = [''];
 
-export const FALLBACK_ICONS: string[] = [
-  'fas fa-tag', 'fa-regular fa-bookmark',
-  'fas fa-fire', 'fas fa-bolt',
-];
+export const FALLBACK_ICONS: string[] = ['fas fa-tag', 'fa-regular fa-bookmark', 'fas fa-fire', 'fas fa-bolt'];
 
 // ─── Navigation helper ────────────────────────────────────────────────────────
 
@@ -274,28 +274,20 @@ const parseTagIdSet = (raw: unknown): Set<string> => {
   }
 };
 
-export const getFeaturedTagIds = (): Set<string> =>
-  parseTagIdSet(app.forum?.attribute('avocadoFeaturedTags'));
+export const getFeaturedTagIds = (): Set<string> => parseTagIdSet(app.forum?.attribute('avocadoFeaturedTags'));
 
 // ─── Tags requiring hero image at creation ────────────────────────────────────
 // Set of tag IDs the admin marked as "asks for a hero image" — when one of
 // these tags is selected in the composer, the user gets an upload field for
 // the discussion's hero image.
-export const getHeroImageTagIds = (): Set<string> =>
-  parseTagIdSet(app.forum?.attribute('avocadoHeroImageTags'));
+export const getHeroImageTagIds = (): Set<string> => parseTagIdSet(app.forum?.attribute('avocadoHeroImageTags'));
 
 // Resolve the hero image URL stored on a discussion (if any).
 export const getDiscussionHeroImageUrl = (discussion: any): string | null => {
   if (!discussion) return null;
-  const url =
-    discussion.attribute?.('heroImageUrl') ||
-    discussion.data?.attributes?.heroImageUrl ||
-    null;
+  const url = discussion.attribute?.('heroImageUrl') || discussion.data?.attributes?.heroImageUrl || null;
   if (url) return String(url);
-  const path =
-    discussion.attribute?.('heroImagePath') ||
-    discussion.data?.attributes?.heroImagePath ||
-    null;
+  const path = discussion.attribute?.('heroImagePath') || discussion.data?.attributes?.heroImagePath || null;
   return path ? resolveAssetUrl(String(path)) : null;
 };
 
@@ -313,9 +305,9 @@ export const tagsRequireHeroImage = (tags: any[] | null | undefined): boolean =>
 // so callers can update the discussion model in-place.
 export const uploadDiscussionHeroImage = async (
   discussionId: string | number,
-  file: File,
+  file: File
 ): Promise<{ heroImagePath: string; heroImageUrl: string | null }> => {
-  const apiUrl = (app.forum?.attribute('apiUrl') || '/api').replace(/\/+$/, '');
+  const apiUrl = String(app.forum?.attribute('apiUrl') || '/api').replace(/\/+$/, '');
   const body = new FormData();
   body.append('avocado-discussion-hero', file);
   const resp: any = await app.request({
@@ -326,15 +318,13 @@ export const uploadDiscussionHeroImage = async (
   });
   return {
     heroImagePath: resp?.heroImagePath ?? '',
-    heroImageUrl:  resp?.heroImageUrl  ?? null,
+    heroImageUrl: resp?.heroImageUrl ?? null,
   };
 };
 
 // DELETE the discussion's hero image. Resolves once the server clears it.
-export const deleteDiscussionHeroImage = async (
-  discussionId: string | number,
-): Promise<void> => {
-  const apiUrl = (app.forum?.attribute('apiUrl') || '/api').replace(/\/+$/, '');
+export const deleteDiscussionHeroImage = async (discussionId: string | number): Promise<void> => {
+  const apiUrl = String(app.forum?.attribute('apiUrl') || '/api').replace(/\/+$/, '');
   await app.request({
     method: 'DELETE',
     url: `${apiUrl}/avocado/discussion-hero?discussionId=${encodeURIComponent(String(discussionId))}`,
@@ -372,11 +362,8 @@ export const categoryCardStyle = (hex: string | null | undefined, alpha = 0.12):
 // ─── Load-more button ─────────────────────────────────────────────────────────
 
 export const renderLoadMore = (label: string, onclick: () => void): any =>
-  m('div', { className: 'AvocadoDiscussions-loadMore' }, [
-    m('button', { className: 'Button AvocadoDiscussions-loadMoreBtn', onclick }, label),
-  ]);
+  m('div', { className: 'AvocadoDiscussions-loadMore' }, [m('button', { className: 'Button AvocadoDiscussions-loadMoreBtn', onclick }, label)]);
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
-export const renderEmpty = (label: string): any =>
-  m('div', { className: 'AvocadoDiscussions-empty' }, label);
+export const renderEmpty = (label: string): any => m('div', { className: 'AvocadoDiscussions-empty' }, label);

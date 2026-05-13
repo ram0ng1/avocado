@@ -14,10 +14,10 @@
 
 import app from 'flarum/forum/app';
 
-export const POSTED_EVENT  = 'Flarum\\Post\\Event\\Posted';
+export const POSTED_EVENT = 'Flarum\\Post\\Event\\Posted';
 export const STARTED_EVENT = 'Flarum\\Discussion\\Event\\Started';
-export const LIKES_EVENT   = 'likesMutation';
-export const PINNED_EVENT  = 'discussionPinned';
+export const LIKES_EVENT = 'likesMutation';
+export const PINNED_EVENT = 'discussionPinned';
 export const REMOVED_EVENT = 'postRemoved';
 
 export type RealtimeHandler = (data: any) => void;
@@ -71,19 +71,17 @@ export function pushPayloadDiscussion(data: any): any {
 export function bindRealtime(bindings: RealtimeBindings): () => void {
   if (!realtimeAvailable()) return () => {};
 
-  const channels = (app as any).websocket_channels as
-    | { public?: any; user?: any }
-    | undefined;
+  const channels = (app as any).websocket_channels as { public?: any; user?: any } | undefined;
 
   if (!channels) return () => {};
 
   const entries: Array<[string, RealtimeHandler]> = [];
   if (bindings.onPost) {
-    entries.push([POSTED_EVENT,  bindings.onPost]);
+    entries.push([POSTED_EVENT, bindings.onPost]);
     entries.push([STARTED_EVENT, bindings.onPost]);
   }
-  if (bindings.onLike)        entries.push([LIKES_EVENT,   bindings.onLike]);
-  if (bindings.onPinned)      entries.push([PINNED_EVENT,  bindings.onPinned]);
+  if (bindings.onLike) entries.push([LIKES_EVENT, bindings.onLike]);
+  if (bindings.onPinned) entries.push([PINNED_EVENT, bindings.onPinned]);
   if (bindings.onPostRemoved) entries.push([REMOVED_EVENT, bindings.onPostRemoved]);
   if (bindings.custom) {
     for (const [name, handler] of Object.entries(bindings.custom)) {
@@ -94,14 +92,22 @@ export function bindRealtime(bindings: RealtimeBindings): () => void {
   const targets = [channels.public, channels.user].filter(Boolean);
   for (const ch of targets) {
     for (const [name, handler] of entries) {
-      try { ch.bind(name, handler); } catch { /* channel torn down — ignore */ }
+      try {
+        ch.bind(name, handler);
+      } catch {
+        /* channel torn down — ignore */
+      }
     }
   }
 
   return () => {
     for (const ch of targets) {
       for (const [name, handler] of entries) {
-        try { ch.unbind(name, handler); } catch { /* ignore */ }
+        try {
+          ch.unbind(name, handler);
+        } catch {
+          /* ignore */
+        }
       }
     }
   };
