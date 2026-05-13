@@ -72,7 +72,7 @@ jobs:
       # §35.13 R4 — provenance assinada (SLSA) para os artefatos do release.
       - name: Atestar provenance dos artefatos
         if: steps.check_version.outputs.changed == 'true' && steps.create_release.outcome == 'success'
-        uses: actions/attest-build-provenance@520d128f165991a6c774bcb264f323e3d70747f4  # v2.2.0
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32  # v4.1.0
         with:
           subject-path: |
             composer.json
