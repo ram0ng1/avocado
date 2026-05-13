@@ -2,14 +2,7 @@ import app from 'flarum/forum/app';
 import Page from 'flarum/common/components/Page';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 
-import {
-  trans,
-  tagRoute,
-  navigate,
-  renderThreadSkeleton,
-  renderLoadMore,
-  renderEmpty,
-} from '../utils';
+import { trans, tagRoute, navigate, renderThreadSkeleton, renderLoadMore, renderEmpty } from '../utils';
 import { toggleDiscussionLike } from '../utils/likes';
 import { DISCUSSION_LIST_SORT } from '../utils/sortOptions';
 import { bindDiscussionFeedRealtime } from '../utils/discussionRealtime';
@@ -22,9 +15,7 @@ import SortDropdown from './shared/SortDropdown';
 import WsUpdateBanner from './shared/WsUpdateBanner';
 
 const findTagBySlug = (slug: string): any =>
-  app.store.all('tags').find(
-    (t: any) => t.slug?.().localeCompare(slug, undefined, { sensitivity: 'base' }) === 0
-  ) || null;
+  app.store.all('tags').find((t: any) => t.slug?.().localeCompare(slug, undefined, { sensitivity: 'base' }) === 0) || null;
 
 /**
  * AvocadoTagPage — list of discussions filtered by a single tag.
@@ -151,8 +142,11 @@ export default class AvocadoTagPage extends Page {
     const count = tag.discussionCount?.() || 0;
     const children = ((tag.children?.() || []) as any[]).filter(Boolean);
     const discHref = (() => {
-      try { return app.route('avocado-discussions'); }
-      catch { return '/discussions'; }
+      try {
+        return app.route('avocado-discussions');
+      } catch {
+        return '/discussions';
+      }
     })();
 
     const discussions = this.feedState?.flatItems() ?? [];
@@ -162,7 +156,9 @@ export default class AvocadoTagPage extends Page {
 
     return (
       <div className="AvocadoTagPage">
-        <div className="AvocadoNav-helper"><IndexSidebar key={m.route.param('tags')} /></div>
+        <div className="AvocadoNav-helper">
+          <IndexSidebar key={m.route.param('tags')} />
+        </div>
 
         <header className="AvocadoTagPage-hero" style={{ '--tag-color': color }}>
           <div className="AvocadoTagPage-hero-inner">
@@ -227,24 +223,15 @@ export default class AvocadoTagPage extends Page {
             <SortDropdown
               options={DISCUSSION_LIST_SORT}
               currentKey={currentSort}
-              onChange={(key: string) =>
-                this.feedState.refreshParams({ sort: key, filter: { tag: tag.slug() } } as any, 1)
-              }
+              onChange={(key: string) => this.feedState.refreshParams({ sort: key, filter: { tag: tag.slug() } } as any, 1)}
             />
-            <a
-              className="AvocadoTagPage-allDiscLink"
-              href={discHref}
-              onclick={(e: Event) => navigate(e as MouseEvent, discHref)}
-            >
+            <a className="AvocadoTagPage-allDiscLink" href={discHref} onclick={(e: Event) => navigate(e as MouseEvent, discHref)}>
               {trans('ramon-avocado.forum.home.all_title', 'All Discussions')}
               <i className="fas fa-arrow-right" aria-hidden="true" />
             </a>
           </div>
 
-          <WsUpdateBanner
-            pendingCount={this.feedState?.pendingCount() ?? 0}
-            onFlush={() => this.feedState?.flushPending()}
-          />
+          <WsUpdateBanner pendingCount={this.feedState?.pendingCount() ?? 0} onFlush={() => this.feedState?.flushPending()} />
 
           <div className="AvocadoHome-threadStack">
             {discussions.map((d: any) => (
@@ -260,13 +247,11 @@ export default class AvocadoTagPage extends Page {
               />
             ))}
             {isLoadingNext && renderThreadSkeleton()}
-            {!isLoadingNext && discussions.length === 0 && !isInitialLoading &&
-              renderEmpty('No discussions in this category yet.')}
+            {!isLoadingNext && discussions.length === 0 && !isInitialLoading && renderEmpty('No discussions in this category yet.')}
             {isInitialLoading && discussions.length === 0 && renderThreadSkeleton()}
           </div>
 
-          {this.feedState?.hasNext() && !isLoadingNext &&
-            renderLoadMore('Load more', () => this.feedState.loadNext())}
+          {this.feedState?.hasNext() && !isLoadingNext && renderLoadMore('Load more', () => this.feedState.loadNext())}
         </div>
       </div>
     );
@@ -281,10 +266,7 @@ export default class AvocadoTagPage extends Page {
           <div className="AvocadoTagPage-hero-inner">
             <div className="AvocadoTagPage-hero-body">
               <div style={{ flex: 1 }}>
-                <div
-                  className="AvocadoTagsPage-shimmer AvocadoTagsPage-shimmer--name"
-                  style={{ width: '200px', height: '30px' }}
-                />
+                <div className="AvocadoTagsPage-shimmer AvocadoTagsPage-shimmer--name" style={{ width: '200px', height: '30px' }} />
               </div>
             </div>
           </div>
@@ -312,10 +294,7 @@ export default class AvocadoTagPage extends Page {
     const parent = tag.parent?.();
     const selectedTags = parent ? [parent, tag] : [tag];
     app.composer
-      .load(
-        () => (flarum as any).reg.asyncModuleImport('flarum/forum/components/DiscussionComposer'),
-        { user: app.session.user }
-      )
+      .load(() => (flarum as any).reg.asyncModuleImport('flarum/forum/components/DiscussionComposer'), { user: app.session.user })
       .then(() => {
         app.composer.fields.tags = selectedTags;
         app.composer.show();

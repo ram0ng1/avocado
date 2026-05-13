@@ -140,9 +140,7 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
     const user = app.session.user;
     const isFollowingPage = app.current.get?.('routeName') === 'following';
 
-    const popular = this.state.homeLoading
-      ? []
-      : (isFollowingPage ? this.state.allDiscussions().slice(0, 5) : this.state.popularDiscussions(5));
+    const popular = this.state.homeLoading ? [] : isFollowingPage ? this.state.allDiscussions().slice(0, 5) : this.state.popularDiscussions(5);
 
     return (
       <div className="AvocadoHome">
@@ -153,7 +151,10 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
             {this.composerOpen && (
               <InlineComposer
                 user={user}
-                onClose={() => { this.composerOpen = false; m.redraw(); }}
+                onClose={() => {
+                  this.composerOpen = false;
+                  m.redraw();
+                }}
                 onSubmitted={(disc: any) => m.route.set(app.route.discussion(disc))}
               />
             )}
@@ -184,29 +185,32 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
     // Admin-pasted HTML follows Flarum's "admin == HTML" convention but is
     // scrubbed via sanitizeAdminHtml to keep an admin-account compromise from
     // becoming guest-visible XSS.
-    const innerContent = customEnabled && customHtml ? (
-      <div className="AvocadoHome-heroBannerContent AvocadoHome-heroBannerContent--custom">
-        {m.trust(customHtml)}
-      </div>
-    ) : (
-      <div className="AvocadoHome-heroBannerContent">
-        <div className="AvocadoHome-heroBannerIcon">
-          <i className="fas fa-comments" aria-hidden="true" />
+    const innerContent =
+      customEnabled && customHtml ? (
+        <div className="AvocadoHome-heroBannerContent AvocadoHome-heroBannerContent--custom">{m.trust(customHtml)}</div>
+      ) : (
+        <div className="AvocadoHome-heroBannerContent">
+          <div className="AvocadoHome-heroBannerIcon">
+            <i className="fas fa-comments" aria-hidden="true" />
+          </div>
+          <h1 className="AvocadoHome-heroBannerTitle">{forumTitle}</h1>
+          {forumDesc && <p className="AvocadoHome-heroBannerDesc">{m.trust(forumDesc)}</p>}
+          {app.forum?.attribute('avocadoShowGuestCta') !== false && this.renderGuestCTA()}
         </div>
-        <h1 className="AvocadoHome-heroBannerTitle">{forumTitle}</h1>
-        {forumDesc && <p className="AvocadoHome-heroBannerDesc">{m.trust(forumDesc)}</p>}
-        {app.forum?.attribute('avocadoShowGuestCta') !== false && this.renderGuestCTA()}
-      </div>
-    );
+      );
 
     return (
       <div
         className={`AvocadoHome-heroBanner${heroUrl ? ' AvocadoHome-heroBanner--hasImage' : ''}`}
-        style={heroUrl ? {
-          backgroundImage: safeCssUrl(heroUrl),
-          backgroundSize: 'cover',
-          backgroundPosition: heroImagePosition,
-        } : {}}
+        style={
+          heroUrl
+            ? {
+                backgroundImage: safeCssUrl(heroUrl),
+                backgroundSize: 'cover',
+                backgroundPosition: heroImagePosition,
+              }
+            : {}
+        }
       >
         <div className="AvocadoHome-heroBannerOverlay">{innerContent}</div>
       </div>
@@ -269,8 +273,8 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
     const categories = this.sortedCategories();
     if (categories.length === 0) return null;
 
-    const heading = (app.forum?.attribute('avocadoCategoriesHeading') as string)?.trim()
-      || trans('ramon-avocado.forum.home.categories_heading', 'Categories');
+    const heading =
+      (app.forum?.attribute('avocadoCategoriesHeading') as string)?.trim() || trans('ramon-avocado.forum.home.categories_heading', 'Categories');
     const allTagsCount = app.store.all('tags').filter((t: any) => t && !t.parent?.()).length;
     const extraCount = Math.max(0, allTagsCount - categories.length);
 
@@ -281,10 +285,7 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
           {this.renderInlineNav()}
         </div>
         <div className="AvocadoHome-categories">
-          {[
-            ...categories.map((cat: any, idx: number) => this.renderCategoryCard(cat, idx)),
-            this.renderAllCategoriesTile(extraCount),
-          ]}
+          {[...categories.map((cat: any, idx: number) => this.renderCategoryCard(cat, idx)), this.renderAllCategoriesTile(extraCount)]}
         </div>
       </section>
     );
@@ -349,7 +350,9 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
       >
         <div className="AvocadoHome-categoryBody">
           <h3>{trans('ramon-avocado.forum.home.all_categories', 'All categories')}</h3>
-          <p>{extraCount} {trans('ramon-avocado.forum.home.more', 'more')}</p>
+          <p>
+            {extraCount} {trans('ramon-avocado.forum.home.more', 'more')}
+          </p>
         </div>
         <i className="fas fa-arrow-right" aria-hidden="true" />
       </a>
@@ -387,7 +390,9 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
 
     return (
       <div className="AvocadoHome-sectionHead-nav">
-        <nav className="AvocadoHomeNav AvocadoHomeNav--inline" aria-label="Navigation">{items}</nav>
+        <nav className="AvocadoHomeNav AvocadoHomeNav--inline" aria-label="Navigation">
+          {items}
+        </nav>
       </div>
     );
   }
@@ -403,13 +408,10 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
 
     const tag = app.store.getById('tags', String(tagId)) as any;
     const showcaseCount = Math.max(1, Math.min(5, parseInt(app.forum?.attribute('avocadoShowcaseCount') as string) || 5));
-    const items = [...this.state.showcase()]
-      .sort((a, b) => (b.isSticky?.() ? 1 : 0) - (a.isSticky?.() ? 1 : 0))
-      .slice(0, showcaseCount);
+    const items = [...this.state.showcase()].sort((a, b) => (b.isSticky?.() ? 1 : 0) - (a.isSticky?.() ? 1 : 0)).slice(0, showcaseCount);
 
-    const heading = app.forum?.attribute<string>('avocadoShowcaseHeading')
-      || tag?.name?.()
-      || trans('ramon-avocado.forum.home.showcase_heading', 'Showcase');
+    const heading =
+      app.forum?.attribute<string>('avocadoShowcaseHeading') || tag?.name?.() || trans('ramon-avocado.forum.home.showcase_heading', 'Showcase');
 
     if (this.state.showcaseLoading && items.length === 0) {
       const phpCount = parseInt(String(app.forum?.attribute('avocadoShowcaseItemCount') ?? ''), 10);
@@ -433,9 +435,7 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
           <h2>{heading}</h2>
           <OnlineUsers />
         </div>
-        <div className="AvocadoHome-showcaseGrid">
-          {items.map((d: any, i: number) => this.renderShowcaseCard(d, i === 0))}
-        </div>
+        <div className="AvocadoHome-showcaseGrid">{items.map((d: any, i: number) => this.renderShowcaseCard(d, i === 0))}</div>
       </section>
     );
   }
@@ -471,9 +471,7 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
     const dateStr = formatTimeLabel(rawDate);
     const dateIso = rawDate ? new Date(rawDate).toISOString() : '';
     const user = discussion.user?.();
-    const cardClass = ['AvocadoHome-showcaseCard', imageStyle === 'full' && 'AvocadoHome-showcaseCard--full']
-      .filter(Boolean)
-      .join(' ');
+    const cardClass = ['AvocadoHome-showcaseCard', imageStyle === 'full' && 'AvocadoHome-showcaseCard--full'].filter(Boolean).join(' ');
 
     return (
       <article key={id} className={cardClass} style={tagColor ? { '--card-accent': tagColor } : {}}>
@@ -492,9 +490,7 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
         )}
 
         {otherTags.length > 0 && (
-          <div className="AvocadoHome-showcaseCard-topTags">
-            {otherTags.slice(0, 2).map((tag: any) => this.renderShowcaseTagPill(tag))}
-          </div>
+          <div className="AvocadoHome-showcaseCard-topTags">{otherTags.slice(0, 2).map((tag: any) => this.renderShowcaseTagPill(tag))}</div>
         )}
 
         <a className="AvocadoHome-showcaseCard-link" href={href} onclick={(e: Event) => navigate(e as MouseEvent, href)}>
@@ -510,9 +506,16 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
             <div className="AvocadoHome-showcaseCard-titleRow">
               <span className="AvocadoHome-showcaseCard-title">{title}</span>
               <svg
-                xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
-                fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                className="AvocadoHome-showcaseCard-arrow" aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="AvocadoHome-showcaseCard-arrow"
+                aria-hidden="true"
               >
                 <line x1="5" y1="12" x2="19" y2="12" className="AvocadoHome-showcaseCard-arrow-line" />
                 <polyline points="12 5 19 12 12 19" className="AvocadoHome-showcaseCard-arrow-head" />
@@ -541,11 +544,15 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
         className="AvocadoHome-tagPill"
         style={c ? { '--tag-bg': '#ffffff', '--tag-color': c } : { '--tag-bg': '#ffffff' }}
         href={tagHref}
-        onclick={tagHref ? (e: Event) => {
-          e.preventDefault();
-          e.stopPropagation();
-          m.route.set(tagHref);
-        } : undefined}
+        onclick={
+          tagHref
+            ? (e: Event) => {
+                e.preventDefault();
+                e.stopPropagation();
+                m.route.set(tagHref);
+              }
+            : undefined
+        }
       >
         {tag.icon?.() && <i className={tag.icon()} aria-hidden="true" />}
         {tag.name?.()}
@@ -553,38 +560,31 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
     );
   }
 
-  private renderShowcaseImage(
-    imageUrl: string | null,
-    title: string,
-    isFirst: boolean,
-    primaryTag: any,
-    tagColor: string | null,
-    noImgBg: string,
-  ) {
+  private renderShowcaseImage(imageUrl: string | null, title: string, isFirst: boolean, primaryTag: any, tagColor: string | null, noImgBg: string) {
     if (imageUrl) {
       // First card eager-loads with high priority; subsequent cards use an
       // IntersectionObserver to defer the request until they enter the viewport.
       if (isFirst) {
         return (
-          <img
-            className="AvocadoHome-showcaseCard-img"
-            src={imageUrl} alt={title}
-            width="400" height="150"
-            loading="eager" fetchpriority="high"
-          />
+          <img className="AvocadoHome-showcaseCard-img" src={imageUrl} alt={title} width="400" height="150" loading="eager" fetchpriority="high" />
         );
       }
       return (
         <img
           className="AvocadoHome-showcaseCard-img"
-          alt={title} width="400" height="150"
+          alt={title}
+          width="400"
+          height="150"
           oncreate={(vnode: any) => {
-            const io = new IntersectionObserver(([entry]) => {
-              if (entry.isIntersecting) {
-                vnode.dom.src = imageUrl;
-                io.disconnect();
-              }
-            }, { rootMargin: '200px' });
+            const io = new IntersectionObserver(
+              ([entry]) => {
+                if (entry.isIntersecting) {
+                  vnode.dom.src = imageUrl;
+                  io.disconnect();
+                }
+              },
+              { rootMargin: '200px' }
+            );
             io.observe(vnode.dom);
           }}
         />
@@ -592,9 +592,7 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
     }
     return (
       <div className="AvocadoHome-showcaseCard-noImg" style={{ background: noImgBg }}>
-        {primaryTag?.icon?.() && (
-          <i className={primaryTag.icon()} aria-hidden="true" style={tagColor ? { color: tagColor } : {}} />
-        )}
+        {primaryTag?.icon?.() && <i className={primaryTag.icon()} aria-hidden="true" style={tagColor ? { color: tagColor } : {}} />}
       </div>
     );
   }
@@ -609,10 +607,11 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
   private extractFirstImage(post: any): string | null {
     if (!post) return null;
 
-    const html = post.data?.attributes?.contentHtml
-      || post.attribute?.('contentHtml')
-      || (typeof post.contentHtml === 'function' ? post.contentHtml() : null)
-      || '';
+    const html =
+      post.data?.attributes?.contentHtml ||
+      post.attribute?.('contentHtml') ||
+      (typeof post.contentHtml === 'function' ? post.contentHtml() : null) ||
+      '';
 
     if (html && typeof html === 'string') {
       try {
@@ -647,10 +646,8 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
 
   private renderPopularSection(popular: any[], isFollowingPage: boolean) {
     const heading = isFollowingPage
-      ? ((app.forum?.attribute('avocadoFollowingHeading') as string)?.trim()
-        || trans('ramon-avocado.forum.home.following_heading', 'Following'))
-      : ((app.forum?.attribute('avocadoPopularHeading') as string)?.trim()
-        || trans('ramon-avocado.forum.home.popular_heading', 'Popular discussions'));
+      ? (app.forum?.attribute('avocadoFollowingHeading') as string)?.trim() || trans('ramon-avocado.forum.home.following_heading', 'Following')
+      : (app.forum?.attribute('avocadoPopularHeading') as string)?.trim() || trans('ramon-avocado.forum.home.popular_heading', 'Popular discussions');
 
     const showcaseTagIds = this.state.showcaseTagIds();
 
@@ -666,8 +663,7 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
               href={safeRoute('avocado-discussions')}
               onclick={(e: Event) => navigate(e as MouseEvent, safeRoute('avocado-discussions'))}
             >
-              {trans('ramon-avocado.forum.home.see_all', 'See all')}{' '}
-              <i className="fas fa-arrow-right" aria-hidden="true" />
+              {trans('ramon-avocado.forum.home.see_all', 'See all')} <i className="fas fa-arrow-right" aria-hidden="true" />
             </a>
           </div>
         </div>

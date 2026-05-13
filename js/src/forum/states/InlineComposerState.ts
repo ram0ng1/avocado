@@ -78,9 +78,13 @@ export default class InlineComposerState {
 
   setHeroImageFile(file: File | null): void {
     if (this.heroImagePreview) {
-      try { URL.revokeObjectURL(this.heroImagePreview); } catch { /* noop */ }
+      try {
+        URL.revokeObjectURL(this.heroImagePreview);
+      } catch {
+        /* noop */
+      }
     }
-    this.heroImageFile    = file;
+    this.heroImageFile = file;
     this.heroImagePreview = file ? URL.createObjectURL(file) : null;
   }
 
@@ -127,16 +131,13 @@ export default class InlineComposerState {
         // discussion page later.
         if (this.heroImageFile) {
           try {
-            const result = await uploadDiscussionHeroImage(
-              discussion.id(),
-              this.heroImageFile
-            );
+            const result = await uploadDiscussionHeroImage(discussion.id(), this.heroImageFile);
             // Patch the local store so the next render of the discussion
             // already shows the hero image without a refresh.
             const data = (discussion as any).data;
             if (data?.attributes) {
               data.attributes.heroImagePath = result.heroImagePath;
-              data.attributes.heroImageUrl  = result.heroImageUrl;
+              data.attributes.heroImageUrl = result.heroImageUrl;
             }
           } catch (err) {
             try {
@@ -147,7 +148,9 @@ export default class InlineComposerState {
                   'Could not upload the hero image. You can try again on the discussion page.'
                 )
               );
-            } catch { /* alerts may be unavailable in some contexts */ }
+            } catch {
+              /* alerts may be unavailable in some contexts */
+            }
           }
         }
 

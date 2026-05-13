@@ -60,12 +60,8 @@ export default class OnlineUsers<CustomAttrs extends IOnlineUsersAttrs = IOnline
 
     return (
       <div className={wrapperClass}>
-        <div className="AvocadoHome-onlineAvatars-row">
-          {shown.map((user: any, i: number) => this.renderAvatar(user, i, isPlain))}
-        </div>
-        {app.forum?.attribute('avocadoShowOnlineCount') !== false && (
-          <span className="AvocadoHome-onlineAvatars-count">{total} online</span>
-        )}
+        <div className="AvocadoHome-onlineAvatars-row">{shown.map((user: any, i: number) => this.renderAvatar(user, i, isPlain))}</div>
+        {app.forum?.attribute('avocadoShowOnlineCount') !== false && <span className="AvocadoHome-onlineAvatars-count">{total} online</span>}
       </div>
     );
   }
@@ -74,10 +70,7 @@ export default class OnlineUsers<CustomAttrs extends IOnlineUsersAttrs = IOnline
     const key = isPlain ? user.id : user.id?.();
     const userModel = isPlain ? (key ? app.store.getById('users', String(key)) : null) : user;
     const username = userModel?.username?.() || (isPlain ? user.username : '');
-    const name =
-      userModel?.displayName?.() ||
-      userModel?.username?.() ||
-      (isPlain ? user.displayName || user.username : displayName(user));
+    const name = userModel?.displayName?.() || userModel?.username?.() || (isPlain ? user.displayName || user.username : displayName(user));
     const avatarUrl = userModel?.avatarUrl?.() || (isPlain ? user.avatarUrl || null : null);
     const profileHref = safeRoute('user', { username });
     const fallbackBg = FALLBACK_GRADIENTS[index % FALLBACK_GRADIENTS.length];

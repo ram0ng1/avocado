@@ -24,9 +24,7 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
     const { primaryCount, secondaryCount } = this.countSelected(state);
 
     const allTags = (app.store.all('tags') as any[]).filter(Boolean);
-    const rootTags = allTags
-      .filter((t) => !t.isChild?.())
-      .sort((a, b) => (a.position?.() ?? 9999) - (b.position?.() ?? 9999));
+    const rootTags = allTags.filter((t) => !t.isChild?.()).sort((a, b) => (a.position?.() ?? 9999) - (b.position?.() ?? 9999));
 
     // Build a flat list interleaving root tags with their children.
     const tagItems: { tag: any; isChild: boolean }[] = [];
@@ -38,23 +36,17 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
         .forEach((child: any) => tagItems.push({ tag: child, isChild: true }));
     }
 
-    const visible =
-      limits.maxSecondary === 0 && !state.tagBypassReqs
-        ? tagItems.filter(({ isChild }) => !isChild)
-        : tagItems;
+    const visible = limits.maxSecondary === 0 && !state.tagBypassReqs ? tagItems.filter(({ isChild }) => !isChild) : tagItems;
 
     const filter = (state.tagFilter || '').toLowerCase();
-    const filtered = filter
-      ? visible.filter(({ tag }) => tag.name?.().toLowerCase().includes(filter))
-      : visible;
+    const filtered = filter ? visible.filter(({ tag }) => tag.name?.().toLowerCase().includes(filter)) : visible;
 
     const instruction = this.computeInstruction(state, limits, primaryCount, secondaryCount);
 
     return (
       <div className="AvocadoHome-tagPicker">
         {this.renderTrigger(state, instruction)}
-        {state.tagPickerOpen &&
-          this.renderDropdown(state, filtered, limits, primaryCount, secondaryCount)}
+        {state.tagPickerOpen && this.renderDropdown(state, filtered, limits, primaryCount, secondaryCount)}
       </div>
     );
   }
@@ -76,9 +68,7 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
       >
         <i className="fas fa-tag" aria-hidden="true" />
         {state.tags.length === 0 && (
-          <span className="AvocadoHome-tagPickerPlaceholder">
-            {instruction || trans('ramon-avocado.forum.home.choose_tags', 'Choose tags')}
-          </span>
+          <span className="AvocadoHome-tagPickerPlaceholder">{instruction || trans('ramon-avocado.forum.home.choose_tags', 'Choose tags')}</span>
         )}
         {state.tags.map((tag: any) => {
           const tagColor = tag.color?.() || null;
@@ -101,10 +91,7 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
             </span>
           );
         })}
-        <i
-          className={`fas fa-chevron-${state.tagPickerOpen ? 'up' : 'down'} AvocadoHome-tagPickerChevron`}
-          aria-hidden="true"
-        />
+        <i className={`fas fa-chevron-${state.tagPickerOpen ? 'up' : 'down'} AvocadoHome-tagPickerChevron`} aria-hidden="true" />
       </button>
     );
   }
@@ -114,7 +101,7 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
     items: { tag: any; isChild: boolean }[],
     limits: ReturnType<TagPicker['readLimits']>,
     primaryCount: number,
-    secondaryCount: number,
+    secondaryCount: number
   ) {
     return (
       <div className="AvocadoHome-tagPickerDropdown">
@@ -134,9 +121,7 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
         </div>
 
         {items.length === 0 ? (
-          <span className="AvocadoHome-tagPickerEmpty">
-            {trans('ramon-avocado.forum.home.no_tags_found', 'No tags found')}
-          </span>
+          <span className="AvocadoHome-tagPickerEmpty">{trans('ramon-avocado.forum.home.no_tags_found', 'No tags found')}</span>
         ) : (
           <ul className="AvocadoHome-tagPickerList">
             {items.map(({ tag, isChild }) => this.renderItem(state, tag, isChild, limits, primaryCount, secondaryCount))}
@@ -166,19 +151,14 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
     isChild: boolean,
     limits: ReturnType<TagPicker['readLimits']>,
     primaryCount: number,
-    secondaryCount: number,
+    secondaryCount: number
   ) {
     const tagId = tag.id?.();
     const isSelected = state.tags.includes(tag);
     const tagColor = tag.color?.() || FALLBACK_COLORS[0];
     const selectable = this.canSelectTag(tag, state, limits, primaryCount, secondaryCount);
 
-    const className = [
-      'AvocadoHome-tagPickerItem',
-      isChild && 'is-child',
-      isSelected && 'is-selected',
-      !selectable && !isSelected && 'is-disabled',
-    ]
+    const className = ['AvocadoHome-tagPickerItem', isChild && 'is-child', isSelected && 'is-selected', !selectable && !isSelected && 'is-disabled']
       .filter(Boolean)
       .join(' ');
 
@@ -199,9 +179,7 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
           <i className={tag.icon?.() || 'fas fa-tag'} aria-hidden="true" />
         </span>
         <span className="AvocadoHome-tagPickerItem-name">{tag.name?.()}</span>
-        {tag.description?.() && (
-          <span className="AvocadoHome-tagPickerItem-desc">{tag.description()}</span>
-        )}
+        {tag.description?.() && <span className="AvocadoHome-tagPickerItem-desc">{tag.description()}</span>}
         {isSelected && <i className="fas fa-check AvocadoHome-tagPickerItem-check" aria-hidden="true" />}
       </li>
     );
@@ -233,7 +211,7 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
     state: InlineComposerState,
     limits: ReturnType<TagPicker['readLimits']>,
     primaryCount: number,
-    secondaryCount: number,
+    secondaryCount: number
   ): boolean {
     if (state.tagBypassReqs || state.tags.includes(tag)) return true;
     const isPrimary = tag.position?.() !== null && !tag.isChild?.();
@@ -247,7 +225,7 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
     state: InlineComposerState,
     limits: ReturnType<TagPicker['readLimits']>,
     primaryCount: number,
-    secondaryCount: number,
+    secondaryCount: number
   ): string {
     if (state.tagBypassReqs) return '';
     if (primaryCount < limits.minPrimary) {
