@@ -9,11 +9,7 @@ import app from 'flarum/forum/app';
  * and an optional `selfActionIds` set lets the realtime handler skip the pop
  * animation for likes the user just performed (avoids self-echo).
  */
-export function toggleDiscussionLike(
-  discussion: any,
-  likingIds: Set<string>,
-  selfActionIds?: Set<string>,
-): void {
+export function toggleDiscussionLike(discussion: any, likingIds: Set<string>, selfActionIds?: Set<string>): void {
   const firstPost = discussion.firstPost?.();
   if (!firstPost) return;
 

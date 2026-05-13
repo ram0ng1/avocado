@@ -21,10 +21,10 @@ import SelectDropdown from 'flarum/common/components/SelectDropdown';
 
 class ScrollableNav {
   private _el: Element | null = null;
-  private _canLeft  = false;
+  private _canLeft = false;
   private _canRight = false;
   private _dragging = false;
-  private _startX   = 0;
+  private _startX = 0;
   private _scrollLeft0 = 0;
   private _ro: ResizeObserver | null = null;
   private _handleScroll: (() => void) | null = null;
@@ -38,7 +38,7 @@ class ScrollableNav {
     const l = el.scrollLeft > 1;
     const r = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
     if (l !== this._canLeft || r !== this._canRight) {
-      this._canLeft  = l;
+      this._canLeft = l;
       this._canRight = r;
       m.redraw();
     }
@@ -53,12 +53,12 @@ class ScrollableNav {
     this._el = el;
     if (!el) return;
 
-    this._handleScroll    = () => this._check();
+    this._handleScroll = () => this._check();
     this._handleMouseDown = (e: MouseEvent) => {
-      this._dragging    = true;
-      this._startX      = e.pageX - el.offsetLeft;
+      this._dragging = true;
+      this._startX = e.pageX - el.offsetLeft;
       this._scrollLeft0 = el.scrollLeft;
-      document.documentElement.style.cursor     = 'grabbing';
+      document.documentElement.style.cursor = 'grabbing';
       document.documentElement.style.userSelect = 'none';
     };
     this._handleMouseMove = (e: MouseEvent) => {
@@ -69,14 +69,14 @@ class ScrollableNav {
     this._handleMouseUp = () => {
       if (!this._dragging) return;
       this._dragging = false;
-      document.documentElement.style.cursor     = '';
+      document.documentElement.style.cursor = '';
       document.documentElement.style.userSelect = '';
     };
 
-    el.addEventListener('scroll',     this._handleScroll!,    { passive: true });
-    el.addEventListener('mousedown',  this._handleMouseDown!);
+    el.addEventListener('scroll', this._handleScroll!, { passive: true });
+    el.addEventListener('mousedown', this._handleMouseDown!);
     window.addEventListener('mousemove', this._handleMouseMove!);
-    window.addEventListener('mouseup',   this._handleMouseUp!);
+    window.addEventListener('mouseup', this._handleMouseUp!);
 
     this._ro = new ResizeObserver(() => this._check());
     this._ro.observe(el);
@@ -92,11 +92,11 @@ class ScrollableNav {
 
   onremove() {
     if (this._el) {
-      this._el.removeEventListener('scroll',    this._handleScroll!);
+      this._el.removeEventListener('scroll', this._handleScroll!);
       this._el.removeEventListener('mousedown', this._handleMouseDown! as EventListener);
     }
     window.removeEventListener('mousemove', this._handleMouseMove! as EventListener);
-    window.removeEventListener('mouseup',   this._handleMouseUp!);
+    window.removeEventListener('mouseup', this._handleMouseUp!);
     this._ro?.disconnect();
     this._el = null;
   }
@@ -145,13 +145,11 @@ export function buildHero(user: any, isEditable: boolean, controls: any[] = []) 
     );
   }
 
-  const color           = user.color?.() || '#5a6480';
-  const badges          = user.badges?.().toArray?.() || [];
-  const isOnline        = user.isOnline?.();
-  const joinTime        = user.joinTime?.();
-  const joinLabel       = joinTime
-    ? new Date(joinTime as string).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
-    : null;
+  const color = user.color?.() || '#5a6480';
+  const badges = user.badges?.().toArray?.() || [];
+  const isOnline = user.isOnline?.();
+  const joinTime = user.joinTime?.();
+  const joinLabel = joinTime ? new Date(joinTime as string).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
 
   return (
     <div className="AvocadoUserPage-hero" style={{ '--user-color': color }}>
@@ -163,14 +161,8 @@ export function buildHero(user: any, isEditable: boolean, controls: any[] = []) 
           </div>
           <div className="AvocadoUserPage-hero-info">
             <h1 className="AvocadoUserPage-hero-name">{user.displayName?.() || user.username?.()}</h1>
-            {badges.length > 0 && (
-              <ul className="AvocadoUserPage-hero-badges badges">{listItems(badges)}</ul>
-            )}
-            <div className="AvocadoUserPage-hero-stats">
-              {joinLabel && (
-                <span className="AvocadoUserPage-hero-statPill">Joined {joinLabel}</span>
-              )}
-            </div>
+            {badges.length > 0 && <ul className="AvocadoUserPage-hero-badges badges">{listItems(badges)}</ul>}
+            <div className="AvocadoUserPage-hero-stats">{joinLabel && <span className="AvocadoUserPage-hero-statPill">Joined {joinLabel}</span>}</div>
           </div>
           {controls.length > 0 && (
             <div className="AvocadoUserPage-hero-controls">
@@ -188,9 +180,13 @@ export function buildHero(user: any, isEditable: boolean, controls: any[] = []) 
           try {
             const UserBio = (flarum as any).reg.get('fof-user-bio', 'forum/components/UserBio');
             if (UserBio && user.attribute('canViewBio')) {
-              return <div className="AvocadoUserPage-hero-bio"><UserBio user={user} editable={isEditable} /></div>;
+              return (
+                <div className="AvocadoUserPage-hero-bio">
+                  <UserBio user={user} editable={isEditable} />
+                </div>
+              );
             }
-          } catch { }
+          } catch {}
           return null;
         })()}
       </div>
@@ -215,15 +211,13 @@ export function buildSidebar(page: any) {
   }
   return (
     <ScrollableNav>
-      <ul className="AvocadoUserPage-navInner">
-        {listItems(page.navItems().toArray())}
-      </ul>
+      <ul className="AvocadoUserPage-navInner">{listItems(page.navItems().toArray())}</ul>
     </ScrollableNav>
   );
 }
 
 export function buildUserPhoneNav(page: any) {
-  const user  = page?.user;
+  const user = page?.user;
   const items = user ? page.navItems().toArray() : [];
   return (
     <nav className="IndexPage-nav sideNav">

@@ -66,25 +66,23 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
 
     if (!discussion) return null;
 
-    const id              = discussion.id?.() as string;
-    const user            = discussion.user?.();
-    const title           = (discussion.title?.() || 'Untitled') as string;
-    const href            = discussionRoute(discussion);
-    const allTags         = ((discussion.tags?.() || []) as any[]).filter(Boolean);
-    const tags            = filterTagIds
-      ? allTags.filter((t: any) => !filterTagIds.has(String(t.id?.() ?? '')))
-      : allTags;
-    const isSticky        = discussion.isSticky?.() || false;
-    const isLocked        = discussion.isLocked?.() || false;
-    const isFollowing     = discussion.subscription?.() === 'follow';
-    const isUnread        = discussion.isUnread?.() || false;
-    const unreadCount     = isUnread ? numberOr(discussion.unreadCount?.(), 0) : 0;
-    const replies         = numberOr(discussion.replyCount?.(), 0);
-    const timeLabel       = formatTimeLabel(discussion.lastPostedAt?.());
+    const id = discussion.id?.() as string;
+    const user = discussion.user?.();
+    const title = (discussion.title?.() || 'Untitled') as string;
+    const href = discussionRoute(discussion);
+    const allTags = ((discussion.tags?.() || []) as any[]).filter(Boolean);
+    const tags = filterTagIds ? allTags.filter((t: any) => !filterTagIds.has(String(t.id?.() ?? ''))) : allTags;
+    const isSticky = discussion.isSticky?.() || false;
+    const isLocked = discussion.isLocked?.() || false;
+    const isFollowing = discussion.subscription?.() === 'follow';
+    const isUnread = discussion.isUnread?.() || false;
+    const unreadCount = isUnread ? numberOr(discussion.unreadCount?.(), 0) : 0;
+    const replies = numberOr(discussion.replyCount?.(), 0);
+    const timeLabel = formatTimeLabel(discussion.lastPostedAt?.());
     const userProfileHref = userRoute(user);
-    const isNew           = newDiscIds.has(id);
-    const isSearch        = variant === 'search';
-    const p               = isSearch ? 'AvocadoSearch' : 'AvocadoHome';
+    const isNew = newDiscIds.has(id);
+    const isSearch = variant === 'search';
+    const p = isSearch ? 'AvocadoSearch' : 'AvocadoHome';
 
     // ── excerpt ──────────────────────────────────────────────────────────────
     const excerptRaw = isSearch
@@ -99,9 +97,7 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
         })()
       : postPreview(discussion);
 
-    const excerptNode = isSearch
-      ? (searchQuery ? highlight(excerptRaw, searchQuery, 160) : truncate(excerptRaw, 160))
-      : excerptRaw;
+    const excerptNode = isSearch ? (searchQuery ? highlight(excerptRaw, searchQuery, 160) : truncate(excerptRaw, 160)) : excerptRaw;
 
     const titleNode = isSearch && searchQuery ? highlight(title, searchQuery) : title;
 
@@ -119,51 +115,66 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
     ) : null;
 
     // ── like state (home variant) ─────────────────────────────────────────────
-    const likes   = numberOr(discussion.firstPost?.()?.attribute?.('likesCount'), 0);
+    const likes = numberOr(discussion.firstPost?.()?.attribute?.('likesCount'), 0);
     const isLiked = !!(app.session.user && ((discussion.firstPost?.()?.likes?.() || []) as any[]).some((u: any) => u === app.session.user));
     const isLiking = likingIds.has(id);
 
     // ── reply card (home variant, only when there are replies) ────────────────
-    const replyCardNode = (!isSearch && replies > 0) ? (() => {
-      const lastPoster = discussion.lastPostedUser?.();
-      const lastPost   = discussion.lastPost?.();
-      if (!lastPoster && !lastPost) return null;
-      const preview    = truncate((lastPost?.contentPlain?.() || '') as string, 100);
-      const otherCount = replies - 1;
-      const lastPostHref = (() => {
-        try { const n = discussion.lastPostNumber?.(); return n ? app.route.discussion(discussion, n) : href; }
-        catch { return href; }
-      })();
-      const secondHref = (() => {
-        try { return app.route.discussion(discussion, 2); } catch { return href; }
-      })();
-      return (
-        <div className="AvocadoHome-replyCard">
-          <a
-            className="AvocadoHome-replyCard-line"
-            href={lastPostHref}
-            onclick={(e: Event) => { e.stopPropagation(); navigate(e as MouseEvent, lastPostHref); }}
-          >
-            <div className="AvocadoHome-replyCard-avatar">
-              {lastPoster && <Avatar user={lastPoster} />}
-            </div>
-            <span className="AvocadoHome-replyCard-name">{displayName(lastPoster)}</span>
-            {preview && <span className="AvocadoHome-replyCard-text">{preview}</span>}
-          </a>
-          {otherCount > 0 && (
-            <a
-              className="AvocadoHome-replyCard-seeMore"
-              href={secondHref}
-              onclick={(e: Event) => { e.stopPropagation(); navigate(e as MouseEvent, secondHref); }}
-            >
-              {otherCount === 1
-                ? trans('ramon-avocado.forum.home.see_other_reply_singular', 'See other {count} reply', { count: otherCount })
-                : trans('ramon-avocado.forum.home.see_other_replies', 'See other {count} replies', { count: otherCount })}
-            </a>
-          )}
-        </div>
-      );
-    })() : null;
+    const replyCardNode =
+      !isSearch && replies > 0
+        ? (() => {
+            const lastPoster = discussion.lastPostedUser?.();
+            const lastPost = discussion.lastPost?.();
+            if (!lastPoster && !lastPost) return null;
+            const preview = truncate((lastPost?.contentPlain?.() || '') as string, 100);
+            const otherCount = replies - 1;
+            const lastPostHref = (() => {
+              try {
+                const n = discussion.lastPostNumber?.();
+                return n ? app.route.discussion(discussion, n) : href;
+              } catch {
+                return href;
+              }
+            })();
+            const secondHref = (() => {
+              try {
+                return app.route.discussion(discussion, 2);
+              } catch {
+                return href;
+              }
+            })();
+            return (
+              <div className="AvocadoHome-replyCard">
+                <a
+                  className="AvocadoHome-replyCard-line"
+                  href={lastPostHref}
+                  onclick={(e: Event) => {
+                    e.stopPropagation();
+                    navigate(e as MouseEvent, lastPostHref);
+                  }}
+                >
+                  <div className="AvocadoHome-replyCard-avatar">{lastPoster && <Avatar user={lastPoster} />}</div>
+                  <span className="AvocadoHome-replyCard-name">{displayName(lastPoster)}</span>
+                  {preview && <span className="AvocadoHome-replyCard-text">{preview}</span>}
+                </a>
+                {otherCount > 0 && (
+                  <a
+                    className="AvocadoHome-replyCard-seeMore"
+                    href={secondHref}
+                    onclick={(e: Event) => {
+                      e.stopPropagation();
+                      navigate(e as MouseEvent, secondHref);
+                    }}
+                  >
+                    {otherCount === 1
+                      ? trans('ramon-avocado.forum.home.see_other_reply_singular', 'See other {count} reply', { count: otherCount })
+                      : trans('ramon-avocado.forum.home.see_other_replies', 'See other {count} replies', { count: otherCount })}
+                  </a>
+                )}
+              </div>
+            );
+          })()
+        : null;
 
     const primaryTagColor: string = (allTags.length ? allTags[0].color?.() : null) || 'var(--primary-color)';
 
@@ -179,11 +190,9 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
             {user && <Avatar user={user} title={displayName(user)} />}
             {unreadCount > 0 && (
               <Tooltip
-                text={trans(
-                  'ramon-avocado.forum.home.badge_unread_tooltip',
-                  unreadCount === 1 ? '1 unread post' : '{count} unread posts',
-                  { count: unreadCount }
-                )}
+                text={trans('ramon-avocado.forum.home.badge_unread_tooltip', unreadCount === 1 ? '1 unread post' : '{count} unread posts', {
+                  count: unreadCount,
+                })}
                 position="top"
               >
                 <span className="AvocadoHome-unreadBadge" aria-hidden="true">
@@ -199,7 +208,10 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
               <a
                 className={`${p}-threadAuthor`}
                 href={userProfileHref}
-                onclick={(e: Event) => { e.stopPropagation(); navigate(e as MouseEvent, userProfileHref); }}
+                onclick={(e: Event) => {
+                  e.stopPropagation();
+                  navigate(e as MouseEvent, userProfileHref);
+                }}
               >
                 {displayName(user)}
               </a>
@@ -227,17 +239,13 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
                 </Tooltip>
               )}
               {tags.slice(0, 4).map((tag: any, idx: number) => {
-                const tagColor     = tag.color?.() || null;
+                const tagColor = tag.color?.() || null;
                 const isCurrentTag = currentTag && tag.id?.() === currentTag.id?.();
-                const extraClass   = idx >= 2 ? ' AvocadoHome-tagPill--extra' : '';
-                const tagStyle     = tagPillStyle(tagColor);
+                const extraClass = idx >= 2 ? ' AvocadoHome-tagPill--extra' : '';
+                const tagStyle = tagPillStyle(tagColor);
                 if (isCurrentTag) {
                   return (
-                    <span
-                      key={tag.id?.()}
-                      className={`AvocadoHome-tagPill${extraClass}`}
-                      style={{ ...tagStyle, cursor: 'default' }}
-                    >
+                    <span key={tag.id?.()} className={`AvocadoHome-tagPill${extraClass}`} style={{ ...tagStyle, cursor: 'default' }}>
                       {tag.icon?.() && <i className={tag.icon()} aria-hidden="true" />}
                       {tag.name?.()}
                     </span>
@@ -248,7 +256,10 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
                     key={tag.id?.()}
                     className={`AvocadoHome-tagPill${extraClass}`}
                     href={tagRoute(tag)}
-                    onclick={(e: Event) => { e.stopPropagation(); navigate(e as MouseEvent, tagRoute(tag)); }}
+                    onclick={(e: Event) => {
+                      e.stopPropagation();
+                      navigate(e as MouseEvent, tagRoute(tag));
+                    }}
                     style={tagStyle}
                   >
                     {tag.icon?.() && <i className={tag.icon()} aria-hidden="true" />}
@@ -259,11 +270,7 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
               {tags.length > 2 && <span className="AvocadoHome-tagMore">+{tags.length - 2}</span>}
             </div>
 
-            <a
-              className={`${p}-threadTitle`}
-              href={href}
-              onclick={(e: Event) => navigate(e as MouseEvent, href)}
-            >
+            <a className={`${p}-threadTitle`} href={href} onclick={(e: Event) => navigate(e as MouseEvent, href)}>
               {titleNode}
             </a>
 
@@ -283,7 +290,9 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
           </div>
 
           {/* Actions — search: just controls dropdown; home: controls + reply button */}
-          {isSearch ? controlsDropdown : (
+          {isSearch ? (
+            controlsDropdown
+          ) : (
             <div className="AvocadoHome-threadActions">
               {controlsDropdown}
               <button
@@ -295,8 +304,14 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
                     return;
                   }
                   app.composer
-                    .load(() => (flarum as any).reg.asyncModuleImport('flarum/forum/components/ReplyComposer'), { user: app.session.user, discussion })
-                    .then(() => { app.composer.show(); m.route.set(href); });
+                    .load(() => (flarum as any).reg.asyncModuleImport('flarum/forum/components/ReplyComposer'), {
+                      user: app.session.user,
+                      discussion,
+                    })
+                    .then(() => {
+                      app.composer.show();
+                      m.route.set(href);
+                    });
                 }}
               >
                 <i className="fas fa-reply" aria-hidden="true" />
@@ -315,8 +330,8 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
             <button
               className={[
                 'AvocadoHome-statBtn AvocadoHome-statBtn--likes',
-                isLiked   ? ' AvocadoHome-statBtn--liked'   : '',
-                isLiking  ? ' AvocadoHome-statBtn--loading' : '',
+                isLiked ? ' AvocadoHome-statBtn--liked' : '',
+                isLiking ? ' AvocadoHome-statBtn--loading' : '',
                 updatedLikeIds.has(id) ? ' AvocadoHome-statBtn--pop' : '',
               ].join('')}
               onclick={(e: Event) => {
@@ -338,7 +353,10 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
             </button>
             <button
               className="AvocadoHome-statBtn AvocadoHome-statBtn--replies"
-              onclick={(e: Event) => { e.stopPropagation(); m.route.set(href); }}
+              onclick={(e: Event) => {
+                e.stopPropagation();
+                m.route.set(href);
+              }}
               title={trans('ramon-avocado.forum.home.replies', 'Replies')}
             >
               <i className="far fa-comment" aria-hidden="true" />

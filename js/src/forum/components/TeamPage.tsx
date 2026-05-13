@@ -38,9 +38,7 @@ export default class TeamPage extends Page {
     if (groupIds.length) {
       try {
         const results = await Promise.all(
-          groupIds.map((gid: string) =>
-            app.store.find('users', { filter: { group: gid }, page: { limit: 50 }, include: 'groups' })
-          )
+          groupIds.map((gid: string) => app.store.find('users', { filter: { group: gid }, page: { limit: 50 }, include: 'groups' }))
         );
         const seen = new Set<string>();
         this.members = (results as any[]).flat().filter((u: any) => {
@@ -57,11 +55,13 @@ export default class TeamPage extends Page {
 
   view() {
     const title = app.forum.attribute('avocadoTeamPageTitle') || trans('ramon-avocado.forum.team.title', 'Our Team');
-    const desc  = app.forum.attribute('avocadoTeamPageDescription') || '';
+    const desc = app.forum.attribute('avocadoTeamPageDescription') || '';
 
     return (
       <div className="AvocadoTeamPage">
-        <div className="AvocadoNav-helper"><IndexSidebar /></div>
+        <div className="AvocadoNav-helper">
+          <IndexSidebar />
+        </div>
 
         <div className="AvocadoTeamPage-header">
           <h1 className="AvocadoTeamPage-title">{title}</h1>
@@ -83,9 +83,7 @@ export default class TeamPage extends Page {
         ) : !this.members.length ? (
           <p className="AvocadoTeamPage-empty">{trans('ramon-avocado.forum.team.empty', 'No members found.')}</p>
         ) : (
-          <div className="AvocadoTeamPage-grid">
-            {this.members.map((u: any) => this.renderCard(u))}
-          </div>
+          <div className="AvocadoTeamPage-grid">{this.members.map((u: any) => this.renderCard(u))}</div>
         )}
       </div>
     );
@@ -93,16 +91,19 @@ export default class TeamPage extends Page {
 
   renderCard(user: any) {
     const href = (() => {
-      try { return app.route('user', { username: user.username() }); }
-      catch { return `/u/${user.username()}`; }
+      try {
+        return app.route('user', { username: user.username() });
+      } catch {
+        return `/u/${user.username()}`;
+      }
     })();
 
-    const name        = displayName(user);
-    const isOnline    = user.isOnline?.();
-    const bio         = user.bio?.();
+    const name = displayName(user);
+    const isOnline = user.isOnline?.();
+    const bio = user.bio?.();
     const discussions = user.discussionCount?.() ?? 0;
-    const posts       = user.commentCount?.() ?? 0;
-    const joinTime    = user.joinTime?.();
+    const posts = user.commentCount?.() ?? 0;
+    const joinTime = user.joinTime?.();
 
     const role = (() => {
       const groups: any[] = user.groups?.() ?? [];
@@ -120,10 +121,7 @@ export default class TeamPage extends Page {
         <h3 className="AvocadoTeamPage-card-name">{name}</h3>
 
         {role && (
-          <span
-            className="AvocadoTeamPage-card-role"
-            style={role.color?.() ? `background:${role.color()};color:#fff` : undefined}
-          >
+          <span className="AvocadoTeamPage-card-role" style={role.color?.() ? `background:${role.color()};color:#fff` : undefined}>
             {role.nameSingular?.() || role.namePlural?.()}
           </span>
         )}

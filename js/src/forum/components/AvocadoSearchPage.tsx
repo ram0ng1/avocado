@@ -25,11 +25,7 @@ import {
   categoryCardStyle,
 } from '../utils';
 import { toggleDiscussionLike } from '../utils/likes';
-import {
-  DISCUSSION_SEARCH_SORT,
-  POST_SEARCH_SORT,
-  getSortLabel,
-} from '../utils/sortOptions';
+import { DISCUSSION_SEARCH_SORT, POST_SEARCH_SORT, getSortLabel } from '../utils/sortOptions';
 
 import UserSearchState from '../states/UserSearchState';
 
@@ -127,9 +123,13 @@ export default class AvocadoSearchPage extends Page {
 
     return (
       <div className="AvocadoSearch AvocadoSearch--unified">
-        <div key="nav" className="AvocadoNav-helper"><IndexSidebar /></div>
+        <div key="nav" className="AvocadoNav-helper">
+          <IndexSidebar />
+        </div>
 
-        {!hasQuery ? this.renderEmptyState() : (
+        {!hasQuery ? (
+          this.renderEmptyState()
+        ) : (
           <div key="body" className="AvocadoSearch-body">
             <div key="bar">{this.renderSearchBar(false)}</div>
 
@@ -140,14 +140,10 @@ export default class AvocadoSearchPage extends Page {
               {this.renderSortDropdown()}
             </div>
 
-            <div
-              key={`results-${this.resultsKey}-${tab}`}
-              className="AvocadoSearch-tabContent AvocadoSearch-tabContent--animate"
-              role="tabpanel"
-            >
+            <div key={`results-${this.resultsKey}-${tab}`} className="AvocadoSearch-tabContent AvocadoSearch-tabContent--animate" role="tabpanel">
               {tab === 'discussions' && this.renderDiscussionsTab()}
-              {tab === 'posts'       && this.renderPostsTab()}
-              {tab === 'users'       && canSearchUsers && this.renderUsersTab()}
+              {tab === 'posts' && this.renderPostsTab()}
+              {tab === 'users' && canSearchUsers && this.renderUsersTab()}
             </div>
           </div>
         )}
@@ -158,14 +154,13 @@ export default class AvocadoSearchPage extends Page {
   // ── Tab buttons ────────────────────────────────────────────────────────────
 
   private renderTab(t: Tab, active: Tab) {
-    const icon = t === 'discussions' ? 'far fa-comments'
-               : t === 'posts'       ? 'far fa-file-alt'
-               :                       'fas fa-users';
-    const label = t === 'discussions'
-      ? trans('ramon-avocado.forum.search.tab_discussions', 'Discussions')
-      : t === 'posts'
-        ? trans('ramon-avocado.forum.search.tab_posts', 'Posts')
-        : trans('ramon-avocado.forum.search.tab_users', 'Users');
+    const icon = t === 'discussions' ? 'far fa-comments' : t === 'posts' ? 'far fa-file-alt' : 'fas fa-users';
+    const label =
+      t === 'discussions'
+        ? trans('ramon-avocado.forum.search.tab_discussions', 'Discussions')
+        : t === 'posts'
+          ? trans('ramon-avocado.forum.search.tab_posts', 'Posts')
+          : trans('ramon-avocado.forum.search.tab_users', 'Users');
 
     return (
       <button
@@ -238,9 +233,11 @@ export default class AvocadoSearchPage extends Page {
           <input
             className="AvocadoSearch-barInput"
             type="search"
-            placeholder={hero
-              ? trans('ramon-avocado.forum.search.placeholder_hero', 'Search the forum…')
-              : trans('ramon-avocado.forum.search.placeholder', 'Search…')}
+            placeholder={
+              hero
+                ? trans('ramon-avocado.forum.search.placeholder_hero', 'Search the forum…')
+                : trans('ramon-avocado.forum.search.placeholder', 'Search…')
+            }
             value={this.searchInputValue}
             oninput={(e: Event) => {
               this.searchInputValue = (e.target as HTMLInputElement).value;
@@ -282,19 +279,12 @@ export default class AvocadoSearchPage extends Page {
 
     return (
       <div key="empty" className="AvocadoSearch-hero">
-        <h1 className="AvocadoSearch-heroTitle">
-          {trans('ramon-avocado.forum.search.hero_title', 'What are you looking for?')}
-        </h1>
-        <p className="AvocadoSearch-heroSub">
-          {trans('ramon-avocado.forum.search.hero_sub', 'Search discussions, posts and members')}
-        </p>
+        <h1 className="AvocadoSearch-heroTitle">{trans('ramon-avocado.forum.search.hero_title', 'What are you looking for?')}</h1>
+        <p className="AvocadoSearch-heroSub">{trans('ramon-avocado.forum.search.hero_sub', 'Search discussions, posts and members')}</p>
         {this.renderSearchBar(true)}
         {tags.length > 0 && (
           <div className="AvocadoSearch-heroTags">
-            {[
-              ...tags.map((tag: any, idx: number) => this.renderHeroTag(tag, idx, featuredIds)),
-              this.renderAllCategoriesTile(tags.length),
-            ]}
+            {[...tags.map((tag: any, idx: number) => this.renderHeroTag(tag, idx, featuredIds)), this.renderAllCategoriesTile(tags.length)]}
           </div>
         )}
       </div>
@@ -351,7 +341,9 @@ export default class AvocadoSearchPage extends Page {
       >
         <div className="AvocadoHome-categoryBody">
           <h3>{trans('ramon-avocado.forum.home.all_categories', 'All categories')}</h3>
-          <p>{extraCount} {trans('ramon-avocado.forum.home.more', 'more')}</p>
+          <p>
+            {extraCount} {trans('ramon-avocado.forum.home.more', 'more')}
+          </p>
         </div>
         <i className="fas fa-arrow-right" aria-hidden="true" />
       </a>
@@ -363,7 +355,10 @@ export default class AvocadoSearchPage extends Page {
   private renderDiscussionsTab() {
     const state = this.discussionsState;
     const isLoading = state.isInitialLoading() || state.isLoadingNext();
-    const items = state.getPages().flatMap((pg: any) => pg.items).filter((d: any) => d.id?.()) as any[];
+    const items = state
+      .getPages()
+      .flatMap((pg: any) => pg.items)
+      .filter((d: any) => d.id?.()) as any[];
     const q = ((app.search as any).state.params().q || '') as string;
 
     if (isLoading && items.length === 0) {
@@ -407,7 +402,10 @@ export default class AvocadoSearchPage extends Page {
   private renderPostsTab() {
     const state = this.postsState;
     const isLoading = state.isInitialLoading() || state.isLoadingNext();
-    const allPosts = state.getPages().flatMap((pg: any) => pg.items).filter((p: any) => p.id?.()) as any[];
+    const allPosts = state
+      .getPages()
+      .flatMap((pg: any) => pg.items)
+      .filter((p: any) => p.id?.()) as any[];
     const q = ((app.search as any).state.params().q || '') as string;
 
     if (isLoading && allPosts.length === 0) {
@@ -463,10 +461,7 @@ export default class AvocadoSearchPage extends Page {
         {loading && this.renderUserSkeleton()}
         {!loading && hasMore && (
           <div className="AvocadoDiscussions-loadMore">
-            <button
-              className="AvocadoDiscussions-loadMoreBtn"
-              onclick={() => this.usersState.loadNext()}
-            >
+            <button className="AvocadoDiscussions-loadMoreBtn" onclick={() => this.usersState.loadNext()}>
               {trans('ramon-avocado.forum.discussions.load_more', 'Load more')}
             </button>
           </div>
@@ -481,17 +476,18 @@ export default class AvocadoSearchPage extends Page {
     const username = (user.username?.() || '') as string;
     const dname = displayName(user);
     const href = (() => {
-      try { return app.route('user', { username }); }
-      catch { return '#'; }
+      try {
+        return app.route('user', { username });
+      } catch {
+        return '#';
+      }
     })();
     const bio = (user.bio?.() || '') as string;
     const q = (app.search as any).state.params().q || '';
     const postCount = numberOr(user.commentCount?.(), 0);
     const discussionCount = numberOr(user.discussionCount?.(), 0);
     const joinTime = user.joinTime?.();
-    const joinLabel = joinTime
-      ? new Date(joinTime as string).toLocaleDateString(undefined, { year: 'numeric', month: 'short' })
-      : null;
+    const joinLabel = joinTime ? new Date(joinTime as string).toLocaleDateString(undefined, { year: 'numeric', month: 'short' }) : null;
     const badges = user.badges?.()?.toArray?.() ?? [];
 
     return (
@@ -500,7 +496,10 @@ export default class AvocadoSearchPage extends Page {
           <a
             className="AvocadoSearch-userCard-avatar"
             href={href}
-            onclick={(e: Event) => { e.stopPropagation(); navigate(e as MouseEvent, href); }}
+            onclick={(e: Event) => {
+              e.stopPropagation();
+              navigate(e as MouseEvent, href);
+            }}
             aria-hidden="true"
             tabIndex={-1}
           >
@@ -510,19 +509,23 @@ export default class AvocadoSearchPage extends Page {
             <a
               className="AvocadoSearch-userCard-name"
               href={href}
-              onclick={(e: Event) => { e.stopPropagation(); navigate(e as MouseEvent, href); }}
+              onclick={(e: Event) => {
+                e.stopPropagation();
+                navigate(e as MouseEvent, href);
+              }}
             >
               {q ? highlight(dname, q) : dname}
             </a>
             <span className="AvocadoSearch-userCard-handle">@{username}</span>
-            {badges.length > 0 && (
-              <ul className="badges AvocadoSearch-userCard-badges">{listItems(badges)}</ul>
-            )}
+            {badges.length > 0 && <ul className="badges AvocadoSearch-userCard-badges">{listItems(badges)}</ul>}
           </div>
           <a
             className="AvocadoHome-replyBtn AvocadoSearch-userCard-viewBtn"
             href={href}
-            onclick={(e: Event) => { e.stopPropagation(); navigate(e as MouseEvent, href); }}
+            onclick={(e: Event) => {
+              e.stopPropagation();
+              navigate(e as MouseEvent, href);
+            }}
           >
             <i className="fas fa-arrow-right" aria-hidden="true" />
             {trans('ramon-avocado.forum.home.view', 'View')}
@@ -559,10 +562,7 @@ export default class AvocadoSearchPage extends Page {
     return [0, 1, 2].map((i) => (
       <div key={String(i)} className="AvocadoSearch-userCard AvocadoSearch-userCard--skeleton">
         <div className="AvocadoSearch-userCard-head">
-          <div
-            className="AvocadoSearch-userCard-avatar AvocadoHome-skeletonAvatar"
-            style={{ width: '44px', height: '44px' }}
-          />
+          <div className="AvocadoSearch-userCard-avatar AvocadoHome-skeletonAvatar" style={{ width: '44px', height: '44px' }} />
           <div className="AvocadoSearch-userCard-info">
             <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--sm" />
             <div className="AvocadoHome-skeletonLine AvocadoHome-skeletonLine--md" />

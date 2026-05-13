@@ -15,9 +15,7 @@ export default class WsUpdateBanner extends Component<WsUpdateBannerAttrs> {
     const { pendingCount, onFlush } = this.attrs;
     if (pendingCount <= 0) return null;
 
-    const label = pendingCount === 1
-      ? '1 new discussion'
-      : `${pendingCount} new discussions`;
+    const label = pendingCount === 1 ? '1 new discussion' : `${pendingCount} new discussions`;
 
     return (
       <div className="AvocadoWsUpdate">
