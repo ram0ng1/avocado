@@ -148,7 +148,7 @@ jobs:
           urls: |
             http://127.0.0.1:8080/
             http://127.0.0.1:8080/tags
-            http://127.0.0.1:8080/all
+            http://127.0.0.1:8080/discussions
           configPath: ${{ env.EXT_DIR }}/.github/lighthouserc.json
           uploadArtifacts: false
           temporaryPublicStorage: false
