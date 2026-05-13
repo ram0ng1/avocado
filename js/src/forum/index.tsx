@@ -52,8 +52,7 @@ import { buildUserPhoneNav, buildHero, buildSidebar } from './components/UserPro
 // então declaramos explicitamente para manter o padrão `forum/components/*`.
 const AllDiscussionsPage = () =>
   import(/* webpackChunkName: "forum/components/AllDiscussionsPage", webpackPrefetch: true */ './components/AllDiscussionsPage');
-const AvocadoTagPage = () =>
-  import(/* webpackChunkName: "forum/components/TagPage", webpackPrefetch: true */ './components/TagPage');
+const AvocadoTagPage = () => import(/* webpackChunkName: "forum/components/TagPage", webpackPrefetch: true */ './components/TagPage');
 const AvocadoTeamPage = () => import('./components/TeamPage');
 const AvocadoPostsSearchPage = () => import('./components/AvocadoPostsSearchPage');
 const AvocadoSearchPage = () => import('./components/AvocadoSearchPage');
