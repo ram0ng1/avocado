@@ -30,16 +30,24 @@ categories:
   - title: '🔧 Manutenção'
     labels:
       - 'manutencao'
+# A versão dos releases é calculada no release-management.yml a partir da
+# última tag git (label "BC" => minor; qualquer outra => patch) e passada
+# explicitamente ao release-drafter via input `version`. Este resolver fica
+# como fallback/documentação e espelha a mesma regra — sem "major" automático.
 version-resolver:
-  major:
-    labels:
-      - 'BC'
   minor:
     labels:
-      - 'melhoria'
+      - 'BC'
   patch:
     labels:
+      - 'melhoria'
       - 'correcao'
+      - 'performance'
+      - 'documentacao'
+      - 'refatoracao'
+      - 'dependencias'
+      - 'traducao'
+      - 'manutencao'
   default: patch
 change-template: '- $TITLE (PR #$NUMBER) por @$AUTHOR'
 template: |
