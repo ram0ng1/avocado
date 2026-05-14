@@ -37,9 +37,11 @@ jobs:
           tools: composer:v2
 
       - name: Validar composer.json
-        # --no-check-version mantém o campo "version" (lido pelo
-        # EndBug/version-check no release). Demais warnings continuam fatais.
-        run: composer validate --strict --no-check-publish --no-check-version
+        # O composer.json NÃO tem campo "version": a versão dos releases é
+        # derivada das tags git (ver release-management.yml). --no-check-publish
+        # evita falso-positivo de requisitos de publicação; demais warnings
+        # continuam fatais.
+        run: composer validate --strict --no-check-publish
 
   php:
     name: PHP ${{ matrix.php }} × flarum/core ${{ matrix.flarum-core }}
