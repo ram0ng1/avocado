@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Ramon\Avocado\Api;
 
-use Carbon\Carbon;
 use Flarum\Api\Schema\Attribute;
 use Flarum\Settings\SettingsRepositoryInterface;
-use Flarum\User\User;
-use Illuminate\Database\Capsule\Manager as DB;
+use Illuminate\Database\ConnectionInterface;
 
 class ForumAttributes
 {
-    public function __construct(protected SettingsRepositoryInterface $settings)
-    {
+    public function __construct(
+        protected SettingsRepositoryInterface $settings,
+        protected ConnectionInterface $db,
+    ) {
     }
 
     public function __invoke(): array
@@ -32,7 +32,7 @@ class ForumAttributes
                         return 0;
                     }
 
-                    return (int) DB::table('users')
+                    return (int) $this->db->table('users')
                         ->join('group_user', 'users.id', '=', 'group_user.user_id')
                         ->whereIn('group_user.group_id', $groupIds)
                         ->distinct('users.id')
@@ -52,33 +52,18 @@ class ForumAttributes
 
                     $limit = (int) ($this->settings->get('avocado.showcase_count') ?: 5);
 
-                    $count = DB::table('discussion_tag')
+                    $count = $this->db->table('discussion_tag')
                         ->where('tag_id', $tagId)
                         ->count();
 
                     return min($count, $limit);
                 }),
 
-            Attribute::make('avocadoOnlineUsers')
-                ->get(function () {
-                    if (!$this->settings->get('avocado.show_online_users', true)) {
-                        return [];
-                    }
-
-                    return User::select(['id', 'username', 'avatar_url', 'preferences'])
-                        ->where('last_seen_at', '>=', Carbon::now()->subMinutes(5))
-                        ->limit(50)
-                        ->get()
-                        ->filter(fn (User $user) => $user->preferences['discloseOnline'] ?? true)
-                        ->map(fn (User $user) => [
-                            'id'          => $user->id,
-                            'username'    => $user->username,
-                            'displayName' => $user->display_name,
-                            'avatarUrl'   => $user->avatar_url,
-                        ])
-                        ->values()
-                        ->toArray();
-                }),
+            // NOTE: the online-user list is NOT exposed here. It is injected
+            // server-side into <head> as window.__avocadoOnlineUsers by
+            // Content\InjectOnlineUsers (single source of truth — see §37 of
+            // CLAUDE.md). Duplicating it as an API attribute ran the same
+            // users-table scan twice on every forum page load.
         ];
     }
 }
