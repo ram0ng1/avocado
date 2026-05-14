@@ -15,6 +15,7 @@ use Flarum\Extend;
 use Ramon\Avocado\AvocadoServiceProvider;
 use Ramon\Avocado\Middleware\AddPerfHeaders;
 use Ramon\Avocado\Middleware\RemoveSkipLink;
+use Ramon\Avocado\Support\HtmlSanitizer;
 
 return [
     (new Extend\ServiceProvider())
@@ -29,11 +30,9 @@ return [
         ->content(\Ramon\Avocado\Content\AddHeroBannerPreload::class)
         ->content(\Ramon\Avocado\Content\CustomLoadingSpinner::class)
         ->content(\Ramon\Avocado\Content\HideLogoFlash::class)
-        // DeferMainCss removed: Flarum core already emits async-CSS natively
-        // (sessionStorage warm-visit cache + <link rel="preload" onload>) since
-        // a recent version. Keeping our own deferral was duplicating <noscript>
-        // tags and creating extra <link> entries on warm visits. The class file
-        // remains in src/Content/ as a no-op until removed in a future cleanup.
+        // No CSS-deferral injector here: Flarum core already emits async CSS
+        // natively (warm-visit cache + <link rel="preload" onload>); a custom
+        // deferral only duplicated <noscript>/<link> tags.
         ->content(\Ramon\Avocado\Content\LoadFontAwesomeKit::class)
         ->content(\Ramon\Avocado\Content\InjectOnlineUsers::class)
         ->route('/discussions', 'avocado-discussions')
@@ -116,7 +115,6 @@ return [
         ->fields(\Ramon\Avocado\Api\DiscussionFields::class),
 
     (new Extend\Routes('api'))
-        ->get('/avocado/optimize-image', 'avocado.optimize_image', \Ramon\Avocado\Controller\OptimizeImageController::class)
         ->post('/avocado/banner', 'avocado.banner.upload', \Ramon\Avocado\Controller\UploadBannerController::class)
         ->delete('/avocado/banner', 'avocado.banner.delete', \Ramon\Avocado\Controller\DeleteBannerController::class)
         ->post('/avocado/auth-image', 'avocado.auth_image.upload', \Ramon\Avocado\Controller\UploadAuthImageController::class)
@@ -160,7 +158,7 @@ return [
         ->serializeToForum('avocadoPopularHeading',     'avocado.popular_heading')
         ->serializeToForum('avocadoFollowingHeading',   'avocado.following_heading')
         ->serializeToForum('avocadoCustomHeroEnabled',  'avocado.custom_hero_enabled', 'boolval')
-        ->serializeToForum('avocadoCustomHeroHtml',     'avocado.custom_hero_html')
+        ->serializeToForum('avocadoCustomHeroHtml',     'avocado.custom_hero_html', fn ($html) => HtmlSanitizer::sanitize((string) $html))
         ->serializeToForum('avocadoColoredEnabled', 'avocado.colored_enabled', 'boolval')
         ->serializeToForum('avocadoColoredBorderStyle', 'avocado.colored_border_style', null, 'none')
         ->serializeToForum('avocadoThreadsStyle', 'avocado.threads_style', 'boolval')

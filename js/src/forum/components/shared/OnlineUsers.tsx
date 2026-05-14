@@ -20,17 +20,15 @@ const FALLBACK_GRADIENTS = [
 ];
 
 /**
- * Reads the online-user payload injected by the backend.
- *
- * The PHP side may push to `window.__avocadoOnlineUsers` (a plain JSON list)
- * or expose it via `app.forum.attribute('avocadoOnlineUsers')`. Both shapes
- * are supported. Returns an empty array when the feature is unavailable.
+ * Reads the online-user payload injected server-side into <head> as
+ * `window.__avocadoOnlineUsers` by Content\InjectOnlineUsers — the single
+ * source of truth (it used to be duplicated as an `avocadoOnlineUsers` forum
+ * API attribute, which ran the same users-table scan twice per page load).
+ * Returns an empty array when the feature is off or the payload is missing.
  */
 function getOnlineUsers(): any[] {
-  const win = window as any;
-  if (Array.isArray(win.__avocadoOnlineUsers)) return win.__avocadoOnlineUsers;
-  const injected = app.forum?.attribute('avocadoOnlineUsers');
-  return Array.isArray(injected) ? injected : [];
+  const list = (window as any).__avocadoOnlineUsers;
+  return Array.isArray(list) ? list : [];
 }
 
 /**
