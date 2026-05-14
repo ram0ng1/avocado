@@ -46,13 +46,9 @@ import { buildUserPhoneNav, buildHero, buildSidebar } from './components/UserPro
 // AllDiscussionsPage e TagPage (rotas mais prováveis após a home/tags). O
 // browser baixa esses chunks em idle, sem bloquear o first paint. Search*
 // e TeamPage ficam sem prefetch — só baixam quando o usuário navega.
-//
-// Como adicionamos o magic comment manualmente, o autoChunkNameLoader do
-// flarum-webpack-config não injeta mais o `webpackChunkName` automático,
-// então declaramos explicitamente para manter o padrão `forum/components/*`.
-const AllDiscussionsPage = () =>
-  import(/* webpackChunkName: "forum/components/AllDiscussionsPage", webpackPrefetch: true */ './components/AllDiscussionsPage');
-const AvocadoTagPage = () => import(/* webpackChunkName: "forum/components/TagPage", webpackPrefetch: true */ './components/TagPage');
+
+const AllDiscussionsPage = () => import('./components/AllDiscussionsPage');
+const AvocadoTagPage = () => import('./components/TagPage');
 const AvocadoTeamPage = () => import('./components/TeamPage');
 const AvocadoPostsSearchPage = () => import('./components/AvocadoPostsSearchPage');
 const AvocadoSearchPage = () => import('./components/AvocadoSearchPage');
