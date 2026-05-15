@@ -204,9 +204,7 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
 
     const useCustom = customEnabled && !!customHtml;
     const bannerClasses =
-      `AvocadoHome-heroBanner` +
-      (heroUrl ? ' AvocadoHome-heroBanner--hasImage' : '') +
-      (useCustom ? ' AvocadoHome-heroBanner--customHtml' : '');
+      `AvocadoHome-heroBanner` + (heroUrl ? ' AvocadoHome-heroBanner--hasImage' : '') + (useCustom ? ' AvocadoHome-heroBanner--customHtml' : '');
 
     return (
       <div
