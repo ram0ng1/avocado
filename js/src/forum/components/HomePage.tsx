@@ -180,14 +180,17 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
     const customEnabled = !!app.forum?.attribute('avocadoCustomHeroEnabled');
     const customHtml = sanitizeAdminHtml(app.forum?.attribute('avocadoCustomHeroHtml') as string);
 
-    // Custom HTML replaces the inner content only — wrapper, background image
-    // and overlay stay so all hero settings keep working with custom content.
-    // Admin-pasted HTML follows Flarum's "admin == HTML" convention but is
-    // scrubbed via sanitizeAdminHtml to keep an admin-account compromise from
-    // becoming guest-visible XSS.
+    // Custom HTML replaces everything inside the overlay — the admin's markup
+    // becomes a direct child of .AvocadoHome-heroBannerOverlay so it can define
+    // its own .AvocadoHome-heroBannerContent (and anything else) without being
+    // nested inside an extra wrapper. The hero banner wrapper, background image
+    // and overlay still stay so all hero settings keep working. Admin-pasted
+    // HTML follows Flarum's "admin == HTML" convention but is scrubbed via
+    // sanitizeAdminHtml to keep an admin-account compromise from becoming
+    // guest-visible XSS.
     const innerContent =
       customEnabled && customHtml ? (
-        <div className="AvocadoHome-heroBannerContent AvocadoHome-heroBannerContent--custom">{m.trust(customHtml)}</div>
+        m.trust(customHtml)
       ) : (
         <div className="AvocadoHome-heroBannerContent">
           <div className="AvocadoHome-heroBannerIcon">
@@ -199,9 +202,15 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
         </div>
       );
 
+    const useCustom = customEnabled && !!customHtml;
+    const bannerClasses =
+      `AvocadoHome-heroBanner` +
+      (heroUrl ? ' AvocadoHome-heroBanner--hasImage' : '') +
+      (useCustom ? ' AvocadoHome-heroBanner--customHtml' : '');
+
     return (
       <div
-        className={`AvocadoHome-heroBanner${heroUrl ? ' AvocadoHome-heroBanner--hasImage' : ''}`}
+        className={bannerClasses}
         style={
           heroUrl
             ? {

@@ -1291,6 +1291,32 @@
   }
 }
 
+// When admin-supplied custom HTML is used, the overlay keeps its flex
+// centering (so the admin's card stays centered in the banner regardless of
+// its max-width) but drops the dark depth gradient and decorative blobs that
+// would bleed over the admin's own background / shadow. The admin's inline
+// <style> may also override .AvocadoHome-heroBannerOverlay rules; the styles
+// below are scoped to the modifier so they don't fight nested overlays the
+// admin may have pasted in.
+.AvocadoHome-heroBanner--customHtml {
+  // Let the banner grow with the custom content. The default overlay is
+  // position:absolute (inset:0), which does not contribute to the banner's
+  // height — so a `min-height: 0` plus an absolute overlay collapses the
+  // banner to 0 and overflow:hidden clips the admin's card. Lifting every
+  // overlay (including any nested ones the admin pastes by mistake) back
+  // into the flow makes the banner size itself to the admin's markup.
+  min-height: 0;
+
+  .AvocadoHome-heroBannerOverlay {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    background: transparent;
+
+    &::before, &::after { display: none; }
+  }
+}
+
 .AvocadoHome-heroBannerContent {
   position: relative;
   z-index: 1;
