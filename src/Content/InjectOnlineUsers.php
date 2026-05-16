@@ -37,9 +37,7 @@ class InjectOnlineUsers
                 'id'          => $u->id,
                 'username'    => $u->username,
                 'displayName' => $u->display_name,
-                'avatarUrl'   => $u->avatar_url
-                    ? rtrim((string) app('flarum.config')->url(), '/') . '/assets/avatars/' . $u->avatar_url
-                    : null,
+                'avatarUrl'   => $u->avatar_url,
             ])
             ->values()
             ->toArray();
