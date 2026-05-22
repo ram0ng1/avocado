@@ -119,14 +119,22 @@ class AddCriticalCss
                 '.App-backControl{left:0}' .
             '}';
 
+        // NOTE: `.App` MUST use `min-height:100vh`, never `height:100%`.
+        // Core's sticky-footer layout makes `.App` a flex column whose `.App-content`
+        // child has `flex:1`. With a definite `height` the `.App` box is capped to the
+        // viewport and tall page content overflows it — any <body>-level element placed
+        // after #app (e.g. the `modern-footer` extension's <footer id="modern-footer">,
+        // or core's raw `custom_footer`) then lands at the 100vh mark and is painted
+        // over by the overflowing content. `min-height` lets `.App` grow with content,
+        // mirroring core's real `.App` rule in forum.css.
         $css = <<<CSS
         @font-face{font-family:'DM Sans Variable';font-weight:100 900;font-style:normal;font-display:swap;src:url('{$normalFont}') format('woff2-variations')}
         @font-face{font-family:'DM Sans Variable';font-weight:100 900;font-style:italic;font-display:swap;src:url('{$italicFont}') format('woff2-variations')}
         @font-face{font-family:'DM Sans';font-weight:100 900;font-style:normal;font-display:swap;src:url('{$normalFont}') format('woff2-variations')}
-        html,body{margin:0;padding:0;height:100%}
+        html,body{margin:0;padding:0}
         body{font-family:'DM Sans Variable','DM Sans','Segoe UI',sans-serif;overflow-x:hidden}
         *,*::before,*::after{box-sizing:border-box}
-        .App{display:flex;flex-direction:column;height:100%}
+        .App{display:flex;flex-direction:column;min-height:100vh}
         .App-content{flex:1 1 auto;min-width:0}
         .App-header{display:flex;contain:layout}@media(min-width:768px){.App-header{height:52px;min-height:52px}}
         {$logoReservation}
