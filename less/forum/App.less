@@ -9,16 +9,16 @@
 }
 
 // ── Custom Footer (admin → Appearance → Edit Custom Footer) ─────────────────
-// Flarum's core blade renders TWO footers (vendor/flarum/core/views/frontend/forum.blade.php):
-//   1. <footer class="App-footer" id="footer"></footer>  — Mithril mount target,
-//      always empty (Footer.view() returns null).
-//   2. {!! $forum['footerHtml'] !!}                       — Custom footer HTML
-//      from admin settings, sibling of #app inside <body>.
+// Flarum's core blade emits the custom footer in two places (vendor/flarum/core/
+// views/frontend/{app,forum}.blade.php):
+//   1. <footer class="App-footer" id="footer"></footer>  — Mithril mount target
+//      inside #app, empty until the avocado Footer.view override fills it.
+//   2. {!! $forum['footerHtml'] !!}                       — the admin's raw
+//      `custom_footer` HTML, printed as a <body> child between #app and #modal.
 //
-// Both share `id="footer"`. That duplicate ID breaks `document.getElementById('footer')`,
-// confuses Mithril patching and is invalid HTML. Hiding the empty one with CSS
-// avoids visual artifacts but does NOT fix the duplicate ID. We strip the id
-// from the mount target via JS at boot — see js/src/forum/index.tsx.
+// The avocado theme renders the footer inside mount #1 and removes the
+// body-level copy #2 at boot (see bootstrap block 0a in js/src/forum/index.tsx).
+// Without that removal the page shows two footers.
 //
 // Beyond that, do NOT add layout overrides here. Core's
 // `.hasPane.panePinned .App-footer { margin-left: var(--pane-width) }` is
