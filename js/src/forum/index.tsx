@@ -377,23 +377,41 @@ const addThreadsBackLabel = (root: HTMLElement | null) => {
 app.initializers.add(
   'ramon-avocado',
   () => {
-    // ── 0a. Resolve duplicate id="footer" via Footer override ─────────────────
-    // Core's blade renders TWO <footer id="footer" class="App-footer"> elements:
-    //   1. inside #app as a Mithril mount target (Footer.view() returns null,
-    //      so it stays empty — and core's `.App-footer:empty { display:none }`
-    //      hides it);
-    //   2. outside #app as a sibling of body, populated with the admin's
-    //      `custom_footer` HTML.
+    // ── 0a. Remove the server-rendered custom-footer copy ─────────────────────
+    // Flarum's blade emits the admin's custom footer TWICE worth of markup:
+    //   1. <footer class="App-footer" id="footer"></footer> inside #app — an
+    //      empty Mithril mount target (core's Footer.view() returns null);
+    //   2. {!! $forum['footerHtml'] !!} — the admin's `custom_footer` HTML,
+    //      printed RAW as a <body> child sitting between #app and #modal.
+    //      See vendor/flarum/core/views/frontend/{app,forum}.blade.php.
     //
-    // The duplicate id breaks getElementById and confuses layout. Better fix:
-    //   a) override Footer.view so the Mithril mount renders the admin footer
-    //      content itself (no longer empty, no longer hidden by :empty);
-    //   b) remove the external sibling footer at boot, so only one #footer
-    //      exists and core's pane-aware layout (margin-left: var(--pane-width))
-    //      works without conflicts.
+    // The avocado theme renders that HTML inside the in-#app mount instead
+    // (block 25 below: the Footer.view override) so the layout stays inside
+    // #app and core's pane-aware `margin-left: var(--pane-width)` keeps working.
+    // The server-rendered body-level copy (#2) is therefore a duplicate and
+    // must be removed — otherwise the page shows two footers.
+    //
+    // The old `body > footer#footer` selector only matched when the admin
+    // happened to wrap their footer in exactly `<footer id="footer">`. Core
+    // does NOT wrap `custom_footer`, so any other markup (a <div>, plain text,
+    // a <footer> with a different id) left the duplicate in place. Instead we
+    // clear every <body> node between #app and #modal: that span is exactly
+    // the `custom_footer` output — head/foot Document injectors land in <head>
+    // or after the boot scripts, never here.
     try {
-      const externalFooter = document.querySelector('body > footer#footer') as HTMLElement | null;
-      if (externalFooter) externalFooter.parentElement?.removeChild(externalFooter);
+      const appEl = document.getElementById('app');
+      const modalEl = document.getElementById('modal');
+      if (appEl && appEl.parentElement === document.body) {
+        let node: ChildNode | null = appEl.nextSibling;
+        while (node && node !== modalEl) {
+          // Safety net: if #modal is somehow absent, never walk into the boot
+          // scripts — stop before them rather than deleting the SPA payload.
+          if (!modalEl && /^(script|noscript)$/i.test(node.nodeName)) break;
+          const next: ChildNode | null = node.nextSibling;
+          document.body.removeChild(node);
+          node = next;
+        }
+      }
     } catch (_) {
       /* defensive — never block boot */
     }
@@ -2296,7 +2314,8 @@ app.initializers.add(
     };
 
     // ── 25. Footer — render admin's custom_footer inside the Mithril mount ───
-    // See bootstrap block 0a for the rationale (resolve duplicate id="footer").
+    // See bootstrap block 0a for the rationale (the server-rendered body-level
+    // copy of this same HTML is removed there, so this mount is the only one).
     //
     // Two transformations on the admin HTML:
     //   1. <style> blocks are hoisted into <head>. They must be moved out of the
