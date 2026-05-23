@@ -51,7 +51,12 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
             throw new ValidationException(['discussionId' => 'Discussion not found.']);
         }
 
-        $actor->assertCan('rename', $discussion);
+        // Use a dedicated ability so the authorization rule is named for what
+        // it gates (hero-image upload) rather than piggy-backing on the
+        // unrelated "rename" permission. The policy currently delegates to
+        // rename — admins can override that later without touching this
+        // controller. See Ramon\Avocado\Access\DiscussionPolicy.
+        $actor->assertCan('uploadHeroImage', $discussion);
 
         $file = Arr::get($request->getUploadedFiles(), 'avocado-discussion-hero');
         if (! $file) {
@@ -65,9 +70,22 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
             throw new ValidationException(['file' => 'File is too large (max 8 MB).']);
         }
 
-        // MIME guard: don't trust the client's Content-Type. Sniff on disk.
+        // MIME guard: don't trust the client's Content-Type. Sniff on disk via
+        // finfo — mime_content_type() is a thin wrapper over the same database
+        // but is deprecated for new code and unavailable on PHP builds compiled
+        // without ext-fileinfo's CLI alias. Use the finfo API directly.
         $tmpPath = $file->getStream()->getMetadata('uri');
-        $mime = is_string($tmpPath) ? (mime_content_type($tmpPath) ?: '') : '';
+        $mime = '';
+        if (is_string($tmpPath) && is_readable($tmpPath)) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            if ($finfo !== false) {
+                $detected = finfo_file($finfo, $tmpPath);
+                finfo_close($finfo);
+                if (is_string($detected)) {
+                    $mime = $detected;
+                }
+            }
+        }
         if (! in_array($mime, self::ALLOWED_MIMES, true)) {
             throw new ValidationException(['file' => 'Unsupported image type.']);
         }
