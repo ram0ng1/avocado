@@ -5,24 +5,31 @@ declare(strict_types=1);
 namespace Ramon\Avocado\Content;
 
 use Flarum\Frontend\Document;
+use Flarum\Settings\SettingsRepositoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
- * Injects a script into <head> that ensures Font Awesome Kit processes
- * dynamically-added .fa-kit elements without page refresh.
+ * Injects a preconnect to the Font Awesome Kit CDN plus the FontAwesomeConfig
+ * stanza that switches the kit's runtime into mutation-observer mode (so
+ * Mithril-added .fa-kit icons render without a refresh flash).
  *
- * How it works:
- * 1. Font Awesome Kit's main script loads and sets up mutation observation
- * 2. This script configures FontAwesome to watch the DOM for new .fa-kit icons
- * 3. When Mithril renders new elements with .fa-kit, FontAwesome automatically
- *    processes them without flash or delay
- *
- * This prevents the "refresh" effect where icons flicker or are redrawn.
+ * Both lines are no-ops — and a wasted preconnect — on forums that don't load
+ * a kit at all, so the injector is gated behind an admin opt-in. The Kit
+ * script itself is expected to be loaded by whoever opts in (typically pasted
+ * into the admin custom_header HTML field straight from the FA dashboard).
  */
 class LoadFontAwesomeKit
 {
+    public function __construct(protected SettingsRepositoryInterface $settings)
+    {
+    }
+
     public function __invoke(Document $document, ServerRequestInterface $request): void
     {
+        if (! $this->settings->get('avocado.fontawesome_kit_enabled', false)) {
+            return;
+        }
+
         // language=JavaScript
         $script = <<<'JS'
 <link rel="preconnect" href="https://kit.fontawesome.com" crossorigin>

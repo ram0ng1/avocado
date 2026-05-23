@@ -7,9 +7,21 @@ namespace Ramon\Avocado\Api;
 use Flarum\Api\Schema;
 use Flarum\Discussion\Discussion;
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
+use Illuminate\Contracts\Filesystem\Filesystem;
 
 class DiscussionFields
 {
+    protected Filesystem $disk;
+
+    public function __construct(FilesystemFactory $filesystem)
+    {
+        // Resolve the disk once per request instead of per attribute read —
+        // the getter below runs for every discussion in an Index payload, so
+        // calling resolve() inside the closure was repeating container work
+        // for every row.
+        $this->disk = $filesystem->disk('flarum-assets');
+    }
+
     public function __invoke(): array
     {
         return [
@@ -26,9 +38,7 @@ class DiscussionFields
                     if (! $path) {
                         return null;
                     }
-                    /** @var FilesystemFactory $factory */
-                    $factory = resolve(FilesystemFactory::class);
-                    return $factory->disk('flarum-assets')->url((string) $path);
+                    return $this->disk->url((string) $path);
                 }),
         ];
     }
