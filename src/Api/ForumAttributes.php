@@ -6,13 +6,13 @@ namespace Ramon\Avocado\Api;
 
 use Flarum\Api\Schema\Attribute;
 use Flarum\Settings\SettingsRepositoryInterface;
-use Illuminate\Database\ConnectionInterface;
+use Flarum\Tags\Tag;
+use Flarum\User\User;
 
 class ForumAttributes
 {
     public function __construct(
         protected SettingsRepositoryInterface $settings,
-        protected ConnectionInterface $db,
     ) {
     }
 
@@ -21,42 +21,42 @@ class ForumAttributes
         return [
             Attribute::make('avocadoTeamPageMemberCount')
                 ->get(function () {
-                    if (!$this->settings->get('avocado.team_page_enabled', false)) {
+                    if (! $this->settings->get('avocado.team_page_enabled', false)) {
                         return 0;
                     }
 
                     $raw = (string) ($this->settings->get('avocado.team_page_groups') ?: '[]');
                     $groupIds = json_decode($raw, true);
 
-                    if (empty($groupIds) || !is_array($groupIds)) {
+                    if (empty($groupIds) || ! is_array($groupIds)) {
                         return 0;
                     }
 
-                    return (int) $this->db->table('users')
-                        ->join('group_user', 'users.id', '=', 'group_user.user_id')
-                        ->whereIn('group_user.group_id', $groupIds)
-                        ->distinct('users.id')
-                        ->count('users.id');
+                    return User::query()
+                        ->whereHas('groups', fn ($q) => $q->whereIn('groups.id', $groupIds))
+                        ->count();
                 }),
 
             Attribute::make('avocadoShowcaseItemCount')
                 ->get(function () {
-                    if (!$this->settings->get('avocado.showcase_enabled', false)) {
+                    if (! $this->settings->get('avocado.showcase_enabled', false)) {
                         return 0;
                     }
 
                     $tagId = (int) $this->settings->get('avocado.showcase_tag');
-                    if (!$tagId) {
+                    if (! $tagId) {
                         return 0;
                     }
 
                     $limit = (int) ($this->settings->get('avocado.showcase_count') ?: 5);
 
-                    $count = $this->db->table('discussion_tag')
-                        ->where('tag_id', $tagId)
-                        ->count();
+                    /** @var Tag|null $tag */
+                    $tag = Tag::query()->find($tagId);
+                    if (! $tag) {
+                        return 0;
+                    }
 
-                    return min($count, $limit);
+                    return min($tag->discussions()->count(), $limit);
                 }),
 
             // NOTE: the online-user list is NOT exposed here. It is injected
