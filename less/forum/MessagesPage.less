@@ -12,13 +12,15 @@
 //
 // Note: DiscussionListPane uses Flarum global vars (--body-bg, --control-bg,
 // --shadow-color) which automatically adapt to light/dark themes.
+//
+// Why --header-height is NOT redefined here: the critical CSS in
+// AddCriticalCss.php pins .App-header to 52px on tablet+, so the actual topbar
+// is 52px (= the core --header-height default). Redefining --header-height to
+// 72px at :root caused .App { padding-top: var(--header-height) } to reserve
+// 72px of padding-top globally while the visible header only filled 52px —
+// producing a 20px body-bg strip below the header on every page. MessagesPage's
+// calc(100vh - var(--header-height, 52px)) now resolves correctly to 100vh-52px.
 :root {
-  // Match the actual Avocado topbar height (72px). MessagesPage's
-  // calc(100vh - var(--header-height)) was using the 52px fallback and
-  // making .AvocadoMessages 20px too tall, pushing the sidebar bottom
-  // off-screen.
-  --header-height: 72px;
-
   --avmsg-bg:            #f0f2f7;
   --avmsg-sidebar-bg:    #ffffff;
   --avmsg-card-bg:       #ffffff;
