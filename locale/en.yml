@@ -297,3 +297,10 @@ ramon-avocado:
       member_plural: members
     link:
       login_to_view: "Login to view link"
+    user:
+      posts_empty: "No posts yet."
+      discussions_empty: "No discussions yet."
+      likes_empty: "No liked posts yet."
+      mentions_empty: "No mentions yet."
+      load_more: "Load more"
+      online: "Online"

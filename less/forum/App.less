@@ -337,9 +337,10 @@ html[data-avocado-logo-custom="true"] {
       line-height: 1;
     }
 
-    // .App padding-top uses --header-height (72px globally, set in MessagesPage.less
-    // for the 72px text/PNG topbar). When the SVG-logo branch shrinks the header to
-    // 52px, the 20px difference shows as a body-bg strip below the header. Match.
+    // .App padding-top uses --header-height. Core's default is 52px and the
+    // critical CSS pins .App-header to 52px on tablet+, so this assignment is a
+    // no-op today — kept as documentation in case a future change re-introduces
+    // a wider topbar without updating the SVG-logo branch.
     --header-height: 52px;
   }
 }

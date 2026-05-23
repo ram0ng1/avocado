@@ -2,7 +2,7 @@ import app from 'flarum/forum/app';
 import UserPage from 'flarum/forum/components/UserPage';
 import UserControls from 'flarum/forum/utils/UserControls';
 
-import { renderThreadSkeleton, renderLoadMore, renderEmpty } from '../utils';
+import { renderThreadSkeleton, renderLoadMore, renderEmpty, trans } from '../utils';
 import { toggleDiscussionLike } from '../utils/likes';
 
 import ThreadCard from './shared/ThreadCard';
@@ -145,8 +145,8 @@ export class AvocadoUserPostsPage extends AvocadoUserBase {
       <div className="AvocadoHome-threadStack">
         {this.posts.map((p: any) => <PostCard key={p.id?.()} post={p} context={this} />).filter(Boolean)}
         {this.loading && renderThreadSkeleton()}
-        {!this.loading && this.posts.length === 0 && renderEmpty('No posts yet.')}
-        {this.hasMore && !this.loading && renderLoadMore('Load more', () => this.loadPosts(false))}
+        {!this.loading && this.posts.length === 0 && renderEmpty(trans('ramon-avocado.forum.user.posts_empty', 'No posts yet.'))}
+        {this.hasMore && !this.loading && renderLoadMore(trans('ramon-avocado.forum.user.load_more', 'Load more'), () => this.loadPosts(false))}
       </div>
     );
   }
@@ -224,8 +224,8 @@ export class AvocadoUserDiscussionsPage extends AvocadoUserBase {
           />
         ))}
         {this.loading && renderThreadSkeleton()}
-        {!this.loading && this.discussions.length === 0 && renderEmpty('No discussions yet.')}
-        {this.hasMore && !this.loading && renderLoadMore('Load more', () => this.loadDiscussions(false))}
+        {!this.loading && this.discussions.length === 0 && renderEmpty(trans('ramon-avocado.forum.user.discussions_empty', 'No discussions yet.'))}
+        {this.hasMore && !this.loading && renderLoadMore(trans('ramon-avocado.forum.user.load_more', 'Load more'), () => this.loadDiscussions(false))}
       </div>
     );
   }
@@ -293,8 +293,8 @@ export class AvocadoUserLikesPage extends AvocadoUserBase {
       <div className="AvocadoHome-threadStack">
         {this.posts.map((p: any) => <PostCard key={p.id?.()} post={p} context={this} />).filter(Boolean)}
         {this.loading && renderThreadSkeleton()}
-        {!this.loading && this.posts.length === 0 && renderEmpty('No liked posts yet.')}
-        {this.hasMore && !this.loading && renderLoadMore('Load more', () => this.loadPosts(false))}
+        {!this.loading && this.posts.length === 0 && renderEmpty(trans('ramon-avocado.forum.user.likes_empty', 'No liked posts yet.'))}
+        {this.hasMore && !this.loading && renderLoadMore(trans('ramon-avocado.forum.user.load_more', 'Load more'), () => this.loadPosts(false))}
       </div>
     );
   }
@@ -362,8 +362,8 @@ export class AvocadoUserMentionsPage extends AvocadoUserBase {
       <div className="AvocadoHome-threadStack">
         {this.posts.map((p: any) => <PostCard key={p.id?.()} post={p} context={this} />).filter(Boolean)}
         {this.loading && renderThreadSkeleton()}
-        {!this.loading && this.posts.length === 0 && renderEmpty('No mentions yet.')}
-        {this.hasMore && !this.loading && renderLoadMore('Load more', () => this.loadPosts(false))}
+        {!this.loading && this.posts.length === 0 && renderEmpty(trans('ramon-avocado.forum.user.mentions_empty', 'No mentions yet.'))}
+        {this.hasMore && !this.loading && renderLoadMore(trans('ramon-avocado.forum.user.load_more', 'Load more'), () => this.loadPosts(false))}
       </div>
     );
   }
