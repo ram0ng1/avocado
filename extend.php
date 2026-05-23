@@ -202,5 +202,9 @@ return [
         ->default('avocado.team_page_enabled', false)
         ->default('avocado.team_page_groups', '[]')
         ->default('avocado.team_page_title', '')
-        ->default('avocado.team_page_description', ''),
+        ->default('avocado.team_page_description', '')
+        ->default('avocado.fontawesome_kit_enabled', false),
+
+    (new Extend\Policy())
+        ->modelPolicy(\Flarum\Discussion\Discussion::class, \Ramon\Avocado\Access\DiscussionPolicy::class),
 ];
