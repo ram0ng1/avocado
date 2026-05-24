@@ -247,11 +247,11 @@ export default class AvocadoTagPage extends Page {
               />
             ))}
             {isLoadingNext && renderThreadSkeleton()}
-            {!isLoadingNext && discussions.length === 0 && !isInitialLoading && renderEmpty('No discussions in this category yet.')}
+            {!isLoadingNext && discussions.length === 0 && !isInitialLoading && renderEmpty(trans('ramon-avocado.forum.tags.empty', 'No discussions in this category yet.'))}
             {isInitialLoading && discussions.length === 0 && renderThreadSkeleton()}
           </div>
 
-          {this.feedState?.hasNext() && !isLoadingNext && renderLoadMore('Load more', () => this.feedState.loadNext())}
+          {this.feedState?.hasNext() && !isLoadingNext && renderLoadMore(trans('ramon-avocado.forum.tags.load_more', 'Load more'), () => this.feedState.loadNext())}
         </div>
       </div>
     );
@@ -280,7 +280,7 @@ export default class AvocadoTagPage extends Page {
     return (
       <div className="AvocadoTagPage">
         <div className="AvocadoTagPage-body">
-          <div className="AvocadoDiscussions-empty">Tag not found.</div>
+          <div className="AvocadoDiscussions-empty">{trans('ramon-avocado.forum.tags.not_found', 'Tag not found.')}</div>
         </div>
       </div>
     );
