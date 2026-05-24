@@ -35,6 +35,9 @@
     "require": {
         "flarum/core": "^2.0.0"
     },
+    "require-dev": {
+        "flarum/tags": "^2.0.0"
+    },
     "suggest": {
         "flarum/tags": "Required for the showcase widget and tag-based hero images (^2.0)."
     },
