@@ -16,6 +16,7 @@ use Laminas\Diactoros\Response\JsonResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Ramon\Avocado\Model\DiscussionHero;
 
 class UploadDiscussionHeroController implements RequestHandlerInterface
 {
@@ -95,17 +96,23 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
             ->scaleDown(width: 1600)
             ->toWebp(quality: 78);
 
-        // Replace any previous image attached to this discussion.
-        $oldPath = $discussion->avocado_hero_image_path;
-        if ($oldPath && $this->uploadDir->exists($oldPath)) {
-            $this->uploadDir->delete($oldPath);
+        /** @var DiscussionHero|null $hero */
+        $hero = $discussion->avocadoHero;
+
+        // Substitui qualquer imagem anterior anexada a esta discussão.
+        if ($hero && $this->uploadDir->exists($hero->image_path)) {
+            $this->uploadDir->delete($hero->image_path);
         }
 
         $filename = 'avocado-disc-hero-'.$discussion->id.'-'.Str::lower(Str::random(8)).'.webp';
         $this->uploadDir->put($filename, $encoded);
 
-        $discussion->avocado_hero_image_path = $filename;
-        $discussion->save();
+        if ($hero === null) {
+            $hero = new DiscussionHero();
+            $hero->discussion_id = (int) $discussion->id;
+        }
+        $hero->image_path = $filename;
+        $hero->save();
 
         return new JsonResponse([
             'discussionId'   => (string) $discussion->id,
