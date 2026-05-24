@@ -19,7 +19,12 @@ use Flarum\User\User;
  */
 class DiscussionPolicy extends AbstractPolicy
 {
-    public function uploadHeroImage(User $actor, Discussion $discussion): ?bool
+    // No return type declaration: Flarum's policy methods may return one of the
+    // AbstractPolicy string constants (ALLOW / DENY / FORCE_ALLOW / FORCE_DENY)
+    // via $this->allow() / ->deny() / ->forceAllow() / ->forceDeny(), or null
+    // to abstain. Constraining this to ?bool — as the first cut did — produced
+    // a TypeError because $this->allow() returns the string 'allow'.
+    public function uploadHeroImage(User $actor, Discussion $discussion)
     {
         return $actor->can('rename', $discussion) ? $this->allow() : null;
     }
