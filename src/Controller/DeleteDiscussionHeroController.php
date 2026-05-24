@@ -14,6 +14,7 @@ use Laminas\Diactoros\Response\JsonResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Ramon\Avocado\Model\DiscussionHero;
 
 class DeleteDiscussionHeroController implements RequestHandlerInterface
 {
@@ -41,15 +42,19 @@ class DeleteDiscussionHeroController implements RequestHandlerInterface
             throw new ValidationException(['discussionId' => 'Discussion not found.']);
         }
 
-        $actor->assertCan('rename', $discussion);
+        // Usa a ability dedicada (mesma do upload) em vez de pegar carona em
+        // `rename`. A política delega para `rename` por enquanto; trocar a
+        // semântica via permissão fica numa única decisão do admin.
+        $actor->assertCan('uploadHeroImage', $discussion);
 
-        $path = $discussion->avocado_hero_image_path;
-        if ($path && $this->uploadDir->exists($path)) {
-            $this->uploadDir->delete($path);
+        /** @var DiscussionHero|null $hero */
+        $hero = $discussion->avocadoHero;
+        if ($hero) {
+            if ($hero->image_path && $this->uploadDir->exists($hero->image_path)) {
+                $this->uploadDir->delete($hero->image_path);
+            }
+            $hero->delete();
         }
-
-        $discussion->avocado_hero_image_path = null;
-        $discussion->save();
 
         return new JsonResponse([
             'discussionId'  => (string) $discussion->id,

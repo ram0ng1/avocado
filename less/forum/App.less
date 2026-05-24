@@ -175,13 +175,15 @@
   }
 }
 
-// Hide the skip-to-content link in mobile/tablet UI so it does not appear in the drawer/header list.
-@media @phone, @tablet {
-  a.sr-only.sr-only-focusable-custom[href="#content"],
-  .App-drawer .App-skipNav,
-  .App-drawer .App-skipLink {
-    display: none !important;
-  }
+// Esconde o link "skip to content" do tema. Substitui o middleware
+// RemoveSkipLink (CLAUDE.md §38.2 / §40.3): bufferizar a resposta HTML
+// inteira em memória para extrair uma tag <a> custa proporcional ao tamanho
+// da página em todo hit. Uma regra CSS produz o mesmo resultado visual com
+// custo zero por request.
+a.sr-only.sr-only-focusable-custom[href="#content"],
+.App-drawer .App-skipNav,
+.App-drawer .App-skipLink {
+  display: none !important;
 }
 
 // ─── Phone: hide phone header controls while drawer is open ──────────────────

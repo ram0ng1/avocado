@@ -14,7 +14,6 @@ namespace Ramon\Avocado;
 use Flarum\Extend;
 use Ramon\Avocado\AvocadoServiceProvider;
 use Ramon\Avocado\Middleware\AddPerfHeaders;
-use Ramon\Avocado\Middleware\RemoveSkipLink;
 use Ramon\Avocado\Support\HtmlSanitizer;
 
 return [
@@ -42,7 +41,6 @@ return [
         ->get('/team', 'avocado-team', \Ramon\Avocado\Controller\TeamPageController::class),
 
     (new Extend\Middleware('forum'))
-        ->add(RemoveSkipLink::class)
         ->add(AddPerfHeaders::class),
 
     (new Extend\Frontend('admin'))
@@ -110,6 +108,9 @@ return [
 
     (new Extend\ApiResource(\Flarum\Api\Resource\ForumResource::class))
         ->fields(\Ramon\Avocado\Api\ForumAttributes::class),
+
+    (new Extend\Model(\Flarum\Discussion\Discussion::class))
+        ->hasOne('avocadoHero', \Ramon\Avocado\Model\DiscussionHero::class, 'discussion_id'),
 
     (new Extend\ApiResource(\Flarum\Api\Resource\DiscussionResource::class))
         ->fields(\Ramon\Avocado\Api\DiscussionFields::class),
