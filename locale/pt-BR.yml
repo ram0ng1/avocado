@@ -285,6 +285,9 @@ ramon-avocado:
       other_tags_label: Outras tags
       featured: Destaque
       all_discussions: Todas as discussões
+      empty: "Nenhuma discussão nesta categoria por enquanto."
+      not_found: "Categoria não encontrada."
+      load_more: "Carregar mais"
     team:
       title: Nossa Equipe
       disabled: Esta página não está disponível.
