@@ -1870,6 +1870,9 @@
   width: 26px;
   height: 26px;
   border-radius: 8px;
+  // Fallback quando a tag não tem cor customizada — sem isto, o inline
+  // `background: ''` deixaria o ícone branco invisível no tema claro.
+  background: var(--primary-color);
   color: #fff;
   display: inline-flex;
   align-items: center;

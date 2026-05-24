@@ -220,6 +220,11 @@ ramon-avocado:
       badge_unread_tooltip: "{count} posts não lidos"
       categories_heading: Categorias
       choose_tags: Escolher tags
+      bypass_tag_requirements: Ignorar requisitos de tags
+      choose_primary_tag_singular: Escolha 1 tag principal
+      choose_primary_tag_plural: "Escolha {count} tags principais"
+      choose_secondary_tag_singular: Escolha 1 tag secundária
+      choose_secondary_tag_plural: "Escolha {count} tags secundárias"
       composer_body_placeholder: "Compartilhe seus pensamentos..."
       composer_close: Fechar
       composer_edit: Editar
