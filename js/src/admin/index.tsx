@@ -28,9 +28,13 @@ abstract class AdminComponent<A extends LooseAttrs = LooseAttrs> extends Compone
 const settings = (): Record<string, any> => (app.data as any).settings;
 
 // ─── Translation helper ───────────────────────────────────────────────────────
-const trans = (key: string, fallback: string): string => {
-  const out = app.translator?.trans(key);
-  return out && typeof out === 'string' && out !== key ? out : fallback;
+const trans = (key: string, fallback: string, params: Record<string, any> = {}): string => {
+  // `extract: true` força a Translator.trans devolver string em vez de
+  // NestedStringArray (Mithril children); sem isso o typeof string é sempre
+  // falso e caímos no fallback inglês, quebrando a troca de locale.
+  const out = app.translator?.trans(key, params, true);
+  if (typeof out === 'string' && out !== key) return out;
+  return Object.entries(params).reduce<string>((s, [k, v]) => s.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v)), fallback);
 };
 
 // ─── URL helpers ──────────────────────────────────────────────────────────────

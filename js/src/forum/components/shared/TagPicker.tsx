@@ -1,7 +1,7 @@
 import app from 'flarum/forum/app';
 import Component from 'flarum/common/Component';
 import type { ComponentAttrs } from 'flarum/common/Component';
-import { trans, FALLBACK_COLORS, iconColors } from '../../utils';
+import { trans, iconColors } from '../../utils';
 import type InlineComposerState from '../../states/InlineComposerState';
 
 export interface ITagPickerAttrs extends ComponentAttrs {
@@ -138,7 +138,7 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
                 m.redraw();
               }}
             />
-            {' Bypass tag requirements'}
+            {' ' + trans('ramon-avocado.forum.home.bypass_tag_requirements', 'Bypass tag requirements')}
           </label>
         )}
       </div>
@@ -155,7 +155,10 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
   ) {
     const tagId = tag.id?.();
     const isSelected = state.tags.includes(tag);
-    const tagColor = tag.color?.() || FALLBACK_COLORS[0];
+    // Tags sem cor customizada caem no `--primary-color` da skin via CSS;
+    // setar `background: ''` inline anula a regra LESS e deixa o ícone
+    // (color:#fff) invisível sobre fundo transparente no tema claro.
+    const tagColor = tag.color?.() || null;
     const selectable = this.canSelectTag(tag, state, limits, primaryCount, secondaryCount);
 
     const className = ['AvocadoHome-tagPickerItem', isChild && 'is-child', isSelected && 'is-selected', !selectable && !isSelected && 'is-disabled']
@@ -175,7 +178,7 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
           m.redraw();
         }}
       >
-        <span className="AvocadoHome-tagPickerItem-icon" style={{ background: tagColor }}>
+        <span className="AvocadoHome-tagPickerItem-icon" style={tagColor ? { background: tagColor } : {}}>
           <i className={tag.icon?.() || 'fas fa-tag'} aria-hidden="true" />
         </span>
         <span className="AvocadoHome-tagPickerItem-name">{tag.name?.()}</span>
@@ -230,11 +233,15 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
     if (state.tagBypassReqs) return '';
     if (primaryCount < limits.minPrimary) {
       const n = limits.minPrimary - primaryCount;
-      return n === 1 ? 'Choose 1 primary tag' : `Choose ${n} primary tags`;
+      return n === 1
+        ? trans('ramon-avocado.forum.home.choose_primary_tag_singular', 'Choose 1 primary tag')
+        : trans('ramon-avocado.forum.home.choose_primary_tag_plural', `Choose ${n} primary tags`, { count: n });
     }
     if (secondaryCount < limits.minSecondary) {
       const n = limits.minSecondary - secondaryCount;
-      return n === 1 ? 'Choose 1 secondary tag' : `Choose ${n} secondary tags`;
+      return n === 1
+        ? trans('ramon-avocado.forum.home.choose_secondary_tag_singular', 'Choose 1 secondary tag')
+        : trans('ramon-avocado.forum.home.choose_secondary_tag_plural', `Choose ${n} secondary tags`, { count: n });
     }
     return '';
   }
