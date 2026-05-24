@@ -6,6 +6,7 @@ namespace Ramon\Avocado\Content;
 
 use Carbon\Carbon;
 use Flarum\Frontend\Document;
+use Flarum\Http\RequestUtil;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Flarum\User\User;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
@@ -38,6 +39,16 @@ class InjectOnlineUsers
     public function __invoke(Document $document, ServerRequestInterface $request): void
     {
         if (! $this->settings->get('avocado.show_online_users', true)) {
+            $document->head[] = '<script>window.__avocadoOnlineUsers=[];</script>';
+            return;
+        }
+
+        // Não expõe a lista de online users para visitantes não autenticados:
+        // tratar a presença como informação de comunidade evita revelar
+        // usernames / avatares de membros para qualquer crawler ou visitante
+        // anônimo. Guests recebem uma lista vazia.
+        $actor = RequestUtil::getActor($request);
+        if ($actor->isGuest()) {
             $document->head[] = '<script>window.__avocadoOnlineUsers=[];</script>';
             return;
         }
