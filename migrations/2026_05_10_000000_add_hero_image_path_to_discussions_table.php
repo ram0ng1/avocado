@@ -2,22 +2,12 @@
 
 declare(strict_types=1);
 
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Database\Schema\Builder;
+use Flarum\Database\Migration;
 
-return [
-    'up' => function (Builder $schema) {
-        if (! $schema->hasColumn('discussions', 'avocado_hero_image_path')) {
-            $schema->table('discussions', function (Blueprint $table) {
-                $table->string('avocado_hero_image_path', 191)->nullable()->default(null);
-            });
-        }
-    },
-    'down' => function (Builder $schema) {
-        if ($schema->hasColumn('discussions', 'avocado_hero_image_path')) {
-            $schema->table('discussions', function (Blueprint $table) {
-                $table->dropColumn('avocado_hero_image_path');
-            });
-        }
-    },
-];
+// Mantida apenas para instalações antigas que já registraram esta migração.
+// A coluna é movida para uma tabela companheira por
+// 2026_05_24_000000_create_avocado_discussion_heroes_table.php — instalações
+// novas adicionam e dropam a coluna na mesma fase de upgrade.
+return Migration::addColumns('discussions', [
+    'avocado_hero_image_path' => ['string', 'length' => 191, 'nullable' => true, 'default' => null],
+]);
