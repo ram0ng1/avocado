@@ -14,18 +14,23 @@ use DOMXPath;
  * on the public site.
  *
  * Strips:
- *  - <script>, <iframe>, <object>, <embed>, <link>, <meta>, <base>, <form>
+ *  - <script>, <style>, <iframe>, <object>, <embed>, <link>, <meta>, <base>, <form>
  *  - all on*= event-handler attributes
  *  - href / src / action / formaction / xlink:href pointing at
  *    javascript: / vbscript: / data:text/html schemes
  *  - inline style attributes containing expression(), @import, or *script: schemes
+ *
+ * <style> is stripped because admin-pasted CSS reaches every guest via
+ * serializeToForum and can carry @import url(evil) / expression() payloads
+ * (the inline-style scrub only covers style="..." attributes, not <style>
+ * element bodies).
  *
  * Not a full allow-list (HTMLPurifier territory) — sized for "the admin pasted
  * markup we want to render, but XSS sinks should never reach guests".
  */
 final class HtmlSanitizer
 {
-    private const STRIP_ELEMENTS = ['script', 'iframe', 'object', 'embed', 'link', 'meta', 'base', 'form'];
+    private const STRIP_ELEMENTS = ['script', 'style', 'iframe', 'object', 'embed', 'link', 'meta', 'base', 'form'];
 
     private const URL_ATTRS = ['href', 'src', 'action', 'formaction', 'xlink:href', 'srcset', 'background', 'poster'];
 
