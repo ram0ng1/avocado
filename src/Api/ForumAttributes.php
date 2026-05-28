@@ -60,9 +60,23 @@ class ForumAttributes
         }
 
         $raw = (string) ($this->settings->get('avocado.team_page_groups') ?: '[]');
-        $groupIds = json_decode($raw, true);
+        $decoded = json_decode($raw, true);
 
-        if (empty($groupIds) || ! is_array($groupIds)) {
+        if (! is_array($decoded) || $decoded === []) {
+            return 0;
+        }
+
+        // Coerce every entry to a positive integer; drop nulls, booleans,
+        // strings, and zero/negative values that a hand-edited setting could
+        // smuggle into whereIn. Eloquent binds parameters, so this is shape
+        // hygiene rather than SQLi defense, but it stops malformed settings
+        // from silently widening the count.
+        $groupIds = array_values(array_filter(
+            array_map('intval', $decoded),
+            static fn (int $id): bool => $id > 0,
+        ));
+
+        if ($groupIds === []) {
             return 0;
         }
 
