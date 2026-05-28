@@ -99,10 +99,11 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
         /** @var DiscussionHero|null $hero */
         $hero = $discussion->avocadoHero;
 
-        // Substitui qualquer imagem anterior anexada a esta discussão.
-        if ($hero && $this->uploadDir->exists($hero->image_path)) {
-            $this->uploadDir->delete($hero->image_path);
-        }
+        // Capture the previous image path BEFORE we save. Write the new file,
+        // point the DB row at it, and only THEN delete the previous file. If
+        // put()/save() fails between steps we leak an orphan file (cleanable)
+        // instead of losing the user's current hero image (unrecoverable).
+        $oldPath = $hero?->image_path;
 
         $filename = 'avocado-disc-hero-'.$discussion->id.'-'.Str::lower(Str::random(8)).'.webp';
         $this->uploadDir->put($filename, $encoded);
@@ -113,6 +114,10 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
         }
         $hero->image_path = $filename;
         $hero->save();
+
+        if ($oldPath && $oldPath !== $filename && $this->uploadDir->exists($oldPath)) {
+            $this->uploadDir->delete($oldPath);
+        }
 
         return new JsonResponse([
             'discussionId'   => (string) $discussion->id,
