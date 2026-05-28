@@ -1,18 +1,44 @@
-// @ts-nocheck — large bootstrap file; typed incrementally
+/*
+ * Admin bootstrap. Mostly thin Mithril components that read/write entries in
+ * `app.data.settings` and call POST /api/settings. The helpers and the
+ * components below are typed loosely on purpose — most `attrs` shapes are
+ * one-off and would just repeat the schema we already define in extend.php —
+ * but the file is no longer wholesale `@ts-nocheck`'d; the type-loosening
+ * lives in `AdminComponent<A>` and an explicit cast on `app.data.settings`
+ * (the only place `unknown` would otherwise propagate). New code added here
+ * should declare proper `attrs` interfaces.
+ */
+import app from 'flarum/admin/app';
 import UploadImageButton from 'flarum/common/components/UploadImageButton';
-import Component from 'flarum/common/Component';
+import Component, { ComponentAttrs } from 'flarum/common/Component';
 import Switch from 'flarum/common/components/Switch';
 import ExtensionPage from 'flarum/admin/components/ExtensionPage';
 import { override } from 'flarum/common/extend';
 
+/**
+ * Local helper: most admin components in this file accept arbitrary attrs
+ * (settingKey, label, help, options, …). Extending ComponentAttrs with an
+ * index signature keeps individual `this.attrs.settingKey` reads typed as
+ * `any` rather than triggering "Property does not exist on ComponentAttrs".
+ */
+type LooseAttrs = ComponentAttrs & Record<string, any>;
+abstract class AdminComponent<A extends LooseAttrs = LooseAttrs> extends Component<A> {}
+
+/** Settings are stored as untyped strings in Flarum core; cast once instead of per-call. */
+const settings = (): Record<string, any> => (app.data as any).settings;
+
 // ─── Translation helper ───────────────────────────────────────────────────────
-const trans = (key, fallback) => {
-  const out = app.translator?.trans(key);
-  return out && out !== key ? out : fallback;
+const trans = (key: string, fallback: string, params: Record<string, any> = {}): string => {
+  // `extract: true` força a Translator.trans devolver string em vez de
+  // NestedStringArray (Mithril children); sem isso o typeof string é sempre
+  // falso e caímos no fallback inglês, quebrando a troca de locale.
+  const out = app.translator?.trans(key, params, true);
+  if (typeof out === 'string' && out !== key) return out;
+  return Object.entries(params).reduce<string>((s, [k, v]) => s.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v)), fallback);
 };
 
 // ─── URL helpers ──────────────────────────────────────────────────────────────
-const normalizePath = (path) =>
+const normalizePath = (path: string): string =>
   String(path)
     .replace(/\\/g, '/')
     .replace(/\/+/g, '/')
@@ -24,32 +50,32 @@ const normalizePath = (path) =>
     })
     .join('/');
 
-const resolveAssetUrl = (assetPath) => {
+const resolveAssetUrl = (assetPath: string | null | undefined): string | null => {
   if (!assetPath) return null;
   if (/^https?:\/\//i.test(assetPath)) return assetPath;
   if (/^[a-z][a-z0-9+.-]*:/i.test(assetPath)) return null;
   const normalized = normalizePath(assetPath);
-  const base = app.forum.attribute('assetsBaseUrl') || app.forum.attribute('baseUrl') + '/assets';
+  const base = (app.forum.attribute<string>('assetsBaseUrl') as string) || app.forum.attribute<string>('baseUrl') + '/assets';
   return base.replace(/\/+$/, '') + '/' + normalized;
 };
 
 // ─── Settings helpers ─────────────────────────────────────────────────────────
-const getBool = (key) => {
-  const v = app.data.settings[key];
+const getBool = (key: string): boolean => {
+  const v = settings()[key];
   return v === true || v === 'true' || v === '1' || v === 1;
 };
 
-const getStr = (key, def = '') => String(app.data.settings[key] ?? def);
+const getStr = (key: string, def = ''): string => String(settings()[key] ?? def);
 
 // Direct-save to API (used by all custom controls)
-const saveSetting = (payload) => {
-  const apiUrl = (app.forum.attribute('apiUrl') || '/api').replace(/\/+$/, '');
+const saveSetting = (payload: Record<string, any>) => {
+  const apiUrl = ((app.forum.attribute<string>('apiUrl') as string) || '/api').replace(/\/+$/, '');
   return app.request({ method: 'POST', url: `${apiUrl}/settings`, body: payload });
 };
 
 // ─── AdminToggle ──────────────────────────────────────────────────────────────
 // Self-contained boolean toggle: updates app.data.settings + persists immediately.
-class AdminToggle extends Component {
+class AdminToggle extends AdminComponent {
   view() {
     const { settingKey, label, help } = this.attrs;
     const value = getBool(settingKey);
@@ -57,7 +83,7 @@ class AdminToggle extends Component {
       <div className="Form-group AvocadoAdmin-toggle">
         <Switch
           state={value}
-          onchange={(checked) => {
+          onchange={(checked: any) => {
             app.data.settings[settingKey] = checked;
             m.redraw();
             saveSetting({ [settingKey]: checked ? '1' : '0' });
@@ -72,7 +98,7 @@ class AdminToggle extends Component {
 }
 
 // ─── AdminSelect ──────────────────────────────────────────────────────────────
-class AdminSelect extends Component {
+class AdminSelect extends AdminComponent {
   view() {
     const { settingKey, label, help, options, default: def } = this.attrs;
     const keys = Object.keys(options);
@@ -84,7 +110,7 @@ class AdminSelect extends Component {
           <select
             className="FormControl AvocadoAdmin-select"
             value={value}
-            onchange={(e) => {
+            onchange={(e: any) => {
               const val = e.target.value;
               app.data.settings[settingKey] = val;
               m.redraw();
@@ -106,8 +132,9 @@ class AdminSelect extends Component {
 }
 
 // ─── AdminText ────────────────────────────────────────────────────────────────
-class AdminText extends Component {
-  oninit(vnode) {
+class AdminText extends AdminComponent {
+  _timer: any = null;
+  oninit(vnode: any) {
     super.oninit(vnode);
     this._timer = null;
   }
@@ -123,7 +150,7 @@ class AdminText extends Component {
           type="text"
           value={value}
           placeholder={placeholder || ''}
-          oninput={(e) => {
+          oninput={(e: any) => {
             const val = e.target.value;
             app.data.settings[settingKey] = val;
             clearTimeout(this._timer);
@@ -138,8 +165,9 @@ class AdminText extends Component {
 
 // ─── AdminTextarea ────────────────────────────────────────────────────────────
 // Like AdminText but multi-line. Used for HTML/CSS settings (custom hero, etc.).
-class AdminTextarea extends Component {
-  oninit(vnode) {
+class AdminTextarea extends AdminComponent {
+  _timer: any = null;
+  oninit(vnode: any) {
     super.oninit(vnode);
     this._timer = null;
   }
@@ -155,7 +183,7 @@ class AdminTextarea extends Component {
           rows={rows}
           value={value}
           placeholder={placeholder || ''}
-          oninput={(e) => {
+          oninput={(e: any) => {
             const val = e.target.value;
             app.data.settings[settingKey] = val;
             clearTimeout(this._timer);
@@ -169,9 +197,12 @@ class AdminTextarea extends Component {
 }
 
 // ─── AdminCard ────────────────────────────────────────────────────────────────
-// POJO component (Mithril requires view method — arrow functions are React syntax)
-const AdminCard = {
-  view({ attrs: { title, icon }, children }) {
+// POJO component (Mithril requires view method — arrow functions are React syntax).
+// Cast to `any` so TS treats it as a valid JSX element (Mithril's JSX intrinsic
+// types insist on a class- or function-component shape, but Mithril accepts any
+// object with a `view()` method at runtime).
+const AdminCard: any = {
+  view({ attrs: { title, icon }, children }: any) {
     return (
       <div className="AvocadoAdmin-card">
         <div className="AvocadoAdmin-card-header">
@@ -189,7 +220,7 @@ const AdminCard = {
 };
 
 // ─── Divider between groups of sub-settings ───────────────────────────────────
-const SubDivider = {
+const SubDivider: any = {
   view() {
     return <div className="AvocadoAdmin-subDivider" />;
   },
@@ -235,8 +266,9 @@ const SPINNER_OPTIONS = [
   { key: 'custom', label: 'Personalizado', svg: SPINNER_CUSTOM_PREVIEW, color: false },
 ];
 
-class SpinnerPicker extends Component {
-  oninit(vnode) {
+class SpinnerPicker extends AdminComponent {
+  _customTimer: any = null;
+  oninit(vnode: any) {
     super.oninit(vnode);
     this._customTimer = null;
   }
@@ -273,7 +305,7 @@ class SpinnerPicker extends Component {
                 rows={6}
                 placeholder='<svg xmlns="http://www.w3.org/2000/svg" ...>...</svg>'
                 value={getStr('avocado.loading_spinner_custom')}
-                oninput={(e) => {
+                oninput={(e: any) => {
                   const val = e.target.value;
                   app.data.settings['avocado.loading_spinner_custom'] = val;
                   clearTimeout(this._customTimer);
@@ -294,8 +326,16 @@ class SpinnerPicker extends Component {
 // ─── AdminTagPicker ───────────────────────────────────────────────────────────
 // Multi-select tag picker that matches the AvocadoHome-tagPickerTrigger style
 // from the forum composer. Saves as a JSON array.
-class AdminTagPicker extends Component {
-  oninit(vnode) {
+class AdminTagPicker extends AdminComponent {
+  _saveTimer: any = null;
+  _onDocClick: ((e: Event) => void) | null = null;
+  open = false;
+  search = '';
+  saving = false;
+  tagsLoaded = false;
+  tags: any[] = [];
+  selected: Set<string> = new Set();
+  oninit(vnode: any) {
     super.oninit(vnode);
     this.open = false;
     this.search = '';
@@ -320,8 +360,8 @@ class AdminTagPicker extends Component {
       if (raw) this.selected.add(raw);
     }
 
-    this._onDocClick = (e) => {
-      if (this.element && !this.element.contains(e.target)) {
+    this._onDocClick = (e: Event) => {
+      if (this.element && !this.element.contains(e.target as Node | null)) {
         if (this.open) {
           this.open = false;
           m.redraw();
@@ -344,18 +384,18 @@ class AdminTagPicker extends Component {
       });
   }
 
-  oncreate(vnode) {
+  oncreate(vnode: any) {
     super.oncreate(vnode);
     this.element = vnode.dom;
-    document.addEventListener('click', this._onDocClick, true);
+    if (this._onDocClick) document.addEventListener('click', this._onDocClick, true);
   }
 
-  onremove(vnode) {
+  onremove(vnode: any) {
     super.onremove(vnode);
-    document.removeEventListener('click', this._onDocClick, true);
+    if (this._onDocClick) document.removeEventListener('click', this._onDocClick, true);
   }
 
-  toggle(id) {
+  toggle(id: any) {
     if (this.selected.has(id)) this.selected.delete(id);
     else this.selected.add(id);
     m.redraw();
@@ -397,7 +437,7 @@ class AdminTagPicker extends Component {
           <button
             type="button"
             className={`AvocadoAdmin-tagPickerTrigger${this.open ? ' is-open' : ''}`}
-            onclick={(e) => {
+            onclick={(e: any) => {
               e.stopPropagation();
               this.open = !this.open;
               this.search = '';
@@ -414,7 +454,7 @@ class AdminTagPicker extends Component {
                     key={String(tag.id?.())}
                     className="AvocadoAdmin-tagChip"
                     style={{ '--tag-color': color }}
-                    onclick={(e) => {
+                    onclick={(e: any) => {
                       e.stopPropagation();
                       this.toggle(String(tag.id?.()));
                     }}
@@ -443,11 +483,11 @@ class AdminTagPicker extends Component {
                   type="text"
                   value={this.search}
                   placeholder={trans('ramon-avocado.admin.search_tags', 'Search tags…')}
-                  oninput={(e) => {
+                  oninput={(e: any) => {
                     this.search = e.target.value;
                     m.redraw();
                   }}
-                  onclick={(e) => e.stopPropagation()}
+                  onclick={(e: any) => e.stopPropagation()}
                 />
               </div>
 
@@ -467,7 +507,7 @@ class AdminTagPicker extends Component {
                       <li
                         key={id}
                         className={`AvocadoAdmin-tagPickerItem${isSelected ? ' is-selected' : ''}`}
-                        onclick={(e) => {
+                        onclick={(e: any) => {
                           e.stopPropagation();
                           this.toggle(id);
                         }}
@@ -493,16 +533,16 @@ class AdminTagPicker extends Component {
 }
 
 // ─── AdminGroupPicker ─────────────────────────────────────────────────────────
-class AdminGroupPicker extends Component {
-  groups = [];
+class AdminGroupPicker extends AdminComponent {
+  groups: any[] = [];
   loaded = false;
 
-  oninit(vnode) {
+  oninit(vnode: any) {
     super.oninit(vnode);
     app.store
       .find('groups')
-      .then((groups) => {
-        this.groups = groups;
+      .then((groups: any) => {
+        this.groups = Array.isArray(groups) ? groups : [];
         this.loaded = true;
         m.redraw();
       })
@@ -520,7 +560,7 @@ class AdminGroupPicker extends Component {
     }
   }
 
-  toggle(id) {
+  toggle(id: any) {
     const sel = this.getSelected();
     const idx = sel.indexOf(String(id));
     if (idx >= 0) sel.splice(idx, 1);

@@ -16,6 +16,7 @@ use Laminas\Diactoros\Response\JsonResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Ramon\Avocado\Model\DiscussionHero;
 
 class UploadDiscussionHeroController implements RequestHandlerInterface
 {
@@ -51,7 +52,12 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
             throw new ValidationException(['discussionId' => 'Discussion not found.']);
         }
 
-        $actor->assertCan('rename', $discussion);
+        // Use a dedicated ability so the authorization rule is named for what
+        // it gates (hero-image upload) rather than piggy-backing on the
+        // unrelated "rename" permission. The policy currently delegates to
+        // rename — admins can override that later without touching this
+        // controller. See Ramon\Avocado\Access\DiscussionPolicy.
+        $actor->assertCan('uploadHeroImage', $discussion);
 
         $file = Arr::get($request->getUploadedFiles(), 'avocado-discussion-hero');
         if (! $file) {
@@ -65,9 +71,22 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
             throw new ValidationException(['file' => 'File is too large (max 8 MB).']);
         }
 
-        // MIME guard: don't trust the client's Content-Type. Sniff on disk.
+        // MIME guard: don't trust the client's Content-Type. Sniff on disk via
+        // finfo — mime_content_type() is a thin wrapper over the same database
+        // but is deprecated for new code and unavailable on PHP builds compiled
+        // without ext-fileinfo's CLI alias. Use the finfo API directly.
         $tmpPath = $file->getStream()->getMetadata('uri');
-        $mime = is_string($tmpPath) ? (mime_content_type($tmpPath) ?: '') : '';
+        $mime = '';
+        if (is_string($tmpPath) && is_readable($tmpPath)) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            if ($finfo !== false) {
+                $detected = finfo_file($finfo, $tmpPath);
+                finfo_close($finfo);
+                if (is_string($detected)) {
+                    $mime = $detected;
+                }
+            }
+        }
         if (! in_array($mime, self::ALLOWED_MIMES, true)) {
             throw new ValidationException(['file' => 'Unsupported image type.']);
         }
@@ -77,16 +96,24 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
             ->scaleDown(width: 1600)
             ->toWebp(quality: 78);
 
-        // Write the new file under a fresh name, point the DB row at it, THEN
-        // delete the previous file. If the DB save fails between put() and
-        // save() we leak an orphan file (cleanable) instead of losing the
-        // user's current hero image (unrecoverable).
-        $oldPath = $discussion->avocado_hero_image_path;
+        /** @var DiscussionHero|null $hero */
+        $hero = $discussion->avocadoHero;
+
+        // Capture the previous image path BEFORE we save. Write the new file,
+        // point the DB row at it, and only THEN delete the previous file. If
+        // put()/save() fails between steps we leak an orphan file (cleanable)
+        // instead of losing the user's current hero image (unrecoverable).
+        $oldPath = $hero?->image_path;
+
         $filename = 'avocado-disc-hero-'.$discussion->id.'-'.Str::lower(Str::random(8)).'.webp';
         $this->uploadDir->put($filename, $encoded);
 
-        $discussion->avocado_hero_image_path = $filename;
-        $discussion->save();
+        if ($hero === null) {
+            $hero = new DiscussionHero();
+            $hero->discussion_id = (int) $discussion->id;
+        }
+        $hero->image_path = $filename;
+        $hero->save();
 
         if ($oldPath && $oldPath !== $filename && $this->uploadDir->exists($oldPath)) {
             $this->uploadDir->delete($oldPath);
