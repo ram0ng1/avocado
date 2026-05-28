@@ -77,17 +77,20 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
             ->scaleDown(width: 1600)
             ->toWebp(quality: 78);
 
-        // Replace any previous image attached to this discussion.
+        // Write the new file under a fresh name, point the DB row at it, THEN
+        // delete the previous file. If the DB save fails between put() and
+        // save() we leak an orphan file (cleanable) instead of losing the
+        // user's current hero image (unrecoverable).
         $oldPath = $discussion->avocado_hero_image_path;
-        if ($oldPath && $this->uploadDir->exists($oldPath)) {
-            $this->uploadDir->delete($oldPath);
-        }
-
         $filename = 'avocado-disc-hero-'.$discussion->id.'-'.Str::lower(Str::random(8)).'.webp';
         $this->uploadDir->put($filename, $encoded);
 
         $discussion->avocado_hero_image_path = $filename;
         $discussion->save();
+
+        if ($oldPath && $oldPath !== $filename && $this->uploadDir->exists($oldPath)) {
+            $this->uploadDir->delete($oldPath);
+        }
 
         return new JsonResponse([
             'discussionId'   => (string) $discussion->id,
