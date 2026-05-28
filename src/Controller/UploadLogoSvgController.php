@@ -32,8 +32,20 @@ class UploadLogoSvgController extends UploadImageController
 
     private function sanitizeSvg(string $content): string
     {
+        // Reject DOCTYPE / ENTITY declarations before parsing — defeats XXE,
+        // billion-laughs, and external-DTD attacks even though LIBXML_NONET
+        // would block the network fetch, the parser still expands local
+        // entities in memory.
+        if (preg_match('/<!DOCTYPE|<!ENTITY/i', $content)) {
+            throw new \InvalidArgumentException('SVG contains forbidden DOCTYPE or ENTITY declaration.');
+        }
+
         $prev = libxml_use_internal_errors(true);
 
+        // LIBXML_NONET blocks network DTD fetches; LIBXML_NOENT is intentionally
+        // NOT set (despite its name, it ENABLES entity substitution and would
+        // re-introduce billion-laughs-style expansion if the pre-parse regex is
+        // ever bypassed).
         $dom = new \DOMDocument();
         if (!$dom->loadXML($content, LIBXML_NONET | LIBXML_NOBLANKS)) {
             libxml_use_internal_errors($prev);
@@ -55,13 +67,28 @@ class UploadLogoSvgController extends UploadImageController
     /** @param \DOMNode $node */
     private function cleanNode(\DOMNode $node): void
     {
-        static $dangerous = ['script', 'foreignobject', 'iframe', 'object', 'embed', 'base', 'link'];
+        // SMIL animation tags (animate/animateTransform/animateMotion/set) can
+        // mutate attribute values at runtime — including href on a parent <a>,
+        // which becomes a delayed-trigger XSS. <style> can carry @import and
+        // expression() payloads. <a> is dropped because SVG anchors can carry
+        // javascript:/data:text/html href values that survive attribute scrub
+        // edge cases. <use> with an external href is SSRF-adjacent (fetches
+        // remote SVG referencing this DOM).
+        static $dangerous = [
+            'script', 'foreignobject', 'iframe', 'object', 'embed', 'base', 'link',
+            'style', 'a', 'animate', 'animatetransform', 'animatemotion', 'set',
+        ];
 
         $children = iterator_to_array($node->childNodes);
 
         foreach ($children as $child) {
             if ($child instanceof \DOMElement) {
-                if (in_array(strtolower($child->localName), $dangerous, true)) {
+                $localName = strtolower($child->localName);
+                if (in_array($localName, $dangerous, true)) {
+                    $node->removeChild($child);
+                    continue;
+                }
+                if ($localName === 'use' && $this->useHasExternalHref($child)) {
                     $node->removeChild($child);
                     continue;
                 }
@@ -86,7 +113,7 @@ class UploadLogoSvgController extends UploadImageController
                 continue;
             }
 
-            if (preg_match('/^javascript\s*:/i', $val)) {
+            if (preg_match('/^(?:javascript|vbscript)\s*:/i', $val)) {
                 $remove[] = $attr->name;
                 continue;
             }
@@ -100,5 +127,20 @@ class UploadLogoSvgController extends UploadImageController
         foreach ($remove as $attrName) {
             $node->removeAttribute($attrName);
         }
+    }
+
+    private function useHasExternalHref(\DOMElement $el): bool
+    {
+        foreach (['href', 'xlink:href'] as $attr) {
+            $val = ltrim((string) $el->getAttribute($attr));
+            if ($val === '') {
+                continue;
+            }
+            // Only same-document fragment refs (#id) are safe.
+            if ($val[0] !== '#') {
+                return true;
+            }
+        }
+        return false;
     }
 }
