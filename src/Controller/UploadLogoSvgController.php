@@ -21,11 +21,13 @@ class UploadLogoSvgController extends UploadImageController
     {
         $sanitized = $this->sanitizeSvg((string) $file->getStream());
 
-        $resource = fopen('php://temp', 'r+');
-        fwrite($resource, $sanitized);
-        rewind($resource);
+        // Laminas\Diactoros\Stream abre o resource php://temp internamente; o
+        // SDK trata write/rewind sem precisarmos de fopen/fwrite/rewind crus.
+        $stream = new Stream('php://temp', 'r+');
+        $stream->write($sanitized);
+        $stream->rewind();
 
-        return new Stream($resource);
+        return $stream;
     }
 
     private function sanitizeSvg(string $content): string

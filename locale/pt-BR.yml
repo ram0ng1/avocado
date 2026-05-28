@@ -220,6 +220,11 @@ ramon-avocado:
       badge_unread_tooltip: "{count} posts não lidos"
       categories_heading: Categorias
       choose_tags: Escolher tags
+      bypass_tag_requirements: Ignorar requisitos de tags
+      choose_primary_tag_singular: Escolha 1 tag principal
+      choose_primary_tag_plural: "Escolha {count} tags principais"
+      choose_secondary_tag_singular: Escolha 1 tag secundária
+      choose_secondary_tag_plural: "Escolha {count} tags secundárias"
       composer_body_placeholder: "Compartilhe seus pensamentos..."
       composer_close: Fechar
       composer_edit: Editar
@@ -285,6 +290,9 @@ ramon-avocado:
       other_tags_label: Outras tags
       featured: Destaque
       all_discussions: Todas as discussões
+      empty: "Nenhuma discussão nesta categoria por enquanto."
+      not_found: "Categoria não encontrada."
+      load_more: "Carregar mais"
     team:
       title: Nossa Equipe
       disabled: Esta página não está disponível.
@@ -297,3 +305,10 @@ ramon-avocado:
       member_plural: membros
     link:
       login_to_view: "Faça login para ver o link"
+    user:
+      posts_empty: "Nenhuma publicação por enquanto."
+      discussions_empty: "Nenhuma discussão por enquanto."
+      likes_empty: "Nenhuma publicação curtida por enquanto."
+      mentions_empty: "Nenhuma menção por enquanto."
+      load_more: "Carregar mais"
+      online: "Online agora"

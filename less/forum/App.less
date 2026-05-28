@@ -175,13 +175,15 @@
   }
 }
 
-// Hide the skip-to-content link in mobile/tablet UI so it does not appear in the drawer/header list.
-@media @phone, @tablet {
-  a.sr-only.sr-only-focusable-custom[href="#content"],
-  .App-drawer .App-skipNav,
-  .App-drawer .App-skipLink {
-    display: none !important;
-  }
+// Esconde o link "skip to content" do tema. Substitui o middleware
+// RemoveSkipLink (CLAUDE.md §38.2 / §40.3): bufferizar a resposta HTML
+// inteira em memória para extrair uma tag <a> custa proporcional ao tamanho
+// da página em todo hit. Uma regra CSS produz o mesmo resultado visual com
+// custo zero por request.
+a.sr-only.sr-only-focusable-custom[href="#content"],
+.App-drawer .App-skipNav,
+.App-drawer .App-skipLink {
+  display: none !important;
 }
 
 // ─── Phone: hide phone header controls while drawer is open ──────────────────
@@ -337,9 +339,10 @@ html[data-avocado-logo-custom="true"] {
       line-height: 1;
     }
 
-    // .App padding-top uses --header-height (72px globally, set in MessagesPage.less
-    // for the 72px text/PNG topbar). When the SVG-logo branch shrinks the header to
-    // 52px, the 20px difference shows as a body-bg strip below the header. Match.
+    // .App padding-top uses --header-height. Core's default is 52px and the
+    // critical CSS pins .App-header to 52px on tablet+, so this assignment is a
+    // no-op today — kept as documentation in case a future change re-introduces
+    // a wider topbar without updating the SVG-logo branch.
     --header-height: 52px;
   }
 }

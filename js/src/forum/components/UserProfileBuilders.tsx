@@ -16,7 +16,7 @@ import AvatarEditor from 'flarum/forum/components/AvatarEditor';
 import Dropdown from 'flarum/common/components/Dropdown';
 import listItems from 'flarum/common/helpers/listItems';
 import SelectDropdown from 'flarum/common/components/SelectDropdown';
-import { safeCssUrl } from '../utils';
+import { safeCssUrl, trans } from '../utils';
 
 // ─── Scrollable nav ───────────────────────────────────────────────────────────
 
@@ -170,7 +170,11 @@ export function buildHero(user: any, isEditable: boolean, controls: any[] = []) 
         <div className="AvocadoUserPage-hero-row">
           <div className="AvocadoUserPage-hero-avatarWrap">
             {isEditable ? <AvatarEditor user={user} /> : <Avatar user={user} loading="eager" />}
-            {isOnline && <span className="AvocadoUserPage-onlineDot" />}
+            {isOnline &&
+              (() => {
+                const onlineLabel = trans('ramon-avocado.forum.user.online', 'Online');
+                return <span className="AvocadoUserPage-onlineDot" title={onlineLabel} aria-label={onlineLabel} role="img" />;
+              })()}
           </div>
           <div className="AvocadoUserPage-hero-info">
             <h1 className="AvocadoUserPage-hero-name">{user.displayName?.() || user.username?.()}</h1>
