@@ -11,6 +11,7 @@
 
 namespace Ramon\Avocado;
 
+use Flarum\Api\Endpoint;
 use Flarum\Extend;
 use Ramon\Avocado\AvocadoServiceProvider;
 use Ramon\Avocado\Middleware\AddPerfHeaders;
@@ -113,7 +114,13 @@ return [
         ->hasOne('avocadoHero', \Ramon\Avocado\Model\DiscussionHero::class, 'discussion_id'),
 
     (new Extend\ApiResource(\Flarum\Api\Resource\DiscussionResource::class))
-        ->fields(\Ramon\Avocado\Api\DiscussionFields::class),
+        ->fields(\Ramon\Avocado\Api\DiscussionFields::class)
+        // Eager-load the 1:1 hero companion so DiscussionFields' getters don't
+        // fire one SELECT per discussion when serializing an Index payload.
+        ->endpoint(
+            [Endpoint\Index::class, Endpoint\Show::class],
+            fn (Endpoint\Index|Endpoint\Show $endpoint) => $endpoint->eagerLoad('avocadoHero')
+        ),
 
     (new Extend\Routes('api'))
         ->post('/avocado/banner', 'avocado.banner.upload', \Ramon\Avocado\Controller\UploadBannerController::class)
