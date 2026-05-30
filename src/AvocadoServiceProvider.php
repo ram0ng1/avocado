@@ -13,12 +13,24 @@ namespace Ramon\Avocado;
 
 use Flarum\Foundation\AbstractServiceProvider;
 use Flarum\Foundation\Paths;
+use Flarum\Frontend\Frontend;
 use Illuminate\Filesystem\Filesystem;
 use Psr\Log\LoggerInterface;
+use Ramon\Avocado\Controller\TeamPageController;
 use Throwable;
 
 class AvocadoServiceProvider extends AbstractServiceProvider
 {
+    /**
+     * Asset-directory paths whose sync we've already verified in THIS process.
+     * Under persistent workers (Octane/Swoole) and test suites the provider
+     * boots many times; once a signature matches we can skip the filesystem
+     * round-trip entirely for the rest of the process lifetime.
+     *
+     * @var array<string, string> assets-dir => verified signature
+     */
+    private static array $verifiedSignatures = [];
+
     /**
      * Individual files: [ dest relative to public/assets => src relative to extension root ]
      */
@@ -39,6 +51,17 @@ class AvocadoServiceProvider extends AbstractServiceProvider
     /** Marker filename stored under public/assets; content is a hash of source mtimes. */
     private const SYNC_MARKER = '.avocado-sync';
 
+    public function register(): void
+    {
+        // Supply TeamPageController with the *forum* Frontend without forcing it
+        // to inject the container and resolve the 'flarum.frontend.forum' string
+        // itself. Resolving that binding also runs the content-callback wiring
+        // registered via Extend\Frontend('forum'), so the page renders identically.
+        $this->container->when(TeamPageController::class)
+            ->needs(Frontend::class)
+            ->give(fn () => $this->container->make('flarum.frontend.forum'));
+    }
+
     public function boot(Filesystem $files): void
     {
         /** @var Paths $paths */
@@ -49,14 +72,26 @@ class AvocadoServiceProvider extends AbstractServiceProvider
         // Build a cheap signature from the source-side mtimes (one stat per
         // top-level entry — N is < 10 in practice). When admin/composer updates
         // the extension, the bundled-dir mtimes change and the marker mismatches,
-        // forcing a fresh sync. Steady-state cost per request is ~4 stat calls
-        // + one tiny file read — orders of magnitude cheaper than recursively
-        // iterating js/dist/forum/components on every request.
+        // forcing a fresh sync.
         $signature = $this->buildSignature($files, $extDir);
 
-        $markerPath = $assets.'/'.self::SYNC_MARKER;
-        if ($files->exists($markerPath) && trim($files->get($markerPath)) === $signature) {
+        // In-process fast-path: once a signature is verified, every later boot in
+        // the same process (persistent workers, test suites) skips all I/O below.
+        if ((self::$verifiedSignatures[$assets] ?? null) === $signature) {
             return;
+        }
+
+        // Steady-state cost on the first boot of a process is N source stats (for
+        // the signature) + one marker read. We read the marker directly and catch
+        // the not-found case rather than paying an extra exists() stat first.
+        $markerPath = $assets.'/'.self::SYNC_MARKER;
+        try {
+            if (trim($files->get($markerPath)) === $signature) {
+                self::$verifiedSignatures[$assets] = $signature;
+                return;
+            }
+        } catch (Throwable) {
+            // Marker missing or unreadable — fall through and (re)sync.
         }
 
         // Individual files — copy if missing OR source is newer than destination.
@@ -92,6 +127,7 @@ class AvocadoServiceProvider extends AbstractServiceProvider
         // Touch the marker last so a sync that crashes halfway is retried.
         try {
             $files->put($markerPath, $signature);
+            self::$verifiedSignatures[$assets] = $signature;
         } catch (Throwable $e) {
             $this->logger()?->warning('[avocado] failed to write sync marker', [
                 'path' => $markerPath,
