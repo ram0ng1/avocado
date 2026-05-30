@@ -69,14 +69,17 @@ class UploadLogoSvgController extends UploadImageController
     {
         // SMIL animation tags (animate/animateTransform/animateMotion/set) can
         // mutate attribute values at runtime — including href on a parent <a>,
-        // which becomes a delayed-trigger XSS. <style> can carry @import and
-        // expression() payloads. <a> is dropped because SVG anchors can carry
-        // javascript:/data:text/html href values that survive attribute scrub
-        // edge cases. <use> with an external href is SSRF-adjacent (fetches
+        // which becomes a delayed-trigger XSS. <a> is dropped because SVG anchors
+        // can carry javascript:/data:text/html href values that survive attribute
+        // scrub edge cases. <use> with an external href is SSRF-adjacent (fetches
         // remote SVG referencing this DOM).
+        //
+        // <style> is NOT in this list: CSS @keyframes/animation is how most
+        // animated logos work, so we keep <style> but scrub its body (see
+        // sanitizeStyleNode) and drop it only when it carries an XSS/exfil sink.
         static $dangerous = [
             'script', 'foreignobject', 'iframe', 'object', 'embed', 'base', 'link',
-            'style', 'a', 'animate', 'animatetransform', 'animatemotion', 'set',
+            'a', 'animate', 'animatetransform', 'animatemotion', 'set',
         ];
 
         $children = iterator_to_array($node->childNodes);
@@ -86,6 +89,13 @@ class UploadLogoSvgController extends UploadImageController
                 $localName = strtolower($child->localName);
                 if (in_array($localName, $dangerous, true)) {
                     $node->removeChild($child);
+                    continue;
+                }
+                if ($localName === 'style') {
+                    // Keep clean stylesheets (animations), drop dangerous ones.
+                    if (! $this->sanitizeStyleNode($child)) {
+                        $node->removeChild($child);
+                    }
                     continue;
                 }
                 if ($localName === 'use' && $this->useHasExternalHref($child)) {
@@ -127,6 +137,39 @@ class UploadLogoSvgController extends UploadImageController
         foreach ($remove as $attrName) {
             $node->removeAttribute($attrName);
         }
+    }
+
+    /**
+     * Scrub a <style> body so animation CSS (@keyframes/animation) survives but
+     * XSS/exfil sinks don't. Returns false when the stylesheet must be dropped
+     * entirely (a dangerous construct we can't safely strip in place).
+     *
+     * Threat surface for CSS that reaches every visitor as inline SVG markup:
+     *  - @import           pulls a remote/data: stylesheet (exfil + injection)
+     *  - expression()      legacy IE script execution
+     *  - behavior:/-moz-binding  attach a scriptable behavior
+     *  - javascript:/vbscript: schemes (typically inside url())
+     *  - url(... data: ...) data-URI payloads
+     */
+    private function sanitizeStyleNode(\DOMElement $style): bool
+    {
+        $css = $style->textContent;
+
+        // Drop CSS comments first so obfuscation like `expr/*x*/ession(` can't
+        // slip past the blocklist below.
+        $stripped = preg_replace('!/\*.*?\*/!s', '', $css);
+        if ($stripped === null) {
+            return false;
+        }
+
+        if (preg_match(
+            '/@import|expression\s*\(|behavior\s*:|-moz-binding|javascript\s*:|vbscript\s*:|url\(\s*["\']?\s*data\s*:/i',
+            $stripped
+        )) {
+            return false;
+        }
+
+        return true;
     }
 
     private function useHasExternalHref(\DOMElement $el): bool
