@@ -30,7 +30,7 @@ class AvocadoUserBase extends UserPage {
     this.loadUser(m.route.param('username'));
   }
 
-  loadUser(slug: string) {
+  async loadUser(slug: string): Promise<void> {
     if (!slug) return;
 
     const cached = findBySlug(slug);
@@ -42,7 +42,7 @@ class AvocadoUserBase extends UserPage {
       return;
     }
 
-    app.store
+    await app.store
       .find('users', slug, { bySlug: true })
       .then((user: any) => {
         this.user = user;
