@@ -254,6 +254,46 @@ const isExternalLink = (link) => {
   }
 };
 
+// A link is "raw" when its visible text is just the URL itself (or empty). In
+// that case there's no descriptive context worth keeping, so the whole link is
+// swapped for the placeholder — otherwise we'd preserve an ugly bare URL.
+const isRawUrlLink = (link) => {
+  const text = (link.textContent || '').trim();
+  if (!text) return true;
+  if (text === link.href) return true;
+  if (/^https?:\/\//i.test(text)) return true;
+  return false;
+};
+
+// Build the lock-icon pill shown in place of (or alongside) a gated link.
+// data-avocado-gated prevents double-processing on onupdate redraws.
+const buildGuestLinkPlaceholder = (label) => {
+  const placeholder = document.createElement('span');
+  placeholder.className = 'AvocadoGuestLink';
+  placeholder.setAttribute('data-avocado-gated', '1');
+  placeholder.setAttribute('role', 'button');
+  placeholder.tabIndex = 0;
+
+  const icon = document.createElement('i');
+  icon.className = 'fas fa-lock';
+  icon.setAttribute('aria-hidden', 'true');
+
+  const text = document.createElement('span');
+  text.className = 'AvocadoGuestLink-label';
+  text.textContent = label;
+
+  placeholder.appendChild(icon);
+  placeholder.appendChild(text);
+
+  const handler = () => flarum.reg.asyncModuleImport('flarum/forum/components/LogInModal').then((M) => app.modal.show(M));
+  placeholder.addEventListener('click', handler);
+  placeholder.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') handler();
+  });
+
+  return placeholder;
+};
+
 const gateGuestLinks = (component) => {
   if (app.session.user) return;
   if (!settingEnabled('avocadoHideLinksForGuests', false)) return;
@@ -264,35 +304,29 @@ const gateGuestLinks = (component) => {
 
   // Only external links are replaced. Internal links (mentions, discussion links, etc.) are left untouched.
   // Post-body HTML is rendered via m.trust() — safe to mutate directly.
-  // data-avocado-gated prevents double-processing on onupdate.
-  const label = app.translator.trans('ramon-avocado.forum.link_cta.placeholder');
+  const label = trans('ramon-avocado.forum.link_cta.placeholder', 'Login to view link');
 
   body.querySelectorAll('a[href]:not([data-avocado-gated])').forEach((link) => {
     if (!isExternalLink(link)) return;
 
-    const placeholder = document.createElement('span');
-    placeholder.className = 'AvocadoGuestLink';
-    placeholder.setAttribute('data-avocado-gated', '1');
-    placeholder.setAttribute('role', 'button');
-    placeholder.tabIndex = 0;
+    const placeholder = buildGuestLinkPlaceholder(label);
+    const parent = link.parentNode;
+    if (!parent) return;
 
-    const icon = document.createElement('i');
-    icon.className = 'fas fa-lock';
-    icon.setAttribute('aria-hidden', 'true');
+    if (isRawUrlLink(link)) {
+      parent.replaceChild(placeholder, link);
+      return;
+    }
 
-    const text = document.createElement('span');
-    text.className = 'AvocadoGuestLink-label';
-    text.textContent = typeof label === 'string' ? label : trans('ramon-avocado.forum.link.login_to_view', 'Login to view link');
-
-    placeholder.appendChild(icon);
-    placeholder.appendChild(text);
-
-    const handler = () => flarum.reg.asyncModuleImport('flarum/forum/components/LogInModal').then((M) => app.modal.show(M));
-    placeholder.addEventListener('click', handler);
-    placeholder.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') handler();
-    });
-    link.parentNode.replaceChild(placeholder, link);
+    // Preserve the original link's visible text/markup so the surrounding
+    // sentence still reads naturally, then append " (placeholder)" right after.
+    while (link.firstChild) {
+      parent.insertBefore(link.firstChild, link);
+    }
+    parent.insertBefore(document.createTextNode(' ('), link);
+    parent.insertBefore(placeholder, link);
+    parent.insertBefore(document.createTextNode(')'), link);
+    parent.removeChild(link);
   });
 };
 
