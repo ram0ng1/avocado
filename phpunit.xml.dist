@@ -6,11 +6,18 @@
          cacheDirectory=".phpunit.cache"
          failOnRisky="true"
          failOnWarning="true">
+    <!-- Named suites so CI runs (and shows) each category as a separate step.
+         Plain `phpunit` (composer test) still runs all of them. -->
     <testsuites>
-        <testsuite name="Unit">
+        <testsuite name="unit">
             <directory>tests/Unit</directory>
+            <directory>tests/Security</directory>
+            <exclude>tests/Unit/LocaleParityTest.php</exclude>
         </testsuite>
-        <testsuite name="Integration">
+        <testsuite name="locale">
+            <file>tests/Unit/LocaleParityTest.php</file>
+        </testsuite>
+        <testsuite name="integration">
             <directory>tests/Integration</directory>
         </testsuite>
     </testsuites>
