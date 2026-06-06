@@ -165,14 +165,20 @@ jobs:
       - name: Unit tests (sanitizers, policy, CSS-injection)
         run: vendor/bin/phpunit --testsuite unit
 
-      - name: Locale parity (chaves i18n en ↔ pt-BR)
-        run: vendor/bin/phpunit --testsuite locale
+      # Um step por engine → 3 linhas distintas na UI do Actions. O --filter casa
+      # o nome do data set (sqlite/mysql/pgsql) do DiscussionHeroTest.
+      - name: Integration — SQLite
+        run: vendor/bin/phpunit --testsuite integration --filter sqlite
 
-      - name: Integration — SQLite / MySQL / PgSQL
+      - name: Integration — MySQL
         env:
           AVOCADO_TEST_MYSQL: host=127.0.0.1;port=3306;username=root;password=root;database=avocado_test
+        run: vendor/bin/phpunit --testsuite integration --filter mysql
+
+      - name: Integration — PgSQL
+        env:
           AVOCADO_TEST_PGSQL: host=127.0.0.1;port=5432;username=postgres;password=postgres;database=avocado_test
-        run: vendor/bin/phpunit --testsuite integration
+        run: vendor/bin/phpunit --testsuite integration --filter pgsql
 
       - name: Lint PHP (php -l)
         run: |
@@ -287,6 +293,37 @@ jobs:
       - name: npm audit
         working-directory: js
         run: npm audit --audit-level=high
+
+  # Paridade de tradução (en ↔ pt-BR) roda UMA vez em job próprio — independe de
+  # versão de PHP/core, então não precisa repetir nas 6 células da matriz `php`.
+  # Vira um box distinto na UI do Actions.
+  locale:
+    name: Locale parity (i18n keys)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5  # v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f  # v2
+        with:
+          php-version: '8.3'
+          extensions: dom, mbstring
+          coverage: none
+          tools: composer:v2
+
+      - name: Resolver dependências (composer update)
+        run: composer update --no-interaction --no-progress --prefer-stable --no-scripts
+
+      - name: Locale parity (chaves i18n en ↔ pt-BR)
+        run: vendor/bin/phpunit --testsuite locale
 
   # §35.13 I1 — bloqueia PRs que introduzam dependências com CVEs conhecidos.
   dependency-review:
