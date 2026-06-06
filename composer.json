@@ -36,7 +36,15 @@
         "flarum/core": "^2.0.0"
     },
     "require-dev": {
-        "flarum/tags": "^2.0.0"
+        "flarum/tags": "^2.0.0",
+        "phpunit/phpunit": "^10.5 || ^11.0",
+        "mockery/mockery": "^1.6",
+        "phpstan/phpstan": "^1.11"
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test-security": "phpunit --group security",
+        "analyse": "phpstan analyse"
     },
     "suggest": {
         "flarum/tags": "Required for the showcase widget and tag-based hero images (^2.0)."

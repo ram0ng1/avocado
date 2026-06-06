@@ -26,6 +26,34 @@ jobs:
     permissions:
       contents: read
     steps:
+      # 🟡 §35.13/I3 — egress restrito (block). Lista superset: cobre
+      # PHP/composer + node/npm + apt/ppa do setup-php. Se um step falhar por
+      # egress bloqueado, o resumo do harden-runner no run nomeia o destino
+      # exato a acrescentar aqui.
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5  # v2
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            codeload.github.com:443
+            objects.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+            raw.githubusercontent.com:443
+            packagist.org:443
+            repo.packagist.org:443
+            getcomposer.org:443
+            registry.npmjs.org:443
+            nodejs.org:443
+            ppa.launchpadcontent.net:443
+            ppa.launchpadcontent.net:80
+            keyserver.ubuntu.com:443
+            azure.archive.ubuntu.com:80
+            esm.ubuntu.com:443
+            motd.ubuntu.com:443
+            pecl.php.net:443
+
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
@@ -58,6 +86,34 @@ jobs:
           - '^2.0.0'
           - '2.x-dev'
     steps:
+      # 🟡 §35.13/I3 — egress restrito (block). Lista superset: cobre
+      # PHP/composer + node/npm + apt/ppa do setup-php. Se um step falhar por
+      # egress bloqueado, o resumo do harden-runner no run nomeia o destino
+      # exato a acrescentar aqui.
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5  # v2
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            codeload.github.com:443
+            objects.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+            raw.githubusercontent.com:443
+            packagist.org:443
+            repo.packagist.org:443
+            getcomposer.org:443
+            registry.npmjs.org:443
+            nodejs.org:443
+            ppa.launchpadcontent.net:443
+            ppa.launchpadcontent.net:80
+            keyserver.ubuntu.com:443
+            azure.archive.ubuntu.com:80
+            esm.ubuntu.com:443
+            motd.ubuntu.com:443
+            pecl.php.net:443
+
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
@@ -65,6 +121,8 @@ jobs:
         uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f  # v2
         with:
           php-version: ${{ matrix.php }}
+          # pdo_sqlite + sqlite3 = suíte de integração in-memory; dom/mbstring/fileinfo = sanitizers + uploads.
+          extensions: dom, mbstring, fileinfo, pdo_sqlite, sqlite3
           coverage: none
           tools: composer:v2
 
@@ -73,6 +131,9 @@ jobs:
 
       - name: Resolver dependências (composer update)
         run: composer update --no-interaction --no-progress --prefer-stable --no-scripts
+
+      - name: PHPUnit (Unit + Integration)
+        run: composer test
 
       - name: Lint PHP (php -l)
         run: |
@@ -85,14 +146,13 @@ jobs:
       - name: composer audit
         run: composer audit --no-dev --format=plain
 
-      # §35.13 R3 — PHPStan com flarum/phpstan-stub. continue-on-error: true
-      # porque é a primeira adoção; reduzir conforme baseline melhora.
-      - name: PHPStan (audit-only)
+      # §35.13 R3 — PHPStan nível 5 com baseline versionado (phpstan.neon +
+      # phpstan-baseline.neon). phpstan/phpstan já vem via require-dev, então
+      # `composer analyse` basta. Bloqueante: o baseline mantém verde e novos
+      # achados reprovam o PR (aperte o nível/baseline com o tempo).
+      - name: PHPStan
         if: matrix.php == '8.3' && matrix.flarum-core == '^2.0.0'
-        continue-on-error: true
-        run: |
-          composer require --dev --no-progress "phpstan/phpstan:^1" "flarum/phpstan-stub:*"
-          vendor/bin/phpstan analyse --level=5 --no-progress src/ extend.php
+        run: composer analyse
 
   js:
     name: JS (typecheck, format, build)
@@ -100,6 +160,34 @@ jobs:
     permissions:
       contents: read
     steps:
+      # 🟡 §35.13/I3 — egress restrito (block). Lista superset: cobre
+      # PHP/composer + node/npm + apt/ppa do setup-php. Se um step falhar por
+      # egress bloqueado, o resumo do harden-runner no run nomeia o destino
+      # exato a acrescentar aqui.
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5  # v2
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            codeload.github.com:443
+            objects.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+            raw.githubusercontent.com:443
+            packagist.org:443
+            repo.packagist.org:443
+            getcomposer.org:443
+            registry.npmjs.org:443
+            nodejs.org:443
+            ppa.launchpadcontent.net:443
+            ppa.launchpadcontent.net:80
+            keyserver.ubuntu.com:443
+            azure.archive.ubuntu.com:80
+            esm.ubuntu.com:443
+            motd.ubuntu.com:443
+            pecl.php.net:443
+
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
@@ -162,6 +250,34 @@ jobs:
       contents: read
       pull-requests: write
     steps:
+      # 🟡 §35.13/I3 — egress restrito (block). Lista superset: cobre
+      # PHP/composer + node/npm + apt/ppa do setup-php. Se um step falhar por
+      # egress bloqueado, o resumo do harden-runner no run nomeia o destino
+      # exato a acrescentar aqui.
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5  # v2
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            codeload.github.com:443
+            objects.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+            raw.githubusercontent.com:443
+            packagist.org:443
+            repo.packagist.org:443
+            getcomposer.org:443
+            registry.npmjs.org:443
+            nodejs.org:443
+            ppa.launchpadcontent.net:443
+            ppa.launchpadcontent.net:80
+            keyserver.ubuntu.com:443
+            azure.archive.ubuntu.com:80
+            esm.ubuntu.com:443
+            motd.ubuntu.com:443
+            pecl.php.net:443
+
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       - name: Dependency Review
