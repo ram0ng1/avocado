@@ -1,6 +1,7 @@
 import tsParser from '@typescript-eslint/parser';
 import reactPlugin from 'eslint-plugin-react';
 import mithrilKeyRule from './eslint-local-rules/mithril-key.js';
+import noHardcodedTextRule from './eslint-local-rules/no-hardcoded-text.js';
 
 /**
  * ESLint flat config (ESLint 9+).
@@ -46,6 +47,14 @@ export default [
           'consistent-child-keys': mithrilKeyRule,
         },
       },
+
+      // i18n guard — fails the build on hardcoded user-facing strings so the
+      // theme stays translatable (see eslint-local-rules/no-hardcoded-text.js).
+      i18n: {
+        rules: {
+          'no-hardcoded-text': noHardcodedTextRule,
+        },
+      },
     },
 
     settings: {
@@ -72,6 +81,9 @@ export default [
       // ── Mithril-specific: consistent sibling keys ─────────────────────────────
       // Catches mixed keyed/unkeyed siblings that cause reconciliation crashes.
       'mithril-key/consistent-child-keys': 'error',
+
+      // ── i18n: no hardcoded user-facing strings ────────────────────────────────
+      'i18n/no-hardcoded-text': 'error',
     },
   },
 ];

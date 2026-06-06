@@ -7,39 +7,48 @@ namespace Ramon\Avocado\Tests\Integration;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\Builder;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Ramon\Avocado\Model\DiscussionHero;
 use Ramon\Avocado\Tests\Support\Database;
 
 /**
- * Drives the REAL create_avocado_discussion_heroes migration and the
- * DiscussionHero model against an in-memory SQLite database (the backup
- * extension's Support/Engines.php pattern, trimmed to the serverless engine).
- *
- * Exercises the parts most likely to regress on a refactor:
- *  - the migration's three idempotent up steps (create / copy legacy rows /
- *    drop the old column) and the down round-trip,
- *  - the FK cascade that prevents orphaned hero rows when a discussion is
- *    deleted (§26 — orphans re-expose deleted content),
- *  - the model's $guarded contract on the discussion_id primary key (§7).
+ * Drives the real create_avocado_discussion_heroes migration (up/down,
+ * idempotency), the FK cascade that prevents orphaned hero rows (§26), and the
+ * model's $guarded contract on the discussion_id PK (§7). Each test runs once
+ * per available engine (sqlite always; mysql/mariadb/pgsql when configured via
+ * AVOCADO_TEST_* env vars), so the migration DDL is validated cross-engine.
  */
 final class DiscussionHeroTest extends TestCase
 {
-    private Connection $db;
-    private Builder $schema;
+    private ?Connection $db = null;
+    private ?Builder $schema = null;
 
-    protected function setUp(): void
+    /** @return array<string, array{0: string}> */
+    public static function engines(): array
     {
-        if (! extension_loaded('pdo_sqlite')) {
-            self::markTestSkipped('ext-pdo_sqlite is required for the database integration suite.');
+        return [
+            'sqlite'  => ['sqlite'],
+            'mysql'   => ['mysql'],
+            'mariadb' => ['mariadb'],
+            'pgsql'   => ['pgsql'],
+        ];
+    }
+
+    private function boot(string $engine): void
+    {
+        $this->db = Database::use($engine);
+        if ($this->db === null) {
+            self::markTestSkipped("Database engine '$engine' is not available/configured.");
         }
 
-        $this->db = Database::fresh();
         $this->schema = $this->db->getSchemaBuilder();
 
-        // Minimal stand-in for the core `discussions` table, including the
-        // legacy column the migration migrates away from.
+        // Clean slate (child-first for the FK), then a minimal core `discussions`
+        // stand-in carrying the legacy column the migration migrates away from.
+        $this->schema->dropIfExists('avocado_discussion_heroes');
+        $this->schema->dropIfExists('discussions');
         $this->schema->create('discussions', function (Blueprint $t) {
             $t->increments('id');
             $t->string('title')->nullable();
@@ -53,6 +62,16 @@ final class DiscussionHeroTest extends TestCase
         ]);
     }
 
+    protected function tearDown(): void
+    {
+        if ($this->schema !== null) {
+            $this->schema->dropIfExists('avocado_discussion_heroes');
+            $this->schema->dropIfExists('discussions');
+        }
+        $this->db = null;
+        $this->schema = null;
+    }
+
     /** @return array{up: callable, down: callable} */
     private function migration(): array
     {
@@ -60,8 +79,11 @@ final class DiscussionHeroTest extends TestCase
             . '/migrations/2026_05_24_000000_create_avocado_discussion_heroes_table.php';
     }
 
-    public function test_up_creates_table_copies_legacy_rows_and_drops_old_column(): void
+    #[DataProvider('engines')]
+    public function test_up_creates_table_copies_legacy_rows_and_drops_old_column(string $engine): void
     {
+        $this->boot($engine);
+
         ($this->migration()['up'])($this->schema);
 
         self::assertTrue($this->schema->hasTable('avocado_discussion_heroes'));
@@ -76,8 +98,11 @@ final class DiscussionHeroTest extends TestCase
         self::assertSame('avocado-disc-hero-3-xyz.webp', $rows[1]->image_path);
     }
 
-    public function test_up_is_idempotent(): void
+    #[DataProvider('engines')]
+    public function test_up_is_idempotent(string $engine): void
     {
+        $this->boot($engine);
+
         $up = $this->migration()['up'];
         $up($this->schema);
         $up($this->schema); // second run must not throw or double-copy
@@ -85,8 +110,11 @@ final class DiscussionHeroTest extends TestCase
         self::assertSame(2, $this->db->table('avocado_discussion_heroes')->count());
     }
 
-    public function test_down_restores_column_and_copies_data_back(): void
+    #[DataProvider('engines')]
+    public function test_down_restores_column_and_copies_data_back(string $engine): void
     {
+        $this->boot($engine);
+
         $m = $this->migration();
         $m['up']($this->schema);
         $m['down']($this->schema);
@@ -104,8 +132,11 @@ final class DiscussionHeroTest extends TestCase
     }
 
     #[Group('security')]
-    public function test_deleting_a_discussion_cascades_to_the_hero_row(): void
+    #[DataProvider('engines')]
+    public function test_deleting_a_discussion_cascades_to_the_hero_row(string $engine): void
     {
+        $this->boot($engine);
+
         $this->migration()['up']($this->schema);
 
         $this->db->table('avocado_discussion_heroes')->insert([
@@ -123,8 +154,11 @@ final class DiscussionHeroTest extends TestCase
     }
 
     #[Group('security')]
-    public function test_model_persists_and_guards_the_primary_key(): void
+    #[DataProvider('engines')]
+    public function test_model_persists_and_guards_the_primary_key(string $engine): void
     {
+        $this->boot($engine);
+
         $this->migration()['up']($this->schema);
 
         // $guarded = ['discussion_id'] — mass assignment must NOT set the PK.
