@@ -11,6 +11,7 @@
  * a profile route.
  */
 import app from 'flarum/forum/app';
+import extractText from 'flarum/common/utils/extractText';
 import Avatar from 'flarum/common/components/Avatar';
 import AvatarEditor from 'flarum/forum/components/AvatarEditor';
 import Dropdown from 'flarum/common/components/Dropdown';
@@ -108,7 +109,7 @@ class ScrollableNav {
         <button
           className={`AvocadoUserPage-navArrow AvocadoUserPage-navArrow--left${this._canLeft ? ' is-visible' : ''}`}
           onclick={() => this._scroll(-1)}
-          aria-label="Scroll left"
+          aria-label={extractText(app.translator.trans('ramon-avocado.forum.profile.scroll_left'))}
           tabindex="-1"
         >
           <i className="fas fa-chevron-left" aria-hidden="true" />
@@ -117,7 +118,7 @@ class ScrollableNav {
         <button
           className={`AvocadoUserPage-navArrow AvocadoUserPage-navArrow--right${this._canRight ? ' is-visible' : ''}`}
           onclick={() => this._scroll(1)}
-          aria-label="Scroll right"
+          aria-label={extractText(app.translator.trans('ramon-avocado.forum.profile.scroll_right'))}
           tabindex="-1"
         >
           <i className="fas fa-chevron-right" aria-hidden="true" />
@@ -179,7 +180,7 @@ export function buildHero(user: any, isEditable: boolean, controls: any[] = []) 
           <div className="AvocadoUserPage-hero-info">
             <h1 className="AvocadoUserPage-hero-name">{user.displayName?.() || user.username?.()}</h1>
             {badges.length > 0 && <ul className="AvocadoUserPage-hero-badges badges">{listItems(badges)}</ul>}
-            <div className="AvocadoUserPage-hero-stats">{joinLabel && <span className="AvocadoUserPage-hero-statPill">Joined {joinLabel}</span>}</div>
+            <div className="AvocadoUserPage-hero-stats">{joinLabel && <span className="AvocadoUserPage-hero-statPill">{app.translator.trans('ramon-avocado.forum.profile.joined', { date: joinLabel })}</span>}</div>
           </div>
           {controls.length > 0 && (
             <div className="AvocadoUserPage-hero-controls">

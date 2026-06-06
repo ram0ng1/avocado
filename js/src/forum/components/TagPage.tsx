@@ -1,4 +1,5 @@
 import app from 'flarum/forum/app';
+import extractText from 'flarum/common/utils/extractText';
 import Page from 'flarum/common/components/Page';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 
@@ -165,7 +166,7 @@ export default class AvocadoTagPage extends Page {
             <div className="AvocadoTagPage-hero-row">
               <button
                 className="AvocadoTagPage-back"
-                aria-label="Back"
+                aria-label={extractText(app.translator.trans('ramon-avocado.forum.back'))}
                 onclick={() => {
                   if (window.history.length > 1) window.history.back();
                   else m.route.set(app.route('index'));

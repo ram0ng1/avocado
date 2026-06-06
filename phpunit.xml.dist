@@ -19,4 +19,13 @@
             <directory>src</directory>
         </include>
     </source>
+    <php>
+        <!-- Per-engine connection coords for the DB integration suite. Unset =
+             that engine is skipped, so the suite runs (SQLite only) on a bare
+             checkout. force is left false so a real env var (CI/local) wins.
+             Format: host=..;port=..;username=..;password=..;database=avocado_test -->
+        <env name="AVOCADO_TEST_MYSQL" value=""/>
+        <env name="AVOCADO_TEST_MARIADB" value=""/>
+        <env name="AVOCADO_TEST_PGSQL" value=""/>
+    </php>
 </phpunit>

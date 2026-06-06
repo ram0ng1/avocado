@@ -85,6 +85,29 @@ jobs:
         flarum-core:
           - '^2.0.0'
           - '2.x-dev'
+    # Service containers para a suíte de integração cross-engine. Sem eles, os
+    # data sets mysql/pgsql do DiscussionHeroTest apenas pulam (sqlite sempre roda).
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: avocado_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: avocado_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s --health-timeout=5s --health-retries=10
     steps:
       # 🟡 §35.13/I3 — egress em `audit` (fase 1: registra os destinos, não
       # bloqueia). A allowed-endpoints abaixo é a lista candidata para quando
@@ -121,8 +144,8 @@ jobs:
         uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f  # v2
         with:
           php-version: ${{ matrix.php }}
-          # pdo_sqlite + sqlite3 = suíte de integração in-memory; dom/mbstring/fileinfo = sanitizers + uploads.
-          extensions: dom, mbstring, fileinfo, pdo_sqlite, sqlite3
+          # sqlite/mysql/pgsql = suíte de integração cross-engine; dom/mbstring/fileinfo = sanitizers + uploads.
+          extensions: dom, mbstring, fileinfo, pdo_sqlite, sqlite3, pdo_mysql, pdo_pgsql
           coverage: none
           tools: composer:v2
 
@@ -133,6 +156,9 @@ jobs:
         run: composer update --no-interaction --no-progress --prefer-stable --no-scripts
 
       - name: PHPUnit (Unit + Integration)
+        env:
+          AVOCADO_TEST_MYSQL: host=127.0.0.1;port=3306;username=root;password=root;database=avocado_test
+          AVOCADO_TEST_PGSQL: host=127.0.0.1;port=5432;username=postgres;password=postgres;database=avocado_test
         run: composer test
 
       - name: Lint PHP (php -l)
