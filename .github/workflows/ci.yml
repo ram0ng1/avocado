@@ -79,8 +79,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # flarum/core 2.x requer php ^8.3 — 8.2 ficou de fora.
-        php: ['8.3', '8.4']
+        # flarum/core 2.x requer php ^8.3 — 8.2 ficou de fora. 8.5 incluído
+        # (testado localmente); o composer update usa --ignore-platform-req=php+
+        # para o caso de uma dependência ainda não declarar suporte a 8.5.
+        php: ['8.3', '8.4', '8.5']
         # §35.13 I5 — testa contra a versão estável E a HEAD do core.
         flarum-core:
           - '^2.0.0'
@@ -153,13 +155,24 @@ jobs:
         run: composer require --no-update "flarum/core:${{ matrix.flarum-core }}"
 
       - name: Resolver dependências (composer update)
-        run: composer update --no-interaction --no-progress --prefer-stable --no-scripts
+        # --ignore-platform-req=php+ ignora apenas o LIMITE SUPERIOR de PHP (para
+        # a célula 8.5, caso uma dependência ainda não declare suporte); não
+        # mascara extensões faltantes nem o limite inferior.
+        run: composer update --no-interaction --no-progress --prefer-stable --no-scripts --ignore-platform-req=php+
 
-      - name: PHPUnit (Unit + Integration)
+      # Suítes rodam em steps separados para aparecerem como linhas distintas na
+      # UI do Actions (Unit / Locale parity / Integration cross-engine).
+      - name: Unit tests (sanitizers, policy, CSS-injection)
+        run: vendor/bin/phpunit --testsuite unit
+
+      - name: Locale parity (chaves i18n en ↔ pt-BR)
+        run: vendor/bin/phpunit --testsuite locale
+
+      - name: Integration — SQLite / MySQL / PgSQL
         env:
           AVOCADO_TEST_MYSQL: host=127.0.0.1;port=3306;username=root;password=root;database=avocado_test
           AVOCADO_TEST_PGSQL: host=127.0.0.1;port=5432;username=postgres;password=postgres;database=avocado_test
-        run: composer test
+        run: vendor/bin/phpunit --testsuite integration
 
       - name: Lint PHP (php -l)
         run: |
@@ -257,9 +270,17 @@ jobs:
         working-directory: js
         run: npm run check-typings
 
+      # Step próprio para aparecer como linha distinta na UI: roda a regra
+      # i18n/no-hardcoded-text (strings hardcoded) + mithril-key + jsx-key.
+      - name: ESLint (regra i18n + mithril keys)
+        working-directory: js
+        run: npm run lint
+
+      # Webpack puro — o lint já rodou no step acima (build npm-script reexecuta
+      # o lint; aqui chamamos o webpack direto para não duplicar).
       - name: Build (webpack production)
         working-directory: js
-        run: npm run build
+        run: node_modules/.bin/webpack --mode production
 
       # §35.13 R2 — npm advisories. --audit-level=high reduz ruído de
       # transitivas dev; subir para moderate quando o baseline estabilizar.

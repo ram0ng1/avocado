@@ -180,7 +180,13 @@ export function buildHero(user: any, isEditable: boolean, controls: any[] = []) 
           <div className="AvocadoUserPage-hero-info">
             <h1 className="AvocadoUserPage-hero-name">{user.displayName?.() || user.username?.()}</h1>
             {badges.length > 0 && <ul className="AvocadoUserPage-hero-badges badges">{listItems(badges)}</ul>}
-            <div className="AvocadoUserPage-hero-stats">{joinLabel && <span className="AvocadoUserPage-hero-statPill">{app.translator.trans('ramon-avocado.forum.profile.joined', { date: joinLabel })}</span>}</div>
+            <div className="AvocadoUserPage-hero-stats">
+              {joinLabel && (
+                <span className="AvocadoUserPage-hero-statPill">
+                  {app.translator.trans('ramon-avocado.forum.profile.joined', { date: joinLabel })}
+                </span>
+              )}
+            </div>
           </div>
           {controls.length > 0 && (
             <div className="AvocadoUserPage-hero-controls">
