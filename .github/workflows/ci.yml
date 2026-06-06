@@ -26,6 +26,34 @@ jobs:
     permissions:
       contents: read
     steps:
+      # 🟡 §35.13/I3 — egress em `audit` (fase 1: registra os destinos, não
+      # bloqueia). A allowed-endpoints abaixo é a lista candidata para quando
+      # promover a `block` — antes, revise o resumo do harden-runner do run e
+      # ajuste-a aos destinos reais.
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5  # v2
+        with:
+          egress-policy: audit
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            codeload.github.com:443
+            objects.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+            raw.githubusercontent.com:443
+            packagist.org:443
+            repo.packagist.org:443
+            getcomposer.org:443
+            registry.npmjs.org:443
+            nodejs.org:443
+            ppa.launchpadcontent.net:443
+            ppa.launchpadcontent.net:80
+            keyserver.ubuntu.com:443
+            azure.archive.ubuntu.com:80
+            esm.ubuntu.com:443
+            motd.ubuntu.com:443
+            pecl.php.net:443
+
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
@@ -51,13 +79,66 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # flarum/core 2.x requer php ^8.3 — 8.2 ficou de fora.
-        php: ['8.3', '8.4']
+        # flarum/core 2.x requer php ^8.3 — 8.2 ficou de fora. 8.5 incluído
+        # (testado localmente); o composer update usa --ignore-platform-req=php+
+        # para o caso de uma dependência ainda não declarar suporte a 8.5.
+        php: ['8.3', '8.4', '8.5']
         # §35.13 I5 — testa contra a versão estável E a HEAD do core.
         flarum-core:
           - '^2.0.0'
           - '2.x-dev'
+    # Service containers para a suíte de integração cross-engine. Sem eles, os
+    # data sets mysql/pgsql do DiscussionHeroTest apenas pulam (sqlite sempre roda).
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: avocado_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: avocado_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s --health-timeout=5s --health-retries=10
     steps:
+      # 🟡 §35.13/I3 — egress em `audit` (fase 1: registra os destinos, não
+      # bloqueia). A allowed-endpoints abaixo é a lista candidata para quando
+      # promover a `block` — antes, revise o resumo do harden-runner do run e
+      # ajuste-a aos destinos reais.
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5  # v2
+        with:
+          egress-policy: audit
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            codeload.github.com:443
+            objects.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+            raw.githubusercontent.com:443
+            packagist.org:443
+            repo.packagist.org:443
+            getcomposer.org:443
+            registry.npmjs.org:443
+            nodejs.org:443
+            ppa.launchpadcontent.net:443
+            ppa.launchpadcontent.net:80
+            keyserver.ubuntu.com:443
+            azure.archive.ubuntu.com:80
+            esm.ubuntu.com:443
+            motd.ubuntu.com:443
+            pecl.php.net:443
+
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
@@ -65,6 +146,8 @@ jobs:
         uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f  # v2
         with:
           php-version: ${{ matrix.php }}
+          # sqlite/mysql/pgsql = suíte de integração cross-engine; dom/mbstring/fileinfo = sanitizers + uploads.
+          extensions: dom, mbstring, fileinfo, pdo_sqlite, sqlite3, pdo_mysql, pdo_pgsql
           coverage: none
           tools: composer:v2
 
@@ -72,7 +155,30 @@ jobs:
         run: composer require --no-update "flarum/core:${{ matrix.flarum-core }}"
 
       - name: Resolver dependências (composer update)
-        run: composer update --no-interaction --no-progress --prefer-stable --no-scripts
+        # --ignore-platform-req=php+ ignora apenas o LIMITE SUPERIOR de PHP (para
+        # a célula 8.5, caso uma dependência ainda não declare suporte); não
+        # mascara extensões faltantes nem o limite inferior.
+        run: composer update --no-interaction --no-progress --prefer-stable --no-scripts --ignore-platform-req=php+
+
+      # Suítes rodam em steps separados para aparecerem como linhas distintas na
+      # UI do Actions (Unit / Locale parity / Integration cross-engine).
+      - name: Unit tests (sanitizers, policy, CSS-injection)
+        run: vendor/bin/phpunit --testsuite unit
+
+      # Um step por engine → 3 linhas distintas na UI do Actions. O --filter casa
+      # o nome do data set (sqlite/mysql/pgsql) do DiscussionHeroTest.
+      - name: Integration — SQLite
+        run: vendor/bin/phpunit --testsuite integration --filter sqlite
+
+      - name: Integration — MySQL
+        env:
+          AVOCADO_TEST_MYSQL: host=127.0.0.1;port=3306;username=root;password=root;database=avocado_test
+        run: vendor/bin/phpunit --testsuite integration --filter mysql
+
+      - name: Integration — PgSQL
+        env:
+          AVOCADO_TEST_PGSQL: host=127.0.0.1;port=5432;username=postgres;password=postgres;database=avocado_test
+        run: vendor/bin/phpunit --testsuite integration --filter pgsql
 
       - name: Lint PHP (php -l)
         run: |
@@ -85,14 +191,13 @@ jobs:
       - name: composer audit
         run: composer audit --no-dev --format=plain
 
-      # §35.13 R3 — PHPStan com flarum/phpstan-stub. continue-on-error: true
-      # porque é a primeira adoção; reduzir conforme baseline melhora.
-      - name: PHPStan (audit-only)
+      # §35.13 R3 — PHPStan nível 5 com baseline versionado (phpstan.neon +
+      # phpstan-baseline.neon). phpstan/phpstan já vem via require-dev, então
+      # `composer analyse` basta. Bloqueante: o baseline mantém verde e novos
+      # achados reprovam o PR (aperte o nível/baseline com o tempo).
+      - name: PHPStan
         if: matrix.php == '8.3' && matrix.flarum-core == '^2.0.0'
-        continue-on-error: true
-        run: |
-          composer require --dev --no-progress "phpstan/phpstan:^1" "flarum/phpstan-stub:*"
-          vendor/bin/phpstan analyse --level=5 --no-progress src/ extend.php
+        run: composer analyse
 
   js:
     name: JS (typecheck, format, build)
@@ -100,6 +205,34 @@ jobs:
     permissions:
       contents: read
     steps:
+      # 🟡 §35.13/I3 — egress em `audit` (fase 1: registra os destinos, não
+      # bloqueia). A allowed-endpoints abaixo é a lista candidata para quando
+      # promover a `block` — antes, revise o resumo do harden-runner do run e
+      # ajuste-a aos destinos reais.
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5  # v2
+        with:
+          egress-policy: audit
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            codeload.github.com:443
+            objects.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+            raw.githubusercontent.com:443
+            packagist.org:443
+            repo.packagist.org:443
+            getcomposer.org:443
+            registry.npmjs.org:443
+            nodejs.org:443
+            ppa.launchpadcontent.net:443
+            ppa.launchpadcontent.net:80
+            keyserver.ubuntu.com:443
+            azure.archive.ubuntu.com:80
+            esm.ubuntu.com:443
+            motd.ubuntu.com:443
+            pecl.php.net:443
+
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
@@ -143,15 +276,54 @@ jobs:
         working-directory: js
         run: npm run check-typings
 
+      # Step próprio para aparecer como linha distinta na UI: roda a regra
+      # i18n/no-hardcoded-text (strings hardcoded) + mithril-key + jsx-key.
+      - name: ESLint (regra i18n + mithril keys)
+        working-directory: js
+        run: npm run lint
+
+      # Webpack puro — o lint já rodou no step acima (build npm-script reexecuta
+      # o lint; aqui chamamos o webpack direto para não duplicar).
       - name: Build (webpack production)
         working-directory: js
-        run: npm run build
+        run: node_modules/.bin/webpack --mode production
 
       # §35.13 R2 — npm advisories. --audit-level=high reduz ruído de
       # transitivas dev; subir para moderate quando o baseline estabilizar.
       - name: npm audit
         working-directory: js
         run: npm audit --audit-level=high
+
+  # Paridade de tradução (en ↔ pt-BR) roda UMA vez em job próprio — independe de
+  # versão de PHP/core, então não precisa repetir nas 6 células da matriz `php`.
+  # Vira um box distinto na UI do Actions.
+  locale:
+    name: Locale parity (i18n keys)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5  # v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f  # v2
+        with:
+          php-version: '8.3'
+          extensions: dom, mbstring
+          coverage: none
+          tools: composer:v2
+
+      - name: Resolver dependências (composer update)
+        run: composer update --no-interaction --no-progress --prefer-stable --no-scripts
+
+      - name: Locale parity (chaves i18n en ↔ pt-BR)
+        run: vendor/bin/phpunit --testsuite locale
 
   # §35.13 I1 — bloqueia PRs que introduzam dependências com CVEs conhecidos.
   dependency-review:
@@ -162,6 +334,34 @@ jobs:
       contents: read
       pull-requests: write
     steps:
+      # 🟡 §35.13/I3 — egress em `audit` (fase 1: registra os destinos, não
+      # bloqueia). A allowed-endpoints abaixo é a lista candidata para quando
+      # promover a `block` — antes, revise o resumo do harden-runner do run e
+      # ajuste-a aos destinos reais.
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5  # v2
+        with:
+          egress-policy: audit
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            codeload.github.com:443
+            objects.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+            raw.githubusercontent.com:443
+            packagist.org:443
+            repo.packagist.org:443
+            getcomposer.org:443
+            registry.npmjs.org:443
+            nodejs.org:443
+            ppa.launchpadcontent.net:443
+            ppa.launchpadcontent.net:80
+            keyserver.ubuntu.com:443
+            azure.archive.ubuntu.com:80
+            esm.ubuntu.com:443
+            motd.ubuntu.com:443
+            pecl.php.net:443
+
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       - name: Dependency Review

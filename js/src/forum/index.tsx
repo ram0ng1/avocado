@@ -972,7 +972,7 @@ app.initializers.add(
                     if (window.history.length > 1) window.history.back();
                     else m.route.set(app.route('index'));
                   }}
-                  aria-label="Back"
+                  aria-label={trans('ramon-avocado.forum.back', 'Back')}
                 >
                   <i className="fas fa-arrow-left" aria-hidden="true" />
                 </button>
@@ -1827,7 +1827,7 @@ app.initializers.add(
                   self.hide?.();
                 }}
               >
-                ESC
+                {trans('ramon-avocado.forum.search.esc_key', 'ESC')}
               </button>
             );
           }
@@ -1841,6 +1841,7 @@ app.initializers.add(
               <div className="Avocado-searchModal-foot">
                 <span>
                   {trans('ramon-avocado.forum.search.tip', 'Tip: prefix ')}
+                  {/* eslint-disable-next-line i18n/no-hardcoded-text -- 'tag:' is the literal search operator users type */}
                   <strong>tag:</strong>
                   {trans('ramon-avocado.forum.search.tip_suffix', ' to filter by tag')}
                 </span>

@@ -1,0 +1,20 @@
+includes:
+    # Pre-existing findings (Flarum magic relations/statics, optional-extension
+    # integrations) are frozen here so CI is green and NEW code is still checked.
+    # Ratchet down over time; the negated-boolean findings in the baseline are
+    # worth reviewing as genuine cleanups.
+    - phpstan-baseline.neon
+
+parameters:
+    level: 5
+    paths:
+        - src
+        - extend.php
+    # CI resolves flarum/core via `composer update`, so a baselined magic-type
+    # error may not reproduce there. Don't fail when a frozen entry goes unused.
+    reportUnmatchedIgnoredErrors: false
+    # Flarum core is reflected directly from vendor/ (no flarum/phpstan stub).
+    # If magic-method/dynamic-property false positives pile up as the level
+    # rises, wire flarum/phpstan back in (pin a tag compatible with the phpstan
+    # version) or add targeted ignoreErrors entries here.
+    treatPhpDocTypesAsCertain: false
