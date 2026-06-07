@@ -1,4 +1,5 @@
 import app from 'flarum/forum/app';
+import extractText from 'flarum/common/utils/extractText';
 import Component from 'flarum/common/Component';
 import type { ComponentAttrs } from 'flarum/common/Component';
 import Tooltip from 'flarum/common/components/Tooltip';
@@ -397,7 +398,7 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
 
     return (
       <div className="AvocadoHome-sectionHead-nav">
-        <nav className="AvocadoHomeNav AvocadoHomeNav--inline" aria-label="Navigation">
+        <nav className="AvocadoHomeNav AvocadoHomeNav--inline" aria-label={extractText(app.translator.trans('ramon-avocado.forum.home.nav_label'))}>
           {items}
         </nav>
       </div>
