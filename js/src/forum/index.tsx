@@ -11,7 +11,6 @@ import DiscussionListItem from 'flarum/forum/components/DiscussionListItem';
 import GlobalSearch from 'flarum/forum/components/GlobalSearch';
 import Search from 'flarum/forum/components/Search';
 import HeaderSecondary from 'flarum/forum/components/HeaderSecondary';
-import SessionDropdown from 'flarum/forum/components/SessionDropdown';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import IndexPage from 'flarum/forum/components/IndexPage';
 import CommentPost from 'flarum/forum/components/CommentPost';
