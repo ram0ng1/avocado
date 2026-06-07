@@ -59,7 +59,11 @@ export default class OnlineUsers<CustomAttrs extends IOnlineUsersAttrs = IOnline
     return (
       <div className={wrapperClass}>
         <div className="AvocadoHome-onlineAvatars-row">{shown.map((user: any, i: number) => this.renderAvatar(user, i, isPlain))}</div>
-        {app.forum?.attribute('avocadoShowOnlineCount') !== false && <span className="AvocadoHome-onlineAvatars-count">{total} online</span>}
+        {app.forum?.attribute('avocadoShowOnlineCount') !== false && (
+          <span className="AvocadoHome-onlineAvatars-count">
+            {total} {app.translator.trans('ramon-avocado.forum.online_users.online')}
+          </span>
+        )}
       </div>
     );
   }
