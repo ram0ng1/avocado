@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         cacheDirectory=".phpunit.cache"
+         failOnRisky="true"
+         failOnWarning="true">
+    <!-- Named suites so CI runs (and shows) each category as a separate step.
+         Plain `phpunit` (composer test) still runs all of them. -->
+    <testsuites>
+        <testsuite name="unit">
+            <directory>tests/Unit</directory>
+            <directory>tests/Security</directory>
+            <exclude>tests/Unit/LocaleParityTest.php</exclude>
+        </testsuite>
+        <testsuite name="locale">
+            <file>tests/Unit/LocaleParityTest.php</file>
+        </testsuite>
+        <testsuite name="integration">
+            <directory>tests/Integration</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>src</directory>
+        </include>
+    </source>
+    <php>
+        <!-- Per-engine connection coords for the DB integration suite. Unset =
+             that engine is skipped, so the suite runs (SQLite only) on a bare
+             checkout. force is left false so a real env var (CI/local) wins.
+             Format: host=..;port=..;username=..;password=..;database=avocado_test -->
+        <env name="AVOCADO_TEST_MYSQL" value=""/>
+        <env name="AVOCADO_TEST_MARIADB" value=""/>
+        <env name="AVOCADO_TEST_PGSQL" value=""/>
+    </php>
+</phpunit>

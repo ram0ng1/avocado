@@ -140,6 +140,7 @@ ramon-avocado:
       team_enabled_label: Ativar página Equipe
       team_enabled_help: Mostra a página /team com os membros dos grupos selecionados.
       team_title_label: Título da página
+      team_title_placeholder: Nossa Equipe
       team_desc_label: Descrição da página
       team_desc_placeholder: Conheça as pessoas por trás da comunidade.
       team_groups_label: Grupos a exibir
@@ -160,6 +161,15 @@ ramon-avocado:
       footer_show_social: Mostrar links de mídias sociais
       footer_social_help_json: "Configure links de mídias sociais em formato JSON. Use as chaves: facebook, twitter, linkedin, instagram, youtube."
   forum:
+    back: "Voltar"
+    profile:
+      joined: "Entrou em {date}"
+      scroll_left: "Rolar para a esquerda"
+      scroll_right: "Rolar para a direita"
+    online_users:
+      online: "online"
+    tag_picker:
+      remove: "Remover tag"
     actions:
       share: Compartilhar
     post_cta:
@@ -197,6 +207,7 @@ ramon-avocado:
       results_for: "Resultados para"
       tip: "Dica: use o prefixo "
       tip_suffix: " para filtrar por tag"
+      esc_key: "ESC"
     header:
       back: Voltar
       back_home: Voltar para o Início
@@ -212,6 +223,7 @@ ramon-avocado:
       hero_image_remove: Remover imagem
       hero_image_remove_confirm: Remover a imagem do hero desta discussão?
     home:
+      nav_label: Navegação
       all_categories: Todas as categorias
       all_title: Todas as discussões
       back_home: Voltar

@@ -1,0 +1,86 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Call to method broadcastModelEvent\\(\\) on an unknown class Flarum\\\\Realtime\\\\Extend\\\\Realtime\\.$#"
+			count: 3
+			path: extend.php
+
+		-
+			message: "#^Class Flarum\\\\Likes\\\\Event\\\\PostWasLiked not found\\.$#"
+			count: 1
+			path: extend.php
+
+		-
+			message: "#^Class Flarum\\\\Likes\\\\Event\\\\PostWasUnliked not found\\.$#"
+			count: 1
+			path: extend.php
+
+		-
+			message: "#^Class Flarum\\\\Sticky\\\\Event\\\\DiscussionWasStickied not found\\.$#"
+			count: 1
+			path: extend.php
+
+		-
+			message: "#^Class Flarum\\\\Sticky\\\\Event\\\\DiscussionWasUnstickied not found\\.$#"
+			count: 1
+			path: extend.php
+
+		-
+			message: "#^Instantiated class Flarum\\\\Realtime\\\\Extend\\\\Realtime not found\\.$#"
+			count: 3
+			path: extend.php
+
+		-
+			message: "#^Method Flarum\\\\Extend\\\\Settings\\:\\:serializeToForum\\(\\) invoked with 4 parameters, 2\\-3 required\\.$#"
+			count: 1
+			path: extend.php
+
+		-
+			message: "#^Access to an undefined property Flarum\\\\Discussion\\\\Discussion\\:\\:\\$avocadoHero\\.$#"
+			count: 1
+			path: src/Api/DiscussionFields.php
+
+		-
+			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Filesystem\\\\Filesystem\\:\\:url\\(\\)\\.$#"
+			count: 1
+			path: src/Api/DiscussionFields.php
+
+		-
+			message: "#^Negated boolean expression is always true\\.$#"
+			count: 1
+			path: src/AvocadoServiceProvider.php
+
+		-
+			message: "#^Negated boolean expression is always false\\.$#"
+			count: 1
+			path: src/Content/AddHeroBannerPreload.php
+
+		-
+			message: "#^Call to an undefined static method Flarum\\\\User\\\\User\\:\\:select\\(\\)\\.$#"
+			count: 1
+			path: src/Content/InjectOnlineUsers.php
+
+		-
+			message: "#^Access to an undefined property Flarum\\\\Discussion\\\\Discussion\\:\\:\\$avocadoHero\\.$#"
+			count: 1
+			path: src/Controller/DeleteDiscussionHeroController.php
+
+		-
+			message: "#^Access to an undefined property Flarum\\\\Discussion\\\\Discussion\\:\\:\\$avocadoHero\\.$#"
+			count: 1
+			path: src/Controller/UploadDiscussionHeroController.php
+
+		-
+			message: "#^Call to an undefined method Illuminate\\\\Contracts\\\\Filesystem\\\\Filesystem\\:\\:url\\(\\)\\.$#"
+			count: 1
+			path: src/Controller/UploadDiscussionHeroController.php
+
+		-
+			message: "#^Parameter \\#2 \\$contents of method Illuminate\\\\Contracts\\\\Filesystem\\\\Filesystem\\:\\:put\\(\\) expects Illuminate\\\\Http\\\\File\\|Illuminate\\\\Http\\\\UploadedFile\\|Psr\\\\Http\\\\Message\\\\StreamInterface\\|resource\\|string, Intervention\\\\Image\\\\Interfaces\\\\EncodedImageInterface given\\.$#"
+			count: 1
+			path: src/Controller/UploadDiscussionHeroController.php
+
+		-
+			message: "#^Strict comparison using \\=\\=\\= between DOMNamedNodeMap and null will always evaluate to false\\.$#"
+			count: 1
+			path: src/Support/HtmlSanitizer.php
