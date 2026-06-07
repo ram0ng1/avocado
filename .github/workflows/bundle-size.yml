@@ -1,0 +1,134 @@
+name: Bundle Size
+
+# Mede o tamanho dos bundles JS (js/dist/**.js, raw + gzip). Em PR, compara
+# contra a baseline do último push em master e comenta os deltas 🟢/🔴.
+# Companheiro do performance.yml: aquele mede runtime (Lighthouse), este pega
+# regressão de PESO do bundle. Report-only — não bloqueia o merge.
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+# §35.13 C1 — default-deny do GITHUB_TOKEN.
+permissions: {}
+
+concurrency:
+  group: bundlesize-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  measure:
+    name: Medir bundles (forum.js / admin.js)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481  # v2.11.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: js/package-lock.json
+
+      - name: Build de produção (webpack)
+        working-directory: js
+        # Só o webpack: os `flarum/*` são externals, então não precisa de
+        # composer/vendor para gerar o bundle. (Lint/tsc ficam no ci.yml.)
+        run: |
+          npm ci
+          node_modules/.bin/webpack --mode production
+
+      - name: Medir tamanho do bundle
+        run: node .github/scripts/bundle-size.mjs measure js/dist bundle-size.json
+
+      - name: Subir artefato (PR)
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: bundle-pr-${{ github.event.pull_request.number }}
+          path: bundle-size.json
+          retention-days: 14
+          overwrite: true
+
+      - name: Subir artefato (master baseline)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: bundle-master
+          path: bundle-size.json
+          retention-days: 90
+          overwrite: true
+
+  compare:
+    name: Comparar PR vs master
+    needs: measure
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481  # v2.11.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout (para o script)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
+        with:
+          node-version: 20
+
+      - name: Baixar resultado desta PR
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+        with:
+          name: bundle-pr-${{ github.event.pull_request.number }}
+          path: pr
+
+      # Cross-workflow-run: último artefato 'bundle-master' do último run com
+      # sucesso do bundle-size.yml em master.
+      - name: Baixar baseline do master
+        uses: dawidd6/action-download-artifact@bf251b5aa9c2f7eeb574a96ee720e24f801b7c11  # v6
+        with:
+          workflow: bundle-size.yml
+          workflow_conclusion: success
+          branch: master
+          name: bundle-master
+          path: baseline
+          if_no_artifact_found: warn
+
+      - name: Gerar markdown comparativo
+        run: |
+          node .github/scripts/bundle-size.mjs compare pr/bundle-size.json baseline/bundle-size.json > comparison.md
+          echo "----"; cat comparison.md
+
+      - name: Encontrar comentário existente
+        id: find_comment
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e  # v3.1.0
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: github-actions[bot]
+          body-includes: 'Bundle size'
+
+      - name: Comentar (criar ou atualizar)
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9  # v5.0.0
+        with:
+          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: comparison.md
+          edit-mode: replace

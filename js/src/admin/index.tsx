@@ -523,7 +523,7 @@ app.initializers.add('ramon-avocado', (app) => {
               <AdminText
                 settingKey="avocado.team_page_title"
                 label={trans('ramon-avocado.admin.settings.team_title_label', 'Page title')}
-                placeholder="Our Team"
+                placeholder={trans('ramon-avocado.admin.settings.team_title_placeholder', 'Our Team')}
               />
               <AdminText
                 settingKey="avocado.team_page_description"
