@@ -1,4 +1,5 @@
 import app from 'flarum/forum/app';
+import extractText from 'flarum/common/utils/extractText';
 import Component from 'flarum/common/Component';
 import type { ComponentAttrs } from 'flarum/common/Component';
 import { trans, iconColors } from '../../utils';
@@ -83,7 +84,7 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
                 state.removeTag(tag);
                 m.redraw();
               }}
-              title="Remove tag"
+              title={extractText(app.translator.trans('ramon-avocado.forum.tag_picker.remove'))}
             >
               {tag.icon?.() && <i className={tag.icon()} aria-hidden="true" />}
               {tag.name?.()}
