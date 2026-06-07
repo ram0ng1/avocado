@@ -11,7 +11,6 @@ import DiscussionListItem from 'flarum/forum/components/DiscussionListItem';
 import GlobalSearch from 'flarum/forum/components/GlobalSearch';
 import Search from 'flarum/forum/components/Search';
 import HeaderSecondary from 'flarum/forum/components/HeaderSecondary';
-import SessionDropdown from 'flarum/forum/components/SessionDropdown';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import IndexPage from 'flarum/forum/components/IndexPage';
 import CommentPost from 'flarum/forum/components/CommentPost';
@@ -972,7 +971,7 @@ app.initializers.add(
                     if (window.history.length > 1) window.history.back();
                     else m.route.set(app.route('index'));
                   }}
-                  aria-label="Back"
+                  aria-label={trans('ramon-avocado.forum.back', 'Back')}
                 >
                   <i className="fas fa-arrow-left" aria-hidden="true" />
                 </button>
@@ -1827,7 +1826,7 @@ app.initializers.add(
                   self.hide?.();
                 }}
               >
-                ESC
+                {trans('ramon-avocado.forum.search.esc_key', 'ESC')}
               </button>
             );
           }
@@ -1841,6 +1840,7 @@ app.initializers.add(
               <div className="Avocado-searchModal-foot">
                 <span>
                   {trans('ramon-avocado.forum.search.tip', 'Tip: prefix ')}
+                  {/* eslint-disable-next-line i18n/no-hardcoded-text -- 'tag:' is the literal search operator users type */}
                   <strong>tag:</strong>
                   {trans('ramon-avocado.forum.search.tip_suffix', ' to filter by tag')}
                 </span>
