@@ -1,0 +1,110 @@
+name: Security Regression
+
+# Em PR: roda o Semgrep em modo diff-aware (--baseline-commit) — reporta APENAS
+# os achados de vulnerabilidade NOVOS em relação ao master — e comenta na PR
+# (estilo do performance.yml). A varredura completa (todo o baseline → Security
+# tab) continua no security.yml. Report-only: não bloqueia o merge.
+on:
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+# §35.13 C1 — default-deny do GITHUB_TOKEN.
+permissions: {}
+
+concurrency:
+  group: secreg-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan:
+    name: Semgrep diff (novos achados)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # Mesma imagem pinada do security.yml.
+    container:
+      image: semgrep/semgrep:1.96.0
+    steps:
+      - name: Checkout (histórico completo p/ baseline)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Marcar workspace como safe (git dentro do container)
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Semgrep diff-aware scan
+        env:
+          # Mesmos rulesets do security.yml.
+          SEMGREP_RULES: >-
+            p/php
+            p/security-audit
+            p/owasp-top-ten
+            p/secrets
+            p/javascript
+        # --baseline-commit faz o Semgrep reportar só o que NÃO existia no commit
+        # base da PR (master). || true para nunca quebrar o scan (o gate é o
+        # comentário; veja a nota no fim do workflow para transformar em gate).
+        run: |
+          semgrep scan --json --output=findings.json \
+            --baseline-commit "${{ github.event.pull_request.base.sha }}" \
+            --metrics=off || true
+          echo "Novos achados: $(grep -o '"check_id"' findings.json | wc -l)"
+
+      - name: Subir achados
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: semgrep-diff-${{ github.event.pull_request.number }}
+          path: findings.json
+          retention-days: 14
+          overwrite: true
+
+  report:
+    name: Comentar achados na PR
+    needs: scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481  # v2.11.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout (para o script)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
+        with:
+          node-version: 20
+
+      - name: Baixar achados
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+        with:
+          name: semgrep-diff-${{ github.event.pull_request.number }}
+          path: out
+
+      - name: Gerar comentário
+        run: |
+          node .github/scripts/semgrep-regression.mjs out/findings.json > comment.md
+          echo "----"; cat comment.md
+
+      - name: Encontrar comentário existente
+        id: find_comment
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e  # v3.1.0
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: github-actions[bot]
+          body-includes: 'Regressão de segurança'
+
+      - name: Comentar (criar ou atualizar)
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9  # v5.0.0
+        with:
+          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: comment.md
+          edit-mode: replace
