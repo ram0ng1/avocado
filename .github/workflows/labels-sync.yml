@@ -1,0 +1,60 @@
+name: Sincronizar Labels
+
+# Mantém os labels do repositório idênticos ao manifesto .github/labels.json
+# (mesmo nome, cor e descrição em todos os repositórios da família). Labels
+# fora do manifesto são REMOVIDOS para o conjunto ficar uniforme.
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/labels.json'
+      - '.github/workflows/labels-sync.yml'
+  workflow_dispatch:
+
+# §35.13 C1 — default-deny.
+permissions: {}
+
+concurrency:
+  group: labels-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    name: Aplicar manifesto de labels
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411  # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Sincronizar labels com o manifesto
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea  # v7.0.1
+        with:
+          script: |
+            const fs = require('fs');
+            const desired = JSON.parse(fs.readFileSync('.github/labels.json', 'utf8'));
+            const { owner, repo } = context.repo;
+            const current = await github.paginate(github.rest.issues.listLabelsForRepo, { owner, repo, per_page: 100 });
+            const byName = new Map(current.map(l => [l.name.toLowerCase(), l]));
+            for (const want of desired) {
+              const have = byName.get(want.name.toLowerCase());
+              byName.delete(want.name.toLowerCase());
+              if (!have) {
+                await github.rest.issues.createLabel({ owner, repo, name: want.name, color: want.color, description: want.description });
+                core.info(`criado: ${want.name}`);
+              } else if (have.color !== want.color || (have.description || '') !== want.description || have.name !== want.name) {
+                await github.rest.issues.updateLabel({ owner, repo, name: have.name, new_name: want.name, color: want.color, description: want.description });
+                core.info(`atualizado: ${want.name}`);
+              }
+            }
+            for (const [, extra] of byName) {
+              await github.rest.issues.deleteLabel({ owner, repo, name: extra.name });
+              core.info(`removido: ${extra.name}`);
+            }

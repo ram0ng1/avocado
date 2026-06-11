@@ -1,0 +1,13 @@
+[
+    { "name": "BC", "color": "b60205", "description": "Mudança que quebra compatibilidade (major)" },
+    { "name": "seguranca", "color": "d93f0b", "description": "Correção ou reforço de segurança" },
+    { "name": "melhoria", "color": "0e8a16", "description": "Nova funcionalidade ou aprimoramento (minor)" },
+    { "name": "correcao", "color": "d73a4a", "description": "Correção de erro (patch)" },
+    { "name": "performance", "color": "fbca04", "description": "Otimização de desempenho" },
+    { "name": "documentacao", "color": "0075ca", "description": "Documentação, README e exemplos" },
+    { "name": "refatoracao", "color": "c5def5", "description": "Refatoração sem mudança de comportamento" },
+    { "name": "dependencias", "color": "0366d6", "description": "Atualização de dependências (composer, npm, actions)" },
+    { "name": "traducao", "color": "5319e7", "description": "Traduções e arquivos de locale" },
+    { "name": "manutencao", "color": "bfd4f2", "description": "Manutenção de rotina, CI e infraestrutura" },
+    { "name": "pular changelog", "color": "ededed", "description": "Excluído do changelog da release" }
+]
