@@ -11,6 +11,23 @@ updates:
       - dependencias
     commit-message:
       prefix: "deps"
+    # `increase` faz o Dependabot bumpar o piso das constraints (ex.
+    # flarum/core ^2.0.0 -> ^2.1.0) quando sai uma release nova, em vez de só
+    # alargar a faixa — sem isso ele NÃO abriria PR para versões já cobertas por
+    # ^2.0.0. Com `minimum-stability: dev` no composer.json, prereleases
+    # (rc/beta) do core também entram na conta.
+    versioning-strategy: increase
+    # Junta flarum/core + flarum/tags num único PR por ciclo (em vez de dois).
+    groups:
+      flarum:
+        patterns:
+          - "flarum/*"
+    ignore:
+      # Não deixa o Dependabot desfazer a constraint união do phpunit
+      # (^11.5 || ^13.2.0): um bump major reintroduziria o phpunit 13-only, que
+      # exige PHP >= 8.4.1 e quebra os cells de PHP 8.3 (flarum/core suporta 8.3).
+      - dependency-name: "phpunit/phpunit"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: npm
     directory: /js
