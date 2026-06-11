@@ -142,4 +142,52 @@ final class HtmlSanitizerTest extends TestCase
 
         self::assertStringContainsString('color:red', $out);
     }
+
+    public function test_html_comments_are_stripped(): void
+    {
+        $out = HtmlSanitizer::sanitize('<p>keep</p><!-- <script>alert(1)</script> -->');
+
+        self::assertStringNotContainsString('<!--', $out);
+        self::assertStringNotContainsString('alert(1)', $out);
+        self::assertStringContainsString('keep', $out);
+    }
+
+    #[DataProvider('mxssElements')]
+    public function test_parser_context_elements_are_stripped(string $tag, string $payload): void
+    {
+        $out = HtmlSanitizer::sanitize('<p>keep</p>' . $payload);
+
+        self::assertStringNotContainsString('<' . $tag, strtolower($out));
+        self::assertStringNotContainsString('onerror', strtolower($out));
+        self::assertStringContainsString('keep', $out);
+    }
+
+    /** @return array<string, array{0: string, 1: string}> */
+    public static function mxssElements(): array
+    {
+        return [
+            // <noscript>/<template> bodies are re-parsed by the browser in a
+            // context DOMDocument doesn't replicate — the mutation-XSS vector.
+            'noscript' => ['noscript', '<noscript><img src=x onerror=alert(1)></noscript>'],
+            'template' => ['template', '<template><img src=x onerror=alert(1)></template>'],
+        ];
+    }
+
+    public function test_sanitization_is_idempotent(): void
+    {
+        // The mXSS guard re-scrubs until output stabilizes; a second pass over an
+        // already-clean payload must be a no-op (no markup re-introduced/altered).
+        $payloads = [
+            '<p>Hello <strong>bold</strong></p>',
+            '<a href="https://example.com">link</a>',
+            '<div style="color:red">x</div>',
+            '<noscript><img src=x onerror=alert(1)></noscript>safe',
+            '<p>keep</p><!-- comment --><script>alert(1)</script>',
+        ];
+
+        foreach ($payloads as $payload) {
+            $once = HtmlSanitizer::sanitize($payload);
+            self::assertSame($once, HtmlSanitizer::sanitize($once), "Not idempotent for: {$payload}");
+        }
+    }
 }
