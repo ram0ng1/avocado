@@ -195,14 +195,25 @@ export const safeCssUrl = (url: string | null | undefined): string => {
 // styles using expression()/@import. Not a full allow-list — relies on the
 // "admin == HTML" Flarum convention but ensures admin-account compromise does
 // not become guest-visible XSS.
-const SANITIZE_STRIP_ELS = ['script', 'iframe', 'object', 'embed', 'link', 'meta', 'base', 'form'];
+// <noscript>/<template> re-parse in a different parser context than DOMParser
+// exposes — a classic mutation-XSS vector — and have no use in an admin paste
+// field, so they are dropped outright. <style> is intentionally NOT stripped:
+// the footer field legitimately ships animation CSS that gets hoisted into
+// <head>. Instead its body is scrubbed (see SANITIZE_DANGER_CSS) and the node
+// dropped only when it carries an injection/exfil sink.
+const SANITIZE_STRIP_ELS = ['script', 'iframe', 'object', 'embed', 'link', 'meta', 'base', 'form', 'noscript', 'template'];
 const SANITIZE_URL_ATTRS = ['href', 'src', 'action', 'formaction', 'xlink:href', 'srcset', 'background', 'poster'];
 const SANITIZE_DANGER_SCHEME = /^\s*(?:javascript|vbscript|data:text\/html)/i;
 const SANITIZE_DANGER_STYLE = /expression\s*\(|javascript:|vbscript:|@import/i;
+// <style> body sinks reaching every visitor as page CSS: @import (remote/data:
+// fetch = exfil + injection), expression()/behavior/-moz-binding (legacy script
+// execution), script schemes, and url(data:) payloads.
+const SANITIZE_DANGER_CSS = /@import|expression\s*\(|behavior\s*:|-moz-binding|javascript\s*:|vbscript\s*:|url\(\s*["']?\s*data\s*:/i;
+// Clean markup converges after the first (normalizing) pass; the cap stops a
+// pathological input from looping forever.
+const SANITIZE_MAX_PASSES = 5;
 
-export const sanitizeAdminHtml = (html: string | null | undefined): string => {
-  const raw = (html ?? '').toString().trim();
-  if (!raw) return '';
+const sanitizeAdminHtmlOnce = (raw: string): string => {
   let doc: Document;
   try {
     doc = new DOMParser().parseFromString(`<div id="__avs_root__">${raw}</div>`, 'text/html');
@@ -212,7 +223,20 @@ export const sanitizeAdminHtml = (html: string | null | undefined): string => {
   const root = doc.getElementById('__avs_root__');
   if (!root) return '';
 
+  // Drop comment nodes — conditional comments / `<!-- --><script>` are an mXSS
+  // vector and carry no rendered content the admin needs here.
+  const walker = doc.createTreeWalker(root, NodeFilter.SHOW_COMMENT);
+  const comments: Node[] = [];
+  while (walker.nextNode()) comments.push(walker.currentNode);
+  comments.forEach((c) => (c as ChildNode).remove());
+
   root.querySelectorAll(SANITIZE_STRIP_ELS.join(',')).forEach((el) => el.remove());
+
+  // Keep clean stylesheets, drop ones carrying a CSS sink.
+  root.querySelectorAll('style').forEach((el) => {
+    const css = (el.textContent || '').replace(/\/\*[\s\S]*?\*\//g, '');
+    if (SANITIZE_DANGER_CSS.test(css)) el.remove();
+  });
 
   root.querySelectorAll('*').forEach((el) => {
     // Array.from instead of spread — `NamedNodeMap` lacks Symbol.iterator under
@@ -234,6 +258,34 @@ export const sanitizeAdminHtml = (html: string | null | undefined): string => {
   });
 
   return root.innerHTML;
+};
+
+export const sanitizeAdminHtml = (html: string | null | undefined): string => {
+  let current = (html ?? '').toString().trim();
+  if (!current) return '';
+
+  // mXSS defense-in-depth: re-run the scrub until the serialized output stops
+  // changing, so markup that only turns dangerous after a parse→serialize round
+  // trip (DOMParser vs. browser re-parse) is caught on the next pass.
+  for (let i = 0; i < SANITIZE_MAX_PASSES; i++) {
+    const next = sanitizeAdminHtmlOnce(current);
+    if (next === current) return next;
+    current = next;
+  }
+  return current;
+};
+
+// ─── Safe CSS color ───────────────────────────────────────────────────────────
+// Accept only `#rgb`/`#rgba`/`#rrggbb`/`#rrggbbaa` hex or `rgb()/rgba()` with
+// numeric args. Anything else (e.g. a group color hand-edited to break out of a
+// style attribute and inject extra declarations) returns null so the caller can
+// omit the declaration entirely. Mirrors the PHP `safeColor()` allowlist.
+export const safeCssColor = (raw: string | null | undefined): string | null => {
+  const v = (raw ?? '').toString().trim();
+  if (!v) return null;
+  if (/^#[0-9a-fA-F]{3,8}$/.test(v)) return v;
+  if (/^rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*(?:0|1|0?\.\d+)\s*)?\)$/i.test(v)) return v;
+  return null;
 };
 
 // ─── Clipboard helper ─────────────────────────────────────────────────────────

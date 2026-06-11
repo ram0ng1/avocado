@@ -3,7 +3,7 @@ import Page from 'flarum/common/components/Page';
 import Avatar from 'flarum/common/components/Avatar';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import humanTime from 'flarum/common/helpers/humanTime';
-import { trans, navigate, displayName } from '../utils';
+import { trans, navigate, displayName, safeCssColor } from '../utils';
 
 export default class TeamPage extends Page {
   loading = true;
@@ -120,11 +120,18 @@ export default class TeamPage extends Page {
 
         <h3 className="AvocadoTeamPage-card-name">{name}</h3>
 
-        {role && (
-          <span className="AvocadoTeamPage-card-role" style={role.color?.() ? `background:${role.color()};color:#fff` : undefined}>
-            {role.nameSingular?.() || role.namePlural?.()}
-          </span>
-        )}
+        {role &&
+          (() => {
+            // Validate the admin-set group color before interpolating it into the
+            // style attribute — an invalid/crafted value falls back to no inline
+            // background instead of injecting extra CSS declarations.
+            const roleColor = safeCssColor(role.color?.());
+            return (
+              <span className="AvocadoTeamPage-card-role" style={roleColor ? `background:${roleColor};color:#fff` : undefined}>
+                {role.nameSingular?.() || role.namePlural?.()}
+              </span>
+            );
+          })()}
 
         {bio && <p className="AvocadoTeamPage-card-bio">{bio}</p>}
 

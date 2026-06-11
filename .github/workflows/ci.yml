@@ -165,20 +165,23 @@ jobs:
       - name: Unit tests (sanitizers, policy, CSS-injection)
         run: vendor/bin/phpunit --testsuite unit
 
-      # Um step por engine → 3 linhas distintas na UI do Actions. O --filter casa
-      # o nome do data set (sqlite/mysql/pgsql) do DiscussionHeroTest.
+      # Um step por engine → 3 linhas distintas na UI do Actions. Usamos a sintaxe
+      # de data set do PHPUnit (--filter '#nome'): o bare `--filter sqlite` casa o
+      # nome do método/conjunto no PHPUnit 11 mas NÃO no 13 (que então reporta
+      # "No tests executed" e sai com código 1). O prefixo '#' filtra pelo nome do
+      # data set (sqlite/mysql/pgsql) do DiscussionHeroTest em ambas as versões.
       - name: Integration — SQLite
-        run: vendor/bin/phpunit --testsuite integration --filter sqlite
+        run: vendor/bin/phpunit --testsuite integration --filter '#sqlite'
 
       - name: Integration — MySQL
         env:
           AVOCADO_TEST_MYSQL: host=127.0.0.1;port=3306;username=root;password=root;database=avocado_test
-        run: vendor/bin/phpunit --testsuite integration --filter mysql
+        run: vendor/bin/phpunit --testsuite integration --filter '#mysql'
 
       - name: Integration — PgSQL
         env:
           AVOCADO_TEST_PGSQL: host=127.0.0.1;port=5432;username=postgres;password=postgres;database=avocado_test
-        run: vendor/bin/phpunit --testsuite integration --filter pgsql
+        run: vendor/bin/phpunit --testsuite integration --filter '#pgsql'
 
       - name: Lint PHP (php -l)
         run: |
