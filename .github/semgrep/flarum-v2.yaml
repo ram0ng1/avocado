@@ -1,0 +1,471 @@
+# =============================================================================
+# Regras Semgrep específicas para extensões Flarum v2
+# =============================================================================
+# Derivadas do playbook de segurança CLAUDE.md (§2–§37). Cada regra cita a
+# seção correspondente em `metadata.flarum-playbook`.
+#
+# Uso local:
+#   semgrep scan --config .github/semgrep/flarum-v2.yaml
+#
+# As regras usam predominantemente `pattern-regex` (em block scalars `|-`)
+# porque o objetivo é uma porta de segurança previsível e de baixo
+# falso-positivo — não análise de fluxo de dados. Para taint analysis use os
+# rulesets genéricos (p/php, p/security-audit) já ligados no security.yml.
+#
+# Severidades: ERROR = provável vuln / footgun crítico do playbook;
+#              WARNING = exige revisão manual / defesa em profundidade;
+#              INFO = nota de design.
+# =============================================================================
+rules:
+  # ---------------------------------------------------------------------------
+  # §3 — Comparação frouxa de identidade do ator (IDOR / bypass de policy)
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-loose-actor-id-comparison
+    languages: [php]
+    severity: ERROR
+    message: >-
+      Comparação com `==` envolvendo `->id`. Em PHP `null == 0` é true, então
+      um guest (id null) é tratado como user 0. Use `===` após `(int)` nos dois
+      lados. Ver CLAUDE.md §3.
+    metadata:
+      category: security
+      cwe: "CWE-639: Authorization Bypass Through User-Controlled Key"
+      confidence: MEDIUM
+      flarum-playbook: "CLAUDE.md §3"
+    pattern-either:
+      - pattern-regex: |-
+          ->id\s*==[^=]
+      - pattern-regex: |-
+          [^=!]==\s*\(int\)\s*\$\w+->id
+
+  # ---------------------------------------------------------------------------
+  # §7 — Mass assignment (Flarum v2 não tem $fillable/$guarded)
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-mass-assignment
+    languages: [php]
+    severity: WARNING
+    message: >-
+      Atribuição em massa potencial. Flarum v2 não tem $fillable/$guarded; a
+      defesa é a allowlist `writable()` do Schema. Nunca passe o corpo da
+      request para fill()/forceFill()/create(). Ver CLAUDE.md §7.
+    metadata:
+      category: security
+      cwe: "CWE-915: Improperly Controlled Modification of Object Attributes"
+      confidence: MEDIUM
+      flarum-playbook: "CLAUDE.md §7"
+    pattern-either:
+      - pattern-regex: |-
+          ->fill\s*\(
+      - pattern-regex: |-
+          ->forceFill\s*\(
+      - pattern-regex: |-
+          protected\s+\$guarded\s*=\s*\[\s*\]
+      - pattern-regex: |-
+          ::create\s*\(\s*\$(request|body|data|attributes|input|parsedBody)\b
+
+  # ---------------------------------------------------------------------------
+  # §10 — SQL injection: SQL cru com interpolação de variável
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-raw-sql-concat
+    languages: [php]
+    severity: ERROR
+    message: >-
+      SQL cru com possível interpolação de variável. Use binding de parâmetros
+      (`?` / `:nome`) ou o Query Builder, que sempre faz binding. Ver CLAUDE.md §10.
+    metadata:
+      category: security
+      cwe: "CWE-89: SQL Injection"
+      confidence: MEDIUM
+      flarum-playbook: "CLAUDE.md §10"
+    pattern-either:
+      - pattern-regex: |-
+          (whereRaw|orderByRaw|selectRaw|havingRaw|fromRaw|groupByRaw)\s*\([^)]*\$
+      - pattern-regex: |-
+          DB::raw\s*\([^)]*\$
+      - pattern-regex: |-
+          ->raw\s*\([^)]*\.\s*\$
+
+  # ---------------------------------------------------------------------------
+  # §10 — Acesso direto a superglobais (deve usar a request PSR-7)
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-php-superglobals
+    languages: [php]
+    severity: ERROR
+    message: >-
+      Acesso direto a superglobal. Use a request PSR-7:
+      $request->getQueryParams() / getParsedBody() / getUploadedFiles().
+      Ver CLAUDE.md §10.
+    metadata:
+      category: security
+      cwe: "CWE-20: Improper Input Validation"
+      confidence: HIGH
+      flarum-playbook: "CLAUDE.md §10"
+    pattern-regex: |-
+      \$_(GET|POST|REQUEST|COOKIE|FILES)\b
+
+  # ---------------------------------------------------------------------------
+  # §10 — Capsule\Manager como entrypoint de query (smell de convenção)
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-capsule-manager
+    languages: [php]
+    severity: WARNING
+    message: >-
+      Uso do facade estático Capsule\Manager como entrypoint de query. Funciona
+      porque o Flarum boota o Capsule globalmente, mas é frágil sob testes e
+      queue workers. Injete Illuminate\Database\ConnectionInterface ou use um
+      model Eloquent. Ver CLAUDE.md §10.
+    metadata:
+      category: maintainability
+      confidence: HIGH
+      flarum-playbook: "CLAUDE.md §10"
+    pattern-regex: |-
+      Illuminate\\Database\\Capsule\\Manager
+
+  # ---------------------------------------------------------------------------
+  # §16 — Bypass de CSRF / throttling
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-bypass-csrf-throttling
+    languages: [php]
+    severity: ERROR
+    message: >-
+      `bypassCsrfToken` / `bypassThrottling` detectado. Só é aceitável em rotas
+      autenticadas por token COM verificação própria do ator. Nunca combine
+      "state-change sensível" + "sem verificação in-request" assumindo o CSRF
+      como backstop. Ver CLAUDE.md §16.
+    metadata:
+      category: security
+      cwe: "CWE-352: Cross-Site Request Forgery"
+      confidence: MEDIUM
+      flarum-playbook: "CLAUDE.md §16"
+    pattern-regex: |-
+      bypassCsrfToken|bypassThrottling
+
+  # ---------------------------------------------------------------------------
+  # §17 — Criação de ApiKey (risco de master key com user_id = NULL)
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-apikey-creation
+    languages: [php]
+    severity: ERROR
+    message: >-
+      Criação de ApiKey. Um ApiKey com `user_id = NULL` é uma MASTER KEY: permite
+      impersonar qualquer usuário (inclusive admin) via `;userId=N` no header
+      Authorization. Vincule a chave a um admin real, ou use HMAC para webhooks.
+      Documente inline o threat model. Ver CLAUDE.md §17.
+    metadata:
+      category: security
+      cwe: "CWE-798: Use of Hard-coded Credentials"
+      confidence: HIGH
+      flarum-playbook: "CLAUDE.md §17"
+    pattern-regex: |-
+      new\s+ApiKey\s*\(
+
+  # ---------------------------------------------------------------------------
+  # §3 — forceAllow / forceDeny sem justificativa
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-force-allow-deny
+    languages: [php]
+    severity: WARNING
+    message: >-
+      `forceAllow()` / `forceDeny()` sobrepõe TODAS as outras policies
+      (FORCE_DENY > FORCE_ALLOW > DENY > ALLOW). Use apenas para caminhos sudo
+      reais (kill switch) e documente inline o motivo do override. Ver CLAUDE.md §3.
+    metadata:
+      category: security
+      cwe: "CWE-285: Improper Authorization"
+      confidence: HIGH
+      flarum-playbook: "CLAUDE.md §3"
+    pattern-regex: |-
+      ->(forceAllow|forceDeny)\s*\(
+
+  # ---------------------------------------------------------------------------
+  # §4 — Permissão concedida ao grupo GUEST (a "armadilha do GUEST")
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-guest-permission-grant
+    languages: [php]
+    severity: ERROR
+    message: >-
+      Permissão aparentemente concedida ao grupo GUEST (id 2). Guest = a
+      internet inteira. Qualquer permissão além de viewForum/signUp deve ir para
+      MEMBER_ID (3) por padrão. Ver CLAUDE.md §4.
+    metadata:
+      category: security
+      cwe: "CWE-732: Incorrect Permission Assignment for Critical Resource"
+      confidence: MEDIUM
+      flarum-playbook: "CLAUDE.md §4"
+    pattern-either:
+      - pattern-regex: |-
+          Group::GUEST_ID
+      - pattern-regex: |-
+          ['"]group_id['"]\s*=>\s*2\b
+
+  # ---------------------------------------------------------------------------
+  # §13 — Filtro ingênuo de path traversal
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-path-traversal-naive-filter
+    languages: [php]
+    severity: ERROR
+    message: >-
+      Filtro ingênuo de path traversal. `str_replace('..','')` é derrotado por
+      `....//`; `strpos($p,'..')` é derrotado por `%2e%2e`. Canonicalize com
+      `realpath()` e cheque o prefixo COM separador de diretório.
+      Ver CLAUDE.md §13.
+    metadata:
+      category: security
+      cwe: "CWE-22: Path Traversal"
+      confidence: MEDIUM
+      flarum-playbook: "CLAUDE.md §13"
+    pattern-either:
+      - pattern-regex: |-
+          str_replace\s*\(\s*['"]\.\.['"]
+      - pattern-regex: |-
+          str_ireplace\s*\(\s*['"]\.\.['"]
+      - pattern-regex: |-
+          (strpos|stripos|str_contains)\s*\([^,]+,\s*['"]\.\.['"]
+
+  # ---------------------------------------------------------------------------
+  # §36 — Execução de comando do SO
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-shell-execution
+    languages: [php]
+    severity: ERROR
+    message: >-
+      Execução de comando do SO. O Flarum core nunca faz shell-out. Se for
+      indispensável: pin do binário em caminho absoluto, `proc_open` na forma de
+      ARRAY (sem shell — injeção de argumento fica estruturalmente impossível),
+      timeout de wall-clock e checagem de exit code + arquivo de saída.
+      Ver CLAUDE.md §36.
+    metadata:
+      category: security
+      cwe: "CWE-78: OS Command Injection"
+      confidence: MEDIUM
+      flarum-playbook: "CLAUDE.md §36"
+    pattern-either:
+      - pattern-regex: |-
+          \b(shell_exec|passthru|proc_open|popen|pcntl_exec)\s*\(
+      - pattern-regex: |-
+          (^|[^>$\w-])exec\s*\(
+      - pattern-regex: |-
+          (^|[^>$\w-])system\s*\(
+
+  # ---------------------------------------------------------------------------
+  # §36 — escapeshellcmd em vez de escapeshellarg
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-escapeshellcmd
+    languages: [php]
+    severity: WARNING
+    message: >-
+      `escapeshellcmd()` escapa a string de comando inteira e AINDA permite
+      injeção de argumentos (`--output=/var/www/...`). Use `escapeshellarg()` em
+      cada argumento individualmente — ou, melhor, a forma de array do
+      `proc_open`. Ver CLAUDE.md §36.
+    metadata:
+      category: security
+      cwe: "CWE-78: OS Command Injection"
+      confidence: HIGH
+      flarum-playbook: "CLAUDE.md §36"
+    pattern-regex: |-
+      \bescapeshellcmd\s*\(
+
+  # ---------------------------------------------------------------------------
+  # §15 — Open redirect a partir de input da request
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-open-redirect
+    languages: [php]
+    severity: ERROR
+    message: >-
+      RedirectResponse construída a partir de input da request sem validação de
+      host. Permita apenas paths relativos iniciados por `/` (mas não `//`) ou
+      URLs cujo host seja o do fórum. CVE-2024-21641. Ver CLAUDE.md §15.
+    metadata:
+      category: security
+      cwe: "CWE-601: Open Redirect"
+      confidence: MEDIUM
+      flarum-playbook: "CLAUDE.md §15"
+    pattern-either:
+      - pattern-regex: |-
+          new\s+RedirectResponse\s*\([^)]*getQueryParams
+      - pattern-regex: |-
+          new\s+RedirectResponse\s*\([^)]*getParsedBody
+      - pattern-regex: |-
+          new\s+RedirectResponse\s*\([^)]*\$_(GET|POST|REQUEST)
+
+  # ---------------------------------------------------------------------------
+  # §11 / §12 — MIME / Content-Type controlado pelo cliente
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-client-controlled-mime
+    languages: [php]
+    severity: WARNING
+    message: >-
+      `getClientMediaType()` é controlado pelo cliente — re-detecte o MIME no
+      servidor com `finfo`. Idem para `Content-Type` montado a partir de
+      variável: derive-o no servidor a partir da extensão validada.
+      Ver CLAUDE.md §11 e §12.
+    metadata:
+      category: security
+      cwe: "CWE-434: Unrestricted Upload of File with Dangerous Type"
+      confidence: MEDIUM
+      flarum-playbook: "CLAUDE.md §11"
+    pattern-either:
+      - pattern-regex: |-
+          getClientMediaType\s*\(
+      - pattern-regex: |-
+          withHeader\s*\(\s*['"]Content-Type['"]\s*,\s*\$
+
+  # ---------------------------------------------------------------------------
+  # §21 — serializeToForum expondo segredo (sem filtro de visibilidade)
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-serialize-secret-to-forum
+    languages: [php]
+    severity: WARNING
+    message: >-
+      `serializeToForum()` expõe o valor a TODO request — inclusive guests — sem
+      filtro de visibilidade por ator. Nunca serialize segredos (token/key/
+      secret/password/webhook). HTML controlado por admin precisa de um cast
+      sanitizador no terceiro argumento. Ver CLAUDE.md §21.
+    metadata:
+      category: security
+      cwe: "CWE-200: Exposure of Sensitive Information"
+      confidence: MEDIUM
+      flarum-playbook: "CLAUDE.md §21"
+    pattern-regex: |-
+      (?i)serializeToForum\s*\([^)]*(secret|token|api[_-]?key|password|passwd|webhook|client[_-]?secret|private[_-]?key|stripe)
+
+  # ---------------------------------------------------------------------------
+  # §23 — Log de corpo/headers da request (vaza password, token, Authorization)
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-log-sensitive-request
+    languages: [php]
+    severity: WARNING
+    message: >-
+      Log do corpo ou dos headers da request pode vazar password, email, token e
+      o header Authorization (não há redação automática). Faça strip das chaves
+      sensíveis (`Arr::except`) antes de logar. Ver CLAUDE.md §23.
+    metadata:
+      category: security
+      cwe: "CWE-532: Insertion of Sensitive Information into Log File"
+      confidence: MEDIUM
+      flarum-playbook: "CLAUDE.md §23"
+    pattern-either:
+      - pattern-regex: |-
+          ->(info|debug|notice|warning|error|critical|alert|emergency)\s*\([^)]*getParsedBody
+      - pattern-regex: |-
+          ->(info|debug|notice|warning|error|critical|alert|emergency)\s*\([^)]*->getHeaders\s*\(
+
+  # ---------------------------------------------------------------------------
+  # §14 — SSRF: fetch server-side com URL potencialmente controlada
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-server-side-fetch
+    languages: [php]
+    severity: WARNING
+    message: >-
+      Fetch server-side a partir de variável (possível SSRF). Se a URL puder vir
+      de input: valide o scheme E o host RESOLVIDO; rejeite RFC1918,
+      169.254.169.254, 127.0.0.0/8, ::1, fe80::/10, fc00::/7; pine o IP resolvido
+      contra DNS rebinding. Ver CLAUDE.md §14.
+    metadata:
+      category: security
+      cwe: "CWE-918: Server-Side Request Forgery"
+      confidence: LOW
+      flarum-playbook: "CLAUDE.md §14"
+    pattern-either:
+      - pattern-regex: |-
+          file_get_contents\s*\(\s*\$
+      - pattern-regex: |-
+          curl_init\s*\(\s*\$
+      - pattern-regex: |-
+          (fopen|readfile)\s*\(\s*\$\w*url
+
+  # ---------------------------------------------------------------------------
+  # §9.4 — Blade: `{!! !!}` renderiza HTML cru
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-blade-raw-output
+    languages: [generic]
+    severity: WARNING
+    message: >-
+      `{!! !!}` renderiza HTML cru em template Blade. Use `{{ }}` para QUALQUER
+      valor controlado por usuário; reserve `{!! !!}` para conteúdo já passado
+      pelo formatter do Flarum ou por um sanitizador. Ver CLAUDE.md §9.4.
+    metadata:
+      category: security
+      cwe: "CWE-79: Cross-site Scripting"
+      confidence: LOW
+      flarum-playbook: "CLAUDE.md §9.4"
+    paths:
+      include:
+        - '*.blade.php'
+    pattern-regex: |-
+      \{!!.*!!\}
+
+  # ---------------------------------------------------------------------------
+  # §9.1 — m.trust() no frontend (HTML cru)
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-m-trust
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: >-
+      `m.trust()` renderiza HTML cru. Rastreie a origem da string: se vier de
+      app.forum.attribute(), de uma resposta de API ou de um atributo do DOM,
+      precisa de sanitização espelhada backend+JS (allowlists idênticas).
+      Prefira construir a vnode tree do Mithril. Ver CLAUDE.md §9.1.
+    metadata:
+      category: security
+      cwe: "CWE-79: Cross-site Scripting"
+      confidence: MEDIUM
+      flarum-playbook: "CLAUDE.md §9.1"
+    pattern-regex: |-
+      m\.trust\s*\(
+
+  # ---------------------------------------------------------------------------
+  # §22 — m.trust() sobre saída do translator (CVE-2021-32671)
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-m-trust-translator
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >-
+      `m.trust()` sobre a saída do translator com vars interpoladas é XSS
+      (padrão da CVE-2021-32671) — `extract:true` achata as vnodes em string e o
+      m.trust parseia como HTML. Nunca `m.trust(app.translator.trans(...))` com
+      vars de usuário; construa a vnode tree manualmente. Ver CLAUDE.md §22.
+    metadata:
+      category: security
+      cwe: "CWE-79: Cross-site Scripting"
+      confidence: HIGH
+      flarum-playbook: "CLAUDE.md §22"
+    pattern-regex: |-
+      m\.trust\s*\([^;]*\.trans\s*\(
+
+  # ---------------------------------------------------------------------------
+  # §32 (Frontend) — atribuição a innerHTML
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-innerhtml-assignment
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >-
+      Atribuição a `innerHTML` com valor potencialmente controlado por usuário é
+      XSS. Use nós de texto ou vnodes do Mithril (que escapam por padrão).
+      Ver CLAUDE.md §32 (checklist Frontend).
+    metadata:
+      category: security
+      cwe: "CWE-79: Cross-site Scripting"
+      confidence: MEDIUM
+      flarum-playbook: "CLAUDE.md §32"
+    pattern-regex: |-
+      \.innerHTML\s*=[^=]
+
+  # ---------------------------------------------------------------------------
+  # §9.3 — href/src a partir de input sem allowlist de protocolo
+  # ---------------------------------------------------------------------------
+  - id: flarum-v2-unsafe-url-attribute
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: >-
+      Atributo `href`/`src`/`formaction` a partir de input sem allowlist de
+      protocolo permite `javascript:` URL. Valide com `/^https?:\/\//i` (ou
+      caminho relativo) antes de renderizar. Ver CLAUDE.md §9.3.
+    metadata:
+      category: security
+      cwe: "CWE-79: Cross-site Scripting"
+      confidence: LOW
+      flarum-playbook: "CLAUDE.md §9.3"
+    pattern-regex: |-
+      (href|src|formaction)\s*[:=]\s*\{?\s*\w+\.(profileLink|url|link|href|src)\s*\(
