@@ -39,7 +39,7 @@
         "flarum/tags": "^2.0.0",
         "phpunit/phpunit": "^13.2.0",
         "mockery/mockery": "^1.6",
-        "phpstan/phpstan": "^1.11"
+        "phpstan/phpstan": "^2.2"
     },
     "scripts": {
         "test": "phpunit",
