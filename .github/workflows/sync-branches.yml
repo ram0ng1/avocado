@@ -39,6 +39,8 @@ jobs:
             | grep -v 'HEAD' \
             | grep -v 'origin/master' \
             | grep -v 'origin/copilot/' \
+            | grep -v 'origin/dependabot/' \
+            | grep -v 'origin/claude/' \
             | sed 's|origin/||' \
             | tr -d ' ')
 
