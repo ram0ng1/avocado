@@ -30,13 +30,24 @@ use DOMXPath;
  */
 final class HtmlSanitizer
 {
-    private const STRIP_ELEMENTS = ['script', 'style', 'iframe', 'object', 'embed', 'link', 'meta', 'base', 'form'];
+    // <noscript> and <template> change the HTML parser's context: their bodies
+    // are re-parsed by the browser in a way DOMDocument doesn't replicate, which
+    // is a classic mutation-XSS (mXSS) vector. They have no legitimate use in an
+    // admin "paste some markup" field, so drop them outright.
+    private const STRIP_ELEMENTS = ['script', 'style', 'iframe', 'object', 'embed', 'link', 'meta', 'base', 'form', 'noscript', 'template'];
 
     private const URL_ATTRS = ['href', 'src', 'action', 'formaction', 'xlink:href', 'srcset', 'background', 'poster'];
 
     private const DANGEROUS_SCHEME = '/^\s*(?:javascript|vbscript|data:text\/html)/i';
 
     private const DANGEROUS_STYLE = '/expression\s*\(|javascript:|vbscript:|@import/i';
+
+    /**
+     * Upper bound on the parse→scrub→serialize passes (see sanitize()). Clean
+     * markup converges in two passes; the cap stops a pathological input from
+     * looping forever.
+     */
+    private const MAX_PASSES = 5;
 
     public static function sanitize(string $html): string
     {
@@ -45,6 +56,26 @@ final class HtmlSanitizer
             return '';
         }
 
+        // mXSS defense-in-depth: a denylist scrub can leave markup that, once the
+        // browser re-parses our serialized output, mutates into a different (and
+        // dangerous) tree than DOMDocument saw. Re-run the scrub until the
+        // serialization stops changing, so any node that only becomes dangerous
+        // after a parse→serialize round trip is caught on the next pass. Normal
+        // input stabilizes after the first (normalizing) pass.
+        $current = $trimmed;
+        for ($i = 0; $i < self::MAX_PASSES; $i++) {
+            $next = self::scrubOnce($current);
+            if ($next === $current) {
+                return $next;
+            }
+            $current = $next;
+        }
+
+        return $current;
+    }
+
+    private static function scrubOnce(string $trimmed): string
+    {
         $dom = new DOMDocument('1.0', 'UTF-8');
         $previous = libxml_use_internal_errors(true);
 
@@ -62,7 +93,17 @@ final class HtmlSanitizer
 
         $xpath = new DOMXPath($dom);
 
-        // 1. Drop dangerous elements entirely.
+        // 1. Drop comment nodes. Conditional comments and `<!-- --><script>`-style
+        //    constructs are an mXSS vector, and comments never carry rendered
+        //    content an admin needs in this field.
+        $comments = $xpath->query('//comment()');
+        if ($comments !== false) {
+            foreach (iterator_to_array($comments) as $comment) {
+                $comment->parentNode?->removeChild($comment);
+            }
+        }
+
+        // 2. Drop dangerous elements entirely.
         $query = '//' . implode(' | //', self::STRIP_ELEMENTS);
         $nodes = $xpath->query($query);
         if ($nodes !== false) {
@@ -71,7 +112,7 @@ final class HtmlSanitizer
             }
         }
 
-        // 2. Walk every remaining element, strip on* attrs and dangerous URLs/styles.
+        // 3. Walk every remaining element, strip on* attrs and dangerous URLs/styles.
         $allEls = $xpath->query('//*');
         if ($allEls !== false) {
             foreach ($allEls as $el) {
@@ -82,7 +123,7 @@ final class HtmlSanitizer
             }
         }
 
-        // 3. Serialize children of the wrapper back out.
+        // 4. Serialize children of the wrapper back out.
         $root = $dom->getElementById('__avs_root__');
         if ($root === null) {
             return '';

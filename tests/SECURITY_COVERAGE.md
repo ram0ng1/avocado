@@ -23,8 +23,8 @@ without a full HTTP harness).
 | §6 | Schema field visibility | 📝 | `DiscussionFields` exposes hero path only; no PII fields added. Review-only. |
 | §7 | Mass assignment / `writable` | ✅ | `tests/Integration/DiscussionHeroTest::test_model_persists_and_guards_the_primary_key` — `$guarded` blocks `discussion_id` mass-assign. |
 | §8 | Extending core resources | 📝 | `ForumAttributes` adds only counts; `DiscussionFields` adds hero path. No PII; review-only. |
-| §9 | XSS / `m.trust` | ✅ | `tests/Unit/HtmlSanitizerTest.php` (15 cases) — script/style/iframe strip, `on*`, `javascript:`/`vbscript:`/`data:text/html`, dangerous styles. |
-| §9.3 | CSS-context injection | ✅ | `tests/Security/LoadingSpinnerColorTest.php` — `safeColor()` allowlist blocks `</style>` break-out, `expression()`, `url(javascript:)`. |
+| §9 | XSS / `m.trust` | ✅ | `tests/Unit/HtmlSanitizerTest.php` — script/style/iframe strip, `on*`, `javascript:`/`vbscript:`/`data:text/html`, dangerous styles, **HTML-comment + `<noscript>`/`<template>` strip, and idempotence (mXSS re-scrub loop)**. The JS twin `sanitizeAdminHtml` mirrors this (incl. `<style>`-body scrub for the footer field) — no JS unit harness in-repo, review-locked. |
+| §9.3 | CSS-context injection | ✅ | `tests/Security/LoadingSpinnerColorTest.php` — `safeColor()` allowlist blocks `</style>` break-out, `expression()`, `url(javascript:)`. Frontend twin `safeCssColor()` (utils.ts) gates the TeamPage group-color `style=` interpolation. |
 | §9.5 | SVG inline / XXE | ✅ | `tests/Unit/SvgSanitizerTest.php` (13 cases) — DOCTYPE/ENTITY reject, `<script>/<a>/<use>` external strip, `on*`, `javascript:`, `@import`. |
 | §10 | SQL injection / filters | 🟢 | All queries use the builder; `ForumAttributes` coerces group IDs via `intval > 0` before `whereIn`. No raw SQL. |
 | §11 | File uploads | 📝 | `UploadDiscussionHeroController` validates size + MIME (finfo) + server-side filename + Intervention re-encode. Guards are inline in `handle()`; behavioural test needs HTTP harness. |
