@@ -1,0 +1,51 @@
+name: Limpar Branches Mescladas
+
+# Apaga branches claude/* que já cumpriram seu papel: as que foram cabeça
+# de PR mesclado e não estão em nenhum PR aberto. Qualquer branch com
+# trabalho ainda não mesclado fica intacta. Roda ao publicar/atualizar
+# este arquivo e por dispatch manual.
+on:
+  push:
+    paths:
+      - '.github/workflows/cleanup-branches.yml'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: cleanup-branches
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Apagar branches claude/* mescladas
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411  # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Apagar branches mescladas
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea  # v7.0.1
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const { data: info } = await github.rest.repos.get({ owner, repo });
+            const def = info.default_branch;
+            const branches = await github.paginate(github.rest.repos.listBranches, { owner, repo, per_page: 100 });
+            const fechados = await github.paginate(github.rest.pulls.list, { owner, repo, state: 'closed', per_page: 100 });
+            const abertos = await github.paginate(github.rest.pulls.list, { owner, repo, state: 'open', per_page: 100 });
+            const mesclados = new Set(fechados.filter(p => p.merged_at).map(p => p.head.ref));
+            const emUso = new Set(abertos.map(p => p.head.ref));
+            for (const b of branches) {
+              const nome = b.name;
+              if (!nome.startsWith('claude/') || nome === def) continue;
+              if (emUso.has(nome)) { core.info(`mantida (PR aberto): ${nome}`); continue; }
+              if (!mesclados.has(nome)) { core.info(`mantida (sem PR mesclado): ${nome}`); continue; }
+              await github.rest.git.deleteRef({ owner, repo, ref: `heads/${nome}` });
+              core.info(`apagada: ${nome}`);
+            }
