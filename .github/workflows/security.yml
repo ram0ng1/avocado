@@ -1,7 +1,11 @@
 name: Security Scan
 
-# Cobertura de SAST para PHP (CodeQL nao suporta) via Semgrep.
-# Audits de dependencias adicionais ficam no ci.yml (composer audit, npm audit, dependency-review).
+# Duas camadas de SAST:
+#   1. Rulesets genéricos do Semgrep (PHP, OWASP, secrets, JS).
+#   2. Regras específicas de Flarum v2 (.github/semgrep/flarum-v2.yaml) —
+#      derivadas do playbook de segurança CLAUDE.md (§2–§37).
+# Audits de dependência ficam no ci.yml (composer audit, npm audit,
+# dependency-review). CodeQL (JS/TS) fica no codeql.yml.
 on:
   push:
     branches:
@@ -22,42 +26,109 @@ concurrency:
 
 jobs:
   semgrep:
-    name: Semgrep (PHP + OWASP + secrets)
+    name: Semgrep (SAST genérico + regras Flarum v2)
     runs-on: ubuntu-latest
     permissions:
       contents: read
       security-events: write   # upload SARIF
       actions: read
     container:
-      image: semgrep/semgrep:1.96.0
+      # 1.96.0 saía com exit ≠ 0 na camada 2 (ruleset custom) sem escrever o
+      # SARIF — a etapa de upload então falhava com "Path does not exist".
+      # 1.163.0 roda as 22 regras e gera o arquivo (verificado localmente:
+      # `semgrep --validate` => 0 erros; `semgrep scan` => SARIF de 19 achados).
+      image: semgrep/semgrep:1.163.0
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          # Histórico completo: o scan diff-aware da camada 2 precisa do commit
+          # base disponível para comparar (--baseline-commit).
+          fetch-depth: 0
 
-      - name: Semgrep scan
-        # Conjuntos de regras curadas pelo time Semgrep:
-        # p/php, p/security-audit, p/owasp-top-ten, p/secrets, p/javascript.
-        env:
-          SEMGREP_RULES: >-
-            p/php
-            p/security-audit
-            p/owasp-top-ten
-            p/secrets
-            p/javascript
+      # ---- Camada 1: rulesets curados pelo time Semgrep ------------------
+      - name: Semgrep — rulesets genéricos
         run: |
           set +e
           semgrep scan \
-            --sarif --sarif-output=semgrep.sarif \
+            --config p/php \
+            --config p/security-audit \
+            --config p/owasp-top-ten \
+            --config p/secrets \
+            --config p/javascript \
+            --exclude='js/dist' \
+            --exclude='*.min.js' \
+            --sarif --sarif-output=semgrep-generic.sarif \
             --metrics=off
-          EXIT=$?
-          echo "Semgrep exit code: $EXIT"
-          # Em PR/push/schedule nao falhamos o job — relatorio sobe ao Security tab.
-          # Trocar para "exit $EXIT" quando o baseline estiver limpo.
+          echo "Semgrep (genérico) exit code: $?"
+          # Garante que o arquivo existe mesmo se o semgrep crashar antes de escrevê-lo.
+          [ -f semgrep-generic.sarif ] || echo '{"version":"2.1.0","runs":[]}' > semgrep-generic.sarif
+          ls -l semgrep-generic.sarif
           exit 0
 
-      - name: Upload SARIF para o GitHub Security tab
+      - name: Upload SARIF — genérico
         if: always()
-        uses: github/codeql-action/upload-sarif@a65a038433a26f4363cf9f029e3b9ceac831ad5d  # v3.28.10
+        # Code scanning pode não estar habilitado (repo privado sem GitHub
+        # Advanced Security) — nesse caso o upload emite warning. O artefato
+        # ao final do job é o canal de resultados que sempre funciona.
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e  # v4.36.2
         with:
-          sarif_file: semgrep.sarif
+          sarif_file: semgrep-generic.sarif
           category: semgrep
+
+      # ---- Camada 2: regras específicas de Flarum v2 --------------------
+      # BLOQUEANTE em diff-aware: num PR, falha se houver achado NOVO vs. o
+      # commit base (--baseline-commit ... --error). Em push/schedule, varre
+      # tudo mas NÃO reprova — os achados legados ficam informativos no SARIF.
+      # Assim o gate aperta o código novo (inclui o gerado por IA) sem travar
+      # no legado, no mesmo espírito do baseline do PHPStan.
+      - name: Semgrep — regras Flarum v2 (CLAUDE.md)
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set +e
+          BASELINE_ARGS=""
+          BLOCK=0
+          if [ "$EVENT" = "pull_request" ] && [ -n "$BASE_SHA" ]; then
+            BASELINE_ARGS="--baseline-commit $BASE_SHA --error"
+            BLOCK=1
+          fi
+          semgrep scan \
+            --config .github/semgrep/flarum-v2.yaml \
+            --exclude='js/dist' \
+            --exclude='*.min.js' \
+            $BASELINE_ARGS \
+            --sarif --sarif-output=semgrep-flarum.sarif \
+            --metrics=off
+          EXIT=$?
+          echo "Semgrep (Flarum v2) exit code: $EXIT (block=$BLOCK)"
+          # Garante que o arquivo existe mesmo se o semgrep crashar antes de escrevê-lo.
+          [ -f semgrep-flarum.sarif ] || echo '{"version":"2.1.0","runs":[]}' > semgrep-flarum.sarif
+          ls -l semgrep-flarum.sarif
+          # Em PR (BLOCK=1): propaga o exit do semgrep (≠0 = achado novo).
+          # Em push/schedule: informativo, nunca reprova.
+          [ "$BLOCK" = "1" ] && exit $EXIT
+          exit 0
+
+      - name: Upload SARIF — Flarum v2
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e  # v4.36.2
+        with:
+          sarif_file: semgrep-flarum.sarif
+          category: flarum-v2-security
+
+      # Canal de resultados independente do code scanning estar ligado:
+      # baixável em Actions → run → Artifacts. Inclui as duas camadas.
+      - name: Upload SARIF como artefato
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: semgrep-sarif
+          path: |
+            semgrep-generic.sarif
+            semgrep-flarum.sarif
+          retention-days: 30
+          if-no-files-found: warn
