@@ -1,0 +1,52 @@
+name: Gitleaks
+
+# Varredura de segredos: chaves/tokens/credenciais hardcoded — inclusive no
+# histórico git. Reprova o PR se encontrar segredo (gate bloqueante).
+# Complementa o ruleset `p/secrets` do Semgrep (security.yml) com uma
+# ferramenta dedicada que também varre commits antigos.
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  schedule:
+    - cron: '0 8 * * 1'  # toda segunda, 08:00 UTC
+  workflow_dispatch:
+
+# §35.13 C1 — default-deny.
+permissions: {}
+
+concurrency:
+  group: gitleaks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gitleaks:
+    name: Gitleaks (secret scan)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # gitleaks-action, em pull_request, lê os commits do PR via API
+      # (GET /pulls/{n}/commits) — exige pull-requests: read, senão 403.
+      pull-requests: read
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411  # v2.19.4
+        with:
+          egress-policy: audit
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          # Histórico completo: varre segredos commitados no passado, não só o diff.
+          fetch-depth: 0
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7  # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
