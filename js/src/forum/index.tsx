@@ -3,6 +3,7 @@
 // every patched core component's shape. The page components this file wires
 // together are individually type-checked.
 import { extend, override } from 'flarum/common/extend';
+import trustedHtml from '../common/trustedHtml';
 import Button from 'flarum/common/components/Button';
 import Tooltip from 'flarum/common/components/Tooltip';
 import LinkButton from 'flarum/common/components/LinkButton';
@@ -151,10 +152,16 @@ const initCodeBlocks = (root: HTMLElement | null) => {
     // Only inject once
     if (pre.querySelector('.avocado-code-copy')) return;
 
+    const makeIcon = (cls: string) => {
+      const i = document.createElement('i');
+      i.className = `fas ${cls}`;
+      i.setAttribute('aria-hidden', 'true');
+      return i;
+    };
     const btn = document.createElement('button');
     btn.className = 'avocado-code-copy';
     btn.setAttribute('aria-label', 'Copiar código');
-    btn.innerHTML = '<i class="fas fa-copy" aria-hidden="true"></i>';
+    btn.replaceChildren(makeIcon('fa-copy'));
 
     btn.addEventListener('click', () => {
       const code = pre.querySelector('code');
@@ -163,10 +170,10 @@ const initCodeBlocks = (root: HTMLElement | null) => {
         .writeText(text)
         .then(() => {
           btn.classList.add('avocado-code-copy--copied');
-          btn.innerHTML = '<i class="fas fa-check" aria-hidden="true"></i>';
+          btn.replaceChildren(makeIcon('fa-check'));
           setTimeout(() => {
             btn.classList.remove('avocado-code-copy--copied');
-            btn.innerHTML = '<i class="fas fa-copy" aria-hidden="true"></i>';
+            btn.replaceChildren(makeIcon('fa-copy'));
           }, 1800);
         })
         .catch(() => {});
@@ -302,7 +309,7 @@ const gateGuestLinks = (component) => {
   if (!body) return;
 
   // Only external links are replaced. Internal links (mentions, discussion links, etc.) are left untouched.
-  // Post-body HTML is rendered via m.trust() — safe to mutate directly.
+  // Post-body HTML is the formatter output already rendered by core; safe to mutate directly.
   const label = trans('ramon-avocado.forum.link_cta.placeholder', 'Login to view link');
 
   body.querySelectorAll('a[href]:not([data-avocado-gated])').forEach((link) => {
@@ -2371,8 +2378,7 @@ app.initializers.add(
         if (!html.trim()) {
           _avFooterContent = '';
         } else {
-          const tmp = document.createElement('div');
-          tmp.innerHTML = html;
+          const tmp = new DOMParser().parseFromString(html, 'text/html').body;
 
           // Hoist <style> tags into <head>, deduped by content.
           tmp.querySelectorAll('style').forEach((styleEl) => {
@@ -2398,7 +2404,7 @@ app.initializers.add(
           _avFooterContent = tmp.innerHTML;
         }
       }
-      return _avFooterContent ? m.trust(_avFooterContent) : null;
+      return _avFooterContent ? trustedHtml(_avFooterContent) : null;
     });
 
     // ── Guest link gating ─────────────────────────────────────────────────────

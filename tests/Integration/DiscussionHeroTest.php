@@ -163,7 +163,7 @@ final class DiscussionHeroTest extends TestCase
 
         // $guarded = ['discussion_id'] — mass assignment must NOT set the PK.
         $hero = new DiscussionHero();
-        $hero->fill(['discussion_id' => 999, 'image_path' => 'mass.webp']);
+        $hero->fill(['discussion_id' => 999, 'image_path' => 'mass.webp']); /* o teste verifica exatamente a proteção contra mass assignment; nosemgrep: flarum-v2-mass-assignment */
         self::assertNull($hero->discussion_id);
 
         // Explicit assignment is the only allowed path for the server-controlled PK.

@@ -267,7 +267,7 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
     this.lastPreviewedContent = content;
 
     if (!content.trim()) {
-      dom.innerHTML = '';
+      dom.replaceChildren();
       const empty = document.createElement('span');
       empty.className = 'AvocadoHome-composerPreviewEmpty';
       empty.textContent = trans('ramon-avocado.forum.home.composer_preview_empty', 'Nothing to preview.');
