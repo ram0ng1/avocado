@@ -26,7 +26,7 @@ export default class SpinnerPicker extends AdminComponent {
               }}
             >
               <div className="AvocadoSpinnerOption-preview" style={opt.color ? 'color: var(--primary-color)' : ''}>
-                {m.trust(opt.svg)}
+                {m.trust(opt.svg) /* SVGs estáticos de SPINNER_OPTIONS, do próprio bundle; nosemgrep: flarum-v2-m-trust */}
               </div>
               <span className="AvocadoSpinnerOption-label">{opt.label}</span>
             </button>

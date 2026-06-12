@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Ramon\Avocado\Tests\Support;
 
 use Illuminate\Container\Container;
-use Illuminate\Database\Capsule\Manager as Capsule;
+use Illuminate\Database\Capsule\Manager as Capsule; /* harness de teste standalone, sem boot do Flarum; nosemgrep: flarum-v2-capsule-manager */
 use Illuminate\Database\Connection;
 use Illuminate\Events\Dispatcher;
 use PDO;

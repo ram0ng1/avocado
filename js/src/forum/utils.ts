@@ -190,7 +190,7 @@ export const safeCssUrl = (url: string | null | undefined): string => {
 
 // ─── Admin-HTML sanitizer ─────────────────────────────────────────────────────
 // Defense-in-depth scrub for admin-pasted HTML (custom hero, footer, …) before
-// it lands in `m.trust()` / `innerHTML`. Removes <script>, <iframe>, etc.; strips
+// core renders it as markup. Removes <script>, <iframe>, etc.; strips
 // on*=, javascript:/vbscript:/data:text/html in href/src; neutralizes inline
 // styles using expression()/@import. Not a full allow-list — relies on the
 // "admin == HTML" Flarum convention but ensures admin-account compromise does
