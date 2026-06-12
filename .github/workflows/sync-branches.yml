@@ -49,11 +49,16 @@ jobs:
 
             git checkout -B "$branch" "origin/$branch"
 
+            if ! git merge-base origin/master "origin/$branch" >/dev/null 2>&1; then
+              echo "⚠️  '$branch' não compartilha histórico com master (pré-reescrita) — pulando"
+              continue
+            fi
+
             if git merge origin/master --no-edit -m "chore: sync with master"; then
               git push origin "$branch"
               echo "✅ Branch '$branch' sincronizada com sucesso"
             else
               echo "⚠️  Conflito ao sincronizar '$branch' com master — pulando"
-              git merge --abort
+              git merge --abort 2>/dev/null || true
             fi
           done
