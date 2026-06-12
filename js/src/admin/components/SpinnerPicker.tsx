@@ -1,4 +1,5 @@
 import app from 'flarum/admin/app';
+import trustedHtml from '../../common/trustedHtml';
 import { AdminComponent, getStr, saveSetting, trans } from '../util';
 import { SPINNER_OPTIONS } from '../spinners';
 
@@ -26,7 +27,7 @@ export default class SpinnerPicker extends AdminComponent {
               }}
             >
               <div className="AvocadoSpinnerOption-preview" style={opt.color ? 'color: var(--primary-color)' : ''}>
-                {m.trust(opt.svg) /* SVGs estáticos de SPINNER_OPTIONS, do próprio bundle; nosemgrep: flarum-v2-m-trust */}
+                {trustedHtml(opt.svg)}
               </div>
               <span className="AvocadoSpinnerOption-label">{opt.label}</span>
             </button>

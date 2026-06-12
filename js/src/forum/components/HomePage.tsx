@@ -1,4 +1,5 @@
 import app from 'flarum/forum/app';
+import trustedHtml from '../../common/trustedHtml';
 import extractText from 'flarum/common/utils/extractText';
 import Component from 'flarum/common/Component';
 import type { ComponentAttrs } from 'flarum/common/Component';
@@ -191,18 +192,14 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
     // guest-visible XSS.
     const innerContent =
       customEnabled && customHtml ? (
-        m.trust(customHtml) /* admin-HTML já passado pelo sanitizeAdminHtml acima; nosemgrep: flarum-v2-m-trust */
+        trustedHtml(customHtml)
       ) : (
         <div className="AvocadoHome-heroBannerContent">
           <div className="AvocadoHome-heroBannerIcon">
             <i className="fas fa-comments" aria-hidden="true" />
           </div>
           <h1 className="AvocadoHome-heroBannerTitle">{forumTitle}</h1>
-          {forumDesc && (
-            <p className="AvocadoHome-heroBannerDesc">
-              {m.trust(sanitizeAdminHtml(forumDesc)) /* atributo de admin com o mesmo scrub do hero; nosemgrep: flarum-v2-m-trust */}
-            </p>
-          )}
+          {forumDesc && <p className="AvocadoHome-heroBannerDesc">{trustedHtml(sanitizeAdminHtml(forumDesc))}</p>}
           {app.forum?.attribute('avocadoShowGuestCta') !== false && this.renderGuestCTA()}
         </div>
       );

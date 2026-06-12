@@ -3,6 +3,7 @@
 // every patched core component's shape. The page components this file wires
 // together are individually type-checked.
 import { extend, override } from 'flarum/common/extend';
+import trustedHtml from '../common/trustedHtml';
 import Button from 'flarum/common/components/Button';
 import Tooltip from 'flarum/common/components/Tooltip';
 import LinkButton from 'flarum/common/components/LinkButton';
@@ -2377,8 +2378,7 @@ app.initializers.add(
         if (!html.trim()) {
           _avFooterContent = '';
         } else {
-          const tmp = document.createElement('div');
-          tmp.innerHTML = html; // html já passou pelo sanitizeAdminHtml logo acima; nosemgrep: flarum-v2-innerhtml-assignment
+          const tmp = new DOMParser().parseFromString(html, 'text/html').body;
 
           // Hoist <style> tags into <head>, deduped by content.
           tmp.querySelectorAll('style').forEach((styleEl) => {
@@ -2404,7 +2404,7 @@ app.initializers.add(
           _avFooterContent = tmp.innerHTML;
         }
       }
-      return _avFooterContent ? m.trust(_avFooterContent) : null; // sanitizado na montagem do _avFooterContent; nosemgrep: flarum-v2-m-trust
+      return _avFooterContent ? trustedHtml(_avFooterContent) : null;
     });
 
     // ── Guest link gating ─────────────────────────────────────────────────────
