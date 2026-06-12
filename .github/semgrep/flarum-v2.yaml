@@ -224,13 +224,14 @@ rules:
       cwe: "CWE-22: Path Traversal"
       confidence: MEDIUM
       flarum-playbook: "CLAUDE.md §13"
+    # Só o STRIP é o filtro ingênuo (str_replace('..','') cai no ....//).
+    # Guardas de REJEIÇÃO (if str_contains(..) -> recusa) são legítimas e
+    # ficaram fora do padrão para não gerar falso positivo.
     pattern-either:
       - pattern-regex: |-
           str_replace\s*\(\s*['"]\.\.['"]
       - pattern-regex: |-
           str_ireplace\s*\(\s*['"]\.\.['"]
-      - pattern-regex: |-
-          (strpos|stripos|str_contains)\s*\([^,]+,\s*['"]\.\.['"]
 
   # ---------------------------------------------------------------------------
   # §36 — Execução de comando do SO
@@ -315,11 +316,22 @@ rules:
       cwe: "CWE-434: Unrestricted Upload of File with Dangerous Type"
       confidence: MEDIUM
       flarum-playbook: "CLAUDE.md §11"
+    # Contrato auditável: quando o MIME do cliente é só fachada e o gate
+    # real é detecção server-side fail-closed, marque a linha com
+    # `finfo-gated`; quando o Content-Type deriva de mapeamento fechado no
+    # servidor, marque com `server-derived-mime`. Os marcadores valem para
+    # qualquer scanner que carregue este arquivo.
     pattern-either:
-      - pattern-regex: |-
-          getClientMediaType\s*\(
-      - pattern-regex: |-
-          withHeader\s*\(\s*['"]Content-Type['"]\s*,\s*\$
+      - patterns:
+          - pattern-regex: |-
+              getClientMediaType\s*\(
+          - pattern-not-regex: |-
+              getClientMediaType[^\n]*finfo-gated
+      - patterns:
+          - pattern-regex: |-
+              withHeader\s*\(\s*['"]Content-Type['"]\s*,\s*\$
+          - pattern-not-regex: |-
+              withHeader[^\n]*server-derived-mime
 
   # ---------------------------------------------------------------------------
   # §21 — serializeToForum expondo segredo (sem filtro de visibilidade)
