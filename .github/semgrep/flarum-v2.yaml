@@ -42,6 +42,11 @@ rules:
   # §7 — Mass assignment (Flarum v2 não tem $fillable/$guarded)
   # ---------------------------------------------------------------------------
   - id: flarum-v2-mass-assignment
+    # Regra de código de RUNTIME: harness de teste monta o Capsule e
+    # exercita fill() de propósito; tests/ fica fora do escopo da regra.
+    paths:
+      exclude:
+        - tests
     languages: [php]
     severity: WARNING
     message: >-
@@ -107,6 +112,11 @@ rules:
   # §10 — Capsule\Manager como entrypoint de query (smell de convenção)
   # ---------------------------------------------------------------------------
   - id: flarum-v2-capsule-manager
+    # Regra de código de RUNTIME: harness de teste monta o Capsule e
+    # exercita fill() de propósito; tests/ fica fora do escopo da regra.
+    paths:
+      exclude:
+        - tests
     languages: [php]
     severity: WARNING
     message: >-

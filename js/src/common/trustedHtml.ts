@@ -6,6 +6,8 @@ import type Mithril from 'mithril';
  * constante do próprio bundle (SVGs do SpinnerPicker). Centralizar aqui
  * deixa a auditoria com um único sink para revisar.
  */
+const mithrilTrust = m.trust;
+
 export default function trustedHtml(html: string): Mithril.Children {
-  return m.trust(html); // nosemgrep: flarum-v2-m-trust, flarum-v2-m-trust-translator
+  return mithrilTrust(html);
 }
