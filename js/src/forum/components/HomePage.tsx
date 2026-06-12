@@ -198,7 +198,11 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
             <i className="fas fa-comments" aria-hidden="true" />
           </div>
           <h1 className="AvocadoHome-heroBannerTitle">{forumTitle}</h1>
-          {forumDesc && <p className="AvocadoHome-heroBannerDesc">{m.trust(sanitizeAdminHtml(forumDesc)) /* atributo de admin com o mesmo scrub do hero; nosemgrep: flarum-v2-m-trust */}</p>}
+          {forumDesc && (
+            <p className="AvocadoHome-heroBannerDesc">
+              {m.trust(sanitizeAdminHtml(forumDesc)) /* atributo de admin com o mesmo scrub do hero; nosemgrep: flarum-v2-m-trust */}
+            </p>
+          )}
           {app.forum?.attribute('avocadoShowGuestCta') !== false && this.renderGuestCTA()}
         </div>
       );
