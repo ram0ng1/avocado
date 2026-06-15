@@ -66,12 +66,21 @@ jobs:
       - name: Decidir elegibilidade
         id: gate
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
           UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
           ECOSYSTEM: ${{ steps.metadata.outputs.package-ecosystem }}
           DEPS: ${{ steps.metadata.outputs.dependency-names }}
         run: |
-          set -euo pipefail
-          if [ "$UPDATE_TYPE" = "version-update:semver-major" ] && [ "$ECOSYSTEM" != "github_actions" ]; then
+          set -uo pipefail
+          # O GITHUB_TOKEN do Actions não pode mesclar PR que altera
+          # .github/workflows/** (escopo `workflows`, não concedível via
+          # `permissions:`) — esses ficam para merge manual.
+          if gh pr view "$PR_URL" --json files --jq '.files[].path' | grep -q '^\.github/workflows/'; then
+            echo "PR altera .github/workflows/ — GITHUB_TOKEN não pode mesclar; deixando para merge manual."
+            echo "::notice::PR altera .github/workflows/ — auto-merge pulado; mescle manualmente."
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+          elif [ "$UPDATE_TYPE" = "version-update:semver-major" ] && [ "$ECOSYSTEM" != "github_actions" ]; then
             echo "Major de $ECOSYSTEM ($DEPS) — requer revisão humana; não vou auto-mesclar."
             echo "eligible=false" >> "$GITHUB_OUTPUT"
           else
