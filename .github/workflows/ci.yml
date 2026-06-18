@@ -6,6 +6,12 @@ on:
       - master
   pull_request:
   workflow_dispatch:
+  # Segunda 05:00 UTC: roda a CI mesmo sem push. Como os jobs resolvem as
+  # dependências com `composer update`, o agendamento testa automaticamente
+  # contra a versão mais nova do flarum/core e detecta quebras trazidas por
+  # novas versões do Flarum antes que cheguem a você.
+  schedule:
+    - cron: '0 5 * * 1'
 
 # Default-deny do GITHUB_TOKEN (CLAUDE.md §35.13 C1). Jobs declaram o
 # que precisam.
