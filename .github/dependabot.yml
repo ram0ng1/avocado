@@ -2,6 +2,8 @@
 # `groups` junta cada ecossistema num ÚNICO PR por semana — acaba com a
 # cascata de conflito de vários PRs de action tocando os mesmos arquivos de
 # workflow, e reduz o volume. Labels batem com .github/pr-labeler.yml.
+# Grupo cobre só minor+patch (auto-merge verde); MAJOR sai como PR
+# individual para revisão manual, sem contaminar o grupo.
 version: 2
 updates:
   - package-ecosystem: composer
@@ -16,6 +18,9 @@ updates:
       composer:
         patterns:
           - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   - package-ecosystem: npm
     directory: /js
@@ -29,6 +34,9 @@ updates:
       npm:
         patterns:
           - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   - package-ecosystem: github-actions
     directory: /
@@ -42,3 +50,6 @@ updates:
       github-actions:
         patterns:
           - "*"
+        update-types:
+          - "minor"
+          - "patch"
