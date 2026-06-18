@@ -1,138 +1,70 @@
 name: Dependabot auto-merge
 
-# Mescla automaticamente PRs do Dependabot quando TODOS os outros checks do PR
-# ficam verdes, e apaga a branch ao final — zero fricção para manter as
-# dependências em dia, sem abrir mão do gate de CI.
+# Liga o auto-merge dos PRs do Dependabot de patch/minor — o GitHub funde
+# sozinho QUANDO os checks obrigatórios (CI) passam. Major fica para revisão.
 #
-# Como funciona:
-#   1. Dispara em todo pull_request; o job só roda quando o autor é o
-#      dependabot[bot] (PRs humanos são ignorados).
-#   2. Espera num loop até todos os checks do PR (check runs + commit statuses,
-#      ex. Snyk) completarem — excluindo este próprio job, senão ele esperaria
-#      por si mesmo para sempre.
-#   3. Qualquer check vermelho/cancelado → o job falha e NÃO mescla ("se não
-#      houver quebras"). O PR fica aberto para revisão humana.
-#   4. Tudo verde → `gh pr merge --merge --delete-branch`.
+# Token:
+#   • Por padrão usa o GITHUB_TOKEN, que NÃO pode mesclar PR que toca
+#     .github/workflows/ (escopo `workflows`, não concedível). Esses bumps de
+#     GitHub Action são pulados (merge manual).
+#   • Se você criar o secret AUTOMERGE_TOKEN (PAT fine-grained com
+#     Contents:write + Pull requests:write + Workflows:write), o workflow passa
+#     a usá-lo e auto-mescla TAMBÉM os bumps de action.
 #
-# Guard-rails:
-#   - Bumps SEMVER-MAJOR de composer/npm NÃO são auto-mesclados (CI verde não
-#     prova ausência de breaking change em runtime — vide o bump do phpunit 13
-#     que derrubou os cells de PHP 8.3). GitHub Actions majors são mesclados
-#     normalmente (mudanças de CI, a própria CI as valida por completo).
-#   - Exige um número mínimo de checks presentes antes de considerar "tudo
-#     verde", para não mesclar na janela em que os workflows ainda nem foram
-#     agendados.
-#
-# Token: em workflows disparados pelo Dependabot o GITHUB_TOKEN é read-only por
-# padrão; o bloco `permissions` do job eleva apenas o necessário (padrão
-# documentado pelo GitHub em "Automating Dependabot with GitHub Actions").
+# Requer nas Settings (não dá por workflow):
+#   • General → "Allow auto-merge" LIGADO;
+#   • Branch protection no branch default exigindo os checks da CI verdes —
+#     é o que faz o auto-merge ESPERAR a CI;
+#   • NÃO exigir review obrigatório (o token do Actions é proibido de aprovar).
+on: pull_request_target
 
-on: pull_request
-
-# §35.13 C1 — default-deny do GITHUB_TOKEN. O job declara o que precisa.
+# §35.13 C1 — default-deny.
 permissions: {}
 
-# Um run por PR: push novo (rebase do Dependabot) cancela a espera anterior.
 concurrency:
-  group: dependabot-auto-merge-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  group: dependabot-automerge-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
 
 jobs:
-  auto-merge:
-    # O nome é usado pelo próprio job para se excluir da lista de checks que
-    # ele espera — se renomear aqui, atualize SELF_CHECK_NAME abaixo.
-    name: Dependabot auto-merge
+  automerge:
+    name: Auto-merge (patch/minor)
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'ram0ng1/avocado'
+    # Só Dependabot. NÃO faz checkout do código do PR (pull_request_target roda
+    # no contexto do base) — nenhum código não-confiável executa com o token.
+    if: github.actor == 'dependabot[bot]'
     permissions:
-      contents: write       # merge + apagar a branch
-      pull-requests: write  # mesclar o PR
-      checks: read          # ler check runs (gh pr checks)
-      statuses: read        # ler commit statuses (ex. Snyk)
+      contents: write
+      pull-requests: write
     steps:
       - name: Harden runner
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5  # v2
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411  # v2.19.4
         with:
           egress-policy: audit
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
 
-      - name: Metadados do Dependabot
-        id: metadata
-        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98  # v3.1.0
+      - name: Metadados do update
+        id: meta
+        uses: dependabot/fetch-metadata@08eff52bf64351f401fb50d4972fa95b9f2c2d1b  # v2.4.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      # Majors de composer/npm ficam para revisão humana (vide cabeçalho).
-      - name: Decidir elegibilidade
-        id: gate
+      - name: Habilitar auto-merge (patch + minor)
+        if: steps.meta.outputs.update-type == 'version-update:semver-patch' || steps.meta.outputs.update-type == 'version-update:semver-minor'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
-          UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
-          ECOSYSTEM: ${{ steps.metadata.outputs.package-ecosystem }}
-          DEPS: ${{ steps.metadata.outputs.dependency-names }}
+          PAT: ${{ secrets.AUTOMERGE_TOKEN }}
+          DEFAULT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -uo pipefail
-          # O GITHUB_TOKEN do Actions não pode mesclar PR que altera
-          # .github/workflows/** (escopo `workflows`, não concedível via
-          # `permissions:`) — esses ficam para merge manual.
-          if gh pr view "$PR_URL" --json files --jq '.files[].path' | grep -q '^\.github/workflows/'; then
-            echo "PR altera .github/workflows/ — GITHUB_TOKEN não pode mesclar; deixando para merge manual."
-            echo "::notice::PR altera .github/workflows/ — auto-merge pulado; mescle manualmente."
-            echo "eligible=false" >> "$GITHUB_OUTPUT"
-          elif [ "$UPDATE_TYPE" = "version-update:semver-major" ] && [ "$ECOSYSTEM" != "github_actions" ]; then
-            echo "Major de $ECOSYSTEM ($DEPS) — requer revisão humana; não vou auto-mesclar."
-            echo "eligible=false" >> "$GITHUB_OUTPUT"
+          if [ -n "${PAT:-}" ]; then
+            export GH_TOKEN="$PAT"
           else
-            echo "Elegível para auto-merge: $DEPS ($UPDATE_TYPE, $ECOSYSTEM)."
-            echo "eligible=true" >> "$GITHUB_OUTPUT"
+            export GH_TOKEN="$DEFAULT_TOKEN"
+            if gh pr view "$PR_URL" --json files --jq '.files[].path' | grep -q '^\.github/workflows/'; then
+              echo "::notice::PR altera .github/workflows/ e não há AUTOMERGE_TOKEN — auto-merge pulado; mescle manualmente."
+              exit 0
+            fi
           fi
-
-      - name: Esperar todos os checks ficarem verdes
-        if: steps.gate.outputs.eligible == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          SELF_CHECK_NAME: Dependabot auto-merge
-          # A CI deste repo cria >10 checks por PR (matriz PHP, JS, locale,
-          # bundle-size, security-regression, Snyk...). Exigir um piso evita
-          # mesclar na janela em que quase nenhum workflow foi agendado ainda.
-          MIN_CHECKS: '5'
-          WAIT_SECONDS: '30'
-        run: |
-          set -euo pipefail
-          while :; do
-            # gh pr checks sai com código != 0 enquanto houver pending/fail —
-            # o JSON é o que interessa, então não deixamos isso matar o loop.
-            json=$(gh pr checks "$PR_URL" --json name,bucket 2>/dev/null || true)
-            [ -n "$json" ] || json='[]'
-
-            filtered=$(jq --arg self "$SELF_CHECK_NAME" \
-              '[ .[] | select(.name != $self) ]' <<<"$json")
-
-            total=$(jq 'length' <<<"$filtered")
-            fails=$(jq '[ .[] | select(.bucket == "fail" or .bucket == "cancel") ] | length' <<<"$filtered")
-            pending=$(jq '[ .[] | select(.bucket == "pending") ] | length' <<<"$filtered")
-
-            echo "checks (sem este job): total=$total pending=$pending fails=$fails"
-
-            if [ "$fails" -gt 0 ]; then
-              echo "::error::Há check(s) falhando neste PR — auto-merge abortado."
-              jq -r '.[] | select(.bucket == "fail" or .bucket == "cancel") | "  ✗ \(.name)"' <<<"$filtered"
-              exit 1
-            fi
-
-            if [ "$total" -ge "$MIN_CHECKS" ] && [ "$pending" -eq 0 ]; then
-              echo "Todos os $total checks verdes."
-              break
-            fi
-
-            sleep "$WAIT_SECONDS"
-          done
-
-      - name: Mesclar e apagar a branch
-        if: steps.gate.outputs.eligible == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
-        run: gh pr merge --merge --delete-branch "$PR_URL"
+          gh pr merge --auto --squash --delete-branch "$PR_URL"

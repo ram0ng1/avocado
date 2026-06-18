@@ -1,4 +1,7 @@
-# §35.13 R1 — Dependabot para composer, npm e github-actions.
+# Dependabot: composer (/), npm (/js) e github-actions (/), semanal.
+# `groups` junta cada ecossistema num ÚNICO PR por semana — acaba com a
+# cascata de conflito de vários PRs de action tocando os mesmos arquivos de
+# workflow, e reduz o volume. Labels batem com .github/pr-labeler.yml.
 version: 2
 updates:
   - package-ecosystem: composer
@@ -9,25 +12,10 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencias
-    commit-message:
-      prefix: "deps"
-    # `increase` faz o Dependabot bumpar o piso das constraints (ex.
-    # flarum/core ^2.0.0 -> ^2.1.0) quando sai uma release nova, em vez de só
-    # alargar a faixa — sem isso ele NÃO abriria PR para versões já cobertas por
-    # ^2.0.0. Com `minimum-stability: dev` no composer.json, prereleases
-    # (rc/beta) do core também entram na conta.
-    versioning-strategy: increase
-    # Junta flarum/core + flarum/tags num único PR por ciclo (em vez de dois).
     groups:
-      flarum:
+      composer:
         patterns:
-          - "flarum/*"
-    ignore:
-      # Não deixa o Dependabot desfazer a constraint união do phpunit
-      # (^11.5 || ^13.2.0): um bump major reintroduziria o phpunit 13-only, que
-      # exige PHP >= 8.4.1 e quebra os cells de PHP 8.3 (flarum/core suporta 8.3).
-      - dependency-name: "phpunit/phpunit"
-        update-types: ["version-update:semver-major"]
+          - "*"
 
   - package-ecosystem: npm
     directory: /js
@@ -37,10 +25,11 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencias
-    commit-message:
-      prefix: "deps"
+    groups:
+      npm:
+        patterns:
+          - "*"
 
-  # Mantém os SHAs dos uses: atualizados (Dependabot rebumpa preservando o pin).
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -49,5 +38,7 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencias
-    commit-message:
-      prefix: "ci"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
