@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="icon.svg" width="80" height="80" alt="Avocado">
+  <img src="https://raw.githubusercontent.com/ram0ng1/avocado/refs/heads/master/icon.svg" width="80" height="80" alt="Avocado">
 </p>
 
 <h1 align="center">Avocado</h1>
