@@ -290,6 +290,13 @@ ramon-avocado:
       home: Voltar para o Início
       load_more: Carregar mais
       empty: "Nenhuma discussão encontrada."
+    bookmarks:
+      title: Salvos
+      save: Salvar
+      unsave: Remover dos salvos
+      empty: "Você ainda não salvou nenhuma discussão."
+      guest_prompt: Entre para salvar discussões e encontrá-las aqui depois.
+      toggle_error: Não foi possível atualizar seus salvos. Tente novamente.
     post:
       op_badge: POST ORIGINAL
     messages:

@@ -1,0 +1,78 @@
+// ─── Bookmarks (saved discussions) ───────────────────────────────────────────
+//
+// The /salvos page reuses the .AvocadoDiscussions layout, so this file only adds
+// the bookmark toggle button (on ThreadCards), the search-variant actions row,
+// the page title icon and the guest prompt. Colours are theme variables, so
+// dark mode is handled by Flarum's [data-theme^=dark] token switch.
+
+// ── Toggle button on cards ────────────────────────────────────────────────────
+.AvocadoThreadCard-bookmarkBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  color: var(--home-muted, #8f9097);
+  cursor: pointer;
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
+
+  &:hover {
+    background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+    color: var(--primary-color);
+  }
+
+  &:active {
+    transform: scale(0.88);
+  }
+
+  &.is-saved {
+    color: var(--primary-color);
+  }
+}
+
+// ── Search-variant actions row (bookmark + controls dropdown) ────────────────
+.AvocadoSearch-threadActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+// ── Page title icon ───────────────────────────────────────────────────────────
+.AvocadoBookmarks-titleIcon {
+  font-size: 0.78em;
+  margin-right: 9px;
+  color: var(--primary-color);
+}
+
+// ── Guest prompt (logged-out visitor hits /salvos directly) ──────────────────
+.AvocadoBookmarks-guest {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 64px 24px;
+  text-align: center;
+  color: var(--home-muted, #8f9097);
+
+  > i {
+    font-size: 44px;
+    opacity: 0.4;
+  }
+
+  > p {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+    max-width: 360px;
+    line-height: 1.5;
+  }
+}

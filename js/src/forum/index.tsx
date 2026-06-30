@@ -48,6 +48,7 @@ import { buildUserPhoneNav, buildHero, buildSidebar } from './components/UserPro
 // e TeamPage ficam sem prefetch — só baixam quando o usuário navega.
 
 const AllDiscussionsPage = () => import('./components/AllDiscussionsPage');
+const AvocadoBookmarksPage = () => import('./components/BookmarksPage');
 const AvocadoTagPage = () => import('./components/TagPage');
 const AvocadoTeamPage = () => import('./components/TeamPage');
 const AvocadoPostsSearchPage = () => import('./components/AvocadoPostsSearchPage');
@@ -81,6 +82,7 @@ import {
   canEditDiscussionHero,
   sanitizeAdminHtml,
 } from './utils';
+import { toggleBookmark, isBookmarked } from './utils/bookmarks';
 import TextEditor from 'flarum/common/components/TextEditor';
 import listItems from 'flarum/common/helpers/listItems';
 import humanTime from 'flarum/common/utils/humanTime';
@@ -460,6 +462,7 @@ app.initializers.add(
     // The /discussions page is always registered so direct links keep working.
     app.routes['avocado-team'] = { path: '/team', component: AvocadoTeamPage };
     app.routes['avocado-discussions'] = { path: '/discussions', component: AllDiscussionsPage };
+    app.routes['avocado-bookmarks'] = { path: '/bookmarks', component: AvocadoBookmarksPage };
     // Replace Flarum's default PostsPage (/posts?q=) with our Avocado-styled version.
     app.routes['posts'] = { path: '/posts', component: AvocadoPostsSearchPage };
     // Unified search page — Discussions / Posts / Users tabs.
@@ -1625,6 +1628,17 @@ app.initializers.add(
         );
       }
 
+      // "Saved" — the bookmarks page, only for logged-in users (guests can't save).
+      if (app.session.user && !items.has('avocadoBookmarks')) {
+        items.add(
+          'avocadoBookmarks',
+          <LinkButton href={app.route('avocado-bookmarks')} icon="fas fa-bookmark">
+            {trans('ramon-avocado.forum.bookmarks.title', 'Saved')}
+          </LinkButton>,
+          93
+        );
+      }
+
       if (!items.has('avocadoTeam') && app.forum?.attribute('avocadoTeamPageEnabled')) {
         const teamTitle = app.forum.attribute('avocadoTeamPageTitle') || trans('ramon-avocado.forum.team.title', 'Our Team');
         items.add(
@@ -1635,6 +1649,28 @@ app.initializers.add(
           90
         );
       }
+    });
+
+    // ── 12b. Bookmark action in discussion controls ────────────────────────────
+    // Adds a "Save/Unsave" item to every discussion's controls dropdown — covers
+    // the discussion page header and the card dropdowns in one integration point.
+    // Gated on a logged-in actor; guests never see it.
+    extend(DiscussionControls, 'userControls', function (items: any, discussion: any) {
+      if (!app.session.user) return;
+
+      const saved = isBookmarked(discussion);
+      items.add(
+        'avocadoBookmark',
+        <Button
+          icon={saved ? 'fas fa-bookmark' : 'far fa-bookmark'}
+          onclick={() => toggleBookmark(discussion)}
+        >
+          {saved
+            ? trans('ramon-avocado.forum.bookmarks.unsave', 'Remove from saved')
+            : trans('ramon-avocado.forum.bookmarks.save', 'Save')}
+        </Button>,
+        50
+      );
     });
 
     // ── 13. WelcomeHero isHidden + view overrides ──────────────────────────────

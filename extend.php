@@ -36,7 +36,8 @@ return [
         ->content(\Ramon\Avocado\Content\LoadFontAwesomeKit::class)
         ->content(\Ramon\Avocado\Content\InjectOnlineUsers::class)
         ->route('/discussions', 'avocado-discussions')
-        ->route('/search', 'avocado-search'),
+        ->route('/search', 'avocado-search')
+        ->route('/bookmarks', 'avocado-bookmarks'),
 
     (new Extend\Routes('forum'))
         ->get('/team', 'avocado-team', \Ramon\Avocado\Controller\TeamPageController::class),
@@ -111,15 +112,24 @@ return [
         ->fields(\Ramon\Avocado\Api\ForumAttributes::class),
 
     (new Extend\Model(\Flarum\Discussion\Discussion::class))
-        ->hasOne('avocadoHero', \Ramon\Avocado\Model\DiscussionHero::class, 'discussion_id'),
+        ->hasOne('avocadoHero', \Ramon\Avocado\Model\DiscussionHero::class, 'discussion_id')
+        ->hasMany('avocadoBookmark', \Ramon\Avocado\Model\Bookmark::class, 'discussion_id'),
 
     (new Extend\ApiResource(\Flarum\Api\Resource\DiscussionResource::class))
         ->fields(\Ramon\Avocado\Api\DiscussionFields::class)
+        ->fields(\Ramon\Avocado\Api\BookmarkFields::class)
         // Eager-load the 1:1 hero companion so DiscussionFields' getters don't
         // fire one SELECT per discussion when serializing an Index payload.
+        // avocadoBookmark is scoped to the actor so `bookmarked` reads an
+        // in-memory (0|1)-row collection instead of one SELECT per discussion.
         ->endpoint(
             [Endpoint\Index::class, Endpoint\Show::class],
-            fn (Endpoint\Index|Endpoint\Show $endpoint) => $endpoint->eagerLoad('avocadoHero')
+            fn (Endpoint\Index|Endpoint\Show $endpoint) => $endpoint
+                ->eagerLoad('avocadoHero')
+                ->eagerLoadWhere('avocadoBookmark', function ($query, \Flarum\Api\Context $context) {
+                    $actor = $context->getActor();
+                    $query->where('user_id', $actor->isGuest() ? 0 : (int) $actor->id);
+                })
         ),
 
     (new Extend\Routes('api'))
@@ -130,7 +140,9 @@ return [
         ->post('/avocado/logo-svg', 'avocado.logo_svg.upload', \Ramon\Avocado\Controller\UploadLogoSvgController::class)
         ->delete('/avocado/logo-svg', 'avocado.logo_svg.delete', \Ramon\Avocado\Controller\DeleteLogoSvgController::class)
         ->post('/avocado/discussion-hero', 'avocado.discussion_hero.upload', \Ramon\Avocado\Controller\UploadDiscussionHeroController::class)
-        ->delete('/avocado/discussion-hero', 'avocado.discussion_hero.delete', \Ramon\Avocado\Controller\DeleteDiscussionHeroController::class),
+        ->delete('/avocado/discussion-hero', 'avocado.discussion_hero.delete', \Ramon\Avocado\Controller\DeleteDiscussionHeroController::class)
+        ->post('/avocado/bookmark', 'avocado.bookmark.create', \Ramon\Avocado\Controller\CreateBookmarkController::class)
+        ->delete('/avocado/bookmark', 'avocado.bookmark.delete', \Ramon\Avocado\Controller\DeleteBookmarkController::class),
 
     (new Extend\Settings())
         ->serializeToForum('avocadoHeroImage', 'avocado.hero_image')
@@ -212,6 +224,9 @@ return [
         ->default('avocado.team_page_title', '')
         ->default('avocado.team_page_description', '')
         ->default('avocado.fontawesome_kit_enabled', false),
+
+    (new Extend\SearchDriver(\Flarum\Search\Database\DatabaseSearchDriver::class))
+        ->addFilter(\Flarum\Discussion\Search\DiscussionSearcher::class, \Ramon\Avocado\Filter\BookmarkFilter::class),
 
     (new Extend\Policy())
         ->modelPolicy(\Flarum\Discussion\Discussion::class, \Ramon\Avocado\Access\DiscussionPolicy::class),

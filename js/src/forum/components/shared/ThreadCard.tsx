@@ -19,6 +19,7 @@ import {
   userRoute,
   highlight,
 } from '../../utils';
+import { toggleBookmark, isBookmarked } from '../../utils/bookmarks';
 
 export interface ThreadCardAttrs extends ComponentAttrs {
   /** The discussion model to render */
@@ -112,6 +113,37 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
       >
         {controls}
       </Dropdown>
+    ) : null;
+
+    // ── bookmark button ───────────────────────────────────────────────────────
+    const saved = isBookmarked(discussion);
+    const bookmarkBtn = app.session.user ? (
+      <Tooltip
+        text={
+          saved
+            ? trans('ramon-avocado.forum.bookmarks.unsave', 'Remove from saved')
+            : trans('ramon-avocado.forum.bookmarks.save', 'Save')
+        }
+        position="top"
+      >
+        <button
+          className={`AvocadoThreadCard-bookmarkBtn${saved ? ' is-saved' : ''}`}
+          type="button"
+          aria-pressed={saved}
+          aria-label={
+            saved
+              ? trans('ramon-avocado.forum.bookmarks.unsave', 'Remove from saved')
+              : trans('ramon-avocado.forum.bookmarks.save', 'Save')
+          }
+          onclick={(e: Event) => {
+            e.stopPropagation();
+            e.preventDefault();
+            toggleBookmark(discussion);
+          }}
+        >
+          <i className={saved ? 'fas fa-bookmark' : 'far fa-bookmark'} aria-hidden="true" />
+        </button>
+      </Tooltip>
     ) : null;
 
     // ── like state (home variant) ─────────────────────────────────────────────
@@ -289,11 +321,15 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
             )}
           </div>
 
-          {/* Actions — search: just controls dropdown; home: controls + reply button */}
+          {/* Actions — search: bookmark + controls dropdown; home: bookmark + controls + reply */}
           {isSearch ? (
-            controlsDropdown
+            <div className="AvocadoSearch-threadActions">
+              {bookmarkBtn}
+              {controlsDropdown}
+            </div>
           ) : (
             <div className="AvocadoHome-threadActions">
+              {bookmarkBtn}
               {controlsDropdown}
               <button
                 className="AvocadoHome-replyBtn"
