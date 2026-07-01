@@ -1661,13 +1661,8 @@ app.initializers.add(
       const saved = isBookmarked(discussion);
       items.add(
         'avocadoBookmark',
-        <Button
-          icon={saved ? 'fas fa-bookmark' : 'far fa-bookmark'}
-          onclick={() => toggleBookmark(discussion)}
-        >
-          {saved
-            ? trans('ramon-avocado.forum.bookmarks.unsave', 'Remove from saved')
-            : trans('ramon-avocado.forum.bookmarks.save', 'Save')}
+        <Button icon={saved ? 'fas fa-bookmark' : 'far fa-bookmark'} onclick={() => toggleBookmark(discussion)}>
+          {saved ? trans('ramon-avocado.forum.bookmarks.unsave', 'Remove from saved') : trans('ramon-avocado.forum.bookmarks.save', 'Save')}
         </Button>,
         50
       );

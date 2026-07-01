@@ -56,10 +56,7 @@ export function toggleBookmark(discussion: any): void {
     .catch(() => {
       setBookmarked(discussion, current);
       pending.delete(id);
-      app.alerts.show(
-        { type: 'error' },
-        trans('ramon-avocado.forum.bookmarks.toggle_error', 'Could not update your saved list. Please try again.')
-      );
+      app.alerts.show({ type: 'error' }, trans('ramon-avocado.forum.bookmarks.toggle_error', 'Could not update your saved list. Please try again.'));
       m.redraw();
     });
 }
