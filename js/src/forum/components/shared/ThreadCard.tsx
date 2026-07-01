@@ -119,11 +119,7 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
     const saved = isBookmarked(discussion);
     const bookmarkBtn = app.session.user ? (
       <Tooltip
-        text={
-          saved
-            ? trans('ramon-avocado.forum.bookmarks.unsave', 'Remove from saved')
-            : trans('ramon-avocado.forum.bookmarks.save', 'Save')
-        }
+        text={saved ? trans('ramon-avocado.forum.bookmarks.unsave', 'Remove from saved') : trans('ramon-avocado.forum.bookmarks.save', 'Save')}
         position="top"
       >
         <button
@@ -131,9 +127,7 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
           type="button"
           aria-pressed={saved}
           aria-label={
-            saved
-              ? trans('ramon-avocado.forum.bookmarks.unsave', 'Remove from saved')
-              : trans('ramon-avocado.forum.bookmarks.save', 'Save')
+            saved ? trans('ramon-avocado.forum.bookmarks.unsave', 'Remove from saved') : trans('ramon-avocado.forum.bookmarks.save', 'Save')
           }
           onclick={(e: Event) => {
             e.stopPropagation();

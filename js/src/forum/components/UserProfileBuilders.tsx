@@ -157,9 +157,7 @@ export function buildHero(user: any, isEditable: boolean, controls: any[] = []) 
   const joinTime = user.joinTime?.();
 
   // Locale do navegador (undefined) em vez de 'en-US' fixo, para respeitar pt-BR.
-  const joinLabel = joinTime
-    ? new Date(joinTime as string).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
-    : null;
+  const joinLabel = joinTime ? new Date(joinTime as string).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : null;
 
   // forumaker/profile-cover compat — a extensão estende UserCard.prototype.view,
   // mas o Avocado renderiza um hero próprio (não usa UserCard aqui). Lemos
