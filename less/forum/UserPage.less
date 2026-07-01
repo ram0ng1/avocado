@@ -9,101 +9,100 @@
   color: var(--home-title, #202126);
 }
 
-// ── Hero — compact colored banner (same family as AvocadoTagPage-hero) ────────
+// ── Hero — social cover layout (capa + avatar sobreposto) ─────────────────────
 
 .AvocadoUserPage-hero {
   position: relative;
-  background: var(--user-color, #5a6480);
-  // NO overflow:hidden — AvatarEditor dropdown must escape the banner
+  background: var(--body-bg);
+  // NO overflow:hidden — AvatarEditor dropdown must escape the hero
+}
 
-  &::before {
+// Capa: gradiente derivado da cor do usuário, ou imagem (forumaker/profile-cover).
+.AvocadoUserPage-cover {
+  height: 200px;
+  position: relative;
+  background: linear-gradient(120deg, var(--user-color, #5a6480), color-mix(in srgb, var(--user-color) 55%, #15161a));
+
+  &::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(0,0,0,0.26) 0%, rgba(0,0,0,0.04) 65%);
+    background: radial-gradient(120% 120% at 80% 0%, rgba(255, 255, 255, 0.16), transparent 50%);
     pointer-events: none;
   }
+}
 
-  // forumaker/profile-cover compat — quando o usuário tem uma capa (--user-cover
-  // setado pelo buildHero), camada da cor sólida fica abaixo (visível enquanto
-  // a imagem carrega) e a foto cobre por cima. O ::before vira um overlay
-  // escuro mais forte para garantir legibilidade do nome/badges sobre qualquer
-  // imagem clara.
-  &--hasCover {
-    background-image: var(--user-cover, none);
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+.AvocadoUserPage-hero--hasCover .AvocadoUserPage-cover {
+  background-image: var(--user-cover, none);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
 
-    &::before {
-      background: linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.6) 100%);
-    }
-  }
-
-  &--skeleton {
-    background: #c4c4cc;
-    &::before { display: none; }
-  }
+.AvocadoUserPage-hero--skeleton .AvocadoUserPage-cover {
+  background: #c4c4cc;
+  &::after { display: none; }
 }
 
 .AvocadoUserPage-hero-inner {
   position: relative;
   max-width: var(--home-max-width, 1320px);
   margin: 0 auto;
-  padding: 22px 20px 24px;
+  // padding-top afasta a faixa (nome/stats/ações) da capa.
+  padding: 22px 24px 22px;
 }
 
-.AvocadoUserPage-hero-row {
+// Faixa horizontal estilo Facebook: avatar sobreposto à esquerda, identidade no
+// meio, ações à direita. Só o avatar sobe sobre a capa (margin-top negativo nele).
+.AvocadoUserPage-hero-bar {
   display: flex;
-  align-items: center;
-  gap: 18px;
+  align-items: flex-end;
+  gap: 20px;
 }
 
-// ── Avatar inside the banner ───────────────────────────────────────────────────
+// ── Avatar overlapping the cover ──────────────────────────────────────────────
 
 .AvocadoUserPage-hero-avatarWrap {
   flex-shrink: 0;
-  width: 72px;
-  height: 72px;
+  width: 128px;
+  height: 128px;
+  // Menos sobreposição na capa: o avatar desce e o nome ganha respiro.
+  margin-top: -50px;
   border-radius: 50%;
-  border: none;
-  outline: none;
   position: relative;
-  background: rgba(0, 0, 0, 0.2);
-  box-shadow: none;
+  border: 5px solid var(--body-bg);
+  background: var(--body-bg);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
 
   // Non-editable Avatar (<img> or <span>)
-  // Selector specificity 0,2,0 beats Flarum's .Avatar 0,1,0 — no !important needed
+  // Specificity 0,2,0 beats Flarum's .Avatar 0,1,0 — no !important needed
   > .Avatar {
-    width: 72px;
-    height: 72px;
+    width: 118px;
+    height: 118px;
     border-radius: 50%;
     object-fit: cover;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 26px;
+    font-size: 44px;
   }
 
   // AvatarEditor: <div class="AvatarEditor Dropdown"> containing Avatar + toggle + menu
   > .AvatarEditor {
-    width: 72px;
-    height: 72px;
+    width: 118px;
+    height: 118px;
     border-radius: 50%;
     position: relative;
     display: block;
 
-    // Avatar image/span inside editor — inherits sizing from > .Avatar above (0,2,0)
-    // AvatarEditor wrapper adds one extra class, raising specificity to 0,3,0 — no need to repeat.
     .Avatar {
-      width: 72px;
-      height: 72px;
+      width: 118px;
+      height: 118px;
       border-radius: 50%;
       object-fit: cover;
     }
 
     // Pencil overlay button — covers full circle, invisible until hover
-    // Specificity 0,3,0 beats Flarum's .AvatarEditor .Dropdown-toggle 0,2,0
     .Dropdown-toggle {
       position: absolute;
       inset: 0;
@@ -118,7 +117,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
+      font-size: 22px;
       cursor: pointer;
       transition: background 0.15s ease, color 0.15s ease;
       box-shadow: none;
@@ -131,8 +130,7 @@
       i { position: relative; z-index: 1; }
     }
 
-    // Dropdown menu — escapes the banner
-    // Specificity 0,3,0 — no !important needed
+    // Dropdown menu — escapes the avatar
     .Dropdown-menu {
       position: absolute;
       top: calc(100% + 10px);
@@ -169,91 +167,115 @@
 
 .AvocadoUserPage-onlineDot {
   position: absolute;
-  bottom: 2px;
-  right: 2px;
-  width: 15px;
-  height: 15px;
+  // Assenta na borda inferior-direita do avatar (valores menores = mais pra borda).
+  bottom: 8px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: var(--avocado-online);
-  border: 2.5px solid var(--user-color, #5a6480);
+  // Sem borda branca (estilo mais fino); só um leve sombreado para profundidade.
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
   z-index: 2;
 }
 
-// ── Hero info (name, badges, stats) ───────────────────────────────────────────
+// ── Hero info — nome + selo inline, @handle e stats embaixo (à direita do avatar) ─
 
-.AvocadoUserPage-hero-info {
+.AvocadoUserPage-hero-identity {
   flex: 1;
   min-width: 0;
-  color: #fff;
+  // Sobe a identidade do fundo da faixa para alinhar com o terço inferior do avatar.
+  padding-bottom: 8px;
+}
+
+// Linha do nome: display name + badges (verificado/admin) centralizados juntos.
+.AvocadoUserPage-hero-nameRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
 }
 
 .AvocadoUserPage-hero-name {
-  margin: 0 0 6px;
-  font-size: 24px;
+  margin: 0;
+  font-size: 27px;
   font-weight: 800;
-  color: #fff;
+  color: var(--home-title, #202126);
   letter-spacing: -0.4px;
-  line-height: 1.1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.15;
+  word-break: break-word;
 }
 
 .AvocadoUserPage-hero-badges {
-  display: flex;
+  display: inline-flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: 4px;
   list-style: none;
-  margin: 0 0 8px;
+  margin: 0;
   padding: 0;
 
   li {
+    display: inline-flex;
+    align-items: center;
     list-style: none;
     margin: 0;
     padding: 0;
   }
 }
 
-// Stat items inside banner — same plain style as DiscussionHero-metaItem
-.AvocadoUserPage-hero-stats {
+// @handle sozinho, muted, abaixo do nome (padrão X).
+.AvocadoUserPage-hero-username {
+  display: block;
+  margin-top: 1px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--home-muted, #8f8f95);
+}
+
+// ── Stats meta row ────────────────────────────────────────────────────────────
+
+.AvocadoUserPage-hero-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
   align-items: center;
-  margin-top: 6px;
+  gap: 14px;
+  margin-top: 7px;
 }
 
-.AvocadoUserPage-hero-statPill {
+.AvocadoUserPage-metaItem {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   font-size: 13px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--home-muted, #8f8f95);
 
-  strong { font-weight: 700; color: #fff; }
-
-  i { font-size: 13px; }
+  strong { color: var(--home-title, #202126); font-weight: 800; }
+  i { font-size: 12px; opacity: 0.75; }
+  time { color: var(--home-muted, #8f8f95); }
 }
 
-// ── Controls button ────────────────────────────────────────────────────────────
+// ── Controls button (now on light background) ─────────────────────────────────
 
-.AvocadoUserPage-hero-controls {
+.AvocadoUserPage-hero-actions {
   flex-shrink: 0;
+  // Empurra para a extrema direita da faixa e alinha com a base (padrão FB).
   margin-left: auto;
+  align-self: flex-end;
+  padding-bottom: 8px;
 }
 
 .AvocadoUserPage-controlsBtn {
-  background: rgba(255, 255, 255, 0.16) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.36) !important;
-  color: #fff !important;
+  background: var(--avocado-surface-1) !important;
+  border: 1px solid var(--home-border, #eaeaf0) !important;
+  color: var(--avocado-text-dark, #2a2b30) !important;
   border-radius: 999px !important;
   font-size: 13px !important;
   font-weight: 700 !important;
   box-shadow: none !important;
-  backdrop-filter: blur(4px) !important;
 
-  &:hover { background: rgba(255, 255, 255, 0.26) !important; }
+  &:hover { background: color-mix(in srgb, var(--primary-color) 10%, var(--avocado-surface-1)) !important; }
 }
 
 // ── Skeleton shimmer ──────────────────────────────────────────────────────────
@@ -264,14 +286,14 @@
 }
 
 .AvocadoUserPage-shimmer {
-  background: linear-gradient(90deg, rgba(255,255,255,0.12) 25%, rgba(255,255,255,0.24) 50%, rgba(255,255,255,0.12) 75%);
+  background: linear-gradient(90deg, #f0f0f5 25%, #e6e6ec 50%, #f0f0f5 75%);
   background-size: 800px 100%;
   animation: AvocadoUserShimmer 1.4s infinite;
   border-radius: 8px;
 
-  &--avatar  { width: 72px; height: 72px; border-radius: 50%; flex-shrink: 0; }
-  &--name    { height: 24px; width: 180px; margin-bottom: 10px; display: block; }
-  &--meta    { height: 13px; width: 130px; display: block; }
+  &--avatar  { width: 128px; height: 128px; margin-top: -50px; border-radius: 50%; flex-shrink: 0; border: 5px solid var(--body-bg); }
+  &--name    { height: 27px; width: 200px; margin: 0 0 10px; display: block; }
+  &--meta    { height: 14px; width: 240px; display: block; }
   &--navItem { height: 16px; width: 80px; border-radius: 8px; }
 }
 
@@ -936,26 +958,39 @@
 // ── Responsive: phone ─────────────────────────────────────────────────────────
 
 @media @phone {
-  // Hero row stacks: avatar becomes smaller, name wraps
-  .AvocadoUserPage-hero-inner    { padding: 14px 14px 18px; }
-  .AvocadoUserPage-hero-row      { gap: 12px; }
+  .AvocadoUserPage-cover         { height: 124px; }
+  .AvocadoUserPage-hero-inner    { padding: 0 16px 18px; }
+  // No mobile a faixa empilha: avatar sobreposto, depois identidade e ações.
+  .AvocadoUserPage-hero-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
   .AvocadoUserPage-hero-avatarWrap {
-    width: 56px;
-    height: 56px;
+    width: 92px;
+    height: 92px;
+    margin-top: -34px;
+    border-width: 4px;
   }
   .AvocadoUserPage-hero-avatarWrap > .Avatar,
   .AvocadoUserPage-hero-avatarWrap > .AvatarEditor {
-    width: 56px;
-    height: 56px;
+    width: 84px;
+    height: 84px;
   }
+  .AvocadoUserPage-hero-avatarWrap > .Avatar { font-size: 32px; }
   .AvocadoUserPage-hero-avatarWrap > .AvatarEditor .Avatar {
-    width: 56px;
-    height: 56px;
-    font-size: 20px;
+    width: 84px;
+    height: 84px;
+    font-size: 30px;
   }
-  .AvocadoUserPage-onlineDot     { width: 12px; height: 12px; }
-  .AvocadoUserPage-hero-name     { font-size: 18px; }
-  .AvocadoUserPage-shimmer--avatar { width: 56px; height: 56px; }
+  .AvocadoUserPage-onlineDot     { width: 13px; height: 13px; bottom: 6px; right: 6px; }
+  .AvocadoUserPage-hero-identity { padding-bottom: 0; width: 100%; }
+  .AvocadoUserPage-hero-name     { font-size: 22px; }
+  .AvocadoUserPage-hero-username { font-size: 14px; }
+  .AvocadoUserPage-hero-meta     { gap: 8px 14px; margin-top: 8px; }
+  .AvocadoUserPage-metaItem      { font-size: 12.5px; }
+  .AvocadoUserPage-hero-actions  { margin-left: 0; align-self: flex-start; padding-bottom: 0; }
+  .AvocadoUserPage-shimmer--avatar { width: 92px; height: 92px; }
 
   // Nav tabs: compact
   .AvocadoUserPage-navItem,
@@ -965,42 +1000,41 @@
   .AvocadoUserPage-bodyInner     { padding: 16px 12px 40px; }
 }
 
-// ─── FoF User Bio — hero integration ─────────────────────────────────────────
-// The bio renders inside .AvocadoUserPage-hero (colored banner), so text must
-// be white/light, matching the rest of the hero content.
+// ─── FoF User Bio — light hero integration ───────────────────────────────────
+// The bio now renders on the page background (below the cover), so text is dark
+// and links use the primary color.
 .AvocadoUserPage-hero-bio {
-  margin-top: 14px;
+  margin-top: 12px;
   max-width: 600px;
 
-  // Override extension's dark-background dashed border approach
   .UserBio {
     margin: 0;
     border: 1px dashed transparent;
     border-radius: 10px;
     transition: border-color 0.2s ease;
 
-    // Editable state — show a subtle light dashed border on hover
+    // Editable state — subtle dashed border on hover
     &.editable:not(.editing) {
       cursor: text;
-      border-color: rgba(255, 255, 255, 0.15);
+      border-color: var(--home-border, #eaeaf0);
 
       &:hover, &:focus {
-        border-color: rgba(255, 255, 255, 0.4);
-        background: rgba(255, 255, 255, 0.06);
+        border-color: var(--primary-color);
+        background: var(--avocado-surface-1);
       }
     }
 
-    // Editing state — dark input on light translucent card
+    // Editing state
     &.editing {
-      background: rgba(255, 255, 255, 0.12);
-      border-color: rgba(255, 255, 255, 0.3);
+      background: var(--avocado-surface-1);
+      border-color: var(--home-border, #eaeaf0);
       border-style: solid;
       padding: 8px;
 
       textarea.FormControl {
-        background: rgba(255, 255, 255, 0.9) !important;
-        color: #1a1b21 !important;
-        border: none !important;
+        background: var(--body-bg) !important;
+        color: var(--avocado-text-dark) !important;
+        border: 1px solid var(--home-border, #eaeaf0) !important;
         border-radius: 8px !important;
         font-size: 13px !important;
         font-family: 'DM Sans', Inter, "Segoe UI", sans-serif !important;
@@ -1016,50 +1050,29 @@
     &-actions {
       margin-top: 8px;
       gap: 6px;
-
-      .Button--primary {
-        background: rgba(255, 255, 255, 0.9) !important;
-        color: #1a1b21 !important;
-        border-radius: 999px !important;
-        font-size: 12px !important;
-        font-weight: 700 !important;
-
-        &:hover { background: #fff !important; }
-      }
-
-      .Button:not(.Button--primary) {
-        background: rgba(255, 255, 255, 0.15) !important;
-        color: rgba(255, 255, 255, 0.85) !important;
-        border-radius: 999px !important;
-        font-size: 12px !important;
-        font-weight: 700 !important;
-        border: none !important;
-
-        &:hover { background: rgba(255, 255, 255, 0.25) !important; }
-      }
     }
   }
 
-  // Bio content — white text to match hero
+  // Bio content — dark text on the page background
   .UserBio-content {
-    padding: 6px 2px 1px;
+    padding: 4px 2px 1px;
     line-height: 1.6;
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 14px;
+    color: var(--avocado-text-dark);
+    font-size: 14.5px;
     font-weight: 500;
-    max-height: calc(1px + 20px + 21px * 5);
+    max-height: calc(1px + 20px + 23px * 5);
     overflow-y: auto;
 
-    p { margin: 0 0 4px; color: rgba(255, 255, 255, 0.9); }
+    p { margin: 0 0 4px; color: var(--avocado-text-dark); }
 
     a {
-      color: rgba(255, 255, 255, 0.95) !important;
+      color: var(--primary-color);
       font-weight: 600;
       text-decoration: underline;
-      text-decoration-color: rgba(255, 255, 255, 0.4);
+      text-decoration-color: color-mix(in srgb, var(--primary-color) 40%, transparent);
 
       &:hover {
-        text-decoration-color: rgba(255, 255, 255, 0.9);
+        text-decoration-color: var(--primary-color);
         border-bottom: none;
       }
     }
@@ -1067,13 +1080,13 @@
 
   // Placeholder text ("Add a bio...")
   .UserBio-placeholder {
-    color: rgba(255, 255, 255, 0.45) !important;
+    color: var(--home-muted, #8f8f95);
     font-size: 13px;
     font-style: italic;
     padding: 4px 2px;
   }
 
-  // Scrollbar — subtle white
-  .UserBio-content::-webkit-scrollbar { width: 3px; }
-  .UserBio-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); border-radius: 3px; }
+  // Scrollbar — subtle
+  .UserBio-content::-webkit-scrollbar { width: 4px; }
+  .UserBio-content::-webkit-scrollbar-thumb { background: var(--home-border, #eaeaf0); border-radius: 3px; }
 }

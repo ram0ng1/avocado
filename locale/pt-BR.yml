@@ -164,6 +164,7 @@ ramon-avocado:
     back: "Voltar"
     profile:
       joined: "Entrou em {date}"
+      member_since: "Membro desde {date}"
       scroll_left: "Rolar para a esquerda"
       scroll_right: "Rolar para a direita"
     online_users:

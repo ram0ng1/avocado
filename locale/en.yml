@@ -164,6 +164,7 @@ ramon-avocado:
     back: "Back"
     profile:
       joined: "Joined {date}"
+      member_since: "Member since {date}"
       scroll_left: "Scroll left"
       scroll_right: "Scroll right"
     online_users:

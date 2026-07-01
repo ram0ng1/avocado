@@ -17,6 +17,7 @@ import AvatarEditor from 'flarum/forum/components/AvatarEditor';
 import Dropdown from 'flarum/common/components/Dropdown';
 import listItems from 'flarum/common/helpers/listItems';
 import SelectDropdown from 'flarum/common/components/SelectDropdown';
+import humanTime from 'flarum/common/helpers/humanTime';
 import { safeCssUrl, trans } from '../utils';
 
 // ─── Scrollable nav ───────────────────────────────────────────────────────────
@@ -134,10 +135,11 @@ export function buildHero(user: any, isEditable: boolean, controls: any[] = []) 
   if (!user) {
     return (
       <div className="AvocadoUserPage-hero AvocadoUserPage-hero--skeleton">
+        <div className="AvocadoUserPage-cover" />
         <div className="AvocadoUserPage-hero-inner">
-          <div className="AvocadoUserPage-hero-row">
+          <div className="AvocadoUserPage-hero-bar">
             <div className="AvocadoUserPage-shimmer AvocadoUserPage-shimmer--avatar" />
-            <div style={{ flex: 1 }}>
+            <div className="AvocadoUserPage-hero-identity">
               <div className="AvocadoUserPage-shimmer AvocadoUserPage-shimmer--name" />
               <div className="AvocadoUserPage-shimmer AvocadoUserPage-shimmer--meta" />
             </div>
@@ -150,8 +152,14 @@ export function buildHero(user: any, isEditable: boolean, controls: any[] = []) 
   const color = user.color?.() || '#5a6480';
   const badges = user.badges?.().toArray?.() || [];
   const isOnline = user.isOnline?.();
+  const lastSeen = user.lastSeenAt?.();
+  const username = user.username?.();
   const joinTime = user.joinTime?.();
-  const joinLabel = joinTime ? new Date(joinTime as string).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
+
+  // Locale do navegador (undefined) em vez de 'en-US' fixo, para respeitar pt-BR.
+  const joinLabel = joinTime
+    ? new Date(joinTime as string).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+    : null;
 
   // forumaker/profile-cover compat — a extensão estende UserCard.prototype.view,
   // mas o Avocado renderiza um hero próprio (não usa UserCard aqui). Lemos
@@ -165,31 +173,62 @@ export function buildHero(user: any, isEditable: boolean, controls: any[] = []) 
   const heroStyle: Record<string, string> = { '--user-color': color };
   if (hasCover) heroStyle['--user-cover'] = coverCss as string;
 
+  const onlineLabel = trans('ramon-avocado.forum.user.online', 'Online');
+
+  const bioNode = (() => {
+    try {
+      const UserBio = (flarum as any).reg.get('fof-user-bio', 'forum/components/UserBio');
+      if (UserBio && user.attribute('canViewBio')) {
+        return (
+          <div className="AvocadoUserPage-hero-bio">
+            <UserBio user={user} editable={isEditable} />
+          </div>
+        );
+      }
+    } catch {}
+    return null;
+  })();
+
+  // Layout estilo Facebook: capa larga, avatar grande sobreposto à esquerda,
+  // identidade (nome + @handle + stats) à direita, ações na extrema direita —
+  // tudo numa faixa horizontal; a bio fica abaixo, em largura cheia.
   return (
     <div className={'AvocadoUserPage-hero' + (hasCover ? ' AvocadoUserPage-hero--hasCover' : '')} style={heroStyle}>
+      <div className="AvocadoUserPage-cover" />
       <div className="AvocadoUserPage-hero-inner">
-        <div className="AvocadoUserPage-hero-row">
+        <div className="AvocadoUserPage-hero-bar">
           <div className="AvocadoUserPage-hero-avatarWrap">
             {isEditable ? <AvatarEditor user={user} /> : <Avatar user={user} loading="eager" />}
-            {isOnline &&
-              (() => {
-                const onlineLabel = trans('ramon-avocado.forum.user.online', 'Online');
-                return <span className="AvocadoUserPage-onlineDot" title={onlineLabel} aria-label={onlineLabel} role="img" />;
-              })()}
+            {isOnline && <span className="AvocadoUserPage-onlineDot" title={onlineLabel} aria-label={onlineLabel} role="img" />}
           </div>
-          <div className="AvocadoUserPage-hero-info">
-            <h1 className="AvocadoUserPage-hero-name">{user.displayName?.() || user.username?.()}</h1>
-            {badges.length > 0 && <ul className="AvocadoUserPage-hero-badges badges">{listItems(badges)}</ul>}
-            <div className="AvocadoUserPage-hero-stats">
+
+          <div className="AvocadoUserPage-hero-identity">
+            <div className="AvocadoUserPage-hero-nameRow">
+              <h1 className="AvocadoUserPage-hero-name">{user.displayName?.() || username}</h1>
+              {badges.length > 0 && <ul className="AvocadoUserPage-hero-badges badges">{listItems(badges)}</ul>}
+            </div>
+            {username && <span className="AvocadoUserPage-hero-username">@{username}</span>}
+
+            <div className="AvocadoUserPage-hero-meta">
+              {/* Posts/discussões não entram aqui — os números já aparecem nas abas abaixo. */}
               {joinLabel && (
-                <span className="AvocadoUserPage-hero-statPill">
-                  {app.translator.trans('ramon-avocado.forum.profile.joined', { date: joinLabel })}
+                <span className="AvocadoUserPage-metaItem">
+                  <i className="far fa-calendar" aria-hidden="true" />
+                  {trans('ramon-avocado.forum.profile.member_since', 'Member since {date}', { date: joinLabel })}
+                </span>
+              )}
+              {/* Online é indicado pelo dot no avatar; na meta só "visto há X" quando offline. */}
+              {!isOnline && lastSeen && (
+                <span className="AvocadoUserPage-metaItem">
+                  <i className="far fa-clock" aria-hidden="true" />
+                  {humanTime(lastSeen)}
                 </span>
               )}
             </div>
           </div>
+
           {controls.length > 0 && (
-            <div className="AvocadoUserPage-hero-controls">
+            <div className="AvocadoUserPage-hero-actions">
               <Dropdown
                 buttonClassName="Button AvocadoUserPage-controlsBtn"
                 menuClassName="Dropdown-menu--right"
@@ -200,19 +239,8 @@ export function buildHero(user: any, isEditable: boolean, controls: any[] = []) 
             </div>
           )}
         </div>
-        {(() => {
-          try {
-            const UserBio = (flarum as any).reg.get('fof-user-bio', 'forum/components/UserBio');
-            if (UserBio && user.attribute('canViewBio')) {
-              return (
-                <div className="AvocadoUserPage-hero-bio">
-                  <UserBio user={user} editable={isEditable} />
-                </div>
-              );
-            }
-          } catch {}
-          return null;
-        })()}
+
+        {bioNode}
       </div>
     </div>
   );
