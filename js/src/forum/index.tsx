@@ -1225,6 +1225,10 @@ app.initializers.add(
     // at init so overrides are applied before the user can click "Log In".
     const authPanelOverride = (iconCls) =>
       function authContent(original) {
+        // Admin can disable the custom side-panel design and fall back to
+        // Flarum's default login / sign up / forgot-password modal.
+        if (!settingEnabled('avocadoCustomAuthModal', true)) return original();
+
         const rawUrl = app.forum?.attribute('avocadoAuthImage') || app.forum?.attribute('avocadoHeroImage') || null;
         const heroUrl = rawUrl ? resolveAssetUrl(rawUrl) : null;
         return (
@@ -1655,6 +1659,9 @@ app.initializers.add(
     // Adds a "Save/Unsave" item to every discussion's controls dropdown — covers
     // the discussion page header and the card dropdowns in one integration point.
     // Gated on a logged-in actor; guests never see it.
+    // Priority is kept BELOW core's reply button (default 0) so the discussion
+    // page's SplitDropdown keeps "Reply" as the primary button and the save
+    // action stays inside the dropdown panel, never promoted to the main button.
     extend(DiscussionControls, 'userControls', function (items: any, discussion: any) {
       if (!app.session.user) return;
 
@@ -1664,7 +1671,7 @@ app.initializers.add(
         <Button icon={saved ? 'fas fa-bookmark' : 'far fa-bookmark'} onclick={() => toggleBookmark(discussion)}>
           {saved ? trans('ramon-avocado.forum.bookmarks.unsave', 'Remove from saved') : trans('ramon-avocado.forum.bookmarks.save', 'Save')}
         </Button>,
-        50
+        -10
       );
     });
 

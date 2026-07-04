@@ -311,21 +311,33 @@ app.initializers.add('ramon-avocado', (app) => {
     .registerSetting(
       () => (
         <AdminCard title={trans('ramon-avocado.admin.settings.section_auth', 'Login & Registration')} icon="fas fa-key">
-          <div className="Form-group">
-            <label className="AvocadoAdmin-label">{trans('ramon-avocado.admin.settings.auth_image_label', 'Auth Modal Image')}</label>
-            <UploadImageButton
-              name="avocado-auth"
-              routePath="avocado/auth-image"
-              value={app.data.settings['avocado.auth_image']}
-              url={resolveAssetUrl(app.data.settings['avocado.auth_image'])}
-            />
-            <p className="helpText">
-              {trans(
-                'ramon-avocado.admin.settings.auth_image_help',
-                'Background image shown in the right panel of login, sign up, and forgot password modals.'
-              )}
-            </p>
-          </div>
+          <AdminToggle
+            settingKey="avocado.custom_auth_modal"
+            label={trans('ramon-avocado.admin.settings.custom_auth_modal_label', 'Use custom login / sign up modal')}
+            help={trans(
+              'ramon-avocado.admin.settings.custom_auth_modal_help',
+              "Show the custom side-panel design on the Log In, Sign Up and Forgot Password modals. Turn off to use Flarum's default modal."
+            )}
+          />
+          {getBool('avocado.custom_auth_modal') && (
+            <div className="AvocadoAdmin-subGroup">
+              <div className="Form-group">
+                <label className="AvocadoAdmin-label">{trans('ramon-avocado.admin.settings.auth_image_label', 'Auth Modal Image')}</label>
+                <UploadImageButton
+                  name="avocado-auth"
+                  routePath="avocado/auth-image"
+                  value={app.data.settings['avocado.auth_image']}
+                  url={resolveAssetUrl(app.data.settings['avocado.auth_image'])}
+                />
+                <p className="helpText">
+                  {trans(
+                    'ramon-avocado.admin.settings.auth_image_help',
+                    'Background image shown in the right panel of login, sign up, and forgot password modals.'
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
         </AdminCard>
       ),
       90
