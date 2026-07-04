@@ -48,6 +48,8 @@ ramon-avocado:
       show_online_count_help: 'Mostra o rótulo "X online" ao lado dos avatares de usuários online.'
 
       # Auth & banner
+      custom_auth_modal_label: Usar modal de login / cadastro personalizado
+      custom_auth_modal_help: Exibe o painel lateral personalizado nos modais de Entrar, Cadastrar e Esqueci a senha. Desligue para usar o modal padrão do Flarum.
       auth_image_label: Imagem do modal de autenticação
       auth_image_help: Imagem de fundo exibida no painel direito dos modais de login, registro e redefinição de senha.
       banner_image_label: Imagem do banner
