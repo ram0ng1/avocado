@@ -72,7 +72,7 @@ jobs:
         # Advanced Security) — nesse caso o upload emite warning. O artefato
         # ao final do job é o canal de resultados que sempre funciona.
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e  # v4.36.2
+        uses: github/codeql-action/upload-sarif@54f647b7e1bb85c95cddabcd46b0c578ec92bc1a  # v4.36.3
         with:
           sarif_file: semgrep-generic.sarif
           category: semgrep
@@ -115,7 +115,7 @@ jobs:
       - name: Upload SARIF — Flarum v2
         if: always()
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e  # v4.36.2
+        uses: github/codeql-action/upload-sarif@54f647b7e1bb85c95cddabcd46b0c578ec92bc1a  # v4.36.3
         with:
           sarif_file: semgrep-flarum.sarif
           category: flarum-v2-security
