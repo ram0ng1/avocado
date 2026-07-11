@@ -36,6 +36,21 @@ parameters:
 			path: extend.php
 
 		-
+			message: "#^Parameter \\$pusher of method Ramon\\\\Avocado\\\\Controller\\\\PresenceAuthController\\:\\:__construct\\(\\) has invalid type Pusher\\\\Pusher\\.$#"
+			count: 1
+			path: src/Controller/PresenceAuthController.php
+
+		-
+			message: "#^Property Ramon\\\\Avocado\\\\Controller\\\\PresenceAuthController\\:\\:\\$pusher has unknown class Pusher\\\\Pusher as its type\\.$#"
+			count: 1
+			path: src/Controller/PresenceAuthController.php
+
+		-
+			message: "#^Call to method authorizePresenceChannel\\(\\) on an unknown class Pusher\\\\Pusher\\.$#"
+			count: 1
+			path: src/Controller/PresenceAuthController.php
+
+		-
 			message: "#^Access to an undefined property Flarum\\\\Discussion\\\\Discussion\\:\\:\\$avocadoHero\\.$#"
 			count: 1
 			path: src/Api/DiscussionFields.php

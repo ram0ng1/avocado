@@ -23,6 +23,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Carbon\Carbon|null $remind_at
  * @property \Carbon\Carbon|null $reminder_sent_at
  * @property \Carbon\Carbon|null $created_at
+ * @property-read User|null $user
+ * @property-read Discussion|null $discussion
  */
 class Bookmark extends AbstractModel
 {

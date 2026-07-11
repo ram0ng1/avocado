@@ -36,17 +36,21 @@ class SendBookmarkRemindersCommand extends Command
             return;
         }
 
+        // with() logo após query() — no Eloquent\Builder cru; encadeá-lo depois
+        // do where() faz o PHPStan (sem larastan) narrar para Query\Builder e
+        // reclamar que with() não existe.
         $due = Bookmark::query()
+            ->with(['user', 'discussion'])
             ->whereNotNull('remind_at')
             ->whereNull('reminder_sent_at')
             ->where('remind_at', '<=', Carbon::now())
-            ->with(['user', 'discussion'])
             ->orderBy('remind_at')
             ->limit(self::BATCH)
             ->get();
 
         $sent = 0;
 
+        /** @var Bookmark $bookmark */
         foreach ($due as $bookmark) {
             $user = $bookmark->user;
             $discussion = $bookmark->discussion;
