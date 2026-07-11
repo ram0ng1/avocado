@@ -126,30 +126,31 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
     // modal (removal lives inside the modal and in the controls dropdown).
     const saved = isBookmarked(discussion);
     const bookmarkLabel = saved ? trans('ramon-avocado.forum.bookmarks.edit', 'Edit bookmark') : trans('ramon-avocado.forum.bookmarks.save', 'Save');
-    const bookmarkBtn = app.session.user && bookmarksEnabled() ? (
-      <Tooltip text={bookmarkLabel} position="top">
-        <button
-          className={`AvocadoThreadCard-bookmarkBtn${saved ? ' is-saved' : ''}`}
-          type="button"
-          aria-pressed={saved}
-          aria-label={bookmarkLabel as string}
-          onclick={(e: Event) => {
-            e.stopPropagation();
-            e.preventDefault();
-            // O Tooltip também dispara por focus: sem o blur ele ficava preso
-            // depois do clique, flutuando após o botão esconder (hover-only).
-            (e.currentTarget as HTMLElement | null)?.blur();
-            if (saved) {
-              app.modal.show(BookmarkModal, { discussion });
-            } else {
-              toggleBookmark(discussion);
-            }
-          }}
-        >
-          <i className={saved ? 'fas fa-bookmark' : 'far fa-bookmark'} aria-hidden="true" />
-        </button>
-      </Tooltip>
-    ) : null;
+    const bookmarkBtn =
+      app.session.user && bookmarksEnabled() ? (
+        <Tooltip text={bookmarkLabel} position="top">
+          <button
+            className={`AvocadoThreadCard-bookmarkBtn${saved ? ' is-saved' : ''}`}
+            type="button"
+            aria-pressed={saved}
+            aria-label={bookmarkLabel as string}
+            onclick={(e: Event) => {
+              e.stopPropagation();
+              e.preventDefault();
+              // O Tooltip também dispara por focus: sem o blur ele ficava preso
+              // depois do clique, flutuando após o botão esconder (hover-only).
+              (e.currentTarget as HTMLElement | null)?.blur();
+              if (saved) {
+                app.modal.show(BookmarkModal, { discussion });
+              } else {
+                toggleBookmark(discussion);
+              }
+            }}
+          >
+            <i className={saved ? 'fas fa-bookmark' : 'far fa-bookmark'} aria-hidden="true" />
+          </button>
+        </Tooltip>
+      ) : null;
 
     // ── bookmark meta (BookmarksPage only) ────────────────────────────────────
     const metaVisible = showBookmarkMeta && saved && bookmarksEnabled();

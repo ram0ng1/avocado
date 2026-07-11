@@ -1708,7 +1708,6 @@ app.initializers.add(
       });
     });
 
-
     // ── 12d. User hover card on post authors ───────────────────────────────────
     // Wraps the PostUser name/avatar (discussion page) with the Discourse-style
     // hover card. The component itself no-ops when avocadoUserCardEnabled is off.

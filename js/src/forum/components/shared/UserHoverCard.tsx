@@ -194,8 +194,7 @@ function cardVnode(user: any) {
   // Selo da ext ramon-verified, quando instalada — mesmo componente das outras
   // superfícies, resolvido pelo registry (ausente = null).
   const VerifiedBadge = (flarum as any).reg?.get?.('ramon-verified', 'common/components/VerifiedBadge');
-  const verified =
-    VerifiedBadge && user.attribute?.('isVerified') ? m(VerifiedBadge as any, { user, className: 'AvocadoUserCard-verified' }) : null;
+  const verified = VerifiedBadge && user.attribute?.('isVerified') ? m(VerifiedBadge as any, { user, className: 'AvocadoUserCard-verified' }) : null;
 
   const goProfile = (e: Event) => {
     closeCard();
@@ -203,10 +202,7 @@ function cardVnode(user: any) {
   };
 
   return (
-    <div
-      className={`AvocadoUserCard-wrap${pos.above ? ' AvocadoUserCard-wrap--above' : ''}`}
-      style={{ top: `${pos.top}px`, left: `${pos.left}px` }}
-    >
+    <div className={`AvocadoUserCard-wrap${pos.above ? ' AvocadoUserCard-wrap--above' : ''}`} style={{ top: `${pos.top}px`, left: `${pos.left}px` }}>
       <div
         className="AvocadoUserCard"
         oncreate={(v: any) => (cardEl = v.dom as HTMLElement)}
