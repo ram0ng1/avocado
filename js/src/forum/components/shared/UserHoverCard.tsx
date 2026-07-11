@@ -3,8 +3,13 @@ import Component from 'flarum/common/Component';
 import Avatar from 'flarum/common/components/Avatar';
 import listItems from 'flarum/common/helpers/listItems';
 
-import { trans, truncate, displayName, userRoute, navigate, numberOr, formatTimeLabel } from '../../utils';
+import { trans, truncate, displayName, userRoute, navigate, formatTimeLabel } from '../../utils';
 import CakedayBadge from './CakedayBadge';
+
+/** Conta numérica do atributo, ou null quando ausente (renderiza "–"). */
+function countOrNull(value: unknown): number | null {
+  return typeof value === 'number' && !isNaN(value) ? value : null;
+}
 
 const OPEN_DELAY = 350;
 const CLOSE_DELAY = 150;
@@ -181,8 +186,8 @@ function cardVnode(user: any) {
   const joined = user.joinTime?.();
   const lastSeen = user.lastSeenAt?.();
   const online = !!lastSeen && Date.now() - new Date(lastSeen).getTime() < 5 * 60 * 1000;
-  const discussions = numberOr(user.attribute?.('discussionCount'), null);
-  const posts = numberOr(user.attribute?.('commentCount'), null);
+  const discussions = countOrNull(user.attribute?.('discussionCount'));
+  const posts = countOrNull(user.attribute?.('commentCount'));
   const badges = (user.badges?.()?.toArray?.() || []) as any[];
   const self = app.session.user;
   const canMessage =

@@ -16,7 +16,8 @@ export interface WhoIsReadingAttrs extends ComponentAttrs {
  * desligado — o custo de um no-op é zero.
  */
 export default class WhoIsReading extends Component<WhoIsReadingAttrs> {
-  private state: PresenceState = { members: [], count: 0 };
+  // Não usar `state`: é reservado pelo Component do Mithril (2º generic).
+  private presence: PresenceState = { members: [], count: 0 };
   private leave: (() => void) | null = null;
   private joinedId = '';
 
@@ -37,9 +38,9 @@ export default class WhoIsReading extends Component<WhoIsReadingAttrs> {
   }
 
   view() {
-    if (!presenceEnabled() || this.state.count < 2) return null;
+    if (!presenceEnabled() || this.presence.count < 2) return null;
 
-    const shown = this.state.members.slice(0, 6);
+    const shown = this.presence.members.slice(0, 6);
 
     return (
       <span className="DiscussionHero-metaItem AvocadoPresence">
@@ -55,7 +56,7 @@ export default class WhoIsReading extends Component<WhoIsReadingAttrs> {
             )
           )}
         </span>
-        {trans('ramon-avocado.forum.presence.reading_now', '{count} reading now', { count: this.state.count })}
+        {trans('ramon-avocado.forum.presence.reading_now', '{count} reading now', { count: this.presence.count })}
       </span>
     );
   }
@@ -64,11 +65,11 @@ export default class WhoIsReading extends Component<WhoIsReadingAttrs> {
     this.leave?.();
     const id = String(this.attrs.discussion?.id?.() || '');
     this.joinedId = id;
-    this.state = { members: [], count: 0 };
+    this.presence = { members: [], count: 0 };
     if (!id) return;
 
-    this.leave = joinDiscussionPresence(id, (state) => {
-      this.state = state;
+    this.leave = joinDiscussionPresence(id, (next) => {
+      this.presence = next;
       m.redraw();
     });
   }
