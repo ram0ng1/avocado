@@ -992,9 +992,10 @@
     padding: 0 !important;
   }
 
-  // Reduce top/bottom padding so icon and CTA stay clear of border-radius
+  // Phone: overlay is content-driven, so this padding is the real top/bottom
+  // gap — keep icon and CTA clear of the border-radius with room to breathe.
   .AvocadoHome-heroBannerContent {
-    padding: 28px 20px 28px !important;
+    padding: 36px 20px 36px !important;
   }
 
   // Reply button: icon-only on phone
@@ -1223,7 +1224,10 @@
 // ─── Guest hero banner ────────────────────────────────────────────────────────
 .AvocadoHome-heroBanner {
   width: 100%;
-  min-height: 270px;
+  // Content is vertically centered inside the (absolute, inset:0) overlay, so
+  // the visible gap above the icon and below the CTA is driven by the banner's
+  // own height, not by the content padding. Give it enough room to breathe.
+  min-height: 320px;
   position: relative;
   border-radius: 20px;
   overflow: hidden;

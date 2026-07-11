@@ -129,6 +129,14 @@
       .avocado-line-clamp(3);
       flex: 1;
       width: 100%;
+
+      // Bio can be server-rendered HTML (fof/user-bio). Neutralize the inner
+      // block spacing so the line-clamp box measures clean lines, and keep
+      // inline emphasis/links legible over the muted bio text.
+      p { margin: 0; }
+      > :first-child { margin-top: 0; }
+      > :last-child { margin-bottom: 0; }
+      a { color: var(--primary-color); }
     }
 
     // ── Stats ────────────────────────────────────────────────────────────────

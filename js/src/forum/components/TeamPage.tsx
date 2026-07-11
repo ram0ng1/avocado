@@ -3,6 +3,7 @@ import Page from 'flarum/common/components/Page';
 import Avatar from 'flarum/common/components/Avatar';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import humanTime from 'flarum/common/helpers/humanTime';
+import trustedHtml from '../../common/trustedHtml';
 import { trans, navigate, displayName, safeCssColor } from '../utils';
 
 export default class TeamPage extends Page {
@@ -100,6 +101,11 @@ export default class TeamPage extends Page {
 
     const name = displayName(user);
     const isOnline = user.isOnline?.();
+    // fof/user-bio parses and sanitizes the markdown server-side (s9e) and
+    // exposes the result as `bioHtml`; mirror its own <UserBio> and render that
+    // instead of the raw source. `bio` (plain text) is the fallback for when
+    // formatting is disabled or the extension isn't installed.
+    const bioHtml = user.bioHtml?.();
     const bio = user.bio?.();
     const discussions = user.discussionCount?.() ?? 0;
     const posts = user.commentCount?.() ?? 0;
@@ -133,7 +139,11 @@ export default class TeamPage extends Page {
             );
           })()}
 
-        {bio && <p className="AvocadoTeamPage-card-bio">{bio}</p>}
+        {bioHtml ? (
+          <div className="AvocadoTeamPage-card-bio">{trustedHtml(bioHtml)}</div>
+        ) : bio ? (
+          <p className="AvocadoTeamPage-card-bio">{bio}</p>
+        ) : null}
 
         <p className="AvocadoTeamPage-card-stats">
           {discussions} {trans('ramon-avocado.forum.team.discussions', 'discussions')}
