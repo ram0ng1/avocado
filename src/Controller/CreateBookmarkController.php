@@ -8,12 +8,15 @@ use Carbon\Carbon;
 use Flarum\Discussion\Discussion;
 use Flarum\Foundation\ValidationException;
 use Flarum\Http\RequestUtil;
+use Flarum\Settings\SettingsRepositoryInterface;
+use Flarum\User\Exception\PermissionDeniedException;
 use Illuminate\Support\Arr;
 use Laminas\Diactoros\Response\JsonResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Ramon\Avocado\Model\Bookmark;
+use Ramon\Avocado\Support\BookmarksSetting;
 
 /**
  * Salva uma discussão para o ator. O par é sempre derivado do servidor
@@ -23,8 +26,17 @@ use Ramon\Avocado\Model\Bookmark;
  */
 class CreateBookmarkController implements RequestHandlerInterface
 {
+    public function __construct(
+        protected SettingsRepositoryInterface $settings
+    ) {
+    }
+
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        if (! BookmarksSetting::enabled($this->settings)) {
+            throw new PermissionDeniedException();
+        }
+
         $actor = RequestUtil::getActor($request);
         $actor->assertRegistered();
 

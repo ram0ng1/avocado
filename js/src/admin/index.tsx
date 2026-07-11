@@ -357,6 +357,74 @@ app.initializers.add('ramon-avocado', (app) => {
       55
     )
 
+    // ── Bookmarks ──────────────────────────────────────────────────────────────
+    .registerSetting(
+      () => (
+        <AdminCard title={trans('ramon-avocado.admin.settings.section_bookmarks', 'Bookmarks')} icon="fas fa-bookmark">
+          <AdminToggle
+            settingKey="avocado.bookmarks_enabled"
+            label={trans('ramon-avocado.admin.settings.bookmarks_enabled_label', 'Enable the bookmark system')}
+            help={trans(
+              'ramon-avocado.admin.settings.bookmarks_enabled_help',
+              'Save button on cards, the Saved page, notes, reminders and reminder notifications. Turning this off hides everything and disables the API endpoints; saved data is kept.'
+            )}
+          />
+        </AdminCard>
+      ),
+      53
+    )
+
+    // ── User Card ──────────────────────────────────────────────────────────────
+    .registerSetting(
+      () => (
+        <AdminCard title={trans('ramon-avocado.admin.settings.section_user_card', 'User Card')} icon="far fa-id-card">
+          <AdminToggle
+            settingKey="avocado.user_card_enabled"
+            label={trans('ramon-avocado.admin.settings.user_card_enabled_label', 'Enable the user hover card')}
+            help={trans(
+              'ramon-avocado.admin.settings.user_card_enabled_help',
+              'Show a Discourse-style mini profile (bio, badges, stats, actions) when hovering avatars and usernames.'
+            )}
+          />
+        </AdminCard>
+      ),
+      52
+    )
+
+    // ── Presence ───────────────────────────────────────────────────────────────
+    .registerSetting(
+      () => (
+        <AdminCard title={trans('ramon-avocado.admin.settings.section_presence', 'Presence')} icon="fas fa-broadcast-tower">
+          <AdminToggle
+            settingKey="avocado.presence_enabled"
+            label={trans('ramon-avocado.admin.settings.presence_enabled_label', "Show who's reading a discussion")}
+            help={trans(
+              'ramon-avocado.admin.settings.presence_enabled_help',
+              'Live "N reading now" indicator in the discussion hero, with reader avatars. Requires the Realtime extension; users with "disclose online" off are never listed.'
+            )}
+          />
+        </AdminCard>
+      ),
+      51
+    )
+
+    // ── Cakeday ────────────────────────────────────────────────────────────────
+    .registerSetting(
+      () => (
+        <AdminCard title={trans('ramon-avocado.admin.settings.section_cakeday', 'Cakeday')} icon="fas fa-birthday-cake">
+          <AdminToggle
+            settingKey="avocado.cakeday_enabled"
+            label={trans('ramon-avocado.admin.settings.cakeday_enabled_label', 'Show account anniversary badge')}
+            help={trans(
+              'ramon-avocado.admin.settings.cakeday_enabled_help',
+              'Show a 🎂 next to the username on the anniversary of the account registration (thread cards, posts and user card).'
+            )}
+          />
+        </AdminCard>
+      ),
+      50
+    )
+
     // ── Colored ───────────────────────────────────────────────────────────────
     .registerSetting(
       () => (

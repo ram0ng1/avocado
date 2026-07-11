@@ -1,0 +1,263 @@
+// ─── User hover card (Discourse-style mini profile) ──────────────────────────
+//
+// The floating wrap is position:fixed (computed from the trigger rect in JS)
+// so it is never clipped by thread-card overflow. Its transparent padding is
+// the hover "bridge": crossing from trigger to card never leaves hover range,
+// so the card can't get stuck open (a global mousemove watcher backs it up).
+// Colours come from theme tokens; dark mode is handled by Flarum's
+// [data-theme^=dark] switch.
+
+.AvocadoUserCard-trigger {
+  display: inline-flex;
+  position: relative;
+}
+
+.AvocadoUserCard-wrap {
+  position: fixed;
+  // Acima do header/dropdowns do tema (≤1000) e do popover nativo; abaixo dos
+  // modais do Flarum (1040+) e dos tooltips (1070) — um tooltip disparado por
+  // um badge DENTRO do card precisa renderizar por cima dele.
+  z-index: 1030;
+  padding-top: 10px;
+
+  &--above {
+    transform: translateY(-100%);
+    padding-top: 0;
+    padding-bottom: 10px;
+  }
+}
+
+// overflow VISÍVEL de propósito: tooltips/popovers disparados por elementos
+// de dentro do card (selo verificado, badges) precisam escapar dele — com
+// hidden eles saíam cortados nas bordas. O arredondamento do topo é feito no
+// próprio banner.
+.AvocadoUserCard {
+  width: 330px;
+  border-radius: 16px;
+  background: var(--body-bg);
+  border: 1px solid var(--home-border, #eaeaf0);
+  box-shadow: var(--home-shadow, 0 14px 44px rgba(0, 0, 0, 0.18));
+  cursor: default;
+  animation: AvocadoUserCard-in 0.16s ease-out;
+}
+
+@keyframes AvocadoUserCard-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.AvocadoUserCard-banner {
+  height: 76px;
+  border-radius: 15px 15px 0 0;
+  background-color: var(--primary-color);
+  background-image: linear-gradient(120deg, var(--primary-color), color-mix(in srgb, var(--primary-color) 55%, #1c1c28));
+  background-size: cover;
+  background-position: center;
+}
+
+.AvocadoUserCard-body {
+  padding: 0 16px 16px;
+}
+
+// Layout empilhado (estilo X/Discourse): avatar sobrepõe o banner, o bloco de
+// nome vem ABAIXO dele — sem alinhamento lado-a-lado para não brigar com a
+// altura do avatar.
+.AvocadoUserCard-head {
+  display: block;
+  margin-top: -30px;
+}
+
+.AvocadoUserCard-avatarLink {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+
+  .Avatar {
+    width: 64px;
+    height: 64px;
+    font-size: 26px;
+    border: 3px solid var(--body-bg);
+    border-radius: 50%;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14);
+  }
+}
+
+.AvocadoUserCard-names {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 8px;
+}
+
+.AvocadoUserCard-nameRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.AvocadoUserCard-displayName {
+  font-size: 16.5px;
+  font-weight: 800;
+  color: var(--heading-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &:hover {
+    color: var(--primary-color);
+    text-decoration: none;
+  }
+}
+
+// O VerifiedBadge traz margem própria (pensada para post headers); dentro da
+// linha do nome quem espaça é o gap do flex — zera a margem para o selo colar
+// na mesma linha, rente ao nome.
+.AvocadoUserCard-verified,
+.AvocadoUserCard-nameRow .VerifiedBadge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin: 0 !important;
+  vertical-align: middle;
+}
+
+.AvocadoUserCard-username {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--home-muted, #8f9097);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.AvocadoUserCard-presence {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 600;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    margin-right: 5px;
+    opacity: 0.55;
+  }
+
+  &--online {
+    color: #16a34a;
+
+    &::before {
+      opacity: 1;
+    }
+  }
+}
+
+// Badges de grupo na linha do nome — reduzidos para caberem ao lado do texto
+// sem desalinhar (o tamanho padrão do core é 22px, pensado para post headers).
+// Sem `badges--packed` (que SOBREPÕE os badges de propósito): aqui cada badge
+// tem o próprio espaço, separado por gap.
+.AvocadoUserCard-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+  list-style: none;
+
+  > li {
+    margin: 0;
+  }
+
+  .Badge {
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+    font-size: 9px;
+    box-shadow: none;
+
+    .Badge-icon,
+    .icon {
+      font-size: 9px;
+      line-height: 18px;
+    }
+  }
+}
+
+.AvocadoUserCard-bio {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-color);
+}
+
+.AvocadoUserCard-stats {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--avocado-surface-1, rgba(0, 0, 0, 0.035));
+}
+
+.AvocadoUserCard-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 600;
+  color: var(--home-muted, #8f9097);
+  text-align: center;
+
+  strong {
+    font-size: 14.5px;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--heading-color);
+    font-weight: 800;
+  }
+}
+
+.AvocadoUserCard-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+
+  .Button {
+    flex: 1;
+    justify-content: center;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 700;
+
+    i {
+      margin-right: 6px;
+    }
+  }
+}
+
+.AvocadoUserCard-profileBtn {
+  display: inline-flex;
+  align-items: center;
+
+  &:hover {
+    text-decoration: none;
+  }
+}

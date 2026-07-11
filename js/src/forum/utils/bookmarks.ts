@@ -15,8 +15,24 @@ import { trans } from '../utils';
  */
 const pending = new Set<string>();
 
+/** Admin master switch for the whole bookmark system (avocado.bookmarks_enabled). */
+export function bookmarksEnabled(): boolean {
+  return !!app.forum?.attribute?.('avocadoBookmarksEnabled');
+}
+
 export function isBookmarked(discussion: any): boolean {
   return !!discussion?.attribute?.('bookmarked');
+}
+
+export function bookmarkNote(discussion: any): string {
+  return (discussion?.attribute?.('bookmarkNote') || '') as string;
+}
+
+export function bookmarkRemindAt(discussion: any): Date | null {
+  const raw = discussion?.attribute?.('bookmarkRemindAt');
+  if (!raw) return null;
+  const date = new Date(raw as string);
+  return isNaN(date.getTime()) ? null : date;
 }
 
 function apiUrl(): string {
@@ -24,10 +40,44 @@ function apiUrl(): string {
 }
 
 function setBookmarked(discussion: any, value: boolean): void {
-  discussion.pushData({ attributes: { bookmarked: value } });
+  const attributes: Record<string, unknown> = { bookmarked: value };
+  if (!value) {
+    attributes.bookmarkNote = null;
+    attributes.bookmarkRemindAt = null;
+  }
+  discussion.pushData({ attributes });
+}
+
+/**
+ * Persists note/reminder for the actor's bookmark (upsert — saves the
+ * discussion when it wasn't saved yet). Mirrors the server response back into
+ * the discussion model so cards/modals re-render with authoritative values.
+ * Errors are re-thrown so the calling UI (modal) can keep its own state.
+ */
+export function updateBookmark(discussion: any, payload: { note?: string | null; remindAt?: string | null }): Promise<void> {
+  const id = String(discussion?.id?.() || '');
+  if (!id) return Promise.reject(new Error('missing discussion id'));
+
+  return app
+    .request({
+      method: 'PATCH',
+      url: `${apiUrl()}/avocado/bookmark`,
+      body: { discussionId: Number(id), ...payload },
+    })
+    .then((response: any) => {
+      discussion.pushData({
+        attributes: {
+          bookmarked: true,
+          bookmarkNote: response?.note ?? null,
+          bookmarkRemindAt: response?.remindAt ?? null,
+        },
+      });
+      m.redraw();
+    });
 }
 
 export function toggleBookmark(discussion: any): void {
+  if (!bookmarksEnabled()) return;
   if (!app.session.user) {
     app.modal.show(() => (flarum as any).reg.asyncModuleImport('flarum/forum/components/LogInModal'));
     return;

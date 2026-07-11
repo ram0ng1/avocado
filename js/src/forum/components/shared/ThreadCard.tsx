@@ -19,7 +19,10 @@ import {
   userRoute,
   highlight,
 } from '../../utils';
-import { toggleBookmark, isBookmarked } from '../../utils/bookmarks';
+import { toggleBookmark, isBookmarked, bookmarkNote, bookmarkRemindAt, bookmarksEnabled } from '../../utils/bookmarks';
+import BookmarkModal from '../BookmarkModal';
+import UserHoverCard from './UserHoverCard';
+import CakedayBadge from './CakedayBadge';
 
 export interface ThreadCardAttrs extends ComponentAttrs {
   /** The discussion model to render */
@@ -48,6 +51,8 @@ export interface ThreadCardAttrs extends ComponentAttrs {
    * 'search'         — shows highlighted excerpt + reply count footer, no like button
    */
   variant?: 'home' | 'search';
+  /** Show the bookmark note/reminder row under the excerpt (BookmarksPage). */
+  showBookmarkMeta?: boolean;
 }
 
 export default class ThreadCard extends Component<ThreadCardAttrs> {
@@ -63,6 +68,7 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
       searchQuery = '',
       filterTagIds,
       variant = 'home',
+      showBookmarkMeta = false,
     } = this.attrs;
 
     if (!discussion) return null;
@@ -116,29 +122,65 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
     ) : null;
 
     // ── bookmark button ───────────────────────────────────────────────────────
+    // Unsaved: one click quick-saves. Saved: the click opens the note/reminder
+    // modal (removal lives inside the modal and in the controls dropdown).
     const saved = isBookmarked(discussion);
-    const bookmarkBtn = app.session.user ? (
-      <Tooltip
-        text={saved ? trans('ramon-avocado.forum.bookmarks.unsave', 'Remove from saved') : trans('ramon-avocado.forum.bookmarks.save', 'Save')}
-        position="top"
-      >
+    const bookmarkLabel = saved ? trans('ramon-avocado.forum.bookmarks.edit', 'Edit bookmark') : trans('ramon-avocado.forum.bookmarks.save', 'Save');
+    const bookmarkBtn =
+      app.session.user && bookmarksEnabled() ? (
+        <Tooltip text={bookmarkLabel} position="top">
+          <button
+            className={`AvocadoThreadCard-bookmarkBtn${saved ? ' is-saved' : ''}`}
+            type="button"
+            aria-pressed={saved}
+            aria-label={bookmarkLabel as string}
+            onclick={(e: Event) => {
+              e.stopPropagation();
+              e.preventDefault();
+              // O Tooltip também dispara por focus: sem o blur ele ficava preso
+              // depois do clique, flutuando após o botão esconder (hover-only).
+              (e.currentTarget as HTMLElement | null)?.blur();
+              if (saved) {
+                app.modal.show(BookmarkModal, { discussion });
+              } else {
+                toggleBookmark(discussion);
+              }
+            }}
+          >
+            <i className={saved ? 'fas fa-bookmark' : 'far fa-bookmark'} aria-hidden="true" />
+          </button>
+        </Tooltip>
+      ) : null;
+
+    // ── bookmark meta (BookmarksPage only) ────────────────────────────────────
+    const metaVisible = showBookmarkMeta && saved && bookmarksEnabled();
+    const note = metaVisible ? bookmarkNote(discussion) : '';
+    const remindAt = metaVisible ? bookmarkRemindAt(discussion) : null;
+    const bookmarkMeta =
+      note || remindAt ? (
         <button
-          className={`AvocadoThreadCard-bookmarkBtn${saved ? ' is-saved' : ''}`}
+          className="AvocadoBookmark-meta"
           type="button"
-          aria-pressed={saved}
-          aria-label={
-            saved ? trans('ramon-avocado.forum.bookmarks.unsave', 'Remove from saved') : trans('ramon-avocado.forum.bookmarks.save', 'Save')
-          }
           onclick={(e: Event) => {
             e.stopPropagation();
             e.preventDefault();
-            toggleBookmark(discussion);
+            app.modal.show(BookmarkModal, { discussion });
           }}
         >
-          <i className={saved ? 'fas fa-bookmark' : 'far fa-bookmark'} aria-hidden="true" />
+          {remindAt && (
+            <span className="AvocadoBookmark-metaReminder">
+              <i className="far fa-clock" aria-hidden="true" />
+              {remindAt.toLocaleString(undefined, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
+          {note && (
+            <span className="AvocadoBookmark-metaNote">
+              <i className="far fa-sticky-note" aria-hidden="true" />
+              {truncate(note, 120)}
+            </span>
+          )}
         </button>
-      </Tooltip>
-    ) : null;
+      ) : null;
 
     // ── like state (home variant) ─────────────────────────────────────────────
     const likes = numberOr(discussion.firstPost?.()?.attribute?.('likesCount'), 0);
@@ -213,7 +255,11 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
         <div className={`${p}-threadHead`}>
           {/* Avatar */}
           <div className={isSearch ? `${p}-threadAvatar` : 'AvocadoHome-avatarWrap'}>
-            {user && <Avatar user={user} title={displayName(user)} />}
+            {user && (
+              <UserHoverCard user={user}>
+                <Avatar user={user} title={displayName(user)} />
+              </UserHoverCard>
+            )}
             {unreadCount > 0 && (
               <Tooltip
                 text={trans('ramon-avocado.forum.home.badge_unread_tooltip', unreadCount === 1 ? '1 unread post' : '{count} unread posts', {
@@ -231,16 +277,19 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
           {/* Main content */}
           <div className={`${p}-threadMain`}>
             <div className={`${p}-threadMeta`}>
-              <a
-                className={`${p}-threadAuthor`}
-                href={userProfileHref}
-                onclick={(e: Event) => {
-                  e.stopPropagation();
-                  navigate(e as MouseEvent, userProfileHref);
-                }}
-              >
-                {displayName(user)}
-              </a>
+              <UserHoverCard user={user}>
+                <a
+                  className={`${p}-threadAuthor`}
+                  href={userProfileHref}
+                  onclick={(e: Event) => {
+                    e.stopPropagation();
+                    navigate(e as MouseEvent, userProfileHref);
+                  }}
+                >
+                  {displayName(user)}
+                </a>
+              </UserHoverCard>
+              {user && <CakedayBadge user={user} />}
               {timeLabel && <span className={`${p}-threadTime`}>{timeLabel}</span>}
               {isNew && <span className="AvocadoStatDot AvocadoStatDot--new" aria-hidden="true" />}
               {isSticky && (
@@ -301,6 +350,8 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
             </a>
 
             {excerptNode && <p className={`${p}-threadExcerpt`}>{excerptNode}</p>}
+
+            {bookmarkMeta}
 
             {/* Search-mode footer: reply count */}
             {isSearch && (

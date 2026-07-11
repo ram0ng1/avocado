@@ -1,0 +1,184 @@
+// ─── Presence — "N lendo agora" no meta do hero da discussão ──────────────────
+//
+// Herda a tipografia do .DiscussionHero-metaItem; aqui ficam só o dot pulsante
+// e a fileira de avatares sobrepostos. Cores via currentColor/tokens do tema —
+// o hero colorido (texto branco) e o dark mode funcionam sem caso especial.
+
+.AvocadoPresence {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.AvocadoPresence-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: AvocadoPresence-pulse 2s ease-in-out infinite;
+}
+
+@keyframes AvocadoPresence-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.AvocadoPresence-avatars {
+  display: inline-flex;
+  align-items: center;
+}
+
+.AvocadoPresence-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--body-bg);
+  background: var(--avocado-surface-1, rgba(0, 0, 0, 0.08));
+
+  & + & {
+    margin-left: -7px;
+  }
+
+  &--initial {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--heading-color);
+  }
+}
+
+// ─── Typing indicator — substitui o container padrão do flarum/realtime ──────
+//
+// O item nativo (.TypingUsersContainer, com "No one is typing" permanente) é
+// ocultado e o AvocadoTyping assume: pill que só aparece com alguém digitando,
+// avatares sobrepostos e três pontos com bounce escalonado.
+
+.PostStream .TypingUsersContainer {
+  display: none !important;
+}
+
+.AvocadoTyping {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  margin: 6px 0 2px;
+}
+
+.AvocadoTyping-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 5px 15px 5px 6px;
+  border-radius: 999px;
+  background: var(--avocado-surface-1, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--home-border, #eaeaf0);
+  animation: AvocadoTyping-rise 0.18s ease-out;
+}
+
+@keyframes AvocadoTyping-rise {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.AvocadoTyping-avatars {
+  display: inline-flex;
+  align-items: center;
+}
+
+.AvocadoTyping-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--body-bg);
+  background: var(--avocado-surface-1, rgba(0, 0, 0, 0.08));
+
+  & + & {
+    margin-left: -8px;
+  }
+
+  &--initial {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--heading-color);
+  }
+}
+
+.AvocadoTyping-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+
+  i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--home-muted, #8f9097);
+    animation: AvocadoTyping-bounce 1.2s ease-in-out infinite;
+
+    &:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+  }
+}
+
+@keyframes AvocadoTyping-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+.AvocadoTyping-text {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--home-muted, #8f9097);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .AvocadoTyping-dots i {
+    animation: none;
+    opacity: 0.7;
+  }
+
+  .AvocadoTyping-pill {
+    animation: none;
+  }
+}
+
+// ─── Cakeday — 🎂 no aniversário de conta ─────────────────────────────────────
+.AvocadoCakeday {
+  display: inline-flex;
+  align-items: center;
+  color: #f59e0b;
+  font-size: 0.85em;
+  margin: 0 2px;
+  cursor: default;
+}
