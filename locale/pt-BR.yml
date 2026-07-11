@@ -7,6 +7,10 @@ ramon-avocado:
       section_homepage: Página Inicial
       section_auth: Login e Registro
       section_search: Busca
+      section_bookmarks: Bookmarks
+      section_user_card: Cartão de Usuário
+      section_presence: Presença
+      section_cakeday: Aniversário de conta
       section_posts: Posts
       section_logo: Logotipo
       section_footer: Rodapé
@@ -70,6 +74,22 @@ ramon-avocado:
       # Search
       search_v1_label: Ativar estilo da busca V1
       search_v1_help: Mostrar o dropdown inline de busca em vez do modal V2.
+
+      # Bookmarks
+      bookmarks_enabled_label: Ativar o sistema de bookmarks
+      bookmarks_enabled_help: "Botão de salvar nos cards, página Salvos, notas, lembretes e notificações de lembrete. Desligar esconde tudo e desativa os endpoints da API; os dados salvos são mantidos."
+
+      # User Card
+      user_card_enabled_label: Ativar o cartão de usuário (hover)
+      user_card_enabled_help: "Mostra um mini-perfil estilo Discourse (bio, badges, estatísticas, ações) ao passar o mouse em avatares e nomes de usuário."
+
+      # Presence
+      presence_enabled_label: Mostrar quem está lendo a discussão
+      presence_enabled_help: 'Indicador ao vivo "N lendo agora" no hero da discussão, com avatares dos leitores. Requer a extensão Realtime; usuários com "divulgar online" desativado nunca são listados.'
+
+      # Cakeday
+      cakeday_enabled_label: Mostrar badge de aniversário de conta
+      cakeday_enabled_help: "Mostra um 🎂 ao lado do nome no aniversário do registro da conta (cards, posts e cartão de usuário)."
 
       # Posts
       show_share_label: Mostrar botão Compartilhar nos posts
@@ -297,9 +317,40 @@ ramon-avocado:
       title: Salvos
       save: Salvar
       unsave: Remover dos salvos
+      edit: Editar bookmark
       empty: "Você ainda não salvou nenhuma discussão."
       guest_prompt: Entre para salvar discussões e encontrá-las aqui depois.
       toggle_error: Não foi possível atualizar seus salvos. Tente novamente.
+      update_error: Não foi possível atualizar seu bookmark. Tente novamente.
+      modal_title: Bookmark
+      modal_save: Salvar
+      note_label: Nota
+      note_placeholder: "Por que você está salvando isso? (opcional)"
+      reminder_label: Me lembrar
+      reminder_none: Sem lembrete
+      reminder_later: Mais tarde hoje (em 4 horas)
+      reminder_tomorrow: Amanhã de manhã
+      reminder_week: Semana que vem
+      reminder_custom: "Escolher data e hora"
+      reminder_invalid: Escolha uma data no futuro.
+    notifications:
+      bookmark_reminder_text: Lembrete da sua discussão salva
+    settings:
+      notify_bookmark_reminder_label: Lembretes de bookmark
+    presence:
+      reading_now: "{count} lendo agora"
+    cakeday:
+      tooltip_singular: "Aniversário de conta — 1 ano por aqui hoje!"
+      tooltip_plural: "Aniversário de conta — {years} anos por aqui hoje!"
+      aria: Aniversário de conta
+    user_card:
+      online: Online
+      last_seen: "Visto {time}"
+      discussions: discussões
+      posts: posts
+      joined_label: entrou
+      view_profile: Ver perfil
+      message: Mensagem
     post:
       op_badge: POST ORIGINAL
     messages:

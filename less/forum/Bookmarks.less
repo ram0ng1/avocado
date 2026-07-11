@@ -6,6 +6,8 @@
 // dark mode is handled by Flarum's [data-theme^=dark] token switch.
 
 // ── Toggle button on cards ────────────────────────────────────────────────────
+// Hidden until the card is hovered, mirroring .AvocadoHome-threadControls.
+// Stays visible on keyboard focus and on touch devices (no hover to reveal it).
 .AvocadoThreadCard-bookmarkBtn {
   display: inline-flex;
   align-items: center;
@@ -20,7 +22,18 @@
   cursor: pointer;
   font-size: 14px;
   flex-shrink: 0;
-  transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
+  opacity: 0;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease, opacity 0.15s ease;
+
+  .AvocadoHome-threadCard:hover &,
+  .AvocadoSearch-threadCard:hover &,
+  &:focus-visible {
+    opacity: 1;
+  }
+
+  @media (hover: none) {
+    opacity: 1;
+  }
 
   &:hover {
     background: color-mix(in srgb, var(--primary-color) 12%, transparent);
@@ -43,6 +56,71 @@
   gap: 2px;
   flex-shrink: 0;
   align-self: flex-start;
+}
+
+// ── Note/reminder meta row (BookmarksPage cards) ──────────────────────────────
+.AvocadoBookmark-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--home-muted, #8f9097);
+  text-align: left;
+
+  &:hover {
+    color: var(--primary-color);
+  }
+
+  i {
+    margin-right: 5px;
+    font-size: 11px;
+  }
+}
+
+.AvocadoBookmark-metaReminder {
+  color: var(--primary-color);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+// ── Note/reminder modal ───────────────────────────────────────────────────────
+.AvocadoBookmarkModal {
+  &-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted-color);
+    margin-bottom: 6px;
+  }
+
+  &-note {
+    resize: vertical;
+    min-height: 72px;
+  }
+
+  &-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 0;
+  }
+
+  &-remove {
+    color: #ef4444;
+
+    &:hover {
+      color: #dc2626;
+    }
+  }
 }
 
 // ── Page title icon ───────────────────────────────────────────────────────────

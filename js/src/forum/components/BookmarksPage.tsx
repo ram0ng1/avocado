@@ -3,6 +3,7 @@ import Page from 'flarum/common/components/Page';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 
 import { trans, navigate, safeRoute, renderThreadSkeleton, renderLoadMore, renderEmpty } from '../utils';
+import { bookmarksEnabled } from '../utils/bookmarks';
 import { toggleDiscussionLike } from '../utils/likes';
 import { DISCUSSION_LIST_SORT } from '../utils/sortOptions';
 
@@ -27,6 +28,13 @@ export default class BookmarksPage extends Page {
   oninit(vnode: any) {
     super.oninit(vnode);
     this.bodyClass = 'App--index';
+
+    // Sistema desligado no admin: a rota PHP continua existindo, então quem
+    // chega por URL direta volta para a home em vez de ver uma página morta.
+    if (!bookmarksEnabled()) {
+      m.route.set('/');
+      return;
+    }
 
     // Define o título no oninit (antes do primeiro render), como o TeamPage —
     // setar no oncreate deixava a aba com o título da página anterior.
@@ -108,6 +116,7 @@ export default class BookmarksPage extends Page {
                     discussion={d}
                     context={this}
                     likingIds={this.likingIds}
+                    showBookmarkMeta={true}
                     onToggleLike={(disc: any) => toggleDiscussionLike(disc, this.likingIds)}
                   />
                 ))}

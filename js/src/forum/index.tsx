@@ -31,6 +31,8 @@ import PageStructure from 'flarum/forum/components/PageStructure';
 // flarum.reg.onLoad() applies the patch after the module is loaded.
 import { tagPageView } from './components/TagsPage';
 import HomePage from './components/HomePage';
+import BookmarkModal from './components/BookmarkModal';
+import BookmarkReminderNotification from './components/BookmarkReminderNotification';
 import { buildUserPhoneNav, buildHero, buildSidebar } from './components/UserProfileBuilders';
 
 // ─── Lazy route components ────────────────────────────────────────────────────
@@ -82,7 +84,10 @@ import {
   canEditDiscussionHero,
   sanitizeAdminHtml,
 } from './utils';
-import { toggleBookmark, isBookmarked } from './utils/bookmarks';
+import { toggleBookmark, isBookmarked, bookmarksEnabled } from './utils/bookmarks';
+import UserHoverCard from './components/shared/UserHoverCard';
+import WhoIsReading from './components/shared/WhoIsReading';
+import CakedayBadge from './components/shared/CakedayBadge';
 import TextEditor from 'flarum/common/components/TextEditor';
 import listItems from 'flarum/common/helpers/listItems';
 import humanTime from 'flarum/common/utils/humanTime';
@@ -1098,6 +1103,7 @@ app.initializers.add(
                       : trans('ramon-avocado.forum.discussion.participant_plural', 'participants')}
                   </span>
                 )}
+                <WhoIsReading discussion={discussion} />
               </div>
             </div>
           </div>
@@ -1633,7 +1639,7 @@ app.initializers.add(
       }
 
       // "Saved" — the bookmarks page, only for logged-in users (guests can't save).
-      if (app.session.user && !items.has('avocadoBookmarks')) {
+      if (app.session.user && bookmarksEnabled() && !items.has('avocadoBookmarks')) {
         items.add(
           'avocadoBookmarks',
           <LinkButton href={app.route('avocado-bookmarks')} icon="fas fa-bookmark">
@@ -1663,7 +1669,7 @@ app.initializers.add(
     // page's SplitDropdown keeps "Reply" as the primary button and the save
     // action stays inside the dropdown panel, never promoted to the main button.
     extend(DiscussionControls, 'userControls', function (items: any, discussion: any) {
-      if (!app.session.user) return;
+      if (!app.session.user || !bookmarksEnabled()) return;
 
       const saved = isBookmarked(discussion);
       items.add(
@@ -1672,6 +1678,119 @@ app.initializers.add(
           {saved ? trans('ramon-avocado.forum.bookmarks.unsave', 'Remove from saved') : trans('ramon-avocado.forum.bookmarks.save', 'Save')}
         </Button>,
         -10
+      );
+
+      // Nota/lembrete do bookmark — só faz sentido quando já está salvo.
+      if (saved) {
+        items.add(
+          'avocadoBookmarkEdit',
+          <Button icon="far fa-clock" onclick={() => app.modal.show(BookmarkModal, { discussion })}>
+            {trans('ramon-avocado.forum.bookmarks.edit', 'Edit bookmark')}
+          </Button>,
+          -11
+        );
+      }
+    });
+
+    // ── 12c. Bookmark reminder notification ────────────────────────────────────
+    // Backend type string (BookmarkReminderBlueprint::getType) and this key must
+    // match byte-for-byte, or the alert renders blank. The renderer stays
+    // registered even with the system disabled, so old alerts keep rendering;
+    // only the preferences-grid row is gated.
+    app.notificationComponents.avocadoBookmarkReminder = BookmarkReminderNotification;
+
+    extend('flarum/forum/components/NotificationGrid', 'notificationTypes', function (items: any) {
+      if (!bookmarksEnabled()) return;
+      items.add('avocadoBookmarkReminder', {
+        name: 'avocadoBookmarkReminder',
+        icon: 'fas fa-bookmark',
+        label: trans('ramon-avocado.forum.settings.notify_bookmark_reminder_label', 'Bookmark reminders'),
+      });
+    });
+
+
+    // ── 12d. User hover card on post authors ───────────────────────────────────
+    // Wraps the PostUser name/avatar (discussion page) with the Discourse-style
+    // hover card. The component itself no-ops when avocadoUserCardEnabled is off.
+    extend('flarum/forum/components/PostUser', 'userViewItems', function (items: any, user: any) {
+      if (!user || !items.has('postUser-name')) return;
+      items.setContent('postUser-name', <UserHoverCard user={user}>{items.get('postUser-name')}</UserHoverCard>);
+
+      // 🎂 no dia do aniversário de conta (entre o nome e os badges).
+      items.add('avocadoCakeday', <CakedayBadge user={user} />, 95);
+    });
+
+    // O core tem seu próprio popover (CommentPost.showCard → UserCard--popover)
+    // no mesmo hover — com o nosso card ativo, os dois abririam empilhados.
+    // Anular showCard mantém cardVisible=false e o popover nativo nunca monta.
+    override(CommentPost.prototype, 'showCard', function (original: () => void) {
+      if (app.forum?.attribute('avocadoUserCardEnabled')) return;
+      return original();
+    });
+
+    // ── 12e. Typing indicator restyle (flarum/realtime) ────────────────────────
+    // O container padrão (.TypingUsersContainer) fica oculto via LESS e este
+    // item o substitui: pill com avatares dos digitadores + três pontos
+    // animados. Reusa o estado (getTypingUsers, definido pelo oninit do
+    // realtime — existe independentemente da ordem de boot) e as strings de
+    // tradução do próprio realtime. Sem ninguém digitando, o wrapper fica
+    // vazio mas presente (min-height no LESS) para não deslocar o layout.
+    extend('flarum/forum/components/PostStream', 'endItems', function (items: any) {
+      if (typeof this.getTypingUsers !== 'function') return;
+      if (!this.discussion?.attribute('canViewWhoTypes')) return;
+
+      const names = Object.keys(this.getTypingUsers());
+      const count = names.length;
+      const max = 3;
+      const showUsers = app.session.user?.preferences()?.['flarum-realtime.typing-indicator-full'] ?? true;
+
+      const text =
+        count > 0
+          ? showUsers
+            ? app.translator.trans('flarum-realtime.forum.typing-indicator.users-are-typing', {
+                users: names.slice(0, max).join(', '),
+                count,
+                others: Math.max(count - max, 0),
+              })
+            : app.translator.trans('flarum-realtime.forum.typing-indicator.people-are-typing', { number: count })
+          : null;
+
+      const findAvatar = (name: string): string | null => {
+        try {
+          const user = (app.store.all('users') as any[]).find((u: any) => u.displayName?.() === name);
+          return user?.avatarUrl?.() || null;
+        } catch {
+          return null;
+        }
+      };
+
+      items.add(
+        'avocadoTyping',
+        <div className={`AvocadoTyping${count > 0 ? ' is-active' : ''}`} key="avocadoTyping" aria-live="polite">
+          {count > 0 && (
+            <div className="AvocadoTyping-pill">
+              <span className="AvocadoTyping-avatars" aria-hidden="true">
+                {names.slice(0, max).map((name) => {
+                  const url = findAvatar(name);
+                  return url ? (
+                    <img key={name} className="AvocadoTyping-avatar" src={url} alt="" title={name} />
+                  ) : (
+                    <span key={name} className="AvocadoTyping-avatar AvocadoTyping-avatar--initial" title={name}>
+                      {name.charAt(0).toUpperCase()}
+                    </span>
+                  );
+                })}
+              </span>
+              <span className="AvocadoTyping-dots" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+              </span>
+              <span className="AvocadoTyping-text">{text}</span>
+            </div>
+          )}
+        </div>,
+        70
       );
     });
 

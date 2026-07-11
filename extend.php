@@ -53,6 +53,15 @@ return [
 
     // ── flarum/realtime: NOT NEEDED - flarum/messages already handles it ────────────
 
+    // ── flarum/realtime — presence "quem está lendo" ─────────────────────────
+    // A rota de auth só existe com o realtime ativo: o controller injeta o
+    // singleton Pusher que o WebsocketProvider dele registra.
+    (new Extend\Conditional())
+        ->whenExtensionEnabled('flarum-realtime', fn () => [
+            (new Extend\Routes('api'))
+                ->post('/avocado/presence/auth', 'avocado.presence.auth', \Ramon\Avocado\Controller\PresenceAuthController::class),
+        ]),
+
     // ── flarum/realtime + flarum/likes ───────────────────────────────────────
     (new Extend\Conditional())
         ->whenExtensionEnabled('flarum-realtime', fn () => [
@@ -142,7 +151,18 @@ return [
         ->post('/avocado/discussion-hero', 'avocado.discussion_hero.upload', \Ramon\Avocado\Controller\UploadDiscussionHeroController::class)
         ->delete('/avocado/discussion-hero', 'avocado.discussion_hero.delete', \Ramon\Avocado\Controller\DeleteDiscussionHeroController::class)
         ->post('/avocado/bookmark', 'avocado.bookmark.create', \Ramon\Avocado\Controller\CreateBookmarkController::class)
+        ->patch('/avocado/bookmark', 'avocado.bookmark.update', \Ramon\Avocado\Controller\UpdateBookmarkController::class)
         ->delete('/avocado/bookmark', 'avocado.bookmark.delete', \Ramon\Avocado\Controller\DeleteBookmarkController::class),
+
+    (new Extend\Notification())
+        ->type(\Ramon\Avocado\Notification\BookmarkReminderBlueprint::class, ['alert']),
+
+    (new Extend\Console())
+        ->command(\Ramon\Avocado\Console\SendBookmarkRemindersCommand::class)
+        ->schedule(
+            \Ramon\Avocado\Console\SendBookmarkRemindersCommand::class,
+            \Ramon\Avocado\Console\BookmarkReminderSchedule::class
+        ),
 
     (new Extend\Settings())
         ->serializeToForum('avocadoHeroImage', 'avocado.hero_image')
@@ -184,6 +204,10 @@ return [
         ->serializeToForum('avocadoColoredBorderStyle', 'avocado.colored_border_style', null, 'none')
         ->serializeToForum('avocadoThreadsStyle', 'avocado.threads_style', 'boolval')
         ->serializeToForum('avocadoCustomLoadingSpinner', 'avocado.custom_loading_spinner', 'boolval')
+        ->serializeToForum('avocadoBookmarksEnabled', 'avocado.bookmarks_enabled', 'boolval')
+        ->serializeToForum('avocadoUserCardEnabled', 'avocado.user_card_enabled', 'boolval')
+        ->serializeToForum('avocadoPresenceEnabled', 'avocado.presence_enabled', 'boolval')
+        ->serializeToForum('avocadoCakedayEnabled', 'avocado.cakeday_enabled', 'boolval')
         ->serializeToForum('avocadoTeamPageEnabled', 'avocado.team_page_enabled', 'boolval')
         ->serializeToForum('avocadoTeamPageGroups', 'avocado.team_page_groups')
         ->serializeToForum('avocadoTeamPageTitle', 'avocado.team_page_title')
@@ -221,6 +245,10 @@ return [
         ->default('avocado.custom_loading_spinner', false)
         ->default('avocado.loading_spinner_style', 'avocado')
         ->default('avocado.loading_spinner_custom', '')
+        ->default('avocado.bookmarks_enabled', true)
+        ->default('avocado.user_card_enabled', true)
+        ->default('avocado.presence_enabled', true)
+        ->default('avocado.cakeday_enabled', true)
         ->default('avocado.team_page_enabled', false)
         ->default('avocado.team_page_groups', '[]')
         ->default('avocado.team_page_title', '')

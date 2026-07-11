@@ -19,6 +19,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property int $user_id
  * @property int $discussion_id
+ * @property string|null $note
+ * @property \Carbon\Carbon|null $remind_at
+ * @property \Carbon\Carbon|null $reminder_sent_at
  * @property \Carbon\Carbon|null $created_at
  */
 class Bookmark extends AbstractModel
@@ -30,9 +33,11 @@ class Bookmark extends AbstractModel
     protected $guarded = ['id'];
 
     protected $casts = [
-        'user_id'       => 'integer',
-        'discussion_id' => 'integer',
-        'created_at'    => 'datetime',
+        'user_id'          => 'integer',
+        'discussion_id'    => 'integer',
+        'created_at'       => 'datetime',
+        'remind_at'        => 'datetime',
+        'reminder_sent_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
