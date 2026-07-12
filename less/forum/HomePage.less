@@ -325,17 +325,25 @@
   margin-bottom: 22px;
   padding-bottom: 8px; // room for the active ::after indicator
 
-  // When used inline (same row as a heading), reset vertical margins
+  // When used inline (same row as a heading), reset vertical margins. Items are
+  // kept on a single row: OverflowNav measures them and pushes whatever does not
+  // fit into the "more" dropdown, so the pills can never spill out of the header.
+  // No overflow clipping here: the "more" dropdown menu is absolutely positioned
+  // inside this nav and would be cut off. Fitting is JS-side (OverflowNav).
   &--inline {
     margin: 0 !important;
     padding-bottom: 0 !important;
-    justify-content: flex-start;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    width: 100%;
+    min-width: 0;
   }
 
   // Each LinkButton / TagLinkButton rendered as a pill
   > .Button,
   > .LinkButton,
-  > .TagLinkButton {
+  > .TagLinkButton,
+  > .AvocadoHomeNav-more > .Dropdown-toggle {
     position: relative;
     display: inline-flex !important;
     align-items: center;
@@ -389,6 +397,77 @@
     }
   }
 
+  // Overflow menu — holds the items that don't fit on the header row
+  > .AvocadoHomeNav-more {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+
+    > .Dropdown-toggle {
+      // Caret points down when closed, up when open (icon swapped in OverflowNav)
+      .Button-caret {
+        display: inline-flex;
+        margin-left: 2px;
+        font-size: 10px;
+        opacity: 0.75;
+      }
+
+      // Never show a focus ring for a mouse-driven open; keyboard focus keeps it.
+      &:focus:not(:focus-visible) {
+        outline: none !important;
+        box-shadow: none !important;
+      }
+    }
+
+    // Hovering the pill opens the menu, so mirror the open state on the pill
+    &.is-open > .Dropdown-toggle {
+      background: color-mix(in srgb, var(--primary-color) 10%, transparent) !important;
+      color: var(--primary-color) !important;
+    }
+
+    .Dropdown-menu {
+      min-width: 200px;
+      margin-top: 8px;
+      padding: 6px;
+      border: 1px solid var(--avocado-border-subtle);
+      border-radius: 14px;
+      background: var(--body-bg);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
+
+      // Bridge the gap under the pill: without it, crossing from the button to
+      // the menu leaves the container and the hover-close timer fires.
+      &::before {
+        content: '';
+        position: absolute;
+        top: -8px;
+        left: 0;
+        right: 0;
+        height: 8px;
+      }
+
+      > li > .Button,
+      > li > .LinkButton {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 8px 12px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 14px;
+        text-align: left;
+
+        &:hover, &:focus {
+          background: var(--avocado-surface-1);
+          color: var(--primary-color);
+          text-decoration: none;
+        }
+
+        &[active="true"] { color: var(--primary-color); }
+      }
+    }
+  }
+
   // Suppress separators (added by Tags extension between tag groups)
   > li.Dropdown-separator { display: none !important; }
 
@@ -432,6 +511,20 @@
     flex: 1 1 auto;
     min-width: 0;
   }
+
+  // With an inline nav the heading takes only what it needs and the nav owns the
+  // rest of the row — a fixed width the pill-fitting maths can rely on.
+  &--withNav h2 {
+    flex: 0 1 auto;
+    max-width: 70%; // a very long custom heading must still leave room for the nav
+    white-space: nowrap;
+    text-overflow: ellipsis;
+
+    // `clip` rather than `hidden`: the heading is line-height:1, so a hidden box
+    // shaves the descenders off ("Categorias"). The margin lets them paint out.
+    overflow: clip;
+    overflow-clip-margin: 0.3em;
+  }
 }
 
 // Inline MENU nav — sits on the same row as the section h2
@@ -439,7 +532,11 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-shrink: 0;
+  flex: 1 1 0;
+  min-width: 0;
+
+  // First paint renders every item so OverflowNav can measure it; hide that pass.
+  &.is-measuring { visibility: hidden; }
 }
 
 

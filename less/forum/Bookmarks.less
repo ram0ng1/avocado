@@ -91,6 +91,12 @@
 
 // ── Note/reminder modal ───────────────────────────────────────────────────────
 .AvocadoBookmarkModal {
+  @danger: #dc2626;
+
+  .Modal-body {
+    padding: 24px 26px 26px;
+  }
+
   &-label {
     display: block;
     font-size: 12px;
@@ -98,27 +104,89 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: var(--muted-color);
-    margin-bottom: 6px;
+    margin-bottom: 8px;
+  }
+
+  // The Form-group stack: give each field room to breathe
+  .Form-group {
+    width: 100%;
+    margin-bottom: 20px;
   }
 
   &-note {
     resize: vertical;
-    min-height: 72px;
+    min-height: 84px;
   }
 
+  &-note,
+  select.FormControl,
+  input[type='datetime-local'].FormControl {
+    border-radius: 12px;
+  }
+
+  // `.Form-group` is a flex *column* elsewhere in the stack, so the direction has
+  // to be stated or the two buttons stack on top of each other.
   &-actions {
     display: flex;
+    flex-direction: row;
     align-items: center;
-    justify-content: space-between;
     gap: 10px;
+    margin-top: 24px;
     margin-bottom: 0;
   }
 
+  &-save,
+  &-cancel,
   &-remove {
-    color: #ef4444;
+    height: 44px;
+    padding: 0 18px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 14px;
+  }
 
-    &:hover {
-      color: #dc2626;
+  &-save {
+    flex: 1 1 auto; // the primary action owns the row
+  }
+
+  &-cancel {
+    flex: 0 0 auto;
+    background: var(--avocado-surface-1) !important;
+    color: var(--text-color) !important;
+    box-shadow: none !important;
+
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--avocado-surface-1) 60%, #d0d0d8) !important;
+    }
+  }
+
+  // Destructive action, kept well away from Save behind a divider
+  &-danger {
+    display: flex;
+    justify-content: center;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--avocado-border-subtle);
+  }
+
+  &-remove {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: color-mix(in srgb, @danger 8%, transparent) !important;
+    border: 1px solid color-mix(in srgb, @danger 28%, transparent) !important;
+    color: @danger !important;
+    box-shadow: none !important;
+
+    .Button-icon {
+      font-size: 13px;
+      margin: 0;
+      color: inherit;
+    }
+
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, @danger 15%, transparent) !important;
+      border-color: color-mix(in srgb, @danger 45%, transparent) !important;
     }
   }
 }
