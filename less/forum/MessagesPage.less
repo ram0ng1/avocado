@@ -523,11 +523,11 @@
         color: #fff !important;
       }
 
-      // Online: green border on avatar (same as DiscussionPage)
+      // Online: separador (bg) + anel verde — uniforme com o widget de online.
       &.is-online .Avatar,
       .Avatar.is-online {
-        border-color: var(--avmsg-online) !important;
-        box-shadow: 0 0 0 2px var(--avmsg-sidebar-bg) !important;
+        border-color: var(--avmsg-sidebar-bg) !important;
+        box-shadow: 0 0 0 2px var(--avmsg-online) !important;
       }
 
       // Hide raw UserOnline element
@@ -1315,8 +1315,8 @@
 // Also apply to DialogSection header avatar when user is online
 .AvocadoMessages-chatCol .DialogSection-header.is-online .Avatar,
 .AvocadoMessages-chatCol .DialogSection-header .Avatar.is-online {
-  border-color: var(--avmsg-online) !important;
-  box-shadow: 0 0 0 2px var(--avmsg-header-bg) !important;
+  border-color: var(--avmsg-header-bg) !important;
+  box-shadow: 0 0 0 2px var(--avmsg-online) !important;
 }
 
 // ── Typing indicator ─────────────────────────────────────────────────────────

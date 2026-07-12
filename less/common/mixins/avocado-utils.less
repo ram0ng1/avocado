@@ -52,9 +52,13 @@
 
 // Avatar online ring — green border + white separator shadow
 // @ring-color defaults to the CSS variable; override for dark mode via the variable itself.
-.avocado-online-ring(@size: 2.5px) {
-  border: @size solid var(--avocado-online);
-  box-shadow: 0 0 0 2px var(--avocado-online-ring);
+// Uniform online indicator — a green ring around the avatar's body-bg
+// separator, matching the online-avatars widget (the canonical reference the
+// whole theme mirrors). Pure box-shadow so it works on <img> and <span>
+// avatars alike; pass an avatar that already sits on a body-bg border/background
+// so the green reads as an outer ring (a separate white separator is not needed).
+.avocado-online-ring(@ring: 2px) {
+  box-shadow: 0 0 0 @ring var(--avocado-online);
 }
 
 // Icon circle (fixed-size circle with centered icon)

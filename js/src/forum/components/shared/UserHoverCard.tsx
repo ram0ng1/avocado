@@ -218,7 +218,12 @@ function cardVnode(user: any) {
 
         <div className="AvocadoUserCard-body">
           <div className="AvocadoUserCard-head">
-            <a className="AvocadoUserCard-avatarLink" href={profileHref} aria-label={displayName(user) as string} onclick={goProfile}>
+            <a
+              className={`AvocadoUserCard-avatarLink${online ? ' AvocadoUserCard-avatarLink--online' : ''}`}
+              href={profileHref}
+              aria-label={displayName(user) as string}
+              onclick={goProfile}
+            >
               <Avatar user={user} className="AvocadoUserCard-avatar" />
             </a>
 
@@ -233,15 +238,13 @@ function cardVnode(user: any) {
               </span>
               <span className="AvocadoUserCard-username">
                 @{user.username?.()}
-                {online ? (
-                  <span className="AvocadoUserCard-presence AvocadoUserCard-presence--online">
-                    {trans('ramon-avocado.forum.user_card.online', 'Online')}
-                  </span>
-                ) : lastSeen ? (
+                {/* Online é indicado pelo anel verde no avatar (uniforme com post/perfil);
+                    na meta só mostramos "visto há X" quando offline. */}
+                {!online && lastSeen && (
                   <span className="AvocadoUserCard-presence">
                     {trans('ramon-avocado.forum.user_card.last_seen', 'Seen {time}', { time: formatTimeLabel(lastSeen) })}
                   </span>
-                ) : null}
+                )}
               </span>
             </div>
           </div>

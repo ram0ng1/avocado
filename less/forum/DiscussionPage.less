@@ -647,7 +647,7 @@
 // Same specificity as base rule but comes later in file — cascade wins, no !important needed
 .Page.DiscussionPage .CommentPost .Post-side--online .Avatar,
 .Page.DiscussionPage .CommentPost .Post-side--online a .Avatar {
-  .avocado-online-ring(2.5px);
+  .avocado-online-ring(2px);
 }
 
 // Keep the moved UserOnline element hidden (it exists only for the class trigger)
@@ -914,7 +914,7 @@
 @media @phone {
   // When UserOnline exists inside the link, add green border to the Avatar
   .Page.DiscussionPage .PostUser-name a:has(.UserOnline) .Avatar {
-    .avocado-online-ring(2.5px);
+    .avocado-online-ring(2px);
   }
 }
 

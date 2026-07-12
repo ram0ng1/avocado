@@ -119,9 +119,8 @@ export default class TeamPage extends Page {
 
     return (
       <a key={user.id()} className="AvocadoTeamPage-card" href={href} onclick={(e: MouseEvent) => navigate(e, href)}>
-        <div className="AvocadoTeamPage-card-avatarWrap">
+        <div className={`AvocadoTeamPage-card-avatarWrap${isOnline ? ' AvocadoTeamPage-card-avatarWrap--online' : ''}`}>
           <Avatar user={user} className="AvocadoTeamPage-card-avatar" />
-          {isOnline && <span className="AvocadoTeamPage-card-online" aria-hidden="true" />}
         </div>
 
         <h3 className="AvocadoTeamPage-card-name">{name}</h3>

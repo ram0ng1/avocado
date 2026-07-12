@@ -210,8 +210,9 @@
 
   &:first-child { margin-left: 0; }
 
-  // Green ring — box-shadow avoids the overflow/clipping issue of ::after
-  box-shadow: 0 0 0 2px var(--avocado-online);
+  // Green ring — canonical online indicator (shared mixin, single source).
+  // box-shadow avoids the overflow/clipping issue of ::after.
+  .avocado-online-ring(2px);
 
   // Clip the avatar image to the circle without overflow:hidden on the anchor
   > img {

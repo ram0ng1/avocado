@@ -86,15 +86,10 @@
       }
     }
 
-    &-online {
-      position: absolute;
-      bottom: 2px;
-      right: 2px;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: #2ecc71;
-      border: 2.5px solid var(--body-bg, #fff);
+    // Online: separador body-bg + anel verde no avatar — mesmo indicador do
+    // widget de online (uniforme em todo o fórum).
+    &-avatarWrap--online .Avatar {
+      box-shadow: 0 0 0 2px var(--body-bg), 0 0 0 4px var(--avocado-online);
     }
 
     // ── Name ─────────────────────────────────────────────────────────────────
