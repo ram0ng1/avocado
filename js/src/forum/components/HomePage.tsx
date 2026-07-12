@@ -38,6 +38,7 @@ import HomeState from '../states/HomeState';
 import ThreadCard from './shared/ThreadCard';
 import OnlineUsers from './shared/OnlineUsers';
 import InlineComposer from './shared/InlineComposer';
+import OverflowNav from './shared/OverflowNav';
 
 /** Hex → "r,g,b" string, used by inline rgba() styles in showcase cards. */
 const hexToRgbTriplet = (hex: string | null | undefined): string => {
@@ -286,12 +287,13 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
       (app.forum?.attribute('avocadoCategoriesHeading') as string)?.trim() || trans('ramon-avocado.forum.home.categories_heading', 'Categories');
     const allTagsCount = app.store.all('tags').filter((t: any) => t && !t.parent?.()).length;
     const extraCount = Math.max(0, allTagsCount - categories.length);
+    const nav = this.renderInlineNav();
 
     return (
       <section className="AvocadoHome-section AvocadoHome-section--categories">
-        <div className="AvocadoHome-sectionHead">
+        <div className={`AvocadoHome-sectionHead${nav ? ' AvocadoHome-sectionHead--withNav' : ''}`}>
           <h2>{heading}</h2>
-          {this.renderInlineNav()}
+          {nav}
         </div>
         <div className="AvocadoHome-categories">
           {[...categories.map((cat: any, idx: number) => this.renderCategoryCard(cat, idx)), this.renderAllCategoriesTile(extraCount)]}
@@ -397,13 +399,7 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
 
     if (!items.length) return null;
 
-    return (
-      <div className="AvocadoHome-sectionHead-nav">
-        <nav className="AvocadoHomeNav AvocadoHomeNav--inline" aria-label={extractText(app.translator.trans('ramon-avocado.forum.home.nav_label'))}>
-          {items}
-        </nav>
-      </div>
-    );
+    return <OverflowNav items={items} navLabel={extractText(app.translator.trans('ramon-avocado.forum.home.nav_label'))} />;
   }
 
   // ── Showcase slider ─────────────────────────────────────────────────────────

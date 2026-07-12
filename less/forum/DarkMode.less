@@ -249,7 +249,8 @@ body.dark-mode {
 
   .AvocadoHomeNav {
     > .Button,
-    > .LinkButton {
+    > .LinkButton,
+    > .AvocadoHomeNav-more > .Dropdown-toggle {
       background: rgba(255, 255, 255, 0.07) !important;
       color: var(--muted-color) !important;
 
@@ -261,6 +262,26 @@ body.dark-mode {
       &[active="true"] {
         background: color-mix(in srgb, var(--primary-color) 14%, transparent) !important;
         color: var(--primary-color) !important;
+      }
+    }
+
+    > .AvocadoHomeNav-more.is-open > .Dropdown-toggle {
+      background: color-mix(in srgb, var(--primary-color) 14%, transparent) !important;
+      color: var(--primary-color) !important;
+    }
+
+    > .AvocadoHomeNav-more .Dropdown-menu {
+      border-color: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+
+      > li > .Button,
+      > li > .LinkButton {
+        color: var(--muted-color);
+
+        &:hover, &:focus {
+          background: rgba(255, 255, 255, 0.07);
+          color: var(--primary-color);
+        }
       }
     }
   }

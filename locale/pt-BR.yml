@@ -247,6 +247,8 @@ ramon-avocado:
       hero_image_remove_confirm: Remover a imagem do hero desta discussão?
     home:
       nav_label: Navegação
+      nav_more: Mais
+      nav_more_label: Mostrar mais links de navegação
       all_categories: Todas as categorias
       all_title: Todas as discussões
       back_home: Voltar
@@ -322,8 +324,9 @@ ramon-avocado:
       guest_prompt: Entre para salvar discussões e encontrá-las aqui depois.
       toggle_error: Não foi possível atualizar seus salvos. Tente novamente.
       update_error: Não foi possível atualizar seu bookmark. Tente novamente.
-      modal_title: Bookmark
+      modal_title: Salvar discussão
       modal_save: Salvar
+      modal_cancel: Cancelar
       note_label: Nota
       note_placeholder: "Por que você está salvando isso? (opcional)"
       reminder_label: Me lembrar

@@ -98,9 +98,15 @@ export default class BookmarkModal extends Modal<any> {
           )}
 
           <div className="Form-group AvocadoBookmarkModal-actions">
-            <Button className="Button Button--primary" type="submit" loading={this.loading}>
+            <Button className="Button Button--primary AvocadoBookmarkModal-save" type="submit" loading={this.loading}>
               {trans('ramon-avocado.forum.bookmarks.modal_save', 'Save')}
             </Button>
+            <Button className="Button AvocadoBookmarkModal-cancel" type="button" disabled={this.loading} onclick={() => this.hide()}>
+              {trans('ramon-avocado.forum.bookmarks.modal_cancel', 'Cancel')}
+            </Button>
+          </div>
+
+          <div className="AvocadoBookmarkModal-danger">
             <Button
               className="Button AvocadoBookmarkModal-remove"
               type="button"
