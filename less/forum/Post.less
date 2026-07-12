@@ -243,17 +243,16 @@
       margin-top: 4px;
     }
 
-    // ── Online ring on avatar ─────────────────────────────────────────────────
+    // ── Online ring on avatar (uniform com o widget de online) ────────────────
+    &:has(.UserCard-lastSeen.online) .UserCard-avatar { position: relative; }
     &:has(.UserCard-lastSeen.online) .UserCard-avatar::after {
       content: '';
       position: absolute;
-      bottom: 10px;
-      right: 3px;
-      width: 14px;
-      height: 14px;
+      inset: 0;
       border-radius: 50%;
-      background: var(--avocado-online);
-      border: 2.5px solid var(--usercard-bg, var(--primary-color));
+      // Separador na cor do card + anel verde por fora, igual ao widget.
+      box-shadow: 0 0 0 2px var(--usercard-bg, var(--body-bg)), 0 0 0 4px var(--avocado-online);
+      pointer-events: none;
       z-index: 2;
     }
 

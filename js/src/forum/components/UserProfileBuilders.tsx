@@ -195,9 +195,12 @@ export function buildHero(user: any, isEditable: boolean, controls: any[] = []) 
       <div className="AvocadoUserPage-cover" />
       <div className="AvocadoUserPage-hero-inner">
         <div className="AvocadoUserPage-hero-bar">
-          <div className="AvocadoUserPage-hero-avatarWrap">
+          <div
+            className={`AvocadoUserPage-hero-avatarWrap${isOnline ? ' AvocadoUserPage-hero-avatarWrap--online' : ''}`}
+            title={isOnline ? (onlineLabel as string) : undefined}
+            aria-label={isOnline ? (onlineLabel as string) : undefined}
+          >
             {isEditable ? <AvatarEditor user={user} /> : <Avatar user={user} loading="eager" />}
-            {isOnline && <span className="AvocadoUserPage-onlineDot" title={onlineLabel} aria-label={onlineLabel} role="img" />}
           </div>
 
           <div className="AvocadoUserPage-hero-identity">
