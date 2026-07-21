@@ -200,6 +200,41 @@
   font-size: 13px;
   line-height: 1.5;
   color: var(--text-color);
+
+  // Limita a altura para o card não crescer com bios longas (~5 linhas).
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// Bio renderizada em HTML (fof/user-bio): normaliza os blocos vindos do s9e
+// para caberem no card sem margens/tamanhos herdados do tema base.
+.AvocadoUserCard-bio--html {
+  p {
+    margin: 0 0 4px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  a {
+    color: var(--link-color, var(--primary-color));
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  img,
+  :is(h1, h2, h3, h4, h5, h6) {
+    // Imagens/headings numa bio de card empurrariam o layout; mantém contido.
+    max-width: 100%;
+    font-size: inherit;
+    margin: 0;
+  }
 }
 
 .AvocadoUserCard-stats {

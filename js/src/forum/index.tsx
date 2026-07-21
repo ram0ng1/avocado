@@ -85,7 +85,7 @@ import {
   sanitizeAdminHtml,
 } from './utils';
 import { toggleBookmark, isBookmarked, bookmarksEnabled } from './utils/bookmarks';
-import UserHoverCard from './components/shared/UserHoverCard';
+import { hoverCardAttrs } from './components/shared/UserHoverCard';
 import WhoIsReading from './components/shared/WhoIsReading';
 import CakedayBadge from './components/shared/CakedayBadge';
 import TextEditor from 'flarum/common/components/TextEditor';
@@ -1709,11 +1709,18 @@ app.initializers.add(
     });
 
     // ── 12d. User hover card on post authors ───────────────────────────────────
-    // Wraps the PostUser name/avatar (discussion page) with the Discourse-style
-    // hover card. The component itself no-ops when avocadoUserCardEnabled is off.
+    // Acopla o hover-card ao PRÓPRIO <h3 className="PostUser-name"> em vez de
+    // envolvê-lo. Envolver o h3 (ou seu <a> interno) num wrapper o tirava de
+    // "filho direto de .PostUser": quebrava nosso CSS (.PostUser-name > a) e
+    // extensões que localizam o nó via vnode.children.find(match('PostUser-name'))
+    // e então acessam header_node.children sem checar null — ex.: FoF Gamification
+    // (addUserInfo) → "Cannot read properties of undefined (reading 'children')".
+    // hoverCardAttrs() devolve {} quando o card está off, então isto vira no-op.
     extend('flarum/forum/components/PostUser', 'userViewItems', function (items: any, user: any) {
       if (!user || !items.has('postUser-name')) return;
-      items.setContent('postUser-name', <UserHoverCard user={user}>{items.get('postUser-name')}</UserHoverCard>);
+
+      const name = items.get('postUser-name');
+      if (name && name.attrs) Object.assign(name.attrs, hoverCardAttrs(user));
 
       // 🎂 no dia do aniversário de conta (entre o nome e os badges).
       items.add('avocadoCakeday', <CakedayBadge user={user} />, 95);

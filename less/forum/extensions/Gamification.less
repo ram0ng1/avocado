@@ -1,0 +1,100 @@
+// ── FoF Gamification — botões de voto no post ─────────────────────────────────
+// UI padrão (a que aparece no post): dentro da barra de ações do post
+//   .Post-actions > ul > li.item-votes > .CommentPost-votes
+// ficam os dois botões .Post-vote (up/down) e um <label class="Post-points"> no
+// meio — na MESMA <ul> dos itens Responder / Curtir / Compartilhar. Aqui
+// alinhamos o grupo de votos a essa linha e damos aos botões o mesmo visual
+// "flat" dos demais botões de ação. A UI alternativa (.Post-votes.alternateLayout
+// + .Post-voteButton, ligada por gamification.altPostVotingUi) é tratada no fim.
+
+@avocado-downvote: #e0245e;
+
+// ── Grupo de votos: inline e alinhado com os outros itens da barra ────────────
+.Page.DiscussionPage .Post-actions > ul > li.item-votes {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.Page.DiscussionPage .CommentPost-votes {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+
+// ── Botões up/down: mesmo estilo flat dos .Post-footer .Button--link ──────────
+.Page.DiscussionPage .Post-vote {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 8px;
+  padding: 5px 8px;
+  color: var(--disc-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  .icon,
+  i {
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  // Nesse layout o label vem vazio (botão só-ícone) — não ocupa espaço.
+  .Button-label {
+    display: none;
+  }
+
+  &:hover,
+  &:focus {
+    background: var(--avocado-surface-1, rgba(0, 0, 0, 0.05));
+    color: var(--text-color);
+  }
+
+  &:active {
+    background: var(--avocado-surface-2, rgba(0, 0, 0, 0.08));
+  }
+}
+
+// Estado ativo: upvote na cor primária; downvote no vermelho.
+.Page.DiscussionPage .Post-vote.Post-upvote.Post-vote--active {
+  color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+}
+
+.Page.DiscussionPage .Post-vote.Post-downvote.Post-vote--active {
+  color: @avocado-downvote;
+  background: color-mix(in srgb, @avocado-downvote 10%, transparent);
+}
+
+// ── Contador entre os botões (.Post-points no layout padrão) ──────────────────
+.Page.DiscussionPage .CommentPost-votes .Post-points,
+.Page.DiscussionPage .Post-voteCount {
+  margin: 0;
+  min-width: 10px;
+  padding: 0 1px;
+  font-weight: 800;
+  font-size: 13px;
+  line-height: 1;
+  text-align: center;
+  color: var(--text-color);
+  font-variant-numeric: tabular-nums;
+  cursor: default;
+}
+
+// ── UI alternativa (.Post-votes.alternateLayout) ──────────────────────────────
+// Mantém o grupo inline e só-ícone, caso o admin ligue altPostVotingUi.
+.Page.DiscussionPage .Post-votes.alternateLayout {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+
+  .Post-voteButton {
+    .Button-label {
+      display: none;
+    }
+  }
+}

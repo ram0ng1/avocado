@@ -5,6 +5,7 @@ import listItems from 'flarum/common/helpers/listItems';
 
 import { trans, truncate, displayName, userRoute, navigate, formatTimeLabel } from '../../utils';
 import CakedayBadge from './CakedayBadge';
+import trustedHtml from '../../../common/trustedHtml';
 
 /** Conta numérica do atributo, ou null quando ausente (renderiza "–"). */
 function countOrNull(value: unknown): number | null {
@@ -182,7 +183,11 @@ function hydrate(user: any): void {
 function cardVnode(user: any) {
   const profileHref = userRoute(user);
   const cover = (user.attribute?.('cover_thumbnail') || user.attribute?.('cover')) as string | null;
-  const bio = (user.attribute?.('bio') || '') as string;
+  // fof/user-bio renderiza a bio no servidor (s9e) e expõe o HTML em `bioHtml`;
+  // renderamos isso — senão o BBCode/markdown apareceria cru ([b], [url], …).
+  // `bio` (texto puro) é o fallback quando a formatação/extensão está ausente.
+  const bioHtml = user.bioHtml?.() as string | undefined;
+  const bio = (user.bio?.() || user.attribute?.('bio') || '') as string;
   const joined = user.joinTime?.();
   const lastSeen = user.lastSeenAt?.();
   const online = !!lastSeen && Date.now() - new Date(lastSeen).getTime() < 5 * 60 * 1000;
@@ -249,7 +254,11 @@ function cardVnode(user: any) {
             </div>
           </div>
 
-          {bio && <p className="AvocadoUserCard-bio">{truncate(bio, 180)}</p>}
+          {bioHtml ? (
+            <div className="AvocadoUserCard-bio AvocadoUserCard-bio--html">{trustedHtml(bioHtml)}</div>
+          ) : bio ? (
+            <p className="AvocadoUserCard-bio">{truncate(bio, 180)}</p>
+          ) : null}
 
           <div className="AvocadoUserCard-stats">
             <span className="AvocadoUserCard-stat">
@@ -289,14 +298,51 @@ function cardVnode(user: any) {
 function openMessageComposer(user: any): void {
   closeCard();
 
-  (flarum as any).reg.asyncModuleImport('flarum/forum/components/ComposerBody').then(() => {
-    app.composer
-      .load(() => (flarum as any).reg.asyncModuleImport('ext:flarum/messages/forum/components/MessageComposer'), {
-        user: app.session.user,
-        recipients: [user],
-      })
-      .then(() => app.composer.show());
-  });
+  // NÃO carregamos o MessageComposer pelo registry cross-bundle: nesta stack,
+  // reg.asyncModuleImport('ext:flarum/messages/forum/components/MessageComposer')
+  // resolve para o ComposerBody (abstrato, sem onsubmit) e o compositor nunca
+  // abre / quebra no render. Em vez disso, reaproveitamos a ação nativa "Enviar
+  // mensagem" que o flarum/messages registra em UserControls — o onclick dela usa
+  // o import INTERNO do próprio bundle do messages e resolve a classe correta.
+  try {
+    const UserControls = (flarum as any).reg?.get?.('core', 'forum/utils/UserControls');
+    const items = UserControls?.userControls?.(user);
+    const onclick = items?.get?.('sendMessage')?.attrs?.onclick;
+
+    // Ausente quando flarum/messages não está instalado ou o usuário não pode
+    // receber mensagens — nesses casos o botão do card simplesmente não aparece.
+    if (typeof onclick === 'function') {
+      onclick(new MouseEvent('click'));
+    }
+  } catch (e) {
+    console.warn('[avocado] não foi possível abrir o compositor de mensagens', e);
+  }
+}
+
+/**
+ * Handlers de hover para acoplar o card a um elemento que JÁ existe, sem inserir
+ * um wrapper. Use quando envolver o alvo mudaria a árvore que outras peças
+ * esperam — ex.: o <h3 className="PostUser-name">, que precisa continuar sendo
+ * filho direto de .PostUser (e ter o <a> como filho direto) para o CSS do tema e
+ * para extensões que localizam o nó por vnode.children.find(match('PostUser-name')).
+ * Retorna {} quando o card está desativado, então Object.assign vira no-op.
+ */
+export function hoverCardAttrs(user: any): Record<string, any> {
+  if (!user || !userCardEnabled()) return {};
+
+  const open = (e: MouseEvent) => {
+    (e as any).redraw = false;
+    scheduleOpen(user, e.currentTarget as HTMLElement | null);
+  };
+
+  return {
+    onmouseenter: open,
+    onmousemove: open,
+    onmouseleave: (e: MouseEvent) => {
+      (e as any).redraw = false;
+      scheduleClose();
+    },
+  };
 }
 
 export interface UserHoverCardAttrs {
@@ -321,21 +367,7 @@ export default class UserHoverCard extends Component<UserHoverCardAttrs> {
     if (!user || !userCardEnabled()) return vnode.children;
 
     return (
-      <span
-        className="AvocadoUserCard-trigger"
-        onmouseenter={(e: MouseEvent) => {
-          (e as any).redraw = false;
-          scheduleOpen(user, e.currentTarget as HTMLElement | null);
-        }}
-        onmousemove={(e: MouseEvent) => {
-          (e as any).redraw = false;
-          scheduleOpen(user, e.currentTarget as HTMLElement | null);
-        }}
-        onmouseleave={(e: MouseEvent) => {
-          (e as any).redraw = false;
-          scheduleClose();
-        }}
-      >
+      <span className="AvocadoUserCard-trigger" {...hoverCardAttrs(user)}>
         {vnode.children}
       </span>
     );
