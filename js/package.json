@@ -6,8 +6,8 @@
     "devDependencies": {
         "@flarum/prettier-config": "^1.0.0",
         "@typescript-eslint/parser": "^8.58.1",
-        "eslint": "^10.8.0",
-        "eslint-plugin-react": "^7.22.0",
+        "eslint": "^9.39.4",
+        "eslint-plugin-react": "^7.37.5",
         "flarum-tsconfig": "^2.0.0",
         "flarum-webpack-config": "^3.0.3",
         "patch-package": "^8.0.1",
