@@ -47,7 +47,7 @@
 :root {
   --home-max-width: 1320px;
   --home-border: #eaeaf0;
-  --home-muted: #6b6b72; // was #8f8f95 — bumped to 4.6:1 ratio on white (WCAG AA)
+  --home-muted: #6b6b72; // was #8f9097 — bumped to 4.6:1 ratio on white (WCAG AA)
   --home-title: #202126;
   --home-shadow: 0 10px 24px rgba(22, 22, 33, 0.05);
 }
@@ -72,7 +72,7 @@
   max-width: var(--home-max-width);
   margin: 0 auto;
   padding: 0 12px;
-  border-bottom: 1px solid #efeff4;
+  border-bottom: 1px solid #f0f0f4;
   background: rgba(255, 255, 255, 0.93);
   backdrop-filter: blur(6px);
 }
@@ -273,7 +273,7 @@
   transition: border-color var(--avocado-t-normal), background var(--avocado-t-normal);
 
   &:hover {
-    background: color-mix(in srgb, var(--avocado-surface-2) 80%, #e0e0e8);
+    background: color-mix(in srgb, var(--avocado-surface-2) 80%, #dfdfe6);
     border-color: var(--avocado-border-chip);
   }
 }
@@ -308,7 +308,7 @@
   font-weight: 700;
   cursor: pointer;
   flex-shrink: 0;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--avocado-t-fast);
 
   &:hover { opacity: 0.88; }
 }
@@ -571,7 +571,7 @@
   padding: 12px 14px;
   color: inherit;
   text-decoration: none;
-  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  transition: box-shadow var(--avocado-t-medium), transform var(--avocado-t-medium), border-color var(--avocado-t-medium);
 
   &:hover,
   &:focus {
@@ -840,7 +840,7 @@
 // ─── Thread card: controls dropdown (three-dot) ───────────────────────────────
 .AvocadoHome-threadControls {
   opacity: 0;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--avocado-t-fast);
 
   .AvocadoHome-threadCard:hover &,
   &.open {
@@ -856,7 +856,7 @@
     align-items: center;
     justify-content: center;
     color: var(--muted-color);
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background var(--avocado-t-fast), color var(--avocado-t-fast);
 
     .Button-caret { display: none; }
     .Button-icon  { font-size: 14px; }
@@ -1180,7 +1180,7 @@
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
-  background: var(--control-bg, #f0f0f5);
+  background: var(--control-bg, #f0f0f4);
   color: var(--muted-color, #8f9097);
   flex-shrink: 0;
 }
@@ -1199,7 +1199,7 @@
   flex-shrink: 0;
   background: var(--tag-bg, rgba(63, 136, 246, 0.1));
   color: var(--tag-color, #3f88f6);
-  transition: opacity 0.15s;
+  transition: opacity var(--avocado-t-fast);
 
   &:hover {
     text-decoration: none;
@@ -1535,11 +1535,11 @@
   outline: none;
   font-size: 16px;
   font-weight: 600;
-  color: #1f2025;
+  color: #202126;
   background: transparent;
   min-width: 0;
 
-  &::placeholder { color: #b0b1bb; }
+  &::placeholder { color: #b2b2bb; }
 }
 
 .AvocadoHome-composerBody {
@@ -1567,7 +1567,7 @@
     margin: 0 !important;
     padding: 4px 8px !important;
     border-top: 1px solid #f0f0f4 !important;
-    background: #fafafa !important;
+    background: #f8f8fa !important;
     overflow-x: auto !important;
     overflow-y: visible !important;
     scrollbar-width: none !important;
@@ -1590,7 +1590,7 @@
     li.item-avocadoPreview {
       margin-right: 4px !important;
       padding-right: 4px !important;
-      border-right: 1px solid #e8e8f0;
+      border-right: 1px solid #e7e7ed;
     }
 
     // Spacer pushes Close + Post to right
@@ -1710,14 +1710,14 @@
   height: 30px;
   padding: 0 12px;
   border-radius: 999px;
-  background: var(--control-bg, #f3f4f8);
+  background: var(--control-bg, #f4f4f7);
   color: var(--text-color, #43454e);
   font-size: 12.5px;
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
   border: 1px dashed transparent;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition: background var(--avocado-t-fast), border-color var(--avocado-t-fast), color var(--avocado-t-fast);
   max-width: 100%;
 
   i { font-size: 12px; color: var(--muted-color, #8f9097); }
@@ -1831,13 +1831,13 @@
   max-width: 100%;        // nunca ultrapassa o container
   padding: 5px 12px;
   border-radius: 999px;   // pill quando vazio; continua arredondado ao crescer
-  border: 1px solid #e3e4ea;
-  background: #f7f7fa;
+  border: 1px solid #e6e6eb;
+  background: #f8f8fa;
   color: #60616c;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.15s, border-radius 0.15s;
+  transition: border-color var(--avocado-t-fast), border-radius var(--avocado-t-fast);
   box-sizing: border-box;
   text-align: left;
 
@@ -1890,7 +1890,7 @@
   left: 0;
   z-index: 400;
   background: #fff;
-  border: 1px solid #e8e9ef;
+  border: 1px solid #eaeaf0;
   border-radius: 14px;
   padding: 6px;
   min-width: 240px;
@@ -1907,7 +1907,7 @@
   padding: 6px 10px;
   margin-bottom: 4px;
   border-radius: 8px;
-  background: #f4f4f8;
+  background: #f4f4f7;
 
   > i {
     font-size: 12px;
@@ -1921,7 +1921,7 @@
     background: transparent;
     outline: none;
     font-size: 13px;
-    color: #2a2b32;
+    color: #2a2b30;
 
     &::placeholder { color: #bbbcc4; }
   }
@@ -1943,10 +1943,10 @@
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
-  color: #2a2b32;
+  color: #2a2b30;
   transition: background 0.12s;
 
-  &:hover { background: #f3f4f8; }
+  &:hover { background: #f4f4f7; }
   &.is-selected { background: color-mix(in srgb, var(--primary-color) 10%, transparent); }
 
   // Child (secondary) tags are indented
@@ -2076,13 +2076,13 @@
   gap: 7px;
   padding: 7px 14px;
   border-radius: 8px;
-  border: 1px solid var(--home-border, #e8e9f0);
+  border: 1px solid var(--home-border, #eaeaf0);
   background: #fff;
   font-size: 13px;
   font-weight: 700;
   color: #3a3b44;
   cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color var(--avocado-t-fast), box-shadow var(--avocado-t-fast);
 
   i { font-size: 11px; color: #8f9097; }
 
@@ -2124,7 +2124,7 @@
   transition: background 0.1s ease;
 
   &:hover {
-    background: #f4f4f8;
+    background: #f4f4f7;
   }
 
   &.is-active {
@@ -2169,16 +2169,16 @@
 .AvocadoDiscussions-loadMoreBtn {
   padding: 10px 32px;
   border-radius: 999px;
-  border: 1px solid var(--home-border, #e8e9f0);
+  border: 1px solid var(--home-border, #eaeaf0);
   background: #fff;
   font-size: 14px;
   font-weight: 700;
   color: #3a3b44;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: background var(--avocado-t-fast), border-color var(--avocado-t-fast), box-shadow var(--avocado-t-fast);
 
   &:hover {
-    background: #f4f4f8;
+    background: #f4f4f7;
     border-color: #c4c5d0;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   }
@@ -2537,7 +2537,7 @@
   .AvocadoHome-showcaseCard-link {
     padding: 0;
     display: block;
-    background: #e8e8ec; // light fallback when no image
+    background: #e6e6eb; // light fallback when no image
     height: 100%;
     min-height: 300px; // safety net: height:100% may not resolve in all grid/browser contexts
 

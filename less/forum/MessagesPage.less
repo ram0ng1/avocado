@@ -21,28 +21,28 @@
 // producing a 20px body-bg strip below the header on every page. MessagesPage's
 // calc(100vh - var(--header-height, 52px)) now resolves correctly to 100vh-52px.
 :root {
-  --avmsg-bg:            #f0f2f7;
+  --avmsg-bg:            #f0f0f4;
   --avmsg-sidebar-bg:    #ffffff;
   --avmsg-card-bg:       #ffffff;
   --avmsg-header-bg:     rgba(255,255,255,0.80);
   --avmsg-border:        #eaedf5;
   --avmsg-text:          #1a1b21;
   --avmsg-muted:         #8f90a0;
-  --avmsg-item-hover:    #f5f6fb;
+  --avmsg-item-hover:    #f4f4f7;
   --avmsg-item-active-bg: color-mix(in srgb, var(--primary-color) 10%, transparent);
   --avmsg-item-active-ring: color-mix(in srgb, var(--primary-color) 20%, transparent);
   --avmsg-bubble-in:     #ffffff;
   --avmsg-bubble-text:   #2a2b30;
   --avmsg-input-bg:      #ffffff;
-  --avmsg-search-bg:     #f0f2f7;
+  --avmsg-search-bg:     #f0f0f4;
   --avmsg-send-btn:      var(--primary-color);
   --avmsg-send-icon:     #ffffff;
   --avmsg-unread-bg:     var(--primary-color);
   --avmsg-online:        var(--avocado-online);
   --avmsg-avatar-ring:   #ffffff;
   // Skeleton shimmer colors (overridden in dark mode)
-  --avmsg-sk-base:       #e8eaf0;
-  --avmsg-sk-shine:      #f4f5f9;
+  --avmsg-sk-base:       #eaeaf0;
+  --avmsg-sk-shine:      #f4f4f7;
 }
 
 // ── AvocadoMessages-inner hidden (no longer rendered in view) ─────────────────
@@ -105,7 +105,7 @@
       transition: none !important;
     }
 
-    // DiscussionList container: DiscussionPage.less sets #f6f6fa here — reset it
+    // DiscussionList container: DiscussionPage.less sets #f4f4f7 here — reset it
     // so transparent items fall through to the pane background (body-bg)
     .DiscussionList {
       background: transparent !important;
@@ -319,7 +319,7 @@
       font-family: 'DM Sans', Inter, "Segoe UI", sans-serif !important;
       text-transform: none !important;
       letter-spacing: 0 !important;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+      transition: border-color var(--avocado-t-fast), box-shadow var(--avocado-t-fast) !important;
 
       .Button-caret { font-size: 10px !important; color: var(--avmsg-muted) !important; }
       .Button-label { font-size: 13px !important; }
@@ -370,7 +370,7 @@
       box-shadow: none !important;
       color: var(--avmsg-muted) !important;
       cursor: pointer !important;
-      transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease !important;
+      transition: background var(--avocado-t-normal), border-color var(--avocado-t-normal), color var(--avocado-t-normal) !important;
       flex-shrink: 0 !important;
 
       .Button-icon { margin: 0 !important; font-size: 13px !important; }
@@ -421,7 +421,7 @@
     font-weight: 700 !important;
     font-family: 'DM Sans', Inter, "Segoe UI", sans-serif !important;
     box-shadow: 0 6px 20px color-mix(in srgb, var(--primary-color) 30%, transparent) !important;
-    transition: opacity 0.15s ease, transform 0.12s ease !important;
+    transition: opacity var(--avocado-t-fast), transform 0.12s ease !important;
 
     .Button-icon { font-size: 14px !important; color: #fff !important; }
 
@@ -1172,7 +1172,7 @@
   .Post-actions, .Post-footer {
     opacity: 0 !important;
     margin-top: 4px !important;
-    transition: opacity 0.15s ease !important;
+    transition: opacity var(--avocado-t-fast) !important;
     display: flex !important;
     gap: 2px !important;
     flex-wrap: wrap !important;
@@ -1417,7 +1417,7 @@
     border: 1.5px solid var(--avmsg-border) !important;
     border-radius: 22px !important;
     box-shadow: 0 2px 12px rgba(0,0,0,0.06) !important;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+    transition: border-color var(--avocado-t-fast), box-shadow var(--avocado-t-fast) !important;
     padding: 0 !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
@@ -1578,7 +1578,7 @@
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
-      transition: opacity 0.15s ease, transform 0.15s ease !important;
+      transition: opacity var(--avocado-t-fast), transform var(--avocado-t-fast) !important;
 
       .Button-icon { color: #fff !important; font-size: 13px !important; margin: 0 !important; }
       .Button-label { display: none !important; }
