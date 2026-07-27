@@ -67,7 +67,7 @@
   line-height: 1;
   cursor: pointer;
   backdrop-filter: blur(4px);
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  transition: background var(--avocado-t-fast), border-color var(--avocado-t-fast), transform var(--avocado-t-fast);
 
   i { font-size: 12px; }
 
@@ -218,7 +218,7 @@
   font-size: 13px;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.15s;
+  transition: background var(--avocado-t-fast);
 
   &:hover { opacity: 0.85; }
 }
@@ -1007,7 +1007,7 @@
 
   pre {
     // ── Light-mode defaults (JS dark override via [data-theme="dark"]) ──────────
-    --pre-bg:          #f6f8fa;
+    --pre-bg:          #f8f8fa;
     --pre-text:        #24292e;
     --pre-border:      rgba(0, 0, 0, 0.09);
     --pre-header-bg:   rgba(0, 0, 0, 0.035);
@@ -1064,7 +1064,7 @@
     opacity: 0.4;
     font-size: 11px;
     cursor: pointer;
-    transition: opacity 0.15s, background 0.15s;
+    transition: opacity var(--avocado-t-fast), background var(--avocado-t-fast);
     z-index: 1;
     padding: 0;
 
@@ -1181,16 +1181,16 @@
   }
 
   .Spoiler {
-    background: #1f2025;
+    background: #202126;
     color: transparent;
     border-radius: 4px;
     padding: 0 4px;
     cursor: pointer;
     user-select: none;
-    transition: color 0.2s;
+    transition: color var(--avocado-t-medium);
 
     &.revealed,
-    &:hover { color: #e4e4e7; }
+    &:hover { color: #e6e6eb; }
   }
 }
 
@@ -1234,7 +1234,7 @@
   align-items: center;
   gap: 5px;
   line-height: 1;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background var(--avocado-t-fast), color var(--avocado-t-fast);
   text-decoration: none;
   border: none;
   box-shadow: none;
@@ -1245,7 +1245,7 @@
     color: #4a4c58;
   }
 
-  &:active { background: #e8e8ef; }
+  &:active { background: #e7e7ed; }
 
   .Button-icon, i { font-size: 13px; line-height: 1; }
 
@@ -1358,7 +1358,7 @@
     border: none;
     box-shadow: none;
 
-    &:hover { background: #e5e6ed; }
+    &:hover { background: #e7e7ed; }
   }
 }
 
@@ -1674,7 +1674,7 @@
   align-items: center;
   gap: 6px;
   line-height: 1;
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--avocado-t-fast), color var(--avocado-t-fast);
 
   &--login {
     background: var(--primary-color);
@@ -1782,7 +1782,7 @@
     height: 34px !important;
     border-radius: 999px !important;
     padding: 0 13px !important;
-    background: var(--avocado-surface-1, #f3f3f6) !important;
+    background: var(--avocado-surface-1, #f4f4f7) !important;
     backdrop-filter: none;
     color: var(--disc-title, #202126) !important;
     gap: 7px;
@@ -1790,7 +1790,7 @@
 
     &:hover {
       opacity: 1 !important;
-      background: color-mix(in srgb, var(--avocado-surface-1, #f3f3f6) 50%, #d8d8e0) !important;
+      background: color-mix(in srgb, var(--avocado-surface-1, #f4f4f7) 50%, #d8d8e0) !important;
       color: var(--primary-color) !important;
     }
   }
@@ -1934,7 +1934,7 @@
   // margin-left:20px; border-left:2px solid var(--border-soft); padding-left:20px
   .PostStream > .PostStream-item:not(:first-child) {
     margin-left: 20px;
-    border-left: 2px solid var(--avocado-border-soft, #efeff4);
+    border-left: 2px solid var(--avocado-border-soft, #f0f0f4);
     padding-left: 20px;
     margin-bottom: 2px;
   }
@@ -2061,7 +2061,7 @@
 .DiscussionPage .DiscussionList,
 .App-drawer .DiscussionList {
 
-  background: #f6f6fa;
+  background: #f4f4f7;
   padding: 10px 10px 20px;
 
   // ── Container: no extra margin ──────────────────────────────────────────────
@@ -2286,7 +2286,7 @@
         line-height: 1;
         font-size: 14px;
 
-        &:hover { color: #43454e; background: #f2f2f6; }
+        &:hover { color: #43454e; background: #f0f0f4; }
       }
     }
   }
@@ -2304,7 +2304,7 @@
     margin-top: 4px;
 
     &:hover {
-      background: #f6f6fa;
+      background: #f4f4f7;
       border-color: #d8d8e4;
     }
   }

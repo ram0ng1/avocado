@@ -49,7 +49,7 @@
   --avocado-surface-1:            #f4f4f7;       // input / search background
   --avocado-surface-2:            #f8f8fa;       // composer / post-input bg
   --avocado-border-subtle:        #eaeaf0;       // default card borders
-  --avocado-border-soft:          #efeff4;       // topbar / divider borders
+  --avocado-border-soft:          #f0f0f4;       // topbar / divider borders
   --avocado-border-chip:          #e7e7ed;       // chip / userChip border
 
   // ── Muted text (light mode) ───────────────────────────────────────────────────
@@ -72,6 +72,8 @@
   --avocado-z-tooltip:            9999;
 
   // ── Elevation / shadow scale ─────────────────────────────────────────────────
+  // subtle = repouso (card, chip)  ·  medium = flutuante (dropdown, popover)
+  // lifted = destacado (modal, drawer). Um elemento usa um nível, não um valor.
   --shadow-subtle:                0 1px 6px rgba(0, 0, 0, 0.06);
   --shadow-medium:                0 8px 24px rgba(0, 0, 0, 0.12);
   --shadow-lifted:                0 12px 32px rgba(0, 0, 0, 0.18);
@@ -95,4 +97,12 @@
   --avocado-muted-placeholder:    var(--muted-color);
   --avocado-muted-label:          var(--muted-color);
   --avocado-text-dark:            var(--text-color);
+
+  // ── Elevation no escuro ──────────────────────────────────────────────────────
+  // A escala clara é inutilizável sobre fundo escuro: alpha 0.06–0.18 sobre
+  // #1a1b21 não produz sombra visível. Sem estes valores não há como migrar as
+  // 35 sombras escritas à mão para os tokens — elas usam alpha 0.3–0.5.
+  --shadow-subtle:                0 1px 6px rgba(0, 0, 0, 0.30);
+  --shadow-medium:                0 8px 24px rgba(0, 0, 0, 0.40);
+  --shadow-lifted:                0 12px 32px rgba(0, 0, 0, 0.50);
 }

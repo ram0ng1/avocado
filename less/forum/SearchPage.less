@@ -103,7 +103,7 @@
   padding: 16px;
   background: var(--control-bg);
   cursor: pointer;
-  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  transition: box-shadow var(--avocado-t-medium), transform var(--avocado-t-medium), border-color var(--avocado-t-medium);
   text-decoration: none;
 
   &:hover {
@@ -236,7 +236,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  transition: box-shadow var(--avocado-t-medium), transform var(--avocado-t-medium), border-color var(--avocado-t-medium);
 
   &:hover {
     border-color: #dfdfe6;
@@ -302,7 +302,7 @@
   // sem o teto, um título de discussão longo estoura a largura do card.
   max-width: 100%;
   overflow-wrap: anywhere;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background var(--avocado-t-fast), color var(--avocado-t-fast);
 
   &:hover {
     background: color-mix(in srgb, var(--primary-color) 14%, transparent);
@@ -335,7 +335,7 @@
 
 .AvocadoSearch-postControls {
   opacity: 0;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--avocado-t-fast);
 
   .AvocadoSearch-postCard:hover &,
   &.open {
@@ -351,11 +351,11 @@
   font-weight: 800;
   color: var(--home-muted);
   text-decoration: none;
-  transition: color 0.15s ease;
+  transition: color var(--avocado-t-fast);
 
   > i {
     font-size: 11px;
-    transition: transform 0.15s ease;
+    transition: transform var(--avocado-t-fast);
   }
 
   &:hover {
@@ -447,7 +447,7 @@
   border-radius: 999px;
   background: var(--body-bg);
   padding: 0 6px 0 18px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color var(--avocado-t-fast), box-shadow var(--avocado-t-fast);
 
   &:focus-within {
     border-color: var(--primary-color);
@@ -487,16 +487,16 @@
   width: 26px;
   height: 26px;
   border: none;
-  background: #ebebef;
+  background: #eaeaf0;
   color: #6b6c78;
   cursor: pointer;
   border-radius: 50%;
   flex-shrink: 0;
   font-size: 11px;
   margin-right: 6px;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background var(--avocado-t-fast), color var(--avocado-t-fast);
 
-  &:hover { background: #dcdce4; color: var(--home-title); }
+  &:hover { background: #dfdfe6; color: var(--home-title); }
 }
 
 .AvocadoSearch-barBtn {
@@ -512,12 +512,12 @@
   cursor: pointer;
   flex-shrink: 0;
   margin: 4px;
-  transition: opacity 0.15s ease, background 0.15s ease;
+  transition: opacity var(--avocado-t-fast), background var(--avocado-t-fast);
 
   &:hover:not(:disabled) { opacity: 0.88; }
 
   &:disabled {
-    background: #e0e0e8;
+    background: #dfdfe6;
     color: #adadb8;
     cursor: default;
     opacity: 1;
@@ -553,19 +553,19 @@
   padding: 0 14px;
   border-radius: 999px;
   border: none;
-  background: #f3f3f6;
+  background: #f4f4f7;
   font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   font-size: 13px;
   font-weight: 700;
-  color: #40424b;
+  color: #43454e;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background var(--avocado-t-fast), color var(--avocado-t-fast);
 
   > i { font-size: 12px; }
 
   &:hover {
-    background: #eaeaee;
+    background: #eaeaf0;
     color: var(--primary-color);
   }
 
@@ -725,7 +725,7 @@
   height: 48px;
   border-radius: 50%;
   flex-shrink: 0;
-  background: linear-gradient(90deg, #f0f0f6 25%, #e8e8f0 50%, #f0f0f6 75%);
+  background: linear-gradient(90deg, #f0f0f4 25%, #e7e7ed 50%, #f0f0f4 75%);
   background-size: 200% 100%;
   animation: skeletonShimmer 1.4s infinite;
 }

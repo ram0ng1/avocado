@@ -12,7 +12,7 @@
 // Each section is wrapped in a card that matches the avocado forum design system.
 
 .AvocadoAdmin-card {
-  border: 1px solid var(--control-bg-dark, #e8e8ed);
+  border: 1px solid var(--control-bg-dark, #e7e7ed);
   border-radius: 16px;
   background: var(--body-bg, #fff);
   margin-bottom: 16px;
@@ -26,8 +26,8 @@
   align-items: center;
   gap: 10px;
   padding: 14px 20px 12px;
-  border-bottom: 1px solid var(--control-bg-dark, #f0f0f5);
-  background: var(--control-bg, #f8f8fc);
+  border-bottom: 1px solid var(--control-bg-dark, #f0f0f4);
+  background: var(--control-bg, #f8f8fa);
   border-top-left-radius: 15px;
   border-top-right-radius: 15px;
 }
@@ -73,7 +73,7 @@
 // ─── Sub-divider between logical groups within a card ─────────────────────────
 .AvocadoAdmin-subDivider {
   height: 1px;
-  background: var(--control-bg-dark, #f0f0f5);
+  background: var(--control-bg-dark, #f0f0f4);
   margin: 14px -20px;
 }
 
@@ -81,7 +81,7 @@
 .AvocadoAdmin-subGroup {
   margin-top: 10px;
   padding: 14px 16px;
-  background: var(--control-bg, #f8f8fc);
+  background: var(--control-bg, #f8f8fa);
   border-radius: 10px;
   border: 1px solid var(--control-bg-dark, #eaeaf0);
   display: flex;
@@ -196,15 +196,15 @@
   width: 100%;
   padding: 5px 12px;
   border-radius: 999px;
-  border: 1.5px solid var(--control-bg-dark, #e3e4ea);
-  background: var(--body-bg, #f7f7fa);
+  border: 1.5px solid var(--control-bg-dark, #e6e6eb);
+  background: var(--body-bg, #f8f8fa);
   color: var(--muted-color);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   text-align: left;
   box-sizing: border-box;
-  transition: border-color 0.15s ease, border-radius 0.15s ease;
+  transition: border-color var(--avocado-t-fast), border-radius var(--avocado-t-fast);
 
   // Switches to rounded-rect when tag chips are present
   &:has(.AvocadoAdmin-tagChip) { border-radius: 14px; }
@@ -264,7 +264,7 @@
   right: 0;
   z-index: 500;
   background: var(--body-bg, #fff);
-  border: 1px solid var(--control-bg-dark, #e8e9ef);
+  border: 1px solid var(--control-bg-dark, #eaeaf0);
   border-radius: 14px;
   padding: 6px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.1);
@@ -281,7 +281,7 @@
   padding: 6px 10px;
   margin-bottom: 4px;
   border-radius: 8px;
-  background: var(--control-bg, #f4f4f8);
+  background: var(--control-bg, #f4f4f7);
 
   > i {
     font-size: 12px;
@@ -321,7 +321,7 @@
   color: var(--text-color);
   transition: background 0.1s ease;
 
-  &:hover       { background: var(--control-bg, #f3f4f8); }
+  &:hover       { background: var(--control-bg, #f4f4f7); }
   &.is-selected { background: color-mix(in srgb, var(--primary-color) 10%, transparent); }
 }
 
@@ -383,11 +383,11 @@
   align-items: center;
   gap: 8px;
   padding: 16px 20px;
-  border: 2px solid var(--control-bg, #e8e8f0);
+  border: 2px solid var(--control-bg, #e7e7ed);
   border-radius: 12px;
   background: var(--body-bg, #fff);
   cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color var(--avocado-t-fast), box-shadow var(--avocado-t-fast);
   min-width: 100px;
 
   &:hover {

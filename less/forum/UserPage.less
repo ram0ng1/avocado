@@ -119,7 +119,7 @@
       justify-content: center;
       font-size: 22px;
       cursor: pointer;
-      transition: background 0.15s ease, color 0.15s ease;
+      transition: background var(--avocado-t-fast), color var(--avocado-t-fast);
       box-shadow: none;
 
       &:hover {
@@ -147,7 +147,7 @@
       .Button {
         border-radius: 8px;
         font-size: 13px;
-        color: #40424b;
+        color: #43454e;
         background: transparent;
         border: none;
         font-weight: 600;
@@ -222,7 +222,7 @@
   margin-top: 1px;
   font-size: 15px;
   font-weight: 500;
-  color: var(--home-muted, #8f8f95);
+  color: var(--home-muted, #8f9097);
 }
 
 // ── Stats meta row ────────────────────────────────────────────────────────────
@@ -241,11 +241,11 @@
   gap: 6px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--home-muted, #8f8f95);
+  color: var(--home-muted, #8f9097);
 
   strong { color: var(--home-title, #202126); font-weight: 800; }
   i { font-size: 12px; opacity: 0.75; }
-  time { color: var(--home-muted, #8f8f95); }
+  time { color: var(--home-muted, #8f9097); }
 }
 
 // ── Controls button (now on light background) ─────────────────────────────────
@@ -278,7 +278,7 @@
 }
 
 .AvocadoUserPage-shimmer {
-  background: linear-gradient(90deg, #f0f0f5 25%, #e6e6ec 50%, #f0f0f5 75%);
+  background: linear-gradient(90deg, #f0f0f4 25%, #e7e7ed 50%, #f0f0f4 75%);
   background-size: 800px 100%;
   animation: AvocadoUserShimmer 1.4s infinite;
   border-radius: 8px;
@@ -291,7 +291,7 @@
 
 // Nav tab skeleton uses lighter shimmer (white bg)
 .AvocadoUserPage-nav .AvocadoUserPage-shimmer--navItem {
-  background: linear-gradient(90deg, #f0f0f5 25%, #e6e6ec 50%, #f0f0f5 75%);
+  background: linear-gradient(90deg, #f0f0f4 25%, #e7e7ed 50%, #f0f0f4 75%);
   background-size: 800px 100%;
 }
 
@@ -322,10 +322,10 @@
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  color: var(--home-muted, #8f8f95);
+  color: var(--home-muted, #8f9097);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.18s ease, color 0.15s ease;
+  transition: opacity 0.18s ease, color var(--avocado-t-fast);
   z-index: 3;
 
   &.is-visible {
@@ -357,10 +357,10 @@
     padding: 8px 20px;
     font-size: 13px;
     font-weight: 500;
-    color: var(--home-muted, #8f8f95);
+    color: var(--home-muted, #8f9097);
     text-decoration: none;
     white-space: nowrap;
-    transition: color 0.15s;
+    transition: color var(--avocado-t-fast);
     border-bottom: none;
 
     i { font-size: 12px; }
@@ -412,12 +412,12 @@
     border-radius: 0;
     background: transparent;
     box-shadow: none;
-    color: var(--home-muted, #8f8f95);
+    color: var(--home-muted, #8f9097);
     font-size: 14px;
     font-weight: 600;
     white-space: nowrap;
     text-decoration: none;
-    transition: color 0.15s, border-color 0.15s;
+    transition: color var(--avocado-t-fast), border-color var(--avocado-t-fast);
     flex-shrink: 0;
 
     .Button-icon { font-size: 13px; margin: 0; }
@@ -447,11 +447,11 @@
     .Button-badge {
       font-size: 12px;
       font-weight: 700;
-      background: #f0f0f5;
+      background: #f0f0f4;
       border-radius: 999px;
       padding: 1px 7px;
-      color: #8f8f95;
-      transition: background 0.15s, color 0.15s;
+      color: #8f9097;
+      transition: background var(--avocado-t-fast), color var(--avocado-t-fast);
       margin-left: 0;
     }
 
@@ -469,12 +469,12 @@
   padding: 0 16px;
   gap: 7px;
   border-bottom: 2.5px solid transparent;
-  color: var(--home-muted, #8f8f95);
+  color: var(--home-muted, #8f9097);
   font-size: 14px;
   font-weight: 600;
   white-space: nowrap;
   text-decoration: none;
-  transition: color 0.15s, border-color 0.15s;
+  transition: color var(--avocado-t-fast), border-color var(--avocado-t-fast);
   flex-shrink: 0;
 
   i { font-size: 13px; }
@@ -494,11 +494,11 @@
 .AvocadoUserPage-navCount {
   font-size: 12px;
   font-weight: 700;
-  background: #f0f0f5;
+  background: #f0f0f4;
   border-radius: 999px;
   padding: 1px 7px;
-  color: #8f8f95;
-  transition: background 0.15s, color 0.15s;
+  color: #8f9097;
+  transition: background var(--avocado-t-fast), color var(--avocado-t-fast);
 
   .AvocadoUserPage-navItem.is-active & {
     background: rgba(0, 0, 0, 0.06);
@@ -596,7 +596,7 @@
       min-width: 40px;
       background: #d8dae8;
       border-radius: 999px;
-      transition: background 0.2s ease;
+      transition: background var(--avocado-t-medium);
 
       &::before {
         content: '';
@@ -607,7 +607,7 @@
         background: #fff;
         top: 3px;
         left: 3px;
-        transition: transform 0.2s ease;
+        transition: transform var(--avocado-t-medium);
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
       }
     }
@@ -621,7 +621,7 @@
   // Help text
   .helpText {
     font-size: 13px;
-    color: var(--home-muted, #8f8f95);
+    color: var(--home-muted, #8f9097);
     font-weight: 500;
     line-height: 1.5;
     margin-top: 6px;
@@ -652,7 +652,7 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 1px;
-      color: var(--home-muted, #8f8f95);
+      color: var(--home-muted, #8f9097);
       text-align: center;
 
       &:first-child { text-align: left; }
@@ -663,14 +663,14 @@
       font-size: 14px;
       font-weight: 500;
       color: #43454e;
-      border-top: 1px solid #f4f4f8;
+      border-top: 1px solid #f4f4f7;
       text-align: center;
       vertical-align: middle;
 
       &:first-child { text-align: left; font-weight: 600; color: #2a2b30; }
     }
 
-    tbody tr:last-child td { border-bottom: 1px solid #f4f4f8; }
+    tbody tr:last-child td { border-bottom: 1px solid #f4f4f7; }
   }
 
   // Access tokens list
@@ -685,7 +685,7 @@
     align-items: center;
     gap: 12px;
     padding: 12px 0;
-    border-bottom: 1px solid #f4f4f8;
+    border-bottom: 1px solid #f4f4f7;
 
     &:last-child { border-bottom: 0; }
 
@@ -701,7 +701,7 @@
 
     &-created {
       font-size: 12px;
-      color: var(--home-muted, #8f8f95);
+      color: var(--home-muted, #8f9097);
       white-space: nowrap;
     }
 
@@ -752,7 +752,7 @@
     font-size: 15px;
     font-weight: 800;
     letter-spacing: -0.1px;
-    color: #1f2025;
+    color: #202126;
     text-transform: none;
   }
 
@@ -782,9 +782,9 @@
     }
 
     &--default {
-      background: #f3f3f6;
+      background: #f4f4f7;
       border-color: transparent;
-      color: #40424b;
+      color: #43454e;
     }
 
     &--danger {
@@ -814,7 +814,7 @@
   // Help text below toggles
   .helpText {
     font-size: 13px;
-    color: var(--home-muted, #8f8f95);
+    color: var(--home-muted, #8f9097);
     font-weight: 500;
     line-height: 1.5;
   }
@@ -867,7 +867,7 @@
 
     &--empty {
       font-size: 13px;
-      color: var(--home-muted, #8f8f95);
+      color: var(--home-muted, #8f9097);
       font-style: italic;
     }
   }
@@ -891,7 +891,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--home-muted, #8f8f95);
+      color: var(--home-muted, #8f9097);
     }
 
     &-title {
@@ -906,7 +906,7 @@
         font-size: 12px;
         font-weight: 500;
         font-style: normal;
-        color: var(--home-muted, #8f8f95);
+        color: var(--home-muted, #8f9097);
         margin-top: 2px;
       }
     }
@@ -1003,7 +1003,7 @@
     margin: 0;
     border: 1px dashed transparent;
     border-radius: 10px;
-    transition: border-color 0.2s ease;
+    transition: border-color var(--avocado-t-medium);
 
     // Editable state — subtle dashed border on hover
     &.editable:not(.editing) {
@@ -1072,7 +1072,7 @@
 
   // Placeholder text ("Add a bio...")
   .UserBio-placeholder {
-    color: var(--home-muted, #8f8f95);
+    color: var(--home-muted, #8f9097);
     font-size: 13px;
     font-style: italic;
     padding: 4px 2px;

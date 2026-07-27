@@ -299,8 +299,29 @@ jobs:
 
       # §35.13 R2 — npm advisories. --audit-level=high reduz ruído de
       # transitivas dev; subir para moderate quando o baseline estabilizar.
-      - name: npm audit
+      #
+      # O gate bloqueante cobre só as dependências de produção. Toda a árvore de
+      # JS aqui é build-time — o artefato publicado é js/dist/*.js, que o webpack
+      # gera sem carregar nada de node_modules em runtime —, então um advisory na
+      # toolchain do eslint não é superfície de ataque do pacote.
+      #
+      # Caso concreto que motivou a separação: brace-expansion GHSA-mh99-v99m-4gvg
+      # (range <=5.0.7) chega via minimatch@3, que eslint 9 e eslint-plugin-react
+      # carregam. Não há saída por versão — o fix só existe em 5.0.8+, a linha 1.x
+      # nunca foi corrigida, e eslint-plugin-react (7.37.5, a última publicada)
+      # tem peer eslint ^9.7, então não dá para migrar ao eslint 10. Forçar
+      # overrides de brace-expansion para ^5.0.8 zera o audit mas quebra o lint:
+      # o build CJS da versão 5 exporta `expand` nomeado e o minimatch@3 aninhado
+      # no eslint espera a função default.
+      - name: npm audit (produção — bloqueia)
         working-directory: js
+        run: npm audit --audit-level=high --omit=dev
+
+      # Informativo: mantém os advisories de dev visíveis no log sem derrubar o
+      # job. Se algum dia um deles alcançar produção, o step acima falha.
+      - name: npm audit (dev — informativo)
+        working-directory: js
+        continue-on-error: true
         run: npm audit --audit-level=high
 
   # Paridade de tradução (en ↔ pt-BR) roda UMA vez em job próprio — independe de

@@ -69,7 +69,7 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  transition: box-shadow var(--avocado-t-medium), border-color var(--avocado-t-medium), transform var(--avocado-t-medium);
 
   &:hover {
     border-color: #dfdfe6;
@@ -129,7 +129,7 @@
   padding: 0.6em;
   border-radius: 14px;
   font-size: 20px;
-  background: var(--icon-bg, #f0f0f5);
+  background: var(--icon-bg, #f0f0f4);
   color: var(--icon-color, #8f9097);
   box-sizing: border-box;
   // SEM overflow:hidden — cresce com o ícone
@@ -194,7 +194,7 @@
   display: block;
   font-size: 13px;
   font-weight: 600;
-  color: var(--home-muted, #8f8f95);
+  color: var(--home-muted, #8f9097);
   margin-top: 3px;
 }
 
@@ -217,7 +217,7 @@
   flex-wrap: wrap;
   gap: 5px;
   padding: 10px 18px 12px;
-  border-top: 1px solid #f4f4f8;
+  border-top: 1px solid #f4f4f7;
   border-radius: 0 0 17px 17px;
 }
 
@@ -232,7 +232,7 @@
   text-decoration: none;
   background: var(--cp-bg);
   color: var(--cp-color);
-  transition: opacity 0.15s;
+  transition: opacity var(--avocado-t-fast);
 
   i { font-size: 10px; }
   .fa-kit { padding: 0 !important; }
@@ -246,7 +246,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 18px;
-  border-top: 1px solid #f4f4f8;
+  border-top: 1px solid #f4f4f7;
   border-radius: 0 0 17px 17px;
   text-decoration: none;
   color: inherit;
@@ -259,7 +259,7 @@
   }
 
   &:hover {
-    background: #fafafa;
+    background: #f8f8fa;
     text-decoration: none;
     color: inherit;
   }
@@ -278,7 +278,7 @@
 
 .AvocadoTagsPage-tagCard-last-time {
   font-size: 12px;
-  color: var(--home-muted, #8f8f95);
+  color: var(--home-muted, #8f9097);
   font-weight: 500;
   flex-shrink: 0;
   white-space: nowrap;
@@ -320,7 +320,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1.2px;
-  color: #9d9ea8;
+  color: #9b9ca6;
 }
 
 .AvocadoTagsPage-cloud-pills {
@@ -340,7 +340,7 @@
   text-decoration: none;
   background: var(--cp-bg);
   color: var(--cp-color);
-  transition: opacity 0.15s, transform 0.15s;
+  transition: opacity var(--avocado-t-fast), transform var(--avocado-t-fast);
 
   i { font-size: 11px; }
   .fa-kit { padding: 0 !important; }
@@ -431,7 +431,7 @@
   font-size: 13px;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.15s;
+  transition: background var(--avocado-t-fast);
 
   &:hover { background: rgba(255,255,255,0.28); }
 }
@@ -538,7 +538,7 @@
   background: rgba(255,255,255,0.15);
   border: 1px solid rgba(255,255,255,0.25);
   text-decoration: none;
-  transition: background 0.15s;
+  transition: background var(--avocado-t-fast);
 
   &:hover { background: rgba(255,255,255,0.26); text-decoration: none; color: #fff; }
 }
@@ -558,7 +558,7 @@
   cursor: pointer;
   flex-shrink: 0;
   margin-left: auto;
-  transition: background 0.15s;
+  transition: background var(--avocado-t-fast);
 
   i { font-size: 11px; }
 

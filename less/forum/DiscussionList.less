@@ -32,7 +32,7 @@
         align-items: center;
         justify-content: center;
         color: var(--muted-color);
-        transition: background 0.15s ease, color 0.15s ease;
+        transition: background var(--avocado-t-fast), color var(--avocado-t-fast);
 
         .Button-caret { display: none; }
         .Button-icon  { font-size: 14px; }
@@ -193,7 +193,7 @@
       &.Button--ua-reset {
         color: var(--primary-color);
         cursor: pointer;
-        transition: opacity 0.15s;
+        transition: opacity var(--avocado-t-fast);
 
         ._checkmark { display: none; }
 
@@ -254,7 +254,7 @@
     gap: 7px;
     box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
     animation: AvocadoWsUpdate-in 0.22s ease;
-    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    transition: background var(--avocado-t-fast), color var(--avocado-t-fast), box-shadow var(--avocado-t-fast);
 
     &:hover {
       background: var(--primary-color);
