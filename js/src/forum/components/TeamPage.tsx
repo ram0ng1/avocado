@@ -25,6 +25,33 @@ export default class TeamPage extends Page {
     this.load();
   }
 
+  /**
+   * Reads the boot payload injected by Content\PreloadTeamMembers.
+   *
+   * Runs from oninit, before the first view(), so when the preload is present
+   * the page paints straight to the member grid — the skeleton never appears.
+   * Returns false when there is nothing to read (preload disabled, empty, or
+   * the API call failed server-side), in which case load() does its normal
+   * async fetch.
+   */
+  private hydrateFromBoot(): boolean {
+    try {
+      const preloaded = (app as any).data?.avocadoTeam;
+      if (!preloaded?.data?.length) return false;
+
+      // pushPayload insere os models no store de forma síncrona.
+      const pushed = app.store.pushPayload(preloaded) as any;
+      const members = (Array.isArray(pushed) ? pushed : [pushed]).filter(Boolean);
+      if (!members.length) return false;
+
+      this.members = members;
+      this.loading = false;
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async load() {
     const raw = app.forum.attribute<string>('avocadoTeamPageGroups') || '[]';
     let groupIds: string[];
@@ -35,6 +62,9 @@ export default class TeamPage extends Page {
       groupIds = [];
     }
     this.configuredGroupIds = groupIds;
+
+    // Preload do boot: primeiro paint já com os cards. Sem ele, cai no fetch.
+    if (this.hydrateFromBoot()) return;
 
     if (groupIds.length) {
       try {

@@ -35,6 +35,8 @@ return [
         // deferral only duplicated <noscript>/<link> tags.
         ->content(\Ramon\Avocado\Content\LoadFontAwesomeKit::class)
         ->content(\Ramon\Avocado\Content\InjectOnlineUsers::class)
+        // Preloads de dado — cada um sai cedo se não estiver na sua rota.
+        ->content(\Ramon\Avocado\Content\PreloadTeamMembers::class)
         ->route('/discussions', 'avocado-discussions')
         ->route('/search', 'avocado-search')
         ->route('/bookmarks', 'avocado-bookmarks'),

@@ -155,15 +155,15 @@ export default class HomeState {
   loadHome(): Promise<void> {
     const existing = app.store.all('discussions');
     if (existing.length > 0) {
-      // Store is already warm (e.g. after SPA navigation back). Just unflag the
-      // skeleton with a small delay so the layout doesn't flash.
-      return new Promise<void>((resolve) => {
-        setTimeout(() => {
-          this.homeLoading = false;
-          m.redraw();
-          resolve();
-        }, 350);
-      });
+      // O store já está quente — na home isso é o caso NORMAL, não a exceção: o
+      // apiDocument do boot da index traz 20 discussions com firstPost, tags e
+      // lastPostedUser. Como loadHome() roda no oninit, antes do primeiro
+      // view(), desligar a flag aqui é síncrono e o 1º paint já sai com os
+      // cards. A versão anterior segurava o skeleton por 350ms com um
+      // setTimeout, o que produzia exatamente o flash que ele tentava evitar —
+      // skeleton visível e depois substituído, com o dado pronto o tempo todo.
+      this.homeLoading = false;
+      return Promise.resolve();
     }
     this.invalidate();
     return app.store
@@ -230,15 +230,13 @@ export default class HomeState {
     const storeIsPopulated = this.allDiscussions().length >= 10;
 
     if (fromStore.length > 0 && (fromStore.length >= expectedCount || storeIsPopulated)) {
-      return new Promise<void>((resolve) => {
-        setTimeout(() => {
-          this.showcaseItems = fromStore;
-          this.showcaseLoading = false;
-          this.showcaseFetched = true;
-          m.redraw();
-          resolve();
-        }, 350);
-      });
+      // Mesmo caso do loadHome(): os itens do showcase saem do store que o boot
+      // já preencheu. Resolver síncrono — o skeleton do showcase nunca chega a
+      // pintar quando o dado está pronto.
+      this.showcaseItems = fromStore;
+      this.showcaseLoading = false;
+      this.showcaseFetched = true;
+      return Promise.resolve();
     }
 
     return Promise.all(tagIds.map((id) => this.resolveTagSlug(id)))
