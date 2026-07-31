@@ -1133,7 +1133,26 @@
     border-radius: 10px;
     display: block;
     margin: 12px 0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  // Inside a centred block — `[center]`, which s9e renders as a div carrying
+  // `text-align: center` — images go back to being inline.
+  //
+  // `display: block` above is right for a screenshot, which should own its line,
+  // but it is what made a centred post fail to centre: a block element ignores
+  // `text-align` and, with no `auto` margin, sits left. A row of badges came out
+  // stacked and flush left while the prose around it centred correctly.
+  //
+  // Inline-block instead of `margin: auto` so a run of images flows on one line
+  // and centres as a group, which is what a badge row is. A lone image still
+  // centres, because that is what `text-align` does to an inline box.
+  [style*="text-align:center"],
+  [style*="text-align: center"] {
+    img:not(.Avatar):not(.emoji):not([class*="avatar"]) {
+      display: inline-block;
+      margin: 4px;
+      vertical-align: middle;
+    }
   }
 
   hr {
