@@ -10,8 +10,11 @@
 @import "forum/HomePage.less";
 @import "forum/DiscussionPage.less";
 // Depois do DiscussionPage.less de propósito: a variante editorial precisa
-// ganhar da cascata do hero padrão. Inerte sem o atributo em <html>.
-@import "forum/DiscussionHeroEditorial.less";
+// ganhar da cascata da página padrão. Inerte sem o atributo em <html>.
+@import "forum/DiscussionEditorial.less";
+// Depois do DiscussionEditorial.less: a posição "side" alarga --disc-side-col e
+// o eixo da corrente lê esse mesmo token, então precisa vir por último.
+@import "forum/PostBadges.less";
 @import "forum/AuthModal.less";
 @import "forum/UserPage.less";
 @import "forum/SearchPage.less";

@@ -302,53 +302,73 @@
   }
 
 
-  // ── Variante editorial do hero ──────────────────────────────────────────────
-  // O skeleton só serve se tiver a altura e o ritmo do hero que vai substituí-lo
-  // — senão o conteúdo real entra e a página pula. Com a opção editorial ligada
-  // (forum/DiscussionHeroEditorial.less) o hero é uma faixa baixa e plana, então
-  // o skeleton acompanha: mesmo padding, botão "Voltar" como pill, título menor,
-  // sem pilha de participantes e sem os ícones de decoração.
+  // ── Variante editorial ──────────────────────────────────────────────────────
+  // O skeleton só serve se tiver a medida e o ritmo do que vai substituí-lo —
+  // senão o conteúdo real entra e a página pula. O HERO não entra aqui: na
+  // variante ele continua sendo o hero padrão, então o skeleton dele também.
+  // O que muda é a largura da coluna e a corrente.
   //
-  // Mesmo recorte de breakpoint da variante: de tablet pra cima. No telefone o
-  // hero continua o padrão, e o skeleton também.
-  @media @tablet-up {
-    html[data-avocado-disc-hero="editorial"] & {
-      .AvocadoSkeleton-heroInner {
-        padding: 22px 24px 20px;
+  // A corrente entra no skeleton porque ela é a primeira coisa que se vê da
+  // variante e, sem ela, o fio "aparece" quando o conteúdo real chega. Mesmo
+  // eixo e mesma espessura da regra real (forum/DiscussionEditorial.less), e
+  // mesmo recorte de breakpoint: só desktop.
+  @media @desktop-up {
+    html[data-avocado-disc-style="editorial"] & {
+      // O eixo aqui NÃO leva o recuo do post: o .AvocadoSkeleton-post tem
+      // `padding: 32px 0`, então o avatar do skeleton já começa na borda
+      // esquerda do stream. É meio avatar, menos 1px porque a linha tem 2px.
+      .AvocadoSkeleton-stream {
+        position: relative;
+        background-image: linear-gradient(
+          var(--avocado-border-subtle, #eaeaf0),
+          var(--avocado-border-subtle, #eaeaf0)
+        );
+        background-repeat: no-repeat;
+        background-position: calc(var(--disc-avatar) / 2 - 1px) 0;
+        background-size: 2px 100%;
       }
 
-      .AvocadoSkeleton-nav {
-        margin-bottom: 12px;
+      // Mesmo anel na cor do fundo dos avatares reais: é ele que faz a linha
+      // parecer passar por trás do nó.
+      .AvocadoSkeleton-postAvatar {
+        box-shadow: 0 0 0 3px var(--body-bg, #fff);
       }
 
-      // Pill fantasma no lugar do círculo de 34px.
-      .AvocadoSkeleton-backBtn {
-        width: 78px;
-        height: 30px;
-        border-radius: 999px;
-      }
+      // A variante alarga a coluna de leitura; o skeleton tem de nascer na mesma
+      // medida, senão o conteúdo real entra e a página salta na horizontal.
+      // Mesmo `min()` escapado da regra real, pelo mesmo motivo (o LESS resolve
+      // `100% - 48px` em compilação e emite `52%`).
+    }
+  }
 
-      // clamp(24px, 3vw, 33px) com line-height 1.14 → a linha fica na casa dos
-      // 28-38px; 30px é o meio dessa faixa e é o que o título ocupa na largura
-      // de leitura mais comum.
-      .AvocadoSkeleton-title {
-        height: 30px;
-        margin-top: 8px;
-      }
+  // ── Largura da coluna — vale nas duas opções ────────────────────────────────
+  // Espelha a regra base de forum/DiscussionPage.less. Não fica sob o atributo
+  // da variante porque a largura também não fica: se mudar lá, muda aqui.
+  //
+  // Repetir os números é o preço do esqueleto do avocado usar classes próprias
+  // (.AvocadoSkeleton-*) em vez de vestir as reais como o dfs faz. Sem espelhar,
+  // o conteúdo real entra e a página salta na horizontal.
+  //
+  // O `min()` vai escapado pelo mesmo motivo da regra real: sem isso o LESS
+  // resolve `100% - 48px` em compilação e emite `52%`.
+  @media @desktop-up {
+    .Page-container.container {
+      max-width: ~"min(1440px, calc(100% - 48px))";
+      width: 100%;
+    }
 
-      // A variante esconde .DiscussionHero-participants e o contador do hero:
-      // quem carrega os números é o AvocadoDiscussionStats, uma linha de chips.
-      .AvocadoSkeleton-avatarStack {
-        display: none;
-      }
+    .Page-content {
+      max-width: none;
+      width: auto;
+      margin: 0;
+      flex: 1 1 auto;
+      min-width: 0;
+      padding: 0 44px 0 24px;
+    }
 
-      .AvocadoSkeleton-meta {
-        margin-top: 12px;
-      }
-
-      .AvocadoSkeleton-decoContainer {
-        display: none;
-      }
+    .Page-sidebar {
+      flex: 0 0 176px;
+      width: 176px;
     }
   }
 

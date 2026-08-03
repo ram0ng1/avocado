@@ -30,7 +30,7 @@ return [
         ->content(\Ramon\Avocado\Content\AddHeroBannerPreload::class)
         ->content(\Ramon\Avocado\Content\CustomLoadingSpinner::class)
         ->content(\Ramon\Avocado\Content\HideLogoFlash::class)
-        ->content(\Ramon\Avocado\Content\DiscussionHeroStyle::class)
+        ->content(\Ramon\Avocado\Content\DiscussionStyle::class)
         // No CSS-deferral injector here: Flarum core already emits async CSS
         // natively (warm-visit cache + <link rel="preload" onload>); a custom
         // deferral only duplicated <noscript>/<link> tags.
@@ -179,12 +179,20 @@ return [
         ->serializeToForum('avocadoShowShare', 'avocado.show_share', 'boolval')
         ->serializeToForum('avocadoShowActionIcons', 'avocado.show_action_icons', 'boolval')
         ->serializeToForum('avocadoFixedAvatarEffect', 'avocado.fixed_avatar_effect', 'boolval')
-        // 'default' = o hero de sempre (faixa alta, wash na cor da tag).
-        // 'editorial' = a faixa plana portada do dfs. Serializado para o forum
-        // porque o skeleton precisa saber qual desenhar; o CSS em si é ligado
-        // pelo atributo em <html> que o Content\DiscussionHeroStyle escreve.
-        ->default('avocado.discussion_hero_style', 'default')
-        ->serializeToForum('avocadoDiscussionHeroStyle', 'avocado.discussion_hero_style')
+        // 'default' = a página de discussão de sempre (hero alto com wash na cor
+        // da tag, fio sem linha). 'editorial' = a variante portada do dfs: hero
+        // plano + a corrente que costura a conversa pela coluna do avatar.
+        // Serializado para o forum porque o skeleton precisa saber qual desenhar;
+        // o CSS em si é ligado pelo atributo em <html> que o
+        // Content\DiscussionStyle escreve antes do primeiro paint.
+        ->default('avocado.discussion_style', 'default')
+        ->serializeToForum('avocadoDiscussionStyle', 'avocado.discussion_style')
+        // Onde os badges de grupo aparecem no post: 'inline' (ao lado do nome),
+        // 'below' (linha própria), 'side' (embaixo do avatar) ou 'side_icons'
+        // (embaixo do avatar, só ícones). O forum bundle converte isso nas
+        // classes .avocado-badges--* em <html>; ver forum/PostBadges.less.
+        ->default('avocado.post_badge_position', 'inline')
+        ->serializeToForum('avocadoPostBadgePosition', 'avocado.post_badge_position')
         ->serializeToForum('avocadoHeroDecorationIcon', 'avocado.hero_decoration_icon', 'boolval')
         ->serializeToForum('avocadoHeroDecorationIconCount', 'avocado.hero_decoration_icon_count')
         ->serializeToForum('avocadoHeroDecorationIconOpacity', 'avocado.hero_decoration_icon_opacity')

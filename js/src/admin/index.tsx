@@ -567,26 +567,47 @@ app.initializers.add('ramon-avocado', (app) => {
     )
 
     // ── Discussion page ──────────────────────────────────────────────────────────
-    // Which hero the discussion page draws. "Editorial" is the flat, low band
-    // ported from the dfs theme; it only takes over from tablet up, so the phone
-    // keeps today's hero either way. The CSS is gated by an attribute written on
-    // <html> before the first paint (Content\DiscussionHeroStyle) so switching
-    // never flashes the other hero first.
+    // Which treatment the discussion page draws. "Editorial" is the variant
+    // ported from the dfs theme: a wider reading column plus a conversation
+    // spine — a hairline threading down the avatar column that turns every
+    // avatar into a node and every time gap into a labelled station. The header
+    // is NOT touched; it stays the theme's own in both. Desktop only, so phone
+    // and tablet keep today's page. The CSS is gated by an attribute written on
+    // <html> before the first paint (Content\DiscussionStyle) so switching never
+    // flashes the other style.
     .registerSetting(
       () => (
         <AdminCard title={trans('ramon-avocado.admin.settings.section_discussion', 'Discussion page')} icon="fas fa-comments">
           <AdminSelect
-            settingKey="avocado.discussion_hero_style"
-            label={trans('ramon-avocado.admin.settings.disc_hero_style_label', 'Discussion header style')}
+            settingKey="avocado.discussion_style"
+            label={trans('ramon-avocado.admin.settings.disc_style_label', 'Discussion page style')}
             help={trans(
-              'ramon-avocado.admin.settings.disc_hero_style_help',
-              'Default is the tall header washed in the tag colour. Editorial is a low, flat band: body background, hairline underneath, smaller title, and the stats on the line below. Discussions with a cover image keep the image header in both. Phones keep the default header either way.'
+              'ramon-avocado.admin.settings.disc_style_help',
+              'Default is today’s page. Editorial widens the reading column and threads the conversation with a hairline spine running down the avatar column, each avatar sitting on it as a node and each time gap becoming a labelled station. The header is the same in both. Desktop only — phones and tablets keep the current page either way.'
             )}
             options={{
-              default: trans('ramon-avocado.admin.settings.disc_hero_style_default', 'Default (tag colour)'),
-              editorial: trans('ramon-avocado.admin.settings.disc_hero_style_editorial', 'Editorial (flat)'),
+              default: trans('ramon-avocado.admin.settings.disc_style_default', 'Default'),
+              editorial: trans('ramon-avocado.admin.settings.disc_style_editorial', 'Editorial (conversation spine)'),
             }}
             default="default"
+          />
+          <AdminSelect
+            settingKey="avocado.post_badge_position"
+            label={trans('ramon-avocado.admin.settings.post_badge_position_label', 'Group badge position in posts')}
+            help={trans(
+              'ramon-avocado.admin.settings.post_badge_position_help',
+              'Where a member’s group badges sit in a post. Any option other than the overlay turns each badge into a capsule with the group name beside its icon. Works with the fixed avatar effect on or off. Phones always keep the compact overlay.'
+            )}
+            options={{
+              inline: trans('ramon-avocado.admin.settings.post_badge_position_inline', 'Beside the username'),
+              below: trans('ramon-avocado.admin.settings.post_badge_position_below', 'Below the username (own line)'),
+              side: trans('ramon-avocado.admin.settings.post_badge_position_side', 'Under the avatar (left column)'),
+              side_icons: trans(
+                'ramon-avocado.admin.settings.post_badge_position_side_icons',
+                'Under the avatar — icons only, side by side'
+              ),
+            }}
+            default="inline"
           />
         </AdminCard>
       ),

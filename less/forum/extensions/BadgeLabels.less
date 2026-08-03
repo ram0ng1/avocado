@@ -50,6 +50,15 @@
       // compartilharem a borda esquerda em vez de ficarem 5px defasados.
       padding-left: 5px;
     }
+
+    // A variante editorial desenha a corrente no centro da coluna do avatar e
+    // lê essa largura de --disc-side-col (forum/DiscussionEditorial.less). Com a
+    // coluna alargada aqui, o token tem de acompanhar — senão a linha desce
+    // dezenas de pixels à esquerda dos avatares. Mesma conta da grid acima.
+    // Custom property herda, então declarar no ancestral basta.
+    .Page.DiscussionPage {
+      --disc-side-col: calc(var(--lrbl-column-width, 150px) - var(--disc-gap));
+    }
   }
 
   // Arranjos "centered" e "grid" centralizam a pilha na coluna, então o avatar
