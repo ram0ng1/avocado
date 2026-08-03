@@ -12,6 +12,7 @@ import DiscussionListItem from 'flarum/forum/components/DiscussionListItem';
 import GlobalSearch from 'flarum/forum/components/GlobalSearch';
 import Search from 'flarum/forum/components/Search';
 import HeaderSecondary from 'flarum/forum/components/HeaderSecondary';
+import HeaderDropdown from 'flarum/forum/components/HeaderDropdown';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import IndexPage from 'flarum/forum/components/IndexPage';
 import CommentPost from 'flarum/forum/components/CommentPost';
@@ -2202,6 +2203,12 @@ app.initializers.add(
     // regardless of where the sticky Post-side is on screen.
     extend(CommentPost.prototype, 'sideItems', function (items) {
       if (!settingEnabled('avocadoFixedAvatarEffect')) return;
+      // linkrobins/badge-labels turns each badge into a labelled pill and lays the
+      // list out itself (below the avatar or beside the username). This clone is
+      // built from `user.badges()` directly, so it bypasses that patch entirely:
+      // rendering it would show the same badges a second time, unlabelled, inside
+      // a 64px box. The extension marks its presence with a class on <html>.
+      if (document.documentElement.classList.contains('lrBadgeLabels')) return;
       const user = this.attrs.post.user();
       if (!user) return;
       const badges = user.badges?.().toArray?.() ?? [];
@@ -3330,6 +3337,25 @@ app.initializers.add(
           if (plain) items.add('excerpt', <div>{truncate(plain, 175)}</div>, -100);
         }
       }
+    });
+
+    // ── 25. Phone: no dropdown flash before the notifications page ────────────
+    // Core's HeaderDropdown.onclick() navigates to the full page (goToRoute)
+    // when the drawer is open, but the toggle button still carries Bootstrap's
+    // data-toggle="dropdown". Bootstrap's delegated handler on `document` fires
+    // right after this onclick, so the bottom-sheet panel slides in for a frame
+    // until Page.oninit → app.drawer.hide() tears the drawer down. The result is
+    // the "small panel flashes, then the full page opens" the user sees.
+    //
+    // Stopping propagation here keeps the event from reaching Bootstrap, so only
+    // the route change happens. Mithril binds onclick directly on the button, so
+    // it runs in the target phase — before the document-level handler.
+    override(HeaderDropdown.prototype, 'onclick', function (original, e) {
+      if (!app.drawer?.isOpen?.()) return original(e);
+
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
+      this.goToRoute();
     });
 
     // ── Colored integration ───────────────────────────────────────────────────

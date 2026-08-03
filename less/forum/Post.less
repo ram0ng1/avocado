@@ -108,7 +108,9 @@
       display: none !important;
     }
 
-    .Post-header .PostUser > .PostUser-badges {
+    // `:not(.LrBadgeLabels-list)`: com linkrobins/badge-labels a lista é um flex
+    // container de pills — forçá-la a `inline` empilharia os itens fora de linha.
+    .Post-header .PostUser > .PostUser-badges:not(.LrBadgeLabels-list) {
       display: inline !important;
     }
   }

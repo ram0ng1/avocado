@@ -203,38 +203,19 @@ a.sr-only.sr-only-focusable-custom[href="#content"],
   }
 }
 
-// ─── Mobile: App-drawer dropdowns como painel inline ─────────────────────────
-// O core do Flarum (phone) coloca todos os .Dropdown-menu como position:fixed
-// bottom:0 (bottom sheet cobrindo o viewport). Dentro do .App-drawer isso é
-// inadequado — o menu deve abrir inline no painel.
+// ─── Mobile: App-drawer dropdowns usam o painel nativo do Flarum ─────────────
+// O core (phone) renderiza todo .Dropdown-menu como bottom sheet — position:
+// fixed, bottom:0, largura total, slide-up a partir de translate(0, 70vh) com
+// backdrop escurecendo o resto da tela. Esse é o painel nativo do Flarum 2 e é
+// o comportamento que queremos também dentro do .App-drawer.
 //
-// position:absolute → ancorado no .ButtonGroup (position:relative)
-// top:100%          → abre abaixo do botão
-// transform:none    → cancela o translate(0,70vh) do core
-// transition:visibility 0s → aparecimento imediato sem delay de 0.3s
-// backdrop display:none → remove o overlay do Bootstrap que bloqueava cliques
+// Não sobrescreva position/transform/backdrop aqui: um `position: absolute`
+// ancorado no .ButtonGroup transforma o painel num dropdown minúsculo no canto
+// superior do drawer, e `display:none` no .dropdown-backdrop tira o overlay que
+// fecha o menu ao tocar fora. O .App-drawer aberto tem `transform: none`, então
+// não cria containing block — o `position: fixed` do core resolve contra a
+// viewport corretamente.
 @media @phone {
-  .App-drawer .Dropdown .Dropdown-menu {
-    position: absolute !important;
-    top: 100% !important;
-    bottom: auto !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: auto !important;
-    max-height: 60vh;
-    overflow-y: auto;
-    padding-bottom: 0 !important;
-    transform: none !important;
-    transition: visibility 0s !important;
-    border: 1px solid var(--avocado-border-subtle, #eaeaf0);
-    border-radius: 10px;
-    box-shadow: 0 4px 16px rgba(26, 26, 36, 0.1);
-  }
-
-  .App-drawer .dropdown-backdrop {
-    display: none !important;
-  }
-
   // HeaderList footer ("View all …" link) inside drawer dropdowns:
   // core only styles this on @tablet-up; on phone just center the button.
   .App-drawer .HeaderList-footer {
