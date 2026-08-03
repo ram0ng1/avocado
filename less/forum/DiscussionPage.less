@@ -540,6 +540,45 @@
   }
 }
 
+// ── Desktop: largura da coluna de leitura ─────────────────────────────────────
+// Mesma medida do tema irmão dfs. O `min()` faz a página encostar nas margens da
+// janela enquanto ela for menor que o teto, então o ganho de espaço vale em
+// qualquer tela e não só nas bem largas.
+//
+// Vale nas DUAS opções de estilo de discussão — a variante editorial
+// (forum/DiscussionEditorial.less) acrescenta a corrente por cima disto, não
+// outra largura.
+//
+// ATENÇÃO: a expressão vai escapada (`~"..."`). Sem isso o LESS resolve o
+// `100% - 48px` em tempo de compilação e emite `52%` — a página sai MAIS
+// estreita em vez de mais larga.
+@media @desktop-up {
+  .Page.DiscussionPage {
+    --disc-max-width: 1440px;
+
+    .Page-container.container {
+      max-width: ~"min(var(--disc-max-width), calc(100% - 48px))";
+      width: 100%;
+    }
+
+    // Os posts tomam a largura que sobra; o recuo à direita é o vão até a
+    // coluna lateral.
+    .Page-content {
+      max-width: none;
+      width: auto;
+      margin: 0;
+      flex: 1 1 auto;
+      min-width: 0;
+      padding: 0 44px 0 24px;
+    }
+
+    .Page-sidebar {
+      flex: 0 0 176px;
+      width: 176px;
+    }
+  }
+}
+
 // ── Desktop: sticky avatar variant ────────────────────────────────────────────
 @media @desktop-up {
   .Page.DiscussionPage {

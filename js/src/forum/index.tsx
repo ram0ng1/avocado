@@ -2195,14 +2195,47 @@ app.initializers.add(
       attrs.className = `${attrs.className || ''} CommentPost--fixedAvatar`;
     });
 
+    // ── 18a. Posição dos badges de grupo no post ──────────────────────────────
+    // O setting vira classes no <html>, e todo o desenho é CSS (ver
+    // forum/PostBadges.less — a cápsula sai de `content: attr(aria-label)`, sem
+    // reconstruir lista nenhuma). A classe vai na raiz, não no elemento da
+    // página: o valor é do fórum inteiro, não muda de rota para rota, e a raiz
+    // não é gerenciada pelo Mithril, então nenhum redraw pode apagá-la.
+    //
+    // Só as posições fora do padrão ganham classe — 'inline' é o estado natural
+    // das regras. 'side_icons' leva as DUAS: `--side` traz a coluna larga e a
+    // troca de lista, `--side-icons` é só o modificador (fila em vez de pilha,
+    // disco em vez de cápsula).
+    {
+      const badgePosition = (): string => String(app.forum?.attribute('avocadoPostBadgePosition') || 'inline');
+      const syncBadgePositionClass = () => {
+        const pos = badgePosition();
+        const root = document.documentElement.classList;
+        root.toggle('avocado-badges--below', pos === 'below');
+        root.toggle('avocado-badges--side', pos === 'side' || pos === 'side_icons');
+        root.toggle('avocado-badges--side-icons', pos === 'side_icons');
+      };
+      // beforeMount roda depois de app.forum existir e antes do primeiro render.
+      app.beforeMount(syncBadgePositionClass);
+    }
+
     // ── 18b. CommentPost sideItems: wrap avatar + badges in position:relative div ─
     // position:sticky does NOT create a containing block for position:absolute
     // children. So we wrap both avatar and badges in a single div with
     // position:relative, then absolutely-position the badge inside that wrapper.
     // This guarantees the badge always overlaps the top corner of the avatar,
     // regardless of where the sticky Post-side is on screen.
+    //
+    // Duas coisas pedem este clone, e por motivos diferentes:
+    //   - o efeito de avatar fixo, para ancorar o badge no canto da foto;
+    //   - as posições "embaixo do avatar" (§18a), que precisam da lista DENTRO
+    //     do .Post-side — o <ul> do cabeçalho não tem como ser movido para lá
+    //     por CSS.
+    // Elas são independentes: dá para querer os badges na coluna sem o avatar
+    // fixo. Por isso o guarda testa as duas, e não só a primeira.
     extend(CommentPost.prototype, 'sideItems', function (items) {
-      if (!settingEnabled('avocadoFixedAvatarEffect')) return;
+      const badgesInSideColumn = ['side', 'side_icons'].includes(String(app.forum?.attribute('avocadoPostBadgePosition') || 'inline'));
+      if (!settingEnabled('avocadoFixedAvatarEffect') && !badgesInSideColumn) return;
       // linkrobins/badge-labels turns each badge into a labelled pill and lays the
       // list out itself (below the avatar or beside the username). This clone is
       // built from `user.badges()` directly, so it bypasses that patch entirely:

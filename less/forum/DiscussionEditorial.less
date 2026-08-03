@@ -1,0 +1,166 @@
+// ─── Página de discussão — variante "editorial" ──────────────────────────────
+//
+// Segunda opção para a página de discussão, portada do tema irmão dfs
+// (workbench/dfs/less/forum/DiscussionV2.less). O que ela muda:
+//
+//   1. Uma coluna de leitura mais larga (a mesma medida do dfs).
+//   2. O fio da conversa vira uma CORRENTE: uma hairline de 2px descendo pelo
+//      eixo da coluna do avatar, com cada avatar opaco virando um nó sobre ela e
+//      cada marcador de intervalo de tempo virando uma estação rotulada.
+//
+// O HERO NÃO É TOCADO. Ele continua sendo o hero padrão do avocado nas duas
+// opções — faixa alta, wash na cor da tag, decoração, participantes. A primeira
+// versão desta variante achatava o hero também; saiu a pedido.
+//
+// Ligada pelo atributo que o Content\DiscussionStyle escreve em <html> antes do
+// primeiro paint (mesmo padrão do logo e do spinner — sem flash):
+//
+//     html[data-avocado-disc-style="editorial"]
+//
+// Sem o atributo nada aqui casa, e a página de discussão de hoje fica intacta.
+//
+// ── Recorte de breakpoint ────────────────────────────────────────────────────
+// Desktop apenas, que é onde o dfs também liga a corrente: no tablet a coluna do
+// avatar encolhe para 40px e o eixo fica apertado demais para os nós respirarem.
+// Telefone e tablet ficam exatamente com a página de hoje.
+@media @desktop-up {
+  html[data-avocado-disc-style="editorial"] {
+    .Page.DiscussionPage {
+      // A LARGURA da coluna não mora mais aqui: ela virou base da página de
+      // discussão (forum/DiscussionPage.less), valendo nas duas opções.
+      //
+      // Recuo interno do post. O core dá `padding: var(--post-padding)` ao
+      // .Post mas com padding-LEFT zero; o tema só devolve o recuo esquerdo nos
+      // posts com fixedAvatar. Declarado aqui como token porque a corrente, o
+      // EventPost e o CTA de visitante precisam TODOS do mesmo valor para cair
+      // no mesmo eixo — e logo abaixo ele é aplicado a todo CommentPost, para
+      // que o eixo não dependa de o fixedAvatar estar ligado ou não.
+      --disc-post-pad: var(--post-padding, 20px);
+
+      // Largura da coluna do avatar. Por padrão ela mede o próprio avatar, mas
+      // o linkrobins/badge-labels a alarga quando põe as pills embaixo do avatar
+      // (ver forum/extensions/BadgeLabels.less, que sobrescreve este token).
+      --disc-side-col: var(--disc-avatar);
+
+      // Eixo da corrente = centro da COLUNA, não `recuo + meio avatar`. Os dois
+      // coincidem enquanto a coluna mede o avatar; quando ela é alargada o
+      // avatar passa a ser centrado nela e só o centro da coluna continua
+      // acompanhando. Sai da conta em vez de um pixel fixo justamente para isso.
+      --disc-spine-x: calc(var(--disc-post-pad) + var(--disc-side-col) / 2);
+
+    }
+
+    // Sem o recuo em TODO post o eixo mudaria de lugar conforme o fixedAvatar.
+    .Page.DiscussionPage .CommentPost {
+      padding-left: var(--disc-post-pad);
+    }
+
+    // ── A linha ─────────────────────────────────────────────────────────────
+    // Pintada como background do stream para ficar ATRÁS de tudo: os discos
+    // opacos dos avatares viram nós sobre ela sem nenhuma briga de z-index.
+    // `background-position` recua 1px porque a linha tem 2px de largura e o
+    // eixo é o centro dela.
+    .Page.DiscussionPage .PostStream {
+      position: relative;
+      background-image: linear-gradient(
+        var(--avocado-border-subtle, #eaeaf0),
+        var(--avocado-border-subtle, #eaeaf0)
+      );
+      background-repeat: no-repeat;
+      background-position: calc(var(--disc-spine-x) - 1px) 0;
+      background-size: 2px 100%;
+    }
+
+    // Anel na cor do fundo em volta de cada avatar: é ele que faz a corrente
+    // parecer passar limpa POR TRÁS do nó em vez de encostar na borda. Vale para
+    // TODOS os avatares, inclusive o do autor do tópico.
+    //
+    // O dfs destaca o autor do tópico com um segundo anel, na cor primária. Aqui
+    // ele não existe: em fóruns de primária escura o anel lê como uma borda
+    // preta em volta da foto. O "OP" já é marcado pelo selo ao lado do nome.
+    .Page.DiscussionPage .CommentPost .Post-side .Avatar,
+    .Page.DiscussionPage .CommentPost .Post-side a .Avatar {
+      box-shadow: 0 0 0 3px var(--body-bg);
+    }
+
+    // O EventPost ("fulano fixou a discussão") não herda o recuo do post comum,
+    // então sua coluna de ícone nascia colada na borda e o ícone caía à esquerda
+    // da linha, torto em relação a todos os outros nós.
+    .Page.DiscussionPage .EventPost .Post-container {
+      padding-left: var(--disc-post-pad);
+    }
+
+    .Page.DiscussionPage .EventPost .EventPost-icon {
+      box-shadow: 0 0 0 3px var(--body-bg);
+      background: var(--control-bg);
+    }
+
+    // Intervalo de tempo → uma estação na corrente: um nó e o rótulo à direita
+    // dele, no lugar das hairlines laterais do core.
+    .Page.DiscussionPage .PostStream-timeGap {
+      position: relative;
+      display: block;
+      margin: 8px 0;
+      padding: 8px 0 8px calc(var(--disc-spine-x) + 16px);
+      text-align: left;
+      font: 800 10.5px/1 'DM Sans Variable', 'DM Sans', sans-serif;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--muted-color);
+      background: none;
+      border: none;
+
+      // Mata as hairlines que o core desenha dos dois lados do rótulo.
+      &::after {
+        border: none !important;
+        background: none !important;
+        content: none !important;
+      }
+
+      // O nó: 12px de diâmetro centrado no mesmo eixo da linha.
+      &::before {
+        content: '';
+        position: absolute;
+        left: calc(var(--disc-spine-x) - 6px);
+        top: 50%;
+        transform: translateY(-50%);
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--body-bg);
+        border: 2px solid var(--avocado-border-subtle, #eaeaf0);
+        display: block;
+      }
+
+      // O rótulo mascara a linha logo atrás do texto.
+      span {
+        background: var(--body-bg);
+        padding: 0 2px;
+      }
+    }
+
+    // As pills de tag dentro do primeiro post saem: no fio elas repetem o que o
+    // hero já mostra logo acima, e ocupam a linha em que o título do tópico
+    // deveria abrir a leitura.
+    .Page.DiscussionPage .PostStream .AvocadoThreads-tagRow {
+      display: none;
+    }
+
+    // O convite ao visitante começava na coluna do avatar, ou seja, EM CIMA da
+    // corrente — a hairline entrava por baixo da borda do cartão e reaparecia
+    // embaixo. Ele passa a começar onde começa o corpo do post, à direita da
+    // linha, como qualquer texto do fio. A conta sai do próprio eixo, então
+    // acompanha a coluna larga do modo "badges embaixo do avatar":
+    // eixo × 2 − recuo = borda direita da coluna; mais o vão até o corpo.
+    .Page.DiscussionPage .AvocadoPostCta-wrapper {
+      padding-left: calc(2 * var(--disc-spine-x) - var(--disc-post-pad) + var(--disc-gap));
+    }
+
+    // A pré-visualização do composer é um `.CommentPost.editing` de verdade, mas
+    // sem `--fixedAvatar`. Já recebe o recuo pela regra de .CommentPost acima;
+    // aqui só garantimos que ela não fique fora do eixo se o core mudar.
+    .Page.DiscussionPage .CommentPost.editing {
+      padding-left: var(--disc-post-pad);
+    }
+  }
+}

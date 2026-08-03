@@ -17,6 +17,30 @@ ramon-avocado:
       section_colored: Cores
       section_team: Página Equipe
       section_hero_image_tags: Imagem do hero nas discussões
+      section_discussion: Página de discussão
+
+      # Estilo da página de discussão
+      disc_style_label: Estilo da página de discussão
+      disc_style_help: >
+        O padrão é a página de hoje. O editorial alarga a coluna de leitura e costura a
+        conversa com uma corrente — uma linha fina descendo pela coluna do avatar, com cada
+        avatar virando um nó sobre ela e cada intervalo de tempo virando uma estação com
+        rótulo. O cabeçalho é o mesmo nos dois. Só no desktop — telefone e tablet ficam com
+        a página de hoje de qualquer forma.
+      disc_style_default: Padrão
+      disc_style_editorial: Editorial (corrente da conversa)
+
+      # Posição do badge de grupo no post
+      post_badge_position_label: Posição do badge de grupo no post
+      post_badge_position_help: >
+        Onde os badges de grupo do membro ficam no post. Qualquer opção fora da sobreposição
+        transforma cada badge numa cápsula com o nome do grupo ao lado do ícone. Funciona com
+        o efeito de avatar fixo ligado ou desligado. No telefone a sobreposição compacta vale
+        sempre.
+      post_badge_position_inline: Ao lado do nome
+      post_badge_position_below: Abaixo do nome (linha própria)
+      post_badge_position_side: Embaixo do avatar (coluna esquerda)
+      post_badge_position_side_icons: Embaixo do avatar — só ícones, lado a lado
 
       # Featured / categories on homepage
       featured_tags_label: Categorias em destaque
