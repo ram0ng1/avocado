@@ -664,8 +664,15 @@
 // ── PostUser-badges — desktop/tablet ─────────────────────────────────────────
 // fixedAvatar OFF: badges no Post-header vão direto no flow
 // fixedAvatar ON : badges do Post-header ficam ocultas, JS cria um clone em Post-side
+//
+// `:not(.LrBadgeLabels-list)` isenta a lista quando linkrobins/badge-labels está
+// ativo: lá cada badge vira uma pill com título e a extensão posiciona a lista
+// sozinha, então sobrepor o overlay no avatar (ou escondê-la) só quebraria o
+// layout dela. Um :not() em vez de um prefixo em <html> porque ele mantém a
+// especificidade compatível com a regra do clone --inSide logo abaixo (0,4,0),
+// que precisa continuar ganhando desta. Ver forum/extensions/BadgeLabels.less.
 @media @tablet-up {
-  .Page.DiscussionPage .PostUser-badges {
+  .Page.DiscussionPage .PostUser-badges:not(.LrBadgeLabels-list) {
     position: absolute;
     left: calc(83px - var(--disc-avatar) - var(--disc-gap));
     white-space: nowrap;
@@ -673,7 +680,7 @@
   }
 
   // Quando fixed avatar está ativo, esconde o badges original do Post-header
-  .Page.DiscussionPage .CommentPost--fixedAvatar .Post-header .PostUser-badges {
+  .Page.DiscussionPage .CommentPost--fixedAvatar .Post-header .PostUser-badges:not(.LrBadgeLabels-list) {
     display: none !important;
   }
 
@@ -746,6 +753,13 @@
   }
 }
 
+// Ambos os blocos @phone abaixo ficam sob `html:not(.lrBadgeLabels--phone)`:
+// com o badge-labels configurado para valer no telefone, a extensão renderiza
+// as pills em linha no header e posiciona a lista sozinha — o overlay sobre o
+// avatar sobreporia tudo num quadrado de 32px. O guarda entra nos dois blocos
+// (e não só no de baixo) para que a especificidade relativa entre eles não mude:
+// ambos ganham o mesmo +0,1,1 e a regra de edição continua vencendo.
+html:not(.lrBadgeLabels--phone) {
 @media @phone {
   // Phone hides .Post-side entirely (see @phone rule for .CommentPost
   // .Post-side); the badge inside PostUser-name renders inline in the header.
@@ -780,6 +794,7 @@
     pointer-events: none;
   }
 }
+} // /html:not(.lrBadgeLabels--phone)
 
 // ── Post header — .Page.DiscussionPage .Post-header has 0,3,0 vs Flarum's 0,1,0
 .Page.DiscussionPage .Post-header {

@@ -1,0 +1,115 @@
+// ─── linkrobins/badge-labels ──────────────────────────────────────────────────
+//
+// A extensão transforma cada badge do autor numa pill (ícone na ponta redonda
+// esquerda, título na direita, na cor do próprio badge) e escolhe onde a lista
+// mora: "below" (coluna do avatar) ou "beside" (na linha do nome). Ela marca
+// tudo em <html>: .lrBadgeLabels, --labels, --postCount, --below, --beside,
+// --column, --wide, --phone, --discussions, --v2.
+//
+// Nada aqui vale quando a extensão está desabilitada — todo seletor depende de
+// uma dessas classes, que só existem se o bundle dela rodar.
+//
+// As regras do tema que brigavam com ela já se isentam na origem:
+//   - forum/DiscussionPage.less  → `:not(.LrBadgeLabels-list)` no overlay sobre
+//     o avatar e no hide do fixedAvatar; `html:not(.lrBadgeLabels--phone)` nos
+//     blocos de telefone.
+//   - forum/Post.less            → `:not(.LrBadgeLabels-list)` no `display:inline`.
+//   - js/src/forum/index.tsx     → o clone --inSide não é renderizado.
+//
+// O que sobra e é resolvido aqui é a coluna do autor: o tema substitui a grid
+// do core (--avatar-column-width) pelos seus próprios tokens --disc-avatar /
+// --disc-gap, então widening que a extensão faz em --avatar-column-width não
+// chega na página de discussão. Sem isso a pilha de pills é puxada para fora do
+// post pelo `margin-left: calc(5px - var(--avatar-column-width))` do core.
+
+// ── Layout "below": a coluna do autor precisa caber as pills ──────────────────
+// A extensão pede a largura em --lrbl-column-width e já aponta o
+// --avatar-column-width do core para ela. Aqui a grid do tema passa a medir o
+// mesmo: a coluna vale a largura pedida MENOS o gap, para que a coluna de
+// conteúdo comece exatamente em --lrbl-column-width e a conta do core
+// (`5px - --avatar-column-width`) caia a 5px da borda esquerda do post.
+//
+// Especificidade: html + 5 classes (0,5,1) para passar por cima tanto da grid
+// base (.Page.DiscussionPage .CommentPost .Post-container, 0,4,0) quanto da
+// variante fixedAvatar (0,5,0).
+@media @tablet-up {
+  html.lrBadgeLabels--wide {
+    .Page.DiscussionPage .CommentPost .Post-container {
+      grid-template-columns: calc(var(--lrbl-column-width, 150px) - var(--disc-gap)) 1fr;
+    }
+
+    // A coluna do avatar acompanha a grid, senão o Post-side continua com a
+    // largura do avatar e o `justify-content` abaixo não teria o que alinhar.
+    .Page.DiscussionPage .CommentPost .Post-side {
+      width: calc(var(--lrbl-column-width, 150px) - var(--disc-gap));
+      // O avatar em si continua com --disc-avatar (regra .Post-side .Avatar do
+      // tema): só a caixa que o contém é que cresce.
+      justify-content: flex-start;
+      // O core recua a pilha 5px da borda da coluna (`margin-left: calc(5px -
+      // --avatar-column-width)`). O avatar recebe o mesmo recuo para os dois
+      // compartilharem a borda esquerda em vez de ficarem 5px defasados.
+      padding-left: 5px;
+    }
+  }
+
+  // Arranjos "centered" e "grid" centralizam a pilha na coluna, então o avatar
+  // vai junto — parado na esquerda ele leria como avatar fora do lugar. A
+  // extensão faz isso com text-align/padding no .Post-side, que não pega num
+  // flex container (o tema torna o Post-side flex), daí o justify-content.
+  html.lrBadgeLabels--wide.lrBadgeLabels--centered .Page.DiscussionPage .CommentPost .Post-side {
+    justify-content: center;
+  }
+
+  html.lrBadgeLabels--column {
+    // A extensão ancora a pilha em --lrbl-avatar-offset, que ela calcula como
+    // "64px de avatar + o espaço que o admin pediu". O avatar do tema não tem
+    // 64px: ele mede --disc-avatar e encolhe por breakpoint. Trocar os 64px pelo
+    // token do tema mantém exatamente o espaço configurado, agora medido a
+    // partir do avatar certo — senão sobra um vão de ~16px no desktop.
+    //
+    // O bloco container é o .Post-header nos dois modos (o tema o deixa
+    // position:relative e display:flex, vencendo o display:contents que o
+    // fixedAvatar aplicaria), e ele começa no topo do conteúdo do post, na mesma
+    // linha em que o avatar começa — então a conta é direta.
+    // Os 4px são o anel do avatar: a regra .Post-side .Avatar do tema desenha
+    // `border: 2px` de cada lado, então a caixa renderizada mede --disc-avatar
+    // mais 4px. Sem eles a primeira pill encosta no avatar.
+    .Page.DiscussionPage .CommentPost .PostUser-badges.LrBadgeLabels-list:not(.LrBadgeLabels-list--header) {
+      top: calc(var(--disc-avatar) + 4px + var(--lrbl-avatar-offset, 68px) - 64px);
+    }
+
+    // O avatar sticky do tema (avocadoFixedAvatarEffect) faz o avatar acompanhar
+    // a rolagem dentro de posts longos. A pilha de badges é absoluta dentro do
+    // .Post-header, então ela NÃO acompanha: o avatar desgruda e passa por cima
+    // das pills. Com badges na coluna o conjunto avatar + pills lê como um bloco
+    // só, então aqui o avatar volta a ser estático. Os demais efeitos do
+    // fixedAvatar (a grid, o alinhamento) seguem valendo.
+    .Page.DiscussionPage .CommentPost.CommentPost--fixedAvatar .Post-side {
+      position: relative;
+      top: auto;
+    }
+  }
+}
+
+// ── Telefone ─────────────────────────────────────────────────────────────────
+// Com --phone ligado a extensão põe as pills em linha no header do post. O tema
+// já se isenta do overlay sobre o avatar (guarda em DiscussionPage.less), mas a
+// regra de edição e a base do core ainda deixam a lista absoluta em alguns
+// caminhos; aqui ela é devolvida ao fluxo, que é o que a extensão espera.
+@media @phone {
+  html.lrBadgeLabels--phone .Page.DiscussionPage .PostUser .PostUser-badges.LrBadgeLabels-list {
+    position: static;
+    top: auto;
+    left: auto;
+    width: auto;
+    pointer-events: auto;
+  }
+}
+
+// ── Sem regras para os badges de discussão ("--discussions") ─────────────────
+// Essa opção da extensão age no DiscussionListItem e no DiscussionHero do core.
+// Nenhum dos dois chega a renderizar aqui: o tema troca toda lista de discussão
+// pelos seus próprios cards e sobrescreve DiscussionHero.view inteiro, desenhando
+// as pills de fixado/trancado por conta própria. Ligar a opção no admin não
+// quebra nada — simplesmente não tem onde aparecer. Verificado em /, /all,
+// /discussions, /t/<tag> e /search: zero .DiscussionListItem no DOM.

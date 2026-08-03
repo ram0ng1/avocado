@@ -119,6 +119,15 @@ class AddCriticalCss
                 '.App-backControl{left:0}' .
             '}';
 
+        // NOTE: `contain:layout` on `.App-header` is scoped to tablet-up (768px+).
+        // On phone the header is rendered INSIDE the `.App-drawer`, and `contain`
+        // makes the element a containing block for `position:fixed` descendants.
+        // Flarum's phone dropdowns are bottom sheets (`position:fixed;bottom:0;
+        // left:0;right:0`) — trapped inside the header box they collapse into a
+        // tiny panel anchored to the drawer's top-left instead of sliding up over
+        // the viewport. The header is also the drawer's stacking context there,
+        // which is what forced the `.App-titleControl` visibility workaround above.
+        //
         // NOTE: `.App` MUST use `min-height:100vh`, never `height:100%`.
         // Core's sticky-footer layout makes `.App` a flex column whose `.App-content`
         // child has `flex:1`. With a definite `height` the `.App` box is capped to the
@@ -136,7 +145,7 @@ class AddCriticalCss
         *,*::before,*::after{box-sizing:border-box}
         .App{display:flex;flex-direction:column;min-height:100vh}
         .App-content{flex:1 1 auto;min-width:0}
-        .App-header{display:flex;contain:layout}@media(min-width:768px){.App-header{height:52px;min-height:52px}}
+        .App-header{display:flex}@media(min-width:768px){.App-header{height:52px;min-height:52px;contain:layout}}
         {$logoReservation}
         {$logoTitleCss}
         {$mobileNavCss}
