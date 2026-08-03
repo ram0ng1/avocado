@@ -602,10 +602,7 @@ app.initializers.add('ramon-avocado', (app) => {
               inline: trans('ramon-avocado.admin.settings.post_badge_position_inline', 'Beside the username'),
               below: trans('ramon-avocado.admin.settings.post_badge_position_below', 'Below the username (own line)'),
               side: trans('ramon-avocado.admin.settings.post_badge_position_side', 'Under the avatar (left column)'),
-              side_icons: trans(
-                'ramon-avocado.admin.settings.post_badge_position_side_icons',
-                'Under the avatar — icons only, side by side'
-              ),
+              side_icons: trans('ramon-avocado.admin.settings.post_badge_position_side_icons', 'Under the avatar — icons only, side by side'),
             }}
             default="inline"
           />
