@@ -566,6 +566,33 @@ app.initializers.add('ramon-avocado', (app) => {
       45
     )
 
+    // ── Discussion page ──────────────────────────────────────────────────────────
+    // Which hero the discussion page draws. "Editorial" is the flat, low band
+    // ported from the dfs theme; it only takes over from tablet up, so the phone
+    // keeps today's hero either way. The CSS is gated by an attribute written on
+    // <html> before the first paint (Content\DiscussionHeroStyle) so switching
+    // never flashes the other hero first.
+    .registerSetting(
+      () => (
+        <AdminCard title={trans('ramon-avocado.admin.settings.section_discussion', 'Discussion page')} icon="fas fa-comments">
+          <AdminSelect
+            settingKey="avocado.discussion_hero_style"
+            label={trans('ramon-avocado.admin.settings.disc_hero_style_label', 'Discussion header style')}
+            help={trans(
+              'ramon-avocado.admin.settings.disc_hero_style_help',
+              'Default is the tall header washed in the tag colour. Editorial is a low, flat band: body background, hairline underneath, smaller title, and the stats on the line below. Discussions with a cover image keep the image header in both. Phones keep the default header either way.'
+            )}
+            options={{
+              default: trans('ramon-avocado.admin.settings.disc_hero_style_default', 'Default (tag colour)'),
+              editorial: trans('ramon-avocado.admin.settings.disc_hero_style_editorial', 'Editorial (flat)'),
+            }}
+            default="default"
+          />
+        </AdminCard>
+      ),
+      43
+    )
+
     // ── Discussion hero image ────────────────────────────────────────────────────
     // Picks which tags trigger an "upload an image" prompt in the composer.
     // Each discussion stores its own image (column added by the migration), and

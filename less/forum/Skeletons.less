@@ -302,6 +302,56 @@
   }
 
 
+  // ── Variante editorial do hero ──────────────────────────────────────────────
+  // O skeleton só serve se tiver a altura e o ritmo do hero que vai substituí-lo
+  // — senão o conteúdo real entra e a página pula. Com a opção editorial ligada
+  // (forum/DiscussionHeroEditorial.less) o hero é uma faixa baixa e plana, então
+  // o skeleton acompanha: mesmo padding, botão "Voltar" como pill, título menor,
+  // sem pilha de participantes e sem os ícones de decoração.
+  //
+  // Mesmo recorte de breakpoint da variante: de tablet pra cima. No telefone o
+  // hero continua o padrão, e o skeleton também.
+  @media @tablet-up {
+    html[data-avocado-disc-hero="editorial"] & {
+      .AvocadoSkeleton-heroInner {
+        padding: 22px 24px 20px;
+      }
+
+      .AvocadoSkeleton-nav {
+        margin-bottom: 12px;
+      }
+
+      // Pill fantasma no lugar do círculo de 34px.
+      .AvocadoSkeleton-backBtn {
+        width: 78px;
+        height: 30px;
+        border-radius: 999px;
+      }
+
+      // clamp(24px, 3vw, 33px) com line-height 1.14 → a linha fica na casa dos
+      // 28-38px; 30px é o meio dessa faixa e é o que o título ocupa na largura
+      // de leitura mais comum.
+      .AvocadoSkeleton-title {
+        height: 30px;
+        margin-top: 8px;
+      }
+
+      // A variante esconde .DiscussionHero-participants e o contador do hero:
+      // quem carrega os números é o AvocadoDiscussionStats, uma linha de chips.
+      .AvocadoSkeleton-avatarStack {
+        display: none;
+      }
+
+      .AvocadoSkeleton-meta {
+        margin-top: 12px;
+      }
+
+      .AvocadoSkeleton-decoContainer {
+        display: none;
+      }
+    }
+  }
+
   // ── Decoration icon skeleton ──────────────────────────────────────────────────
   // Count mirrors the admin setting (1 or 2). Mirrors .DiscussionHero-decorationsContainer.
   .AvocadoSkeleton-decoContainer {

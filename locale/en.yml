@@ -17,6 +17,17 @@ ramon-avocado:
       section_colored: Colored
       section_team: Team Page
       section_hero_image_tags: Hero image on discussions
+      section_discussion: Discussion page
+
+      # Discussion header style
+      disc_hero_style_label: Discussion header style
+      disc_hero_style_help: >
+        Default is the tall header washed in the tag colour. Editorial is a low, flat band:
+        body background, hairline underneath, smaller title, and the stats on the line below.
+        Discussions with a cover image keep the image header in both. Phones keep the default
+        header either way.
+      disc_hero_style_default: Default (tag colour)
+      disc_hero_style_editorial: Editorial (flat)
 
       # Featured / categories on homepage
       featured_tags_label: Featured Categories

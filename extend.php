@@ -30,6 +30,7 @@ return [
         ->content(\Ramon\Avocado\Content\AddHeroBannerPreload::class)
         ->content(\Ramon\Avocado\Content\CustomLoadingSpinner::class)
         ->content(\Ramon\Avocado\Content\HideLogoFlash::class)
+        ->content(\Ramon\Avocado\Content\DiscussionHeroStyle::class)
         // No CSS-deferral injector here: Flarum core already emits async CSS
         // natively (warm-visit cache + <link rel="preload" onload>); a custom
         // deferral only duplicated <noscript>/<link> tags.
@@ -178,6 +179,12 @@ return [
         ->serializeToForum('avocadoShowShare', 'avocado.show_share', 'boolval')
         ->serializeToForum('avocadoShowActionIcons', 'avocado.show_action_icons', 'boolval')
         ->serializeToForum('avocadoFixedAvatarEffect', 'avocado.fixed_avatar_effect', 'boolval')
+        // 'default' = o hero de sempre (faixa alta, wash na cor da tag).
+        // 'editorial' = a faixa plana portada do dfs. Serializado para o forum
+        // porque o skeleton precisa saber qual desenhar; o CSS em si é ligado
+        // pelo atributo em <html> que o Content\DiscussionHeroStyle escreve.
+        ->default('avocado.discussion_hero_style', 'default')
+        ->serializeToForum('avocadoDiscussionHeroStyle', 'avocado.discussion_hero_style')
         ->serializeToForum('avocadoHeroDecorationIcon', 'avocado.hero_decoration_icon', 'boolval')
         ->serializeToForum('avocadoHeroDecorationIconCount', 'avocado.hero_decoration_icon_count')
         ->serializeToForum('avocadoHeroDecorationIconOpacity', 'avocado.hero_decoration_icon_opacity')

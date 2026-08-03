@@ -17,6 +17,17 @@ ramon-avocado:
       section_colored: Cores
       section_team: Página Equipe
       section_hero_image_tags: Imagem do hero nas discussões
+      section_discussion: Página de discussão
+
+      # Estilo do cabeçalho da discussão
+      disc_hero_style_label: Estilo do cabeçalho da discussão
+      disc_hero_style_help: >
+        O padrão é o cabeçalho alto com a cor da tag ao fundo. O editorial é uma faixa baixa e
+        plana: fundo do corpo, uma linha fina embaixo, título menor e as estatísticas na linha
+        de baixo. Discussões com imagem de capa mantêm o cabeçalho com a imagem nos dois casos.
+        No telefone o cabeçalho continua sendo o padrão de qualquer forma.
+      disc_hero_style_default: Padrão (cor da tag)
+      disc_hero_style_editorial: Editorial (plano)
 
       # Featured / categories on homepage
       featured_tags_label: Categorias em destaque
