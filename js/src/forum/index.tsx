@@ -2202,15 +2202,22 @@ app.initializers.add(
     // página: o valor é do fórum inteiro, não muda de rota para rota, e a raiz
     // não é gerenciada pelo Mithril, então nenhum redraw pode apagá-la.
     //
-    // Só as posições fora do padrão ganham classe — 'inline' é o estado natural
-    // das regras. 'side_icons' leva as DUAS: `--side` traz a coluna larga e a
-    // troca de lista, `--side-icons` é só o modificador (fila em vez de pilha,
-    // disco em vez de cápsula).
+    // `--custom` é a chave geral: TODA regra de PostBadges.less pende dela, então
+    // o valor 'default' (desligado) sai sem classe nenhuma e o badge volta a ser
+    // o disco do core sobreposto ao avatar, que é o que o tema desenha em
+    // DiscussionPage.less. Desligar é o arquivo inteiro não valer, não um
+    // conjunto de regras desfazendo o outro.
+    //
+    // Das posições, só as fora do padrão ganham classe própria — 'inline' é o
+    // estado natural das regras, e para ela `--custom` basta. 'side_icons' leva
+    // as DUAS: `--side` traz a coluna larga e a troca de lista, `--side-icons` é
+    // só o modificador (fila em vez de pilha, disco em vez de cápsula).
     {
       const badgePosition = (): string => String(app.forum?.attribute('avocadoPostBadgePosition') || 'inline');
       const syncBadgePositionClass = () => {
         const pos = badgePosition();
         const root = document.documentElement.classList;
+        root.toggle('avocado-badges--custom', pos !== 'default');
         root.toggle('avocado-badges--below', pos === 'below');
         root.toggle('avocado-badges--side', pos === 'side' || pos === 'side_icons');
         root.toggle('avocado-badges--side-icons', pos === 'side_icons');

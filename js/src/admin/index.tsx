@@ -596,9 +596,10 @@ app.initializers.add('ramon-avocado', (app) => {
             label={trans('ramon-avocado.admin.settings.post_badge_position_label', 'Group badge position in posts')}
             help={trans(
               'ramon-avocado.admin.settings.post_badge_position_help',
-              'Where a member’s group badges sit in a post. Any option other than the overlay turns each badge into a capsule with the group name beside its icon. Works with the fixed avatar effect on or off. Phones always keep the compact overlay.'
+              'Where a member’s group badges sit in a post. The first option turns the custom badge off: back to Flarum’s round badge overlapping the avatar. Every other option turns each badge into a capsule with the group name beside its icon. Works with the fixed avatar effect on or off. Phones always keep the compact overlay.'
             )}
             options={{
+              default: trans('ramon-avocado.admin.settings.post_badge_position_default', 'Flarum default (off — disc over the avatar)'),
               inline: trans('ramon-avocado.admin.settings.post_badge_position_inline', 'Beside the username'),
               below: trans('ramon-avocado.admin.settings.post_badge_position_below', 'Below the username (own line)'),
               side: trans('ramon-avocado.admin.settings.post_badge_position_side', 'Under the avatar (left column)'),

@@ -187,10 +187,11 @@ return [
         // Content\DiscussionStyle escreve antes do primeiro paint.
         ->default('avocado.discussion_style', 'default')
         ->serializeToForum('avocadoDiscussionStyle', 'avocado.discussion_style')
-        // Onde os badges de grupo aparecem no post: 'inline' (ao lado do nome),
-        // 'below' (linha própria), 'side' (embaixo do avatar) ou 'side_icons'
-        // (embaixo do avatar, só ícones). O forum bundle converte isso nas
-        // classes .avocado-badges--* em <html>; ver forum/PostBadges.less.
+        // Onde os badges de grupo aparecem no post: 'default' (camada desligada —
+        // disco do core sobre o avatar), 'inline' (ao lado do nome), 'below'
+        // (linha própria), 'side' (embaixo do avatar) ou 'side_icons' (embaixo do
+        // avatar, só ícones). O forum bundle converte isso nas classes
+        // .avocado-badges--* em <html>; ver forum/PostBadges.less.
         ->default('avocado.post_badge_position', 'inline')
         ->serializeToForum('avocadoPostBadgePosition', 'avocado.post_badge_position')
         ->serializeToForum('avocadoHeroDecorationIcon', 'avocado.hero_decoration_icon', 'boolval')
