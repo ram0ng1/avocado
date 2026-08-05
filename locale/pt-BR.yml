@@ -33,10 +33,12 @@ ramon-avocado:
       # Posição do badge de grupo no post
       post_badge_position_label: Posição do badge de grupo no post
       post_badge_position_help: >
-        Onde os badges de grupo do membro ficam no post. Qualquer opção fora da sobreposição
+        Onde os badges de grupo do membro ficam no post. A primeira opção desliga o badge
+        personalizado: volta o badge redondo do Flarum sobreposto ao avatar. Qualquer outra
         transforma cada badge numa cápsula com o nome do grupo ao lado do ícone. Funciona com
         o efeito de avatar fixo ligado ou desligado. No telefone a sobreposição compacta vale
         sempre.
+      post_badge_position_default: Padrão do Flarum (desligado — disco sobre o avatar)
       post_badge_position_inline: Ao lado do nome
       post_badge_position_below: Abaixo do nome (linha própria)
       post_badge_position_side: Embaixo do avatar (coluna esquerda)
