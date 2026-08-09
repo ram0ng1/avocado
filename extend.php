@@ -15,6 +15,7 @@ use Flarum\Api\Endpoint;
 use Flarum\Extend;
 use Ramon\Avocado\AvocadoServiceProvider;
 use Ramon\Avocado\Middleware\AddPerfHeaders;
+use Ramon\Avocado\Support\BookmarksRoute;
 use Ramon\Avocado\Support\HtmlSanitizer;
 
 return [
@@ -39,8 +40,16 @@ return [
         // Preloads de dado — cada um sai cedo se não estiver na sua rota.
         ->content(\Ramon\Avocado\Content\PreloadTeamMembers::class)
         ->route('/discussions', 'avocado-discussions')
-        ->route('/search', 'avocado-search')
-        ->route('/bookmarks', 'avocado-bookmarks'),
+        ->route('/search', 'avocado-search'),
+
+    // A página "Salvos" só existe quando o fof/bookmarks não está ativo: duas
+    // rotas GET no mesmo `/bookmarks` derrubam o boot do Flarum inteiro
+    // (FastRoute\BadRouteException). Ver Support\BookmarksRoute.
+    (new Extend\Conditional())
+        ->whenExtensionDisabled(BookmarksRoute::CONFLICTING_EXTENSION_ID, fn () => [
+            (new Extend\Frontend('forum'))
+                ->route(BookmarksRoute::PATH, BookmarksRoute::ROUTE_NAME),
+        ]),
 
     (new Extend\Routes('forum'))
         ->get('/team', 'avocado-team', \Ramon\Avocado\Controller\TeamPageController::class),
@@ -129,20 +138,31 @@ return [
 
     (new Extend\ApiResource(\Flarum\Api\Resource\DiscussionResource::class))
         ->fields(\Ramon\Avocado\Api\DiscussionFields::class)
-        ->fields(\Ramon\Avocado\Api\BookmarkFields::class)
         // Eager-load the 1:1 hero companion so DiscussionFields' getters don't
         // fire one SELECT per discussion when serializing an Index payload.
-        // avocadoBookmark is scoped to the actor so `bookmarked` reads an
-        // in-memory (0|1)-row collection instead of one SELECT per discussion.
         ->endpoint(
             [Endpoint\Index::class, Endpoint\Show::class],
-            fn (Endpoint\Index|Endpoint\Show $endpoint) => $endpoint
-                ->eagerLoad('avocadoHero')
-                ->eagerLoadWhere('avocadoBookmark', function ($query, \Flarum\Api\Context $context) {
-                    $actor = $context->getActor();
-                    $query->where('user_id', $actor->isGuest() ? 0 : (int) $actor->id);
-                })
+            fn (Endpoint\Index|Endpoint\Show $endpoint) => $endpoint->eagerLoad('avocadoHero')
         ),
+
+    // Bookmarks do tema: campos e eager-load só existem quando o fof/bookmarks
+    // não está no comando. Cedendo, o tema para de serializar `avocadoBookmarked`
+    // e de carregar a relação por discussão — sem consulta morta em cada Index.
+    // avocadoBookmark é escopado ao ator, então o campo lê uma coleção de (0|1)
+    // linhas já em memória em vez de um SELECT por discussão.
+    (new Extend\Conditional())
+        ->whenExtensionDisabled(BookmarksRoute::CONFLICTING_EXTENSION_ID, fn () => [
+            (new Extend\ApiResource(\Flarum\Api\Resource\DiscussionResource::class))
+                ->fields(\Ramon\Avocado\Api\BookmarkFields::class)
+                ->endpoint(
+                    [Endpoint\Index::class, Endpoint\Show::class],
+                    fn (Endpoint\Index|Endpoint\Show $endpoint) => $endpoint
+                        ->eagerLoadWhere('avocadoBookmark', function ($query, \Flarum\Api\Context $context) {
+                            $actor = $context->getActor();
+                            $query->where('user_id', $actor->isGuest() ? 0 : (int) $actor->id);
+                        })
+                ),
+        ]),
 
     (new Extend\Routes('api'))
         ->post('/avocado/banner', 'avocado.banner.upload', \Ramon\Avocado\Controller\UploadBannerController::class)
@@ -223,6 +243,11 @@ return [
         ->serializeToForum('avocadoThreadsStyle', 'avocado.threads_style', 'boolval')
         ->serializeToForum('avocadoCustomLoadingSpinner', 'avocado.custom_loading_spinner', 'boolval')
         ->serializeToForum('avocadoBookmarksEnabled', 'avocado.bookmarks_enabled', 'boolval')
+        // Relógio de 12h (2:30 PM) ou 24h (14:30) nos horários que o tema
+        // desenha — hoje o seletor de lembrete e o horário no card salvo.
+        // 'auto' segue o locale do navegador de cada visitante, que é o que o
+        // input nativo fazia; '12'/'24' forçam o formato para o fórum todo.
+        ->serializeToForum('avocadoClockFormat', 'avocado.clock_format')
         ->serializeToForum('avocadoUserCardEnabled', 'avocado.user_card_enabled', 'boolval')
         ->serializeToForum('avocadoPresenceEnabled', 'avocado.presence_enabled', 'boolval')
         ->serializeToForum('avocadoCakedayEnabled', 'avocado.cakeday_enabled', 'boolval')
@@ -264,6 +289,7 @@ return [
         ->default('avocado.loading_spinner_style', 'avocado')
         ->default('avocado.loading_spinner_custom', '')
         ->default('avocado.bookmarks_enabled', true)
+        ->default('avocado.clock_format', 'auto')
         ->default('avocado.user_card_enabled', true)
         ->default('avocado.presence_enabled', true)
         ->default('avocado.cakeday_enabled', true)

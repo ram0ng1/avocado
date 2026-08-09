@@ -5,6 +5,7 @@
 import { extend, override } from 'flarum/common/extend';
 import trustedHtml from '../common/trustedHtml';
 import Button from 'flarum/common/components/Button';
+import PostControls from 'flarum/forum/utils/PostControls';
 import Tooltip from 'flarum/common/components/Tooltip';
 import LinkButton from 'flarum/common/components/LinkButton';
 import Avatar from 'flarum/common/components/Avatar';
@@ -33,6 +34,12 @@ import PageStructure from 'flarum/forum/components/PageStructure';
 import { tagPageView } from './components/TagsPage';
 import HomePage from './components/HomePage';
 import BookmarkModal from './components/BookmarkModal';
+// A página "Salvos" entra no bundle principal em vez de virar chunk: com o
+// fof/bookmarks ativo ela atende a rota dele, e o bundle dele usa ids numéricos
+// de webpack no `webpackChunkmodule_exports` compartilhado — a colisão de ids
+// entre runtimes que o webpack.config comenta ("s[t] is not a function") aparece
+// justamente ao carregar chunk nessa rota. Sem chunk, sem colisão.
+import AvocadoBookmarksPage from './components/BookmarksPage';
 import BookmarkReminderNotification from './components/BookmarkReminderNotification';
 import { buildUserPhoneNav, buildHero, buildSidebar } from './components/UserProfileBuilders';
 
@@ -51,7 +58,6 @@ import { buildUserPhoneNav, buildHero, buildSidebar } from './components/UserPro
 // e TeamPage ficam sem prefetch — só baixam quando o usuário navega.
 
 const AllDiscussionsPage = () => import('./components/AllDiscussionsPage');
-const AvocadoBookmarksPage = () => import('./components/BookmarksPage');
 const AvocadoTagPage = () => import('./components/TagPage');
 const AvocadoTeamPage = () => import('./components/TeamPage');
 const AvocadoPostsSearchPage = () => import('./components/AvocadoPostsSearchPage');
@@ -85,7 +91,15 @@ import {
   canEditDiscussionHero,
   sanitizeAdminHtml,
 } from './utils';
-import { toggleBookmark, isBookmarked, bookmarksEnabled } from './utils/bookmarks';
+import {
+  toggleBookmark,
+  isBookmarked,
+  avocadoBookmarksEnabled,
+  usesFofBookmarks,
+  fofPostButtonInMenu,
+  fofTrans,
+  BOOKMARKS_PATH,
+} from './utils/bookmarks';
 import { hoverCardAttrs } from './components/shared/UserHoverCard';
 import WhoIsReading from './components/shared/WhoIsReading';
 import CakedayBadge from './components/shared/CakedayBadge';
@@ -468,7 +482,14 @@ app.initializers.add(
     // The /discussions page is always registered so direct links keep working.
     app.routes['avocado-team'] = { path: '/team', component: AvocadoTeamPage };
     app.routes['avocado-discussions'] = { path: '/discussions', component: AllDiscussionsPage };
-    app.routes['avocado-bookmarks'] = { path: '/bookmarks', component: AvocadoBookmarksPage };
+    // Página "Salvos". Com o fof/bookmarks ativo quem registra a rota é ele
+    // (registrar as duas derrubava o boot do Flarum — FastRoute recusa dois GET
+    // no mesmo path, ver Support\BookmarksRoute); o tema então só troca o
+    // componente, para a lista sair em ThreadCard como no resto do fórum.
+    app.routes[usesFofBookmarks() ? 'fof-bookmarks' : 'avocado-bookmarks'] = {
+      path: BOOKMARKS_PATH,
+      component: AvocadoBookmarksPage,
+    };
     // Replace Flarum's default PostsPage (/posts?q=) with our Avocado-styled version.
     app.routes['posts'] = { path: '/posts', component: AvocadoPostsSearchPage };
     // Unified search page — Discussions / Posts / Users tabs.
@@ -1640,7 +1661,8 @@ app.initializers.add(
       }
 
       // "Saved" — the bookmarks page, only for logged-in users (guests can't save).
-      if (app.session.user && bookmarksEnabled() && !items.has('avocadoBookmarks')) {
+      // Com o fof/bookmarks ativo quem põe o item aqui é ele (addBookmarksNavItem).
+      if (app.session.user && avocadoBookmarksEnabled() && !items.has('avocadoBookmarks')) {
         items.add(
           'avocadoBookmarks',
           <LinkButton href={app.route('avocado-bookmarks')} icon="fas fa-bookmark">
@@ -1669,8 +1691,10 @@ app.initializers.add(
     // Priority is kept BELOW core's reply button (default 0) so the discussion
     // page's SplitDropdown keeps "Reply" as the primary button and the save
     // action stays inside the dropdown panel, never promoted to the main button.
+    // Com o fof/bookmarks ativo o item do dropdown é o dele (addDiscussionControls),
+    // então o tema não põe o seu — o ícone no card continua funcionando e grava lá.
     extend(DiscussionControls, 'userControls', function (items: any, discussion: any) {
-      if (!app.session.user || !bookmarksEnabled()) return;
+      if (!app.session.user || !avocadoBookmarksEnabled()) return;
 
       const saved = isBookmarked(discussion);
       items.add(
@@ -1693,6 +1717,37 @@ app.initializers.add(
       }
     });
 
+    // ── 12b-bis. Bookmark de post no menu ⋯ (fof/bookmarks) ───────────────────
+    // O Flarum 2 põe esse tipo de ação no dropdown do post, e é lá que o
+    // discuss.flarum.org mostra — o header do post no tema já carrega nome,
+    // badges e data, e um botão a mais ali fica solto. Quando o admin escolheu
+    // 'header'/'actions' na extensão, o CSS esconde o botão dela (a ordem em que
+    // os initializers rodam entre extensões não é garantida, então remover do
+    // ItemList seria uma corrida) e o item abaixo entra no lugar. Com 'menu' a
+    // extensão já põe o dela e o tema fica quieto, sem duplicar.
+    extend(PostControls, 'userControls', function (items: any, post: any) {
+      if (!app.session.user || !usesFofBookmarks() || fofPostButtonInMenu()) return;
+
+      const marked = !!post?.attribute?.('bookmarked');
+
+      items.add(
+        'avocadoBookmark',
+        <Button
+          icon={marked ? 'fas fa-bookmark' : 'far fa-bookmark'}
+          onclick={() => {
+            post.save({ bookmarked: !marked }).catch(() => {
+              app.alerts.show(
+                { type: 'error' },
+                trans('ramon-avocado.forum.bookmarks.toggle_error', 'Could not update your saved list. Please try again.')
+              );
+            });
+          }}
+        >
+          {fofTrans(`postButton.${marked ? 'remove' : 'add'}`, marked ? 'Bookmarked' : 'Bookmark')}
+        </Button>
+      );
+    });
+
     // ── 12c. Bookmark reminder notification ────────────────────────────────────
     // Backend type string (BookmarkReminderBlueprint::getType) and this key must
     // match byte-for-byte, or the alert renders blank. The renderer stays
@@ -1701,7 +1756,7 @@ app.initializers.add(
     app.notificationComponents.avocadoBookmarkReminder = BookmarkReminderNotification;
 
     extend('flarum/forum/components/NotificationGrid', 'notificationTypes', function (items: any) {
-      if (!bookmarksEnabled()) return;
+      if (!avocadoBookmarksEnabled()) return;
       items.add('avocadoBookmarkReminder', {
         name: 'avocadoBookmarkReminder',
         icon: 'fas fa-bookmark',

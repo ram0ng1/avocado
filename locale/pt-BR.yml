@@ -104,6 +104,12 @@ ramon-avocado:
       # Bookmarks
       bookmarks_enabled_label: Ativar o sistema de bookmarks
       bookmarks_enabled_help: "Botão de salvar nos cards, página Salvos, notas, lembretes e notificações de lembrete. Desligar esconde tudo e desativa os endpoints da API; os dados salvos são mantidos."
+      bookmarks_fof_notice: "O FoF Bookmarks está ativo, então o Avocado cede o sistema próprio para ele: o tema mostra um único item Salvos no menu e um único botão de salvar, que grava no FoF Bookmarks. Nota e lembrete ficam indisponíveis enquanto ele estiver ligado; os dados salvos do Avocado são mantidos e voltam se você desativá-lo."
+      clock_format_label: Formato de hora
+      clock_format_help: "Vale para os lembretes: o seletor de hora em “Me lembrar” e o horário mostrado nos cards salvos. Automático segue o navegador de cada visitante."
+      clock_format_auto: "Automático (navegador do visitante)"
+      clock_format_12: "12 horas (2:30 PM)"
+      clock_format_24: "24 horas (14:30)"
 
       # User Card
       user_card_enabled_label: Ativar o cartão de usuário (hover)
@@ -347,6 +353,7 @@ ramon-avocado:
       unsave: Remover dos salvos
       edit: Editar bookmark
       empty: "Você ainda não salvou nenhuma discussão."
+      empty_posts: "Você ainda não marcou nenhum post."
       guest_prompt: Entre para salvar discussões e encontrá-las aqui depois.
       toggle_error: Não foi possível atualizar seus salvos. Tente novamente.
       update_error: Não foi possível atualizar seu bookmark. Tente novamente.
@@ -361,7 +368,14 @@ ramon-avocado:
       reminder_tomorrow: Amanhã de manhã
       reminder_week: Semana que vem
       reminder_custom: "Escolher data e hora"
-      reminder_invalid: Escolha uma data no futuro.
+      reminder_invalid: Essa data e hora já passaram. Escolha um momento no futuro.
+      reminder_invalid_date: Escolha uma data para o lembrete.
+      reminder_date_label: Data
+      reminder_hour_label: Hora
+      reminder_minute_label: Minuto
+      reminder_meridiem_label: AM ou PM
+      reminder_am: AM
+      reminder_pm: PM
     notifications:
       bookmark_reminder_text: Lembrete da sua discussão salva
     settings:

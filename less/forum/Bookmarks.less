@@ -120,8 +120,58 @@
 
   &-note,
   select.FormControl,
-  input[type='datetime-local'].FormControl {
+  input[type='date'].FormControl {
     border-radius: 12px;
+  }
+
+  // Data + hora do lembrete personalizado. A hora é montada com selects nossos
+  // (não `datetime-local`) para que 12h/24h seja escolha do fórum e não do
+  // navegador — ver js/src/forum/utils/clock.ts.
+  &-when {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  &-date {
+    flex: 1 1 160px;
+    min-width: 150px;
+  }
+
+  &-time {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &-hour,
+  &-minute,
+  &-meridiem {
+    width: auto;
+    min-width: 68px;
+    padding-right: 8px;
+    text-align: center;
+  }
+
+  &-timeSep {
+    font-weight: 700;
+    color: var(--muted-color);
+  }
+
+  @media (max-width: 480px) {
+    &-date,
+    &-time {
+      flex: 1 1 100%;
+    }
+
+    &-hour,
+    &-minute,
+    &-meridiem {
+      flex: 1 1 0;
+      min-width: 0;
+    }
   }
 
   // `.Form-group` is a flex *column* elsewhere in the stack, so the direction has

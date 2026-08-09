@@ -11,8 +11,11 @@ use Flarum\Settings\SettingsRepositoryInterface;
 use Ramon\Avocado\Support\BookmarksSetting;
 
 /**
- * Expõe `bookmarked` (boolean), `bookmarkNote` e `bookmarkRemindAt` na
- * DiscussionResource. Tudo é resolvido da relação `avocadoBookmark`, que o
+ * Expõe `avocadoBookmarked` (boolean), `avocadoBookmarkNote` e
+ * `avocadoBookmarkRemindAt` na DiscussionResource. Os nomes carregam o prefixo
+ * do tema porque o fof/bookmarks serializa um `bookmarked` próprio na mesma
+ * resource — sem o prefixo, um sobrescreve o outro e o botão de salvar passa a
+ * refletir o estado do sistema errado. Tudo é resolvido da relação `avocadoBookmark`, que o
  * endpoint carrega com eagerLoadWhere escopado ao ator (extend.php) — assim os
  * getters leem uma coleção já em memória em vez de disparar um SELECT por
  * discussão (CLAUDE.md §38.1). Como a relação é filtrada por user_id = ator,
@@ -35,16 +38,16 @@ class BookmarkFields
             && BookmarksSetting::enabled($this->settings);
 
         return [
-            Schema\Boolean::make('bookmarked')
+            Schema\Boolean::make('avocadoBookmarked')
                 ->visible($notGuest)
                 ->get(fn (Discussion $discussion): bool => self::actorBookmark($discussion) !== null),
 
-            Schema\Str::make('bookmarkNote')
+            Schema\Str::make('avocadoBookmarkNote')
                 ->nullable()
                 ->visible($notGuest)
                 ->get(fn (Discussion $discussion): ?string => self::actorBookmark($discussion)?->note),
 
-            Schema\Str::make('bookmarkRemindAt')
+            Schema\Str::make('avocadoBookmarkRemindAt')
                 ->nullable()
                 ->visible($notGuest)
                 ->get(fn (Discussion $discussion): ?string => self::actorBookmark($discussion)?->remind_at?->toIso8601String()),

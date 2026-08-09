@@ -19,7 +19,16 @@ import {
   userRoute,
   highlight,
 } from '../../utils';
-import { toggleBookmark, isBookmarked, bookmarkNote, bookmarkRemindAt, bookmarksEnabled } from '../../utils/bookmarks';
+import {
+  toggleBookmark,
+  isBookmarked,
+  bookmarkNote,
+  bookmarkRemindAt,
+  bookmarksEnabled,
+  avocadoBookmarksEnabled,
+  bookmarkActionLabel,
+} from '../../utils/bookmarks';
+import { formatDateTime } from '../../utils/clock';
 import BookmarkModal from '../BookmarkModal';
 import UserHoverCard from './UserHoverCard';
 import CakedayBadge from './CakedayBadge';
@@ -122,10 +131,14 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
     ) : null;
 
     // ── bookmark button ───────────────────────────────────────────────────────
-    // Unsaved: one click quick-saves. Saved: the click opens the note/reminder
-    // modal (removal lives inside the modal and in the controls dropdown).
+    // Sistema do tema — não salvo: um clique salva; salvo: o clique abre o modal
+    // de nota/lembrete (remover vive dentro do modal e no dropdown de controles).
+    // Cedendo ao fof/bookmarks não há nota nem lembrete, então o botão vira um
+    // toggle puro que grava na extensão dele.
+    const editsNoteAndReminder = avocadoBookmarksEnabled();
     const saved = isBookmarked(discussion);
-    const bookmarkLabel = saved ? trans('ramon-avocado.forum.bookmarks.edit', 'Edit bookmark') : trans('ramon-avocado.forum.bookmarks.save', 'Save');
+    const bookmarkLabel =
+      saved && editsNoteAndReminder ? (trans('ramon-avocado.forum.bookmarks.edit', 'Edit bookmark') as string) : bookmarkActionLabel(saved);
     const bookmarkBtn =
       app.session.user && bookmarksEnabled() ? (
         <Tooltip text={bookmarkLabel} position="top">
@@ -140,7 +153,7 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
               // O Tooltip também dispara por focus: sem o blur ele ficava preso
               // depois do clique, flutuando após o botão esconder (hover-only).
               (e.currentTarget as HTMLElement | null)?.blur();
-              if (saved) {
+              if (saved && editsNoteAndReminder) {
                 app.modal.show(BookmarkModal, { discussion });
               } else {
                 toggleBookmark(discussion);
@@ -153,7 +166,7 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
       ) : null;
 
     // ── bookmark meta (BookmarksPage only) ────────────────────────────────────
-    const metaVisible = showBookmarkMeta && saved && bookmarksEnabled();
+    const metaVisible = showBookmarkMeta && saved && editsNoteAndReminder;
     const note = metaVisible ? bookmarkNote(discussion) : '';
     const remindAt = metaVisible ? bookmarkRemindAt(discussion) : null;
     const bookmarkMeta =
@@ -170,7 +183,7 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
           {remindAt && (
             <span className="AvocadoBookmark-metaReminder">
               <i className="far fa-clock" aria-hidden="true" />
-              {remindAt.toLocaleString(undefined, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+              {formatDateTime(remindAt)}
             </span>
           )}
           {note && (
