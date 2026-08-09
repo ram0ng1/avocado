@@ -14,10 +14,15 @@ use Illuminate\Database\Eloquent\Builder;
 use Ramon\Avocado\Support\BookmarksSetting;
 
 /**
- * Filtro `bookmarked` para a busca de discussões — restringe o resultado às
- * discussões salvas pelo ator. Alimenta a página /bookmarks. Espelha a forma do
+ * Filtro `avocadoBookmarked` para a busca de discussões — restringe o resultado
+ * às discussões salvas pelo ator. Alimenta a página "Salvos". Espelha a forma do
  * SubscriptionFilter do core (whereIn por subconsulta no índice da companion
  * table). Guests nunca têm bookmarks, então caem num conjunto vazio.
+ *
+ * A chave é prefixada porque o fof/bookmarks registra um filtro `bookmarked` na
+ * mesma DiscussionSearcher: com a chave repetida os dois filtros entram na
+ * mesma query (AND) e a página do tema devolveria a interseção dos dois
+ * sistemas — quase sempre vazia.
  *
  * @implements FilterInterface<DatabaseSearchState>
  */
@@ -32,7 +37,7 @@ class BookmarkFilter implements FilterInterface
 
     public function getFilterKey(): string
     {
-        return 'bookmarked';
+        return 'avocadoBookmarked';
     }
 
     public function filter(SearchState $state, string|array $value, bool $negate): void

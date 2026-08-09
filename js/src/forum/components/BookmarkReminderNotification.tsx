@@ -2,6 +2,7 @@ import app from 'flarum/forum/app';
 import Notification from 'flarum/forum/components/Notification';
 
 import { trans, truncate } from '../utils';
+import { bookmarkNote } from '../utils/bookmarks';
 
 /**
  * Renders the `avocadoBookmarkReminder` alert. The subject is the saved
@@ -24,7 +25,7 @@ export default class BookmarkReminderNotification extends Notification {
 
   excerpt() {
     const discussion = (this.attrs as any).notification.subject();
-    const note = discussion?.attribute?.('bookmarkNote');
-    return note ? truncate(String(note), 160) : null;
+    const note = discussion ? bookmarkNote(discussion) : '';
+    return note ? truncate(note, 160) : null;
   }
 }

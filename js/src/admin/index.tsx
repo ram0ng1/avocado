@@ -361,6 +361,16 @@ app.initializers.add('ramon-avocado', (app) => {
     .registerSetting(
       () => (
         <AdminCard title={trans('ramon-avocado.admin.settings.section_bookmarks', 'Bookmarks')} icon="fas fa-bookmark">
+          {/* Com o fof/bookmarks ativo o tema cede o sistema inteiro para ele —
+              o que está abaixo fica inerte até a extensão ser desativada. */}
+          {'fof-bookmarks' in ((flarum as any)?.extensions ?? {}) && (
+            <p className="helpText AvocadoAdmin-notice">
+              {trans(
+                'ramon-avocado.admin.settings.bookmarks_fof_notice',
+                'FoF Bookmarks is enabled, so Avocado hands its own bookmark system over to it: the theme shows a single Saved menu item and a single save button, which writes to FoF Bookmarks. Notes and reminders are unavailable while it is on; your saved Avocado data is kept and comes back if you disable it.'
+              )}
+            </p>
+          )}
           <AdminToggle
             settingKey="avocado.bookmarks_enabled"
             label={trans('ramon-avocado.admin.settings.bookmarks_enabled_label', 'Enable the bookmark system')}
@@ -369,6 +379,25 @@ app.initializers.add('ramon-avocado', (app) => {
               'Save button on cards, the Saved page, notes, reminders and reminder notifications. Turning this off hides everything and disables the API endpoints; saved data is kept.'
             )}
           />
+          {getBool('avocado.bookmarks_enabled') && (
+            <>
+              <SubDivider />
+              <AdminSelect
+                settingKey="avocado.clock_format"
+                default="auto"
+                label={trans('ramon-avocado.admin.settings.clock_format_label', 'Time format')}
+                help={trans(
+                  'ramon-avocado.admin.settings.clock_format_help',
+                  'Used by reminders: the hour picker in “Remind me” and the time shown on saved cards. Automatic follows each visitor’s browser.'
+                )}
+                options={{
+                  auto: trans('ramon-avocado.admin.settings.clock_format_auto', 'Automatic (visitor’s browser)'),
+                  '12': trans('ramon-avocado.admin.settings.clock_format_12', '12-hour (2:30 PM)'),
+                  '24': trans('ramon-avocado.admin.settings.clock_format_24', '24-hour (14:30)'),
+                }}
+              />
+            </>
+          )}
         </AdminCard>
       ),
       53

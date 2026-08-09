@@ -1,0 +1,97 @@
+// ── fof/bookmarks ────────────────────────────────────────────────────────────
+// Com a extensão ativa o tema cede o sistema próprio de bookmarks e ela vira a
+// fonte de verdade (ver js/src/forum/utils/bookmarks.ts). A página /bookmarks é
+// assumida pelo BookmarksPage do tema (index.tsx troca o componente da rota), o
+// que resolve a listagem; o que sobra aqui é vestir os controles dela.
+
+:root {
+  // A extensão fixa #2756c6 num `:root` próprio. Como a ordem de concatenação do
+  // CSS entre extensões não é garantida, a variável é redefinida aqui E os
+  // pontos que a usam levam seletor mais específico logo abaixo — assim o azul
+  // solto nunca aparece no meio da paleta do fórum.
+  --fof-bookmarks-color: var(--primary-color);
+}
+
+// ── Botão independente na sidebar da discussão ───────────────────────────────
+// Marcado, ele é o estado "ligado" e segue o botão primário do tema.
+.Page.DiscussionPage .DiscussionPage-nav .Button--bookmark {
+  border-radius: 12px;
+
+  &.Button--bookmarked {
+    background: var(--primary-color);
+    color: var(--header-bg, #fff);
+  }
+}
+
+// ── Controle no post ─────────────────────────────────────────────────────────
+// O bookmark do post vive no menu ⋯, como no Flarum 2: o header do post no tema
+// já carrega nome, badges e data. Quando o admin deixa a extensão em
+// 'header'/'actions', o botão dela é escondido aqui e o item equivalente é
+// posto no dropdown pelo forum bundle (ver index.tsx, seção 12b-bis).
+.Post-header .Button--bookmark-post,
+.Post-actions .Button--bookmark-post {
+  display: none;
+}
+
+.Dropdown-menu .Button--bookmark-post {
+  display: inline-flex;
+}
+
+.Dropdown-menu .Button--bookmarked .Button-icon {
+  color: var(--primary-color);
+}
+
+.BookmarkedPostLabel {
+  color: var(--primary-color);
+}
+
+.Badge--bookmarked {
+  background: var(--primary-color);
+}
+
+// ── Abas Discussões / Posts da página "Salvos" ───────────────────────────────
+// Markup do BookmarksPage do tema; a página original do fof não é mais montada.
+.AvocadoBookmarks-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 18px;
+  flex-wrap: wrap;
+}
+
+.AvocadoBookmarks-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--avocado-surface-1);
+  color: var(--text-color);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+
+  i {
+    font-size: 13px;
+    color: var(--muted-color);
+  }
+
+  &:hover {
+    background: color-mix(in srgb, var(--avocado-surface-1) 60%, #d0d0d8);
+    color: var(--text-color);
+    text-decoration: none;
+  }
+
+  &.is-active {
+    background: var(--primary-color);
+    color: #fff;
+
+    i {
+      color: inherit;
+    }
+  }
+}
+
+// A aba "Posts" reusa o card do /posts do tema (shared/PostCard), então o
+// estilo dela já vem de SearchPage.less — nada a acrescentar aqui.
