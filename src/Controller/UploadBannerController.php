@@ -22,7 +22,7 @@ class UploadBannerController extends UploadImageController
         // would TypeError. Fail with a clean validation error instead.
         $uri = $file->getStream()->getMetadata('uri');
         if (! is_string($uri) || ! is_readable($uri)) {
-            throw new ValidationException(['avatar' => 'Uploaded file is not readable.']);
+            throw new ValidationException(['avatar' => $this->translator->trans('ramon-avocado.api.file_not_readable')]);
         }
 
         return $this->imageManager->read($uri)

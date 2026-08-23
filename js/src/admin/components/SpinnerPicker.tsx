@@ -29,7 +29,7 @@ export default class SpinnerPicker extends AdminComponent {
               <div className="AvocadoSpinnerOption-preview" style={opt.color ? 'color: var(--primary-color)' : ''}>
                 {trustedHtml(opt.svg)}
               </div>
-              <span className="AvocadoSpinnerOption-label">{opt.label}</span>
+              <span className="AvocadoSpinnerOption-label">{trans(opt.labelKey, opt.labelFallback)}</span>
             </button>
           ))}
         </div>

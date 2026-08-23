@@ -7,6 +7,7 @@ namespace Ramon\Avocado\Controller;
 use Flarum\Discussion\Discussion;
 use Flarum\Foundation\ValidationException;
 use Flarum\Http\RequestUtil;
+use Flarum\Locale\TranslatorInterface;
 use Illuminate\Contracts\Filesystem\Factory;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Arr;
@@ -20,8 +21,10 @@ class DeleteDiscussionHeroController implements RequestHandlerInterface
 {
     protected Filesystem $uploadDir;
 
-    public function __construct(Factory $filesystemFactory)
-    {
+    public function __construct(
+        Factory $filesystemFactory,
+        protected TranslatorInterface $translator,
+    ) {
         $this->uploadDir = $filesystemFactory->disk('flarum-assets');
     }
 
@@ -33,13 +36,13 @@ class DeleteDiscussionHeroController implements RequestHandlerInterface
         $rawId = Arr::get($request->getQueryParams(), 'discussionId');
         $discussionId = filter_var($rawId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         if ($discussionId === false) {
-            throw new ValidationException(['discussionId' => 'Invalid discussion id.']);
+            throw new ValidationException(['discussionId' => $this->translator->trans('ramon-avocado.api.invalid_discussion_id')]);
         }
 
         /** @var Discussion|null $discussion */
         $discussion = Discussion::query()->find($discussionId);
         if (! $discussion) {
-            throw new ValidationException(['discussionId' => 'Discussion not found.']);
+            throw new ValidationException(['discussionId' => $this->translator->trans('ramon-avocado.api.discussion_not_found')]);
         }
 
         // Usa a ability dedicada (mesma do upload) em vez de pegar carona em

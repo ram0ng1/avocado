@@ -274,9 +274,10 @@
     width: 100% !important;
     box-sizing: border-box !important;
 
-    // "Messages" title — left-aligned flex item
+    // Título da lista — texto vem traduzido do JS na custom property
+    // (--avocado-messages-title, setada em forum/index.tsx). Sem valor, some.
     &::before {
-      content: 'Messages';
+      content: var(--avocado-messages-title, '');
       display: block !important;
       font-size: 16px !important;
       font-weight: 700 !important;

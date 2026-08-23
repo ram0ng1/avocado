@@ -7,6 +7,7 @@ namespace Ramon\Avocado\Controller;
 use Flarum\Discussion\Discussion;
 use Flarum\Foundation\ValidationException;
 use Flarum\Http\RequestUtil;
+use Flarum\Locale\TranslatorInterface;
 use Illuminate\Contracts\Filesystem\Factory;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Arr;
@@ -25,6 +26,7 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
     public function __construct(
         protected ImageManager $imageManager,
         Factory $filesystemFactory,
+        protected TranslatorInterface $translator,
     ) {
         $this->uploadDir = $filesystemFactory->disk('flarum-assets');
     }
@@ -43,13 +45,13 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
         $rawId = Arr::get($request->getQueryParams(), 'discussionId');
         $discussionId = filter_var($rawId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         if ($discussionId === false) {
-            throw new ValidationException(['discussionId' => 'Invalid discussion id.']);
+            throw new ValidationException(['discussionId' => $this->translator->trans('ramon-avocado.api.invalid_discussion_id')]);
         }
 
         /** @var Discussion|null $discussion */
         $discussion = Discussion::query()->find($discussionId);
         if (! $discussion) {
-            throw new ValidationException(['discussionId' => 'Discussion not found.']);
+            throw new ValidationException(['discussionId' => $this->translator->trans('ramon-avocado.api.discussion_not_found')]);
         }
 
         // Use a dedicated ability so the authorization rule is named for what
@@ -61,14 +63,16 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
 
         $file = Arr::get($request->getUploadedFiles(), 'avocado-discussion-hero');
         if (! $file) {
-            throw new ValidationException(['file' => 'No file uploaded.']);
+            throw new ValidationException(['file' => $this->translator->trans('ramon-avocado.api.no_file_uploaded')]);
         }
 
         // Size guard: hero source images are never multi-megabyte; reject before
         // Intervention attempts to decode the bitmap into memory (OOM/DoS).
         $size = $file->getSize();
         if ($size === null || $size > self::MAX_UPLOAD_BYTES) {
-            throw new ValidationException(['file' => 'File is too large (max 8 MB).']);
+            throw new ValidationException([
+                'file' => $this->translator->trans('ramon-avocado.api.file_too_large', ['max' => '8 MB']),
+            ]);
         }
 
         // MIME guard: don't trust the client's Content-Type. Sniff on disk via
@@ -88,7 +92,7 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
             }
         }
         if (! in_array($mime, self::ALLOWED_MIMES, true)) {
-            throw new ValidationException(['file' => 'Unsupported image type.']);
+            throw new ValidationException(['file' => $this->translator->trans('ramon-avocado.api.unsupported_image_type')]);
         }
 
         $encoded = $this->imageManager

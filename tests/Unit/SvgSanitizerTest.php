@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Ramon\Avocado\Tests\Unit;
 
+use Flarum\Api\Controller\UploadImageController;
+use Flarum\Locale\TranslatorInterface;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionMethod;
+use ReflectionProperty;
 use Ramon\Avocado\Controller\UploadLogoSvgController;
 
 /**
@@ -16,8 +19,9 @@ use Ramon\Avocado\Controller\UploadLogoSvgController;
  * runs on every admin logo upload before the markup is rendered inline (§9.5).
  *
  * sanitizeSvg() (and the cleanNode/sanitizeStyleNode/useHasExternalHref helpers
- * it drives) carries no instance state, so we drive it through reflection on an
- * instance built without the parent UploadImageController constructor.
+ * it drives) só toca no translator — as mensagens de rejeição são traduzidas —,
+ * então driblamos o construtor do UploadImageController e injetamos um stub que
+ * devolve a própria chave: aqui se assere o tipo da exceção, não o texto dela.
  */
 #[Group('security')]
 final class SvgSanitizerTest extends TestCase
@@ -28,6 +32,11 @@ final class SvgSanitizerTest extends TestCase
     {
         $controller = (new ReflectionClass(UploadLogoSvgController::class))
             ->newInstanceWithoutConstructor();
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->method('trans')->willReturnArgument(0);
+        (new ReflectionProperty(UploadImageController::class, 'translator'))
+            ->setValue($controller, $translator);
 
         // PHP 8.1+ reflection reaches private methods without setAccessible(),
         // which is a deprecated no-op since 8.5.

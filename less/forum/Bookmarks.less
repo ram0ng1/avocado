@@ -89,39 +89,53 @@
   white-space: nowrap;
 }
 
-// ── Note/reminder modal ───────────────────────────────────────────────────────
+// ── Note/reminder modal ───────────────────────────────────────────────────────// ── Modal de bookmark ─────────────────────────────────────────────────────────
+// A casca (superfície, header, botão de fechar, sombra, backdrop) vem de
+// DiscussionModals.less, onde `.Modal.AvocadoBookmarkModal` entra na mesma
+// regra do Rename e do Editar tags. Aqui fica só o miolo do formulário, na
+// mesma linguagem: campo sem caixa, fio embaixo, ação compacta à direita.
 .AvocadoBookmarkModal {
   @danger: #dc2626;
 
+  // 375px do .Modal--small espremem a linha de data + hora do lembrete.
+  &.Modal {
+    max-width: 420px;
+  }
+
   .Modal-body {
-    padding: 24px 26px 26px;
+    padding: 8px 20px 18px;
   }
 
   &-label {
     display: block;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
     color: var(--muted-color);
-    margin-bottom: 8px;
+    margin-bottom: 4px;
   }
 
-  // The Form-group stack: give each field room to breathe
   .Form-group {
     width: 100%;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
+  }
+
+  // Mesmo campo do Rename e do modal de tags — mixin em DiscussionModals.less.
+  .FormControl {
+    .avocado-modal-field();
+    height: 40px;
+
+    &:focus {
+      .avocado-modal-field-focus();
+    }
   }
 
   &-note {
+    height: auto;
     resize: vertical;
-    min-height: 84px;
-  }
-
-  &-note,
-  select.FormControl,
-  input[type='date'].FormControl {
-    border-radius: 12px;
+    min-height: 76px;
+    line-height: 1.5;
   }
 
   // Data + hora do lembrete personalizado. A hora é montada com selects nossos
@@ -131,13 +145,13 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     flex-wrap: wrap;
   }
 
   &-date {
-    flex: 1 1 160px;
-    min-width: 150px;
+    flex: 1 1 150px;
+    min-width: 140px;
   }
 
   &-time {
@@ -150,8 +164,9 @@
   &-minute,
   &-meridiem {
     width: auto;
-    min-width: 68px;
-    padding-right: 8px;
+    min-width: 62px;
+    padding-right: 6px;
+    padding-left: 6px;
     text-align: center;
   }
 
@@ -174,69 +189,76 @@
     }
   }
 
-  // `.Form-group` is a flex *column* elsewhere in the stack, so the direction has
-  // to be stated or the two buttons stack on top of each other.
+  // `.Form-group` é uma coluna flex no resto da pilha, então a direção precisa
+  // ser declarada ou os dois botões empilham.
   &-actions {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 10px;
-    margin-top: 24px;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 22px;
     margin-bottom: 0;
   }
 
   &-save,
   &-cancel,
   &-remove {
-    height: 44px;
-    padding: 0 18px;
-    border-radius: 12px;
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 999px;
     font-weight: 700;
-    font-size: 14px;
+    font-size: @font-sm;
   }
 
+  // A ação primária deixa de atravessar o modal: pill compacta à direita.
   &-save {
-    flex: 1 1 auto; // the primary action owns the row
+    flex: 0 0 auto;
   }
 
+  // Ghost. Mexemos nas custom properties que o core lê em vez de sobrescrever
+  // `background`/`color` na marra — é o que dispensa o `!important` daqui.
   &-cancel {
     flex: 0 0 auto;
-    background: var(--avocado-surface-1) !important;
-    color: var(--text-color) !important;
-    box-shadow: none !important;
+    --button-bg: transparent;
+    --button-bg-hover: var(--avocado-surface-1);
+    --button-bg-active: var(--avocado-surface-1);
+    --button-bg-disabled: transparent;
+    --button-color: var(--muted-color);
+    box-shadow: none;
 
     &:hover:not(:disabled) {
-      background: color-mix(in srgb, var(--avocado-surface-1) 60%, #d0d0d8) !important;
+      --button-color: var(--text-color);
     }
   }
 
-  // Destructive action, kept well away from Save behind a divider
+  // Ação destrutiva, mantida longe do Save por um fio — misclique aqui apaga
+  // o bookmark sem confirmação.
   &-danger {
     display: flex;
-    justify-content: center;
-    margin-top: 22px;
-    padding-top: 18px;
-    border-top: 1px solid var(--avocado-border-subtle);
+    justify-content: flex-start;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--avocado-border-soft);
   }
 
   &-remove {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: color-mix(in srgb, @danger 8%, transparent) !important;
-    border: 1px solid color-mix(in srgb, @danger 28%, transparent) !important;
-    color: @danger !important;
-    box-shadow: none !important;
+    padding: 0 12px;
+    font-size: @font-xs;
+    --button-bg: transparent;
+    --button-bg-hover: color-mix(in srgb, @danger 12%, transparent);
+    --button-bg-active: color-mix(in srgb, @danger 18%, transparent);
+    --button-bg-disabled: transparent;
+    --button-color: @danger;
+    box-shadow: none;
 
     .Button-icon {
-      font-size: 13px;
+      font-size: 12px;
       margin: 0;
       color: inherit;
-    }
-
-    &:hover:not(:disabled) {
-      background: color-mix(in srgb, @danger 15%, transparent) !important;
-      border-color: color-mix(in srgb, @danger 45%, transparent) !important;
     }
   }
 }

@@ -37,7 +37,7 @@ class UploadLogoSvgController extends UploadImageController
         // would block the network fetch, the parser still expands local
         // entities in memory.
         if (preg_match('/<!DOCTYPE|<!ENTITY/i', $content)) {
-            throw new \InvalidArgumentException('SVG contains forbidden DOCTYPE or ENTITY declaration.');
+            throw new \InvalidArgumentException($this->translator->trans('ramon-avocado.api.svg_forbidden_declaration'));
         }
 
         $prev = libxml_use_internal_errors(true);
@@ -49,14 +49,14 @@ class UploadLogoSvgController extends UploadImageController
         $dom = new \DOMDocument();
         if (!$dom->loadXML($content, LIBXML_NONET | LIBXML_NOBLANKS)) {
             libxml_use_internal_errors($prev);
-            throw new \InvalidArgumentException('Invalid SVG: could not parse XML.');
+            throw new \InvalidArgumentException($this->translator->trans('ramon-avocado.api.svg_parse_failed'));
         }
 
         libxml_use_internal_errors($prev);
 
         $root = $dom->documentElement;
         if (!$root || strtolower($root->localName) !== 'svg') {
-            throw new \InvalidArgumentException('The uploaded file must be a valid SVG.');
+            throw new \InvalidArgumentException($this->translator->trans('ramon-avocado.api.svg_invalid'));
         }
 
         $this->cleanNode($root);

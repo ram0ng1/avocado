@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Flarum\Discussion\Discussion;
 use Flarum\Foundation\ValidationException;
 use Flarum\Http\RequestUtil;
+use Flarum\Locale\TranslatorInterface;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Flarum\User\Exception\PermissionDeniedException;
 use Illuminate\Support\Arr;
@@ -29,7 +30,8 @@ class UpdateBookmarkController implements RequestHandlerInterface
     public const NOTE_MAX_LENGTH = 1000;
 
     public function __construct(
-        protected SettingsRepositoryInterface $settings
+        protected SettingsRepositoryInterface $settings,
+        protected TranslatorInterface $translator,
     ) {
     }
 
@@ -83,13 +85,13 @@ class UpdateBookmarkController implements RequestHandlerInterface
 
         $discussionId = filter_var($rawId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         if ($discussionId === false) {
-            throw new ValidationException(['discussionId' => 'Invalid discussion id.']);
+            throw new ValidationException(['discussionId' => $this->translator->trans('ramon-avocado.api.invalid_discussion_id')]);
         }
 
         /** @var Discussion|null $discussion */
         $discussion = Discussion::whereVisibleTo($actor)->find($discussionId);
         if (! $discussion) {
-            throw new ValidationException(['discussionId' => 'Discussion not found.']);
+            throw new ValidationException(['discussionId' => $this->translator->trans('ramon-avocado.api.discussion_not_found')]);
         }
 
         return $discussion;
@@ -102,7 +104,7 @@ class UpdateBookmarkController implements RequestHandlerInterface
             return null;
         }
         if (! is_string($raw)) {
-            throw new ValidationException(['note' => 'Invalid note.']);
+            throw new ValidationException(['note' => $this->translator->trans('ramon-avocado.api.invalid_note')]);
         }
 
         $note = trim($raw);
@@ -110,7 +112,7 @@ class UpdateBookmarkController implements RequestHandlerInterface
             return null;
         }
         if (mb_strlen($note) > self::NOTE_MAX_LENGTH) {
-            throw new ValidationException(['note' => 'Note is too long.']);
+            throw new ValidationException(['note' => $this->translator->trans('ramon-avocado.api.note_too_long')]);
         }
 
         return $note;
@@ -123,20 +125,20 @@ class UpdateBookmarkController implements RequestHandlerInterface
             return null;
         }
         if (! is_string($raw)) {
-            throw new ValidationException(['remindAt' => 'Invalid reminder date.']);
+            throw new ValidationException(['remindAt' => $this->translator->trans('ramon-avocado.api.invalid_reminder_date')]);
         }
 
         try {
             $remindAt = Carbon::parse($raw);
         } catch (\Throwable) {
-            throw new ValidationException(['remindAt' => 'Invalid reminder date.']);
+            throw new ValidationException(['remindAt' => $this->translator->trans('ramon-avocado.api.invalid_reminder_date')]);
         }
 
         if ($remindAt->isPast()) {
-            throw new ValidationException(['remindAt' => 'Reminder must be in the future.']);
+            throw new ValidationException(['remindAt' => $this->translator->trans('ramon-avocado.api.reminder_must_be_future')]);
         }
         if ($remindAt->greaterThan(Carbon::now()->addYear())) {
-            throw new ValidationException(['remindAt' => 'Reminder is too far in the future.']);
+            throw new ValidationException(['remindAt' => $this->translator->trans('ramon-avocado.api.reminder_too_far')]);
         }
 
         return $remindAt;

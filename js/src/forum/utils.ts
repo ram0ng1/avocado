@@ -411,6 +411,13 @@ export const categoryCardStyle = (hex: string | null | undefined, alpha = 0.12):
   return { '--cat-bg': bg, '--cat-color': color };
 };
 
+/**
+ * Escapa um texto para caber numa custom property que o CSS usa em `content:`.
+ * Serve para rótulos desenhados por pseudo-elemento (toolbar do flarum-messages),
+ * onde o texto precisa vir traduzido do JS em vez de fixo no LESS.
+ */
+export const cssString = (value: string): string => `"${String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+
 // ─── Load-more button ─────────────────────────────────────────────────────────
 
 export const renderLoadMore = (label: string, onclick: () => void): any =>
