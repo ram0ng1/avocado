@@ -263,9 +263,10 @@ app.initializers.add('ramon-avocado', (app) => {
                   'ramon-avocado.admin.settings.custom_hero_html_help',
                   "HTML injected inside the hero banner overlay (replaces .AvocadoHome-heroBannerContent). Inline '<style>' tags are supported."
                 )}
-                placeholder={
+                placeholder={trans(
+                  'ramon-avocado.admin.settings.custom_hero_html_placeholder',
                   '<div class="AvocadoHome-heroBannerContent">\n  <h1 class="AvocadoHome-heroBannerTitle">Welcome!</h1>\n  <p class="AvocadoHome-heroBannerDesc">Anything you want — links, images, buttons.</p>\n</div>'
-                }
+                )}
                 rows={10}
                 className="AvocadoAdmin-codeField"
               />

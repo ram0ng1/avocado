@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ramon\Avocado\Content;
 
 use Flarum\Frontend\Document;
+use Flarum\Locale\TranslatorInterface;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Ramon\Avocado\Support\HtmlSanitizer;
@@ -13,7 +14,10 @@ class CustomLoadingSpinner
 {
     private const DEFAULT_COLOR = '#5c7cfa';
 
-    public function __construct(protected SettingsRepositoryInterface $settings) {}
+    public function __construct(
+        protected SettingsRepositoryInterface $settings,
+        protected TranslatorInterface $translator,
+    ) {}
 
     public function __invoke(Document $document, ServerRequestInterface $request): void
     {
@@ -38,7 +42,7 @@ class CustomLoadingSpinner
             // `<svg onload>`, and the like do.
             $clean = HtmlSanitizer::sanitize($raw);
             if ($clean === '') return;
-            $this->injectSpinner($document, '<div class="AvocadoSpinner">' . $clean . '</div>', $primaryColor);
+            $this->injectSpinner($document, $this->wrap($clean), $primaryColor);
             return;
         }
 
@@ -50,10 +54,27 @@ class CustomLoadingSpinner
             'pl3'     => $this->buildPl3Svg(),
             default   => $this->buildAvocadoSvg(),
         };
-        $this->injectSpinner($document, '<div class="AvocadoSpinner">' . $svg . '</div>', $primaryColor);
+        $this->injectSpinner($document, $this->wrap($svg), $primaryColor);
     }
 
     // ── Shared injection ─────────────────────────────────────────────────────
+
+    /**
+     * Envolve o SVG no contêiner do spinner com um rótulo acessível traduzido.
+     *
+     * O spinner é injetado no `<head>` e roda antes do bundle JS subir, então o
+     * texto tem de vir do backend — o translator já está no locale da request.
+     */
+    private function wrap(string $inner): string
+    {
+        $label = htmlspecialchars(
+            $this->translator->trans('ramon-avocado.forum.loading'),
+            ENT_QUOTES | ENT_SUBSTITUTE,
+            'UTF-8'
+        );
+
+        return '<div class="AvocadoSpinner" role="img" aria-label="' . $label . '">' . $inner . '</div>';
+    }
 
     /**
      * Accept only `#rgb` / `#rgba` / `#rrggbb` / `#rrggbbaa` hex or `rgb()/rgba()`
@@ -97,7 +118,7 @@ HTML;
     private function injectCssOrbital(Document $document, string $color = self::DEFAULT_COLOR): void
     {
         $json = json_encode(
-            '<div class="AvocadoSpinner"><div class="LoadingIndicator"><i></i></div></div>',
+            $this->wrap('<div class="LoadingIndicator"><i></i></div>'),
             JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
                 | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
         );
@@ -183,7 +204,7 @@ HTML;
     // ── Ditie ────────────────────────────────────────────────────────────────
     private function buildDitieSvg(): string
     {
-        return '<svg xmlns="http://www.w3.org/2000/svg" fill="#4d22b3" viewBox="3.52 1.52 16.96 20.97" width="64" height="64" role="img" aria-label="Carregando">'
+        return '<svg xmlns="http://www.w3.org/2000/svg" fill="#4d22b3" viewBox="3.52 1.52 16.96 20.97" width="64" height="64" aria-hidden="true">'
             . '<style>.sw-body{animation:sw-rock 1s ease-in-out infinite;transform-origin:12px 12px}@keyframes sw-rock{0%,100%{transform:translateY(0)}50%{transform:translateY(-0.6px)}}.sw-leg1{animation:sw-leg1 1s ease-in-out infinite;transform-origin:6.5px 18.5px}.sw-leg2{animation:sw-leg2 1s ease-in-out infinite;transform-origin:17.5px 18.5px}@keyframes sw-leg1{0%,100%{transform:rotate(0)}50%{transform:rotate(-8deg)}}@keyframes sw-leg2{0%,100%{transform:rotate(0)}50%{transform:rotate(8deg)}}.sw-hl{animation:sw-hl 1.4s ease-in-out infinite}@keyframes sw-hl{0%,100%{opacity:1}50%{opacity:.4}}</style>'
             . '<g class="sw-body">'
             . '<path d="M15,2H9A5,5,0,0,0,4,7v9a2,2,0,0,0,2,2H18a2,2,0,0,0,2-2V7A5,5,0,0,0,15,2Z" fill="#4d22b3"/>'

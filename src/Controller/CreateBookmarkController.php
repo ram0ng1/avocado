@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Flarum\Discussion\Discussion;
 use Flarum\Foundation\ValidationException;
 use Flarum\Http\RequestUtil;
+use Flarum\Locale\TranslatorInterface;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Flarum\User\Exception\PermissionDeniedException;
 use Illuminate\Support\Arr;
@@ -27,7 +28,8 @@ use Ramon\Avocado\Support\BookmarksSetting;
 class CreateBookmarkController implements RequestHandlerInterface
 {
     public function __construct(
-        protected SettingsRepositoryInterface $settings
+        protected SettingsRepositoryInterface $settings,
+        protected TranslatorInterface $translator,
     ) {
     }
 
@@ -61,13 +63,13 @@ class CreateBookmarkController implements RequestHandlerInterface
 
         $discussionId = filter_var($rawId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         if ($discussionId === false) {
-            throw new ValidationException(['discussionId' => 'Invalid discussion id.']);
+            throw new ValidationException(['discussionId' => $this->translator->trans('ramon-avocado.api.invalid_discussion_id')]);
         }
 
         /** @var Discussion|null $discussion */
         $discussion = Discussion::whereVisibleTo($actor)->find($discussionId);
         if (! $discussion) {
-            throw new ValidationException(['discussionId' => 'Discussion not found.']);
+            throw new ValidationException(['discussionId' => $this->translator->trans('ramon-avocado.api.discussion_not_found')]);
         }
 
         return $discussion;

@@ -11,7 +11,7 @@ const SPINNER_ORBITAL_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="56" height="56" shape-rendering="geometricPrecision"><style>.avq{animation:2s cubic-bezier(0.45,0,0.55,1) infinite}.avq1{animation-name:avq-tl}.avq2{animation-name:avq-tr}.avq3{animation-name:avq-br}.avq4{animation-name:avq-bl}@keyframes avq-tl{0%,100%{transform:translate(0,0)}25%{transform:translate(0,50px)}50%{transform:translate(50px,50px)}75%{transform:translate(50px,0)}}@keyframes avq-tr{0%,100%{transform:translate(0,0)}25%{transform:translate(-50px,0)}50%{transform:translate(-50px,50px)}75%{transform:translate(0,50px)}}@keyframes avq-br{0%,100%{transform:translate(0,0)}25%{transform:translate(0,-50px)}50%{transform:translate(-50px,-50px)}75%{transform:translate(-50px,0)}}@keyframes avq-bl{0%,100%{transform:translate(0,0)}25%{transform:translate(50px,0)}50%{transform:translate(50px,-60%)}75%{transform:translate(0,-60%)}}</style><rect class="avq avq1" x="0" y="0" width="40" height="40" rx="4" fill="currentColor"/><rect class="avq avq2" x="50" y="0" width="40" height="40" rx="4" fill="currentColor"/><rect class="avq avq3" x="50" y="50" width="40" height="40" rx="4" fill="currentColor"/><rect class="avq avq4" x="0" y="50" width="40" height="40" rx="4" fill="currentColor"/></svg>';
 
 const SPINNER_DITIE_SVG =
-  '<svg xmlns="http://www.w3.org/2000/svg" fill="#4d22b3" viewBox="3.52 1.52 16.96 20.97" width="56" height="56" role="img" aria-label="Carregando"><style>.sw-body{animation:sw-rock 1s ease-in-out infinite;transform-origin:12px 12px}@keyframes sw-rock{0%,100%{transform:translateY(0)}50%{transform:translateY(-0.6px)}}.sw-leg1{animation:sw-leg1 1s ease-in-out infinite;transform-origin:6.5px 18.5px}.sw-leg2{animation:sw-leg2 1s ease-in-out infinite;transform-origin:17.5px 18.5px}@keyframes sw-leg1{0%,100%{transform:rotate(0)}50%{transform:rotate(-8deg)}}@keyframes sw-leg2{0%,100%{transform:rotate(0)}50%{transform:rotate(8deg)}}.sw-hl{animation:sw-hl 1.4s ease-in-out infinite}@keyframes sw-hl{0%,100%{opacity:1}50%{opacity:.4}}</style><g class="sw-body"><path d="M15,2H9A5,5,0,0,0,4,7v9a2,2,0,0,0,2,2H18a2,2,0,0,0,2-2V7A5,5,0,0,0,15,2Z" fill="#4d22b3"/><path d="M20,7H4A5,5,0,0,1,9,2h6A5,5,0,0,1,20,7Z" fill="#ff9300"/><circle class="sw-hl" cx="9" cy="12.5" r="1.5" fill="#ff9300"/><circle class="sw-hl" cx="15" cy="12.5" r="1.5" fill="#ff9300"/></g><path class="sw-leg1" d="M6,22A1.25,1.25,0,0,1,5.68,22a1,1,0,0,1-.63-1.27l1.33-4a1,1,0,1,1,1.9.64L7,21.32A1,1,0,0,1,6,22Z" fill="#ff9300"/><path class="sw-leg2" d="M18.32,22A1,1,0,0,0,19,20.68l-1.33-4a1,1,0,0,0-1.9.64l1.33,4A1,1,0,0,0,18,22,1.25,1.25,0,0,0,18.32,22Z" fill="#ff9300"/></svg>';
+  '<svg xmlns="http://www.w3.org/2000/svg" fill="#4d22b3" viewBox="3.52 1.52 16.96 20.97" width="56" height="56" aria-hidden="true"><style>.sw-body{animation:sw-rock 1s ease-in-out infinite;transform-origin:12px 12px}@keyframes sw-rock{0%,100%{transform:translateY(0)}50%{transform:translateY(-0.6px)}}.sw-leg1{animation:sw-leg1 1s ease-in-out infinite;transform-origin:6.5px 18.5px}.sw-leg2{animation:sw-leg2 1s ease-in-out infinite;transform-origin:17.5px 18.5px}@keyframes sw-leg1{0%,100%{transform:rotate(0)}50%{transform:rotate(-8deg)}}@keyframes sw-leg2{0%,100%{transform:rotate(0)}50%{transform:rotate(8deg)}}.sw-hl{animation:sw-hl 1.4s ease-in-out infinite}@keyframes sw-hl{0%,100%{opacity:1}50%{opacity:.4}}</style><g class="sw-body"><path d="M15,2H9A5,5,0,0,0,4,7v9a2,2,0,0,0,2,2H18a2,2,0,0,0,2-2V7A5,5,0,0,0,15,2Z" fill="#4d22b3"/><path d="M20,7H4A5,5,0,0,1,9,2h6A5,5,0,0,1,20,7Z" fill="#ff9300"/><circle class="sw-hl" cx="9" cy="12.5" r="1.5" fill="#ff9300"/><circle class="sw-hl" cx="15" cy="12.5" r="1.5" fill="#ff9300"/></g><path class="sw-leg1" d="M6,22A1.25,1.25,0,0,1,5.68,22a1,1,0,0,1-.63-1.27l1.33-4a1,1,0,1,1,1.9.64L7,21.32A1,1,0,0,1,6,22Z" fill="#ff9300"/><path class="sw-leg2" d="M18.32,22A1,1,0,0,0,19,20.68l-1.33-4a1,1,0,0,0-1.9.64l1.33,4A1,1,0,0,0,18,22,1.25,1.25,0,0,0,18.32,22Z" fill="#ff9300"/></svg>';
 
 // css-orbital preview: uses a real div with pseudo-elements (CSS in admin.less)
 const SPINNER_CSS_ORBITAL_PREVIEW = '<div class="avs-co"><i></i></div>';
@@ -34,18 +34,22 @@ const SPINNER_CUSTOM_PREVIEW =
 
 export interface SpinnerOption {
   key: string;
-  label: string;
+  /** Chave de tradução do rótulo; o fallback só aparece se o locale não cobrir. */
+  labelKey: string;
+  labelFallback: string;
   svg: string;
   color: boolean;
 }
 
+const LABEL_KEY = 'ramon-avocado.admin.settings.spinner_option_';
+
 export const SPINNER_OPTIONS: SpinnerOption[] = [
-  { key: 'avocado', label: 'Avocado', svg: SPINNER_AVOCADO_SVG, color: true },
-  { key: 'orbital', label: 'Orbital', svg: SPINNER_ORBITAL_SVG, color: true },
-  { key: 'css-orbital', label: 'Orbital (CSS)', svg: SPINNER_CSS_ORBITAL_PREVIEW, color: true },
-  { key: 'ditie', label: 'ditie.online', svg: SPINNER_DITIE_SVG, color: false },
-  { key: 'b2', label: 'Giratório', svg: SPINNER_B2_SVG, color: false },
-  { key: 'flarum', label: 'Flarum', svg: SPINNER_FLARUM_SVG, color: false },
-  { key: 'pl3', label: 'Pulso', svg: SPINNER_PL3_SVG, color: false },
-  { key: 'custom', label: 'Personalizado', svg: SPINNER_CUSTOM_PREVIEW, color: false },
+  { key: 'avocado', labelKey: `${LABEL_KEY}avocado`, labelFallback: 'Avocado', svg: SPINNER_AVOCADO_SVG, color: true },
+  { key: 'orbital', labelKey: `${LABEL_KEY}orbital`, labelFallback: 'Orbital', svg: SPINNER_ORBITAL_SVG, color: true },
+  { key: 'css-orbital', labelKey: `${LABEL_KEY}css_orbital`, labelFallback: 'Orbital (CSS)', svg: SPINNER_CSS_ORBITAL_PREVIEW, color: true },
+  { key: 'ditie', labelKey: `${LABEL_KEY}ditie`, labelFallback: 'ditie.online', svg: SPINNER_DITIE_SVG, color: false },
+  { key: 'b2', labelKey: `${LABEL_KEY}b2`, labelFallback: 'Spinning', svg: SPINNER_B2_SVG, color: false },
+  { key: 'flarum', labelKey: `${LABEL_KEY}flarum`, labelFallback: 'Flarum', svg: SPINNER_FLARUM_SVG, color: false },
+  { key: 'pl3', labelKey: `${LABEL_KEY}pl3`, labelFallback: 'Pulse', svg: SPINNER_PL3_SVG, color: false },
+  { key: 'custom', labelKey: `${LABEL_KEY}custom`, labelFallback: 'Custom', svg: SPINNER_CUSTOM_PREVIEW, color: false },
 ];

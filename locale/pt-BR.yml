@@ -3,6 +3,14 @@ ramon-avocado:
     loading: "Carregando…"
     search_tags: "Pesquisar tags…"
     settings:
+      spinner_option_avocado: Avocado
+      spinner_option_orbital: Orbital
+      spinner_option_css_orbital: "Orbital (CSS)"
+      spinner_option_ditie: "ditie.online"
+      spinner_option_b2: Giratório
+      spinner_option_flarum: Flarum
+      spinner_option_pl3: Pulso
+      spinner_option_custom: Personalizado
       # Sections
       section_homepage: Página Inicial
       section_auth: Login e Registro
@@ -96,6 +104,11 @@ ramon-avocado:
       custom_hero_enabled_help: "Substitui o conteúdo padrão do hero (ícone, título, descrição, botões Entrar/Cadastrar) pelo seu HTML. O wrapper do banner, a imagem de fundo e o overlay permanecem. Exibido apenas para visitantes — igual ao hero padrão."
       custom_hero_html_label: HTML do hero personalizado
       custom_hero_html_help: "HTML injetado dentro do overlay do banner hero (substitui .AvocadoHome-heroBannerContent). Tags '<style>' inline são suportadas."
+      custom_hero_html_placeholder: |-
+        <div class="AvocadoHome-heroBannerContent">
+          <h1 class="AvocadoHome-heroBannerTitle">Bem-vindo!</h1>
+          <p class="AvocadoHome-heroBannerDesc">O que você quiser — links, imagens, botões.</p>
+        </div>
 
       # Search
       search_v1_label: Ativar estilo da busca V1
@@ -215,6 +228,7 @@ ramon-avocado:
       footer_show_social: Mostrar links de mídias sociais
       footer_social_help_json: "Configure links de mídias sociais em formato JSON. Use as chaves: facebook, twitter, linkedin, instagram, youtube."
   forum:
+    loading: "Carregando…"
     back: "Voltar"
     profile:
       joined: "Entrou em {date}"
@@ -263,6 +277,7 @@ ramon-avocado:
       tip: "Dica: use o prefixo "
       tip_suffix: " para filtrar por tag"
       esc_key: "ESC"
+      close: "Fechar (Esc)"
     header:
       back: Voltar
       back_home: Voltar para o Início
@@ -342,6 +357,8 @@ ramon-avocado:
       discussion_plural_card: "{count} discussões"
       yesterday_time: "Ontem, {time}"
       showcase_heading: "Showcase"
+      ws_update_singular: "1 nova discussão"
+      ws_update_plural: "{count} novas discussões"
     discussions:
       title: Todas as discussões
       home: Voltar para o Início
@@ -396,6 +413,7 @@ ramon-avocado:
       message: Mensagem
     post:
       op_badge: POST ORIGINAL
+      copy_code: "Copiar código"
     messages:
       deleted_message: Mensagem apagada
     tags:
@@ -428,3 +446,20 @@ ramon-avocado:
       mentions_empty: "Nenhuma menção por enquanto."
       load_more: "Carregar mais"
       online: "Online agora"
+  # Mensagens de erro devolvidas pela API (server-side). Fora de .forum./.admin.
+  # de propósito: não são embarcadas no bundle JS.
+  api:
+    invalid_discussion_id: "ID de discussão inválido."
+    discussion_not_found: "Discussão não encontrada."
+    invalid_note: "Nota inválida."
+    note_too_long: "A nota é longa demais."
+    invalid_reminder_date: "Data de lembrete inválida."
+    reminder_must_be_future: "O lembrete precisa ser no futuro."
+    reminder_too_far: "O lembrete está longe demais no futuro."
+    file_not_readable: "Não foi possível ler o arquivo enviado."
+    no_file_uploaded: "Nenhum arquivo enviado."
+    file_too_large: "Arquivo grande demais (máx. {max})."
+    unsupported_image_type: "Tipo de imagem não suportado."
+    svg_forbidden_declaration: "O SVG contém uma declaração DOCTYPE ou ENTITY proibida."
+    svg_parse_failed: "SVG inválido: não foi possível interpretar o XML."
+    svg_invalid: "O arquivo enviado precisa ser um SVG válido."

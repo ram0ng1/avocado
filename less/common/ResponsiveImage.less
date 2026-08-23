@@ -114,7 +114,8 @@ picture {
   }
 
   .AvocadoResponsiveImage--video::after {
-    content: '[Video: ' attr(alt) ']';
+    // Só pontuação + o alt do próprio elemento: nada de texto fixo aqui.
+    content: '[' attr(alt) ']';
     display: block;
     padding: 1rem;
     text-align: center;

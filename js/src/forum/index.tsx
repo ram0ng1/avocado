@@ -74,6 +74,7 @@ import Footer from 'flarum/forum/components/Footer';
 // FIX: utils centralises helpers that were duplicated in every component file
 import {
   trans,
+  cssString,
   hexLuminance,
   iconColors,
   tagPillStyle,
@@ -182,7 +183,7 @@ const initCodeBlocks = (root: HTMLElement | null) => {
     };
     const btn = document.createElement('button');
     btn.className = 'avocado-code-copy';
-    btn.setAttribute('aria-label', 'Copiar código');
+    btn.setAttribute('aria-label', trans('ramon-avocado.forum.post.copy_code', 'Copy code'));
     btn.replaceChildren(makeIcon('fa-copy'));
 
     btn.addEventListener('click', () => {
@@ -3220,7 +3221,15 @@ app.initializers.add(
         };
 
         return (
-          <div className="AvocadoMessages MessagesPage">
+          <div
+            className="AvocadoMessages MessagesPage"
+            // A toolbar é do flarum-messages e o título dela é desenhado por
+            // ::before no nosso LESS. Passamos o texto já traduzido — com a
+            // chave da própria extensão — para não haver string fixa no CSS.
+            style={`--avocado-messages-title: ${cssString(
+              String(app.translator.trans('flarum-messages.forum.messages_page.title', {}, true) ?? '')
+            )}`}
+          >
             <div className="AvocadoNav-helper">
               <IndexSidebar key={m.route.get()} />
             </div>

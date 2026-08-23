@@ -369,7 +369,11 @@ export default class AvocadoSearchPage extends Page {
       return (
         <div className="AvocadoSearch-empty">
           <i className="far fa-frown-open" aria-hidden="true" />
-          <p>{q ? `No discussions found for "${q}".` : 'No discussions match these filters.'}</p>
+          <p>
+            {q
+              ? trans('ramon-avocado.forum.search.no_discussions_query', 'No discussions found for "{q}".', { q })
+              : trans('ramon-avocado.forum.search.no_discussions_filter', 'No discussions match these filters.')}
+          </p>
         </div>
       );
     }
@@ -416,7 +420,11 @@ export default class AvocadoSearchPage extends Page {
       return (
         <div className="AvocadoSearch-empty">
           <i className="far fa-frown-open" aria-hidden="true" />
-          <p>{q ? `No posts found for "${q}".` : 'No posts match these filters.'}</p>
+          <p>
+            {q
+              ? trans('ramon-avocado.forum.search.no_posts_found', 'No posts found for "{q}".', { q })
+              : trans('ramon-avocado.forum.search.no_posts_match', 'No posts match these filters.')}
+          </p>
         </div>
       );
     }
@@ -450,7 +458,11 @@ export default class AvocadoSearchPage extends Page {
       return (
         <div className="AvocadoSearch-empty">
           <i className="far fa-frown-open" aria-hidden="true" />
-          <p>{q ? `No users found for "${q}".` : 'Enter a search term to find users.'}</p>
+          <p>
+            {q
+              ? trans('ramon-avocado.forum.search.no_users_found', 'No users found for "{q}".', { q })
+              : trans('ramon-avocado.forum.search.enter_search_term', 'Enter a search term to find users.')}
+          </p>
         </div>
       );
     }
