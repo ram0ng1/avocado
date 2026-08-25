@@ -35,7 +35,10 @@
 .AvocadoUserPage-hero--hasCover .AvocadoUserPage-cover {
   background-image: var(--user-cover, none);
   background-size: cover;
-  background-position: center;
+  // Vertical framing chosen in forumaker/profile-cover's editor, published as
+  // an inline var by buildHero (see coverPosition in forum/utils.ts). The
+  // fallback is the extension's own default, so nothing moves without it.
+  background-position: var(--user-cover-position, center);
   background-repeat: no-repeat;
 }
 

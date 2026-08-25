@@ -32,6 +32,7 @@ return [
         ->content(\Ramon\Avocado\Content\CustomLoadingSpinner::class)
         ->content(\Ramon\Avocado\Content\HideLogoFlash::class)
         ->content(\Ramon\Avocado\Content\DiscussionStyle::class)
+        ->content(\Ramon\Avocado\Content\SearchStyle::class)
         // No CSS-deferral injector here: Flarum core already emits async CSS
         // natively (warm-visit cache + <link rel="preload" onload>); a custom
         // deferral only duplicated <noscript>/<link> tags.

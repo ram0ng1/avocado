@@ -2173,14 +2173,20 @@ app.initializers.add(
     }
 
     // ── 15. GlobalSearch view override (V1 search) ────────────────────────────
+    // Off by default: `serializeToForum(..., 'boolval')` on the PHP side turns
+    // an unset setting into `false`, so the default here has to match or the
+    // two sides disagree about which control is on screen. The matching CSS is
+    // gated on html[data-avocado-search="v1"] (src/Content/SearchStyle.php) —
+    // core's V2 control is a button it sizes itself, and the V1 rules boxed it
+    // into a fixed 200px slot when they were left ungated.
     override(GlobalSearch.prototype, 'view', function (original, ...args) {
-      if (!settingEnabled('avocadoSearchV1')) return original.apply(this, args);
+      if (!settingEnabled('avocadoSearchV1', false)) return original.apply(this, args);
       return <Search state={this.searchState} />;
     });
 
     // ── 16. Search view extend (V1 search icons + truncate) ───────────────────
     extend(Search.prototype, 'view', function (vnode) {
-      if (!settingEnabled('avocadoSearchV1')) return;
+      if (!settingEnabled('avocadoSearchV1', false)) return;
       if (!vnode || !Array.isArray(vnode.children)) return;
 
       const searchInput = vnode.children.find(

@@ -3,7 +3,7 @@ import Component from 'flarum/common/Component';
 import Avatar from 'flarum/common/components/Avatar';
 import listItems from 'flarum/common/helpers/listItems';
 
-import { trans, truncate, displayName, userRoute, navigate, formatTimeLabel } from '../../utils';
+import { trans, truncate, displayName, userRoute, navigate, formatTimeLabel, coverPosition } from '../../utils';
 import CakedayBadge from './CakedayBadge';
 import trustedHtml from '../../../common/trustedHtml';
 
@@ -219,7 +219,7 @@ function cardVnode(user: any) {
         onmouseenter={() => cancelClose()}
         onmouseleave={() => scheduleClose()}
       >
-        <div className="AvocadoUserCard-banner" style={cover ? { backgroundImage: `url(${cover})` } : {}} />
+        <div className="AvocadoUserCard-banner" style={cover ? { backgroundImage: `url(${cover})`, backgroundPosition: coverPosition(user) } : {}} />
 
         <div className="AvocadoUserCard-body">
           <div className="AvocadoUserCard-head">
