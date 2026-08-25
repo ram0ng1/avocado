@@ -188,6 +188,22 @@ export const safeCssUrl = (url: string | null | undefined): string => {
   return `url('${escaped}')`;
 };
 
+// forumaker/profile-cover lets the user pick how a cover is framed vertically —
+// a 0–100 percentage it stores on the model and applies to core's .UserCard as
+// `background-position: center {n}%`. The Avocado surfaces render their own
+// cover elements, so they have to read the value themselves or the choice has
+// no effect anywhere in the theme.
+//
+// Returns the ready-made `background-position` value. 50% (dead centre) is both
+// the extension's own default and the fallback when it is not installed, so a
+// forum without it keeps exactly the centred framing it had before.
+export const coverPosition = (user: any): string => {
+  const raw = Number(user?.cover_position?.() ?? user?.attribute?.('cover_position') ?? 50);
+  // Number.isFinite, not a truthiness check: 0 is a legitimate position (top).
+  const pct = Number.isFinite(raw) ? Math.min(100, Math.max(0, raw)) : 50;
+  return `center ${pct}%`;
+};
+
 // ─── Admin-HTML sanitizer ─────────────────────────────────────────────────────
 // Defense-in-depth scrub for admin-pasted HTML (custom hero, footer, …) before
 // core renders it as markup. Removes <script>, <iframe>, etc.; strips

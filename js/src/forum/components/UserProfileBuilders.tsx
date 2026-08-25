@@ -18,7 +18,7 @@ import Dropdown from 'flarum/common/components/Dropdown';
 import listItems from 'flarum/common/helpers/listItems';
 import SelectDropdown from 'flarum/common/components/SelectDropdown';
 import humanTime from 'flarum/common/helpers/humanTime';
-import { safeCssUrl, trans } from '../utils';
+import { coverPosition, safeCssUrl, trans } from '../utils';
 
 // ─── Scrollable nav ───────────────────────────────────────────────────────────
 
@@ -169,7 +169,13 @@ export function buildHero(user: any, isEditable: boolean, controls: any[] = []) 
   const hasCover = coverCss !== null && coverCss !== 'none';
 
   const heroStyle: Record<string, string> = { '--user-color': color };
-  if (hasCover) heroStyle['--user-cover'] = coverCss as string;
+  if (hasCover) {
+    heroStyle['--user-cover'] = coverCss as string;
+    // Same reason as the cover URL itself: the extension applies the framing to
+    // core's .UserCard, which this hero replaces. Without this the slider in the
+    // cover editor moved nothing on the profile page.
+    heroStyle['--user-cover-position'] = coverPosition(user);
+  }
 
   const onlineLabel = trans('ramon-avocado.forum.user.online', 'Online');
 

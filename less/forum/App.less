@@ -43,135 +43,351 @@
   opacity: 0.5;
 }
 
-// V1-style Search bar (inline dropdown, no modal)
-// transform: translateZ(0) forces GPU compositing so the width transition is smooth
-// even when the header is position:fixed (affix state on scroll / discussion page)
-.Search {
-  position: relative;
-  width: 200px;
-  flex-shrink: 0;
-  transform: translateZ(0);
-  transition: width 0.3s ease !important;
+// ─── Header search ───────────────────────────────────────────────────────────
+// Two different controls can sit in the header, chosen by `avocado.search_v1`:
+//
+//   V2 (default)  Flarum 2's GlobalSearch — a button that opens the search
+//                 modal, rendered alongside the other header controls. Core
+//                 sizes it in less/common/Search.less: it collapses to a bare
+//                 icon on tablet-up and grows (max-width 180px) to show the
+//                 active query beside a loose clear button. The theme dresses
+//                 it as the same pill V1 shows — see the V2 block further down.
+//
+//   V1 (opt-in)   The legacy inline `Search` component (text input + results
+//                 dropdown), rendered in GlobalSearch's place by the override
+//                 in js/src/forum/index.tsx §15.
+//
+// The two are mutually exclusive and their rules must stay that way: what broke
+// the header bar on 2.0-rc.6 is that the V1 sizing below used to apply
+// unconditionally, so it boxed the V2 button into a fixed 200px slot and
+// clipped the active query inside it. Each block is therefore gated on
+// html[data-avocado-search="v1"] — written before the first paint by
+// src/Content/SearchStyle.php — or on its negation.
 
-  &.focused {
-    width: 400px;
-  }
-
-  // On tablet and small laptops: don't grow on focus — prevents header overflow
-  @media (max-width: 1100px) {
-    &.focused {
-      width: 200px;
-    }
-  }
-
-  &-input {
-    position: relative;
-    overflow: hidden;
-    border-radius: @border-radius;
-    // Use Flarum's own --transition var so .Input .FormControl keeps its width 0.4s rule
-    --transition: border-color 0.15s ease;
-
-    .Input-prefix-icon {
-      color: inherit;
-    }
-
-    .FormControl {
-      border-radius: @border-radius;
-      background: var(--control-bg);
-      border-color: transparent;
-
-      &:focus {
-        background: var(--control-bg);
-        border-color: var(--primary-color);
-      }
-
-      &::-webkit-search-cancel-button,
-      &::-webkit-search-decoration {
-        -webkit-appearance: none;
-        appearance: none;
-      }
-    }
-
-    .Search-clear {
-      color: var(--primary-color);
-    }
-  }
-
-  &-results {
-    position: absolute;
-    left: 0;
-    right: 0;
-    width: 100%;
-    box-sizing: border-box;
-    border-radius: @border-radius;
-    overflow: hidden;
-  }
-}
-
-
-// Search result item layout
-// Override Flarum core overflow:hidden + white header text on .Dropdown-menu > li > a
-.App-header .Search-results .DiscussionSearchResult {
-  > a {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    overflow: visible;
-    padding: 8px 15px;
-
-    &:hover,
-    &:focus {
-      text-decoration: none;
-      background: var(--control-bg);
-    }
-  }
-
-  .DiscussionSearchResult-title {
-    display: block;
-    width: 100%;
-    font-weight: bold;
-    color: var(--text-color);
-    .avocado-truncate();
-
-    mark {
-      background: transparent;
-      font-weight: bold;
-      color: inherit;
-      padding: 0;
-    }
-  }
-
-  .DiscussionSearchResult-excerpt {
-    .avocado-line-clamp(2);
-    width: 100%;
-    font-size: 12px;
-    color: var(--muted-color);
-    margin-top: 3px;
-    margin-bottom: 4px;
-
-    mark {
-      background: transparent;
-      font-weight: bold;
-      color: inherit;
-      padding: 0;
-    }
-  }
-}
-
-// Hide the V2 GlobalSearch modal trigger wrapper (we override it with V1 Search)
-.GlobalSearch {
-  display: contents;
-}
-
-// On phone the search lives in the drawer — cap it to the available width
-@media @phone {
+html[data-avocado-search="v1"] {
+  // V1-style Search bar (inline dropdown, no modal)
+  // transform: translateZ(0) forces GPU compositing so the width transition is smooth
+  // even when the header is position:fixed (affix state on scroll / discussion page)
   .Search {
-    width: 100% !important;
-    transform: none;
+    position: relative;
+    width: 200px;
+    flex-shrink: 0;
+    transform: translateZ(0);
+    transition: width 0.3s ease !important;
 
     &.focused {
-      width: 100% !important;
+      width: 400px;
     }
+
+    // Clicking back into a bar that still holds a query opens the results panel
+    // in the same frame the bar starts widening. The panel is anchored to the
+    // bar's edges, so it spent that whole 0.3s stretching along with it — the
+    // list looked like it was unfolding sideways instead of just being there.
+    // While the panel is up the bar takes its focused width at once: the
+    // animation exists for an empty bar being opened, where there is nothing
+    // underneath to drag along. Closing is unaffected — `open` drops with the
+    // focus, so the bar still eases back down to 200px.
+    // !important because the base `transition` above is itself !important.
+    &.open {
+      transition: none !important;
+    }
+
+    // On tablet and small laptops: don't grow on focus — prevents header overflow
+    @media (max-width: 1100px) {
+      &.focused {
+        width: 200px;
+      }
+    }
+
+    &-input {
+      // 2.0-rc.6 made `.Search` a flex container (less/common/Search.less), so
+      // this wrapper became a flex item: it stops at its max-content width —
+      // the bare width of an <input> — instead of filling the bar. The field
+      // then sat at ~215px inside a 400px focused bar, its pill and its focus
+      // border detached from the control around them. Grow to fill, and allow
+      // shrinking below content width so the 200px idle bar still fits.
+      flex: 1 1 auto;
+      min-width: 0;
+      position: relative;
+      overflow: hidden;
+      border-radius: @border-radius;
+      // Use Flarum's own --transition var so .Input .FormControl keeps its width 0.4s rule
+      --transition: border-color 0.15s ease;
+
+      .Input-prefix-icon {
+        color: inherit;
+        transition: color 0.15s ease;
+      }
+
+      // Pointing at the field picks the magnifier out in the forum's own accent,
+      // the same colour the border takes once the field is focused.
+      &:hover .Input-prefix-icon {
+        color: var(--primary-color);
+      }
+
+      .FormControl {
+        border-radius: @border-radius;
+        background: var(--control-bg);
+        border-color: transparent;
+
+        &:focus {
+          background: var(--control-bg);
+          border-color: var(--primary-color);
+        }
+
+        &::-webkit-search-cancel-button,
+        &::-webkit-search-decoration {
+          -webkit-appearance: none;
+          appearance: none;
+        }
+      }
+
+      .Search-clear {
+        color: var(--primary-color);
+      }
+    }
+
+    &-results {
+      position: absolute;
+      left: 0;
+      right: 0;
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: @border-radius;
+      overflow: hidden;
+    }
+  }
+
+  // Core turns the header search into a round icon button on tablet-up, because
+  // the V2 control *is* a button. Landing on the V1 input wrapper instead, that
+  // mixin shrinks the field to 36px and hides the clear button — undo both.
+  @media @tablet-up {
+    .Header-secondary .Search .Search-input {
+      width: auto;
+      padding: 0;
+      text-align: start;
+    }
+
+    .Header-secondary .Search .Search-clear {
+      display: flex;
+    }
+  }
+
+  // Core's global `mark` is a highlighter pill: a coloured fill plus 1px of
+  // padding, a border radius and a drop shadow. At the type size of a results
+  // row that box is taller than the line it sits on, so every match bleeds out
+  // of its row — worst in the users list, where the whole name is a match. The
+  // V2 modal resets it for the same reason (`.SearchModal-results mark`); this
+  // is that reset for the V1 dropdown, so a match reads as bold text.
+  .Search-results mark {
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    font-weight: bold;
+    color: inherit;
+  }
+
+  // Search result item layout
+  // Override Flarum core overflow:hidden + white header text on .Dropdown-menu > li > a
+  .App-header .Search-results .DiscussionSearchResult {
+    > a {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      overflow: visible;
+      padding: 8px 15px;
+
+      &:hover,
+      &:focus {
+        text-decoration: none;
+        background: var(--control-bg);
+      }
+    }
+
+    .DiscussionSearchResult-title {
+      display: block;
+      width: 100%;
+      font-weight: bold;
+      color: var(--text-color);
+      .avocado-truncate();
+    }
+
+    .DiscussionSearchResult-excerpt {
+      .avocado-line-clamp(2);
+      width: 100%;
+      font-size: 12px;
+      color: var(--muted-color);
+      margin-top: 3px;
+      margin-bottom: 4px;
+      // The row inherits `white-space: nowrap` from core's `.Dropdown-menu > li
+      // > a`, which every menu entry is (`.Search-results` is a Dropdown-menu).
+      // A -webkit-box that cannot wrap has no second line to end, so instead of
+      // clamping at two lines with an ellipsis the excerpt ran off the edge of
+      // the dropdown and was chopped mid-word with no sign it had been cut.
+      white-space: normal;
+      // Post excerpts routinely contain a bare URL longer than the dropdown is
+      // wide. `break-word` only breaks a word that has no other way to fit, and
+      // an unbroken URL still overflows the line box it is alone on; `anywhere`
+      // is what actually lets the clamp put an ellipsis on it.
+      overflow-wrap: anywhere;
+    }
+  }
+
+  // On phone the search lives in the drawer — cap it to the available width
+  @media @phone {
+    .Search {
+      width: 100% !important;
+      transform: none;
+
+      &.focused {
+        width: 100% !important;
+      }
+    }
+  }
+}
+
+// ── V2 header search: same pill the V1 bar has ───────────────────────────────
+// Core renders the V2 control as a bare icon button with the clear button as a
+// *sibling* outside it, so an active query reads as two loose controls dropped
+// between the header links (see the `discussion:3000 ⊗` pair). The theme wants
+// what V1 shows instead: one rounded field holding the magnifier, the query and
+// the clear button together.
+//
+// The pill is `.Search` itself — the flex row core already gives us — with both
+// buttons inside going transparent, so no extra markup is needed. Colours come
+// from the same tokens the V1 field picks up, which is what keeps the two modes
+// looking alike in light, dark and colored-header forums.
+//
+// The gate is :not([data-avocado-search="v1"]) so these never stack on top of
+// the V1 rules above; it also carries enough specificity to beat core's own
+// `.Header-secondary .Search …` sizing without a single !important.
+//
+// Phone is left alone: there the control lives in the drawer, where core styles
+// it as a labelled row like every other drawer entry — as V1 does too.
+@media @tablet-up {
+  html:not([data-avocado-search="v1"]) .Header-secondary .Search {
+    --avocado-search-bg: var(--control-bg);
+    --avocado-search-fg: var(--text-color);
+    --avocado-search-muted: var(--muted-color);
+    --avocado-search-accent: var(--primary-color);
+
+    box-sizing: border-box;
+    width: 200px;
+    height: 36px;
+    flex-shrink: 0;
+    padding: 0;
+    border: 0;
+    border-radius: @border-radius;
+    background: var(--avocado-search-bg);
+    // The focus ring is an inset shadow declared only in :focus-within, rather
+    // than a border. A border would have to be carried as 2px of transparent in
+    // every other state just to stop the pill resizing when it lights up; the
+    // shadow costs no geometry, so the resting state declares nothing at all.
+    transition: box-shadow 0.15s ease, background 0.15s ease;
+
+    &:hover {
+      background: color-mix(in srgb, var(--avocado-search-bg) 92%, var(--avocado-search-fg));
+    }
+
+    // The V1 field gets this from `.FormControl:focus`. Here focus lands on the
+    // trigger button, so :focus-within is the equivalent — and it keeps the pill
+    // marked while focus returns to it after the modal closes.
+    &:focus-within {
+      box-shadow: inset 0 0 0 2px var(--primary-color);
+    }
+
+    // The trigger fills the pill: icon and query on one left-aligned row.
+    .Search-input {
+      flex: 1 1 auto;
+      min-width: 0;
+      width: auto;
+      max-width: none;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      // Core's `.Button` centres its content. Left-align instead, so the
+      // magnifier sits at the edge of the pill the way the V1 field's prefix
+      // icon does rather than floating in the middle of an empty bar.
+      justify-content: flex-start;
+      gap: 9px;
+      padding: 0 2px 0 13px;
+      text-align: start;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      color: var(--avocado-search-fg);
+      // The pill behind it is opaque, so the header's frosted-glass treatment
+      // for .Button--flat has nothing to blur and only makes a stacking context.
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+
+      &,
+      &:hover,
+      &:focus {
+        background: transparent;
+      }
+
+      .Button-icon {
+        margin: 0;
+        width: auto;
+        font-size: 14px;
+        color: var(--avocado-search-muted);
+        transition: color 0.15s ease;
+      }
+
+      // Matches the V1 field: pointing at the bar picks the magnifier out in
+      // the forum's accent. On a colored header the accent *is* the surface
+      // behind it, so the token resolves to the control colour there instead.
+      &:hover .Button-icon {
+        color: var(--avocado-search-accent);
+      }
+
+      .Button-label {
+        display: flex;
+        min-width: 0;
+        font-size: 14px;
+      }
+
+      .Button-labelText {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+    }
+
+    // With no query the label stands in for the placeholder, so it reads like
+    // one instead of like typed text.
+    &:not(.Search--active) .Search-input .Button-labelText {
+      color: var(--avocado-search-muted);
+    }
+
+    // Clear moves inside the pill, where V1 keeps its own.
+    .Search-clear {
+      display: flex;
+      flex-shrink: 0;
+      width: 32px;
+      height: 100%;
+      padding: 0;
+      border-radius: 0;
+      color: var(--avocado-search-accent);
+
+      &,
+      &:hover,
+      &:focus {
+        background: transparent;
+        color: var(--avocado-search-accent);
+      }
+    }
+  }
+
+  // Colored header: the surface behind the pill is the primary colour, so it
+  // borrows the same control tokens core hands the V1 field there.
+  html[data-colored-header="true"]:not([data-avocado-search="v1"]) .Header-secondary .Search {
+    --avocado-search-bg: var(--header-colored-control-bg, rgba(0, 0, 0, 0.1));
+    --avocado-search-fg: var(--header-colored-control-color, #fff);
+    --avocado-search-muted: var(--header-colored-control-color, #fff);
+    --avocado-search-accent: var(--header-colored-control-color, #fff);
   }
 }
 
@@ -236,14 +452,16 @@ a.sr-only.sr-only-focusable-custom[href="#content"],
   padding-left: 12px;
 }
 
-// Core Flarum collapses header search to 1px on tablet when input isn't focused.
-// Keep V1 search visible in this breakpoint as well.
+// Core Flarum collapses the header search to 1px on tablet when the input
+// isn't focused. Keep the V1 search bar visible in this breakpoint as well.
 @media @tablet {
   .Header-title {
     padding-left: 20px;  // extra breathing room from the nav drawer button
   }
 
-  .Header-secondary .Search {
+  // V1 only — see the header-search block above. The V2 control is a button
+  // core already sizes, and has no input to widen.
+  html[data-avocado-search="v1"] .Header-secondary .Search {
     input:not(:focus) {
       width: 100%;
       background: var(--control-bg);
