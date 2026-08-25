@@ -219,10 +219,7 @@ function cardVnode(user: any) {
         onmouseenter={() => cancelClose()}
         onmouseleave={() => scheduleClose()}
       >
-        <div
-          className="AvocadoUserCard-banner"
-          style={cover ? { backgroundImage: `url(${cover})`, backgroundPosition: coverPosition(user) } : {}}
-        />
+        <div className="AvocadoUserCard-banner" style={cover ? { backgroundImage: `url(${cover})`, backgroundPosition: coverPosition(user) } : {}} />
 
         <div className="AvocadoUserCard-body">
           <div className="AvocadoUserCard-head">
