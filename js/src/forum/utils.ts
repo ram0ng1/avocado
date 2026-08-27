@@ -114,9 +114,19 @@ export const highlight = (text: string, query: string, maxLength = 0): any =>
 
 export const postPreview = (discussion: any, max = 150): string => {
   try {
+    // `avocadoExcerpt` vem no próprio payload da discussão (Api\DiscussionFields),
+    // então existe já no primeiro paint — inclusive no boot, onde o Index da
+    // série 2.0 RC manda apenas o *linkage* do firstPost e não o post. Ler o
+    // post do store só como fallback evita que o texto TROQUE quando o post
+    // chega depois (o card ficaria piscando).
+    const excerpt = (discussion.attribute?.('avocadoExcerpt') || '') as string;
+    if (excerpt) return truncate(excerpt, max);
+
     const plain = discussion.firstPost?.()?.contentPlain?.() || '';
     if (plain) return truncate(plain, max);
-    return truncate(discussion.attribute?.('firstPostContent') || '', max);
+
+    // Última linha: o excerpt que o flarum/sticky serializa nas fixadas.
+    return truncate(discussion.attribute?.('firstPostExcerpt') || '', max);
   } catch {
     return '';
   }
