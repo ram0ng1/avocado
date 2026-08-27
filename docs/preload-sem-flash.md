@@ -140,6 +140,41 @@ Pontos-chave:
   (ex.: guest vê menos tags). Nunca exponha dado privado no boot.
 - Cacheie preloads caros (o Content roda em **toda** página do fórum).
 
+### 1b) Dado derivado como ATRIBUTO, não como recurso incluído
+
+Quando o que o card precisa é um pedaço de um recurso relacionado (o texto do
+primeiro post, a primeira imagem dele), pedir a relação inteira é caro e ainda
+depende de o `included` do boot trazê-la. Desde o RC.6 o próprio core seguiu o
+caminho oposto — *"serve the excerpt as an attribute instead of including
+posts"* — e o Index parou de mandar os posts: sobra só o **linkage**
+`firstPost`, e `discussion.firstPost()` devolve `undefined` no primeiro paint.
+
+Foi isso que deixou os cards do showcase sem descrição (issue #199). A correção
+é servir o dado derivado como atributo da própria discussão:
+
+```php
+// src/Api/DiscussionFields.php
+Schema\Str::make('avocadoExcerpt')->nullable()->get(function ($discussion, $context) {
+    EloquentBuffer::add($discussion, 'firstPost');          // fase síncrona: enfileira
+
+    return fn () => $this->excerpt($this->firstPost($discussion, $context)); // fase adiada
+});
+```
+
+Pontos-chave:
+- **`EloquentBuffer`** carrega a relação de TODAS as linhas do documento em UMA
+  consulta (o `add()` roda por linha, o `load()` só depois que a fila fechou).
+  Sem ele é um SELECT por card — N+1.
+- Ler `$post->parsed_content` (o XML guardado) com `Utils::removeFormatting()`
+  evita o render do s9e. Incluir os posts inteiros no boot custava ~250ms na
+  home; os dois atributos custam **1 consulta** e ficam no ruído.
+- O atributo viaja no apiDocument do boot, então o primeiro paint já tem o
+  texto — sem request extra e sem flash.
+- Prefixe o nome (`avocadoExcerpt`, não `firstPostExcerpt`): o flarum/sticky
+  serializa `firstPostExcerpt` na MESMA resource e os dois se sobrescreveriam.
+- No front, leia o atributo ANTES da relação. Se a relação vier depois (por um
+  fetch com `include`), o texto não pode mudar embaixo do usuário.
+
 ### 2) Derivar do store, não da relação que carrega depois
 
 No 1º paint, uma relação pode não estar "materializada" ainda. Prefira derivar do

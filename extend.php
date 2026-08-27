@@ -16,6 +16,7 @@ use Flarum\Extend;
 use Ramon\Avocado\AvocadoServiceProvider;
 use Ramon\Avocado\Middleware\AddPerfHeaders;
 use Ramon\Avocado\Support\BookmarksRoute;
+use Ramon\Avocado\Support\BookmarksSchema;
 use Ramon\Avocado\Support\HtmlSanitizer;
 
 return [
@@ -157,11 +158,18 @@ return [
                 ->fields(\Ramon\Avocado\Api\BookmarkFields::class)
                 ->endpoint(
                     [Endpoint\Index::class, Endpoint\Show::class],
-                    fn (Endpoint\Index|Endpoint\Show $endpoint) => $endpoint
-                        ->eagerLoadWhere('avocadoBookmark', function ($query, \Flarum\Api\Context $context) {
+                    // O mutator roda por request, então a decisão é tomada com o
+                    // banco na mão: sem a tabela migrada (código novo entregue
+                    // pelo composer, `flarum migrate` ainda não rodado) o
+                    // eager-load sai do endpoint em vez de derrubar toda
+                    // listagem de discussões com "Base table or view not found".
+                    // Guests não têm bookmark nenhum — a query também não entra.
+                    fn (Endpoint\Index|Endpoint\Show $endpoint) => BookmarksSchema::available()
+                        ? $endpoint->eagerLoadWhere('avocadoBookmark', function ($query, \Flarum\Api\Context $context) {
                             $actor = $context->getActor();
                             $query->where('user_id', $actor->isGuest() ? 0 : (int) $actor->id);
                         })
+                        : $endpoint
                 ),
         ]),
 
@@ -243,7 +251,14 @@ return [
         ->serializeToForum('avocadoColoredBorderStyle', 'avocado.colored_border_style', null, 'none')
         ->serializeToForum('avocadoThreadsStyle', 'avocado.threads_style', 'boolval')
         ->serializeToForum('avocadoCustomLoadingSpinner', 'avocado.custom_loading_spinner', 'boolval')
-        ->serializeToForum('avocadoBookmarksEnabled', 'avocado.bookmarks_enabled', 'boolval')
+        // O botão de salvar segue o mesmo veredito do backend (BookmarksSetting):
+        // sem a tabela migrada o forum recebe `false` e o front nem desenha o
+        // botão, em vez de oferecer uma ação que o controller vai recusar.
+        ->serializeToForum(
+            'avocadoBookmarksEnabled',
+            'avocado.bookmarks_enabled',
+            fn ($value) => (bool) filter_var($value ?? true, FILTER_VALIDATE_BOOL) && BookmarksSchema::available()
+        )
         // Relógio de 12h (2:30 PM) ou 24h (14:30) nos horários que o tema
         // desenha — hoje o seletor de lembrete e o horário no card salvo.
         // 'auto' segue o locale do navegador de cada visitante, que é o que o
