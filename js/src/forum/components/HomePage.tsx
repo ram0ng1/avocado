@@ -467,8 +467,7 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
     // `avocadoFirstImageUrl` vem no payload da discussão e por isso já existe no
     // primeiro paint; `extractFirstImage` continua atrás dele para o caso de o
     // post estar no store e o campo não (payload de uma versão anterior).
-    const imageUrl =
-      getDiscussionHeroImageUrl(discussion) || discussion.attribute?.('avocadoFirstImageUrl') || this.extractFirstImage(firstPost);
+    const imageUrl = getDiscussionHeroImageUrl(discussion) || discussion.attribute?.('avocadoFirstImageUrl') || this.extractFirstImage(firstPost);
     const excerpt = postPreview(discussion, 140);
 
     const noImgBg = tagColor
