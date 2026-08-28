@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Ramon\Avocado\Api;
 
+use DOMDocument;
+use DOMXPath;
 use Flarum\Api\Context;
 use Flarum\Api\Resource\EloquentBuffer;
 use Flarum\Api\Schema;
@@ -12,7 +14,6 @@ use Flarum\Post\CommentPost;
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Ramon\Avocado\Model\DiscussionHero;
-use s9e\TextFormatter\Utils;
 
 class DiscussionFields
 {
@@ -129,7 +130,7 @@ class DiscussionFields
     /**
      * Texto puro do primeiro post, na mesma forma que o front produzia com
      * `getPlainContent(contentHtml)`: sem citações e sem as URLs cruas das
-     * imagens (que o `removeFormatting` devolveria como texto).
+     * imagens (que viriam como texto no lugar da imagem).
      */
     private function excerpt(?CommentPost $post): ?string
     {
@@ -137,10 +138,56 @@ class DiscussionFields
             return null;
         }
 
-        $xml = preg_replace('#<(QUOTE|IMG|UPL-IMAGE-PREVIEW)\b.*?</\1>#is', '', $post->parsed_content) ?? $post->parsed_content;
-        $xml = preg_replace('#<(IMG|UPL-IMAGE-PREVIEW)\b[^>]*/?>#i', '', $xml) ?? $xml;
+        return $this->plainExcerpt($post->parsed_content);
+    }
 
-        $plain = trim(preg_replace('/\s+/', ' ', Utils::removeFormatting($xml)) ?? '');
+    /**
+     * Reduz a representação intermediária do s9e a texto corrido.
+     *
+     * O corte é feito no DOM, não por regex: um `<QUOTE>` aninhado fazia o
+     * `.*?</QUOTE>` casar até o fechamento *interno*, deixando o externo órfão.
+     * O XML resultante não carregava, `Utils::removeFormatting()` devolvia null
+     * e o `preg_replace` seguinte derrubava o request inteiro com TypeError —
+     * uma discussão com citação de citação quebrava a lista toda.
+     *
+     * Uma única passada de parse cobre o que era feito em quatro (dois
+     * `preg_replace` mais o load do `removeFormatting`).
+     */
+    private function plainExcerpt(string $xml): ?string
+    {
+        if (trim($xml) === '') {
+            return null;
+        }
+
+        $dom = new DOMDocument();
+
+        // XML de post é gerado pelo s9e e deveria sempre carregar; se um
+        // registro antigo ou corrompido não carregar, o card fica sem descrição
+        // em vez de estourar 500 — e o warning do libxml não vaza no output.
+        $internal = libxml_use_internal_errors(true);
+        $loaded = $dom->loadXML($xml, LIBXML_COMPACT | LIBXML_PARSEHUGE);
+        libxml_clear_errors();
+        libxml_use_internal_errors($internal);
+
+        if (! $loaded || $dom->documentElement === null) {
+            return null;
+        }
+
+        $xpath = new DOMXPath($dom);
+
+        // Citações e imagens saem inteiras, trocadas por um espaço: retirar o
+        // nó sem separador colaria o texto vizinho ("antes<IMG/>depois").
+        foreach ($xpath->query('//QUOTE | //IMG | //UPL-IMAGE-PREVIEW') as $node) {
+            $node->parentNode?->replaceChild($dom->createTextNode(' '), $node);
+        }
+
+        // `e`/`s` são a marcação em si (os `**` do negrito, o `>` da citação):
+        // saem sem espaço, senão partiriam a palavra que estavam decorando.
+        foreach ($xpath->query('//e | //s') as $node) {
+            $node->parentNode?->removeChild($node);
+        }
+
+        $plain = trim(preg_replace('/\s+/', ' ', $dom->documentElement->textContent) ?? '');
 
         return $plain === '' ? null : mb_substr($plain, 0, self::EXCERPT_LENGTH);
     }
