@@ -100,6 +100,7 @@ class PreloadShowcase
 
         $slugs = [];
 
+        /** @var \Flarum\Tags\Tag $tag */
         foreach ($tags as $tag) {
             $slug = $driver->toSlug($tag);
 
