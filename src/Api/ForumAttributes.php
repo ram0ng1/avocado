@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ramon\Avocado\Api;
 
 use Flarum\Api\Schema\Attribute;
+use Flarum\Discussion\Discussion;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Flarum\User\User;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
@@ -98,18 +99,42 @@ class ForumAttributes
             return 0;
         }
 
-        $tagId = (int) $this->settings->get('avocado.showcase_tag');
-        if (! $tagId) {
+        $tagIds = $this->showcaseTagIds();
+        if (! $tagIds) {
             return 0;
         }
 
         $limit = (int) ($this->settings->get('avocado.showcase_count') ?: 5);
 
-        $tag = \Flarum\Tags\Tag::query()->find($tagId);
-        if (! $tag) {
-            return 0;
+        // Contagem DISTINCT sobre o conjunto de tags: uma discussão marcada com
+        // duas tags do showcase é um card só, não dois.
+        $count = Discussion::query()
+            ->whereHas('tags', fn ($q) => $q->whereIn('tags.id', $tagIds))
+            ->count();
+
+        return min($count, $limit);
+    }
+
+    /**
+     * IDs das tags do showcase.
+     *
+     * O TagPicker do admin grava um array JSON (`["3","7"]`); instalações
+     * antigas ainda podem ter um id solto. Um `(int)` direto sobre o JSON dava
+     * 0 e zerava a contagem — o skeleton caía no fallback e o valor nunca
+     * refletia mais de uma tag.
+     *
+     * @return int[]
+     */
+    private function showcaseTagIds(): array
+    {
+        $raw = trim((string) $this->settings->get('avocado.showcase_tag'));
+        if ($raw === '') {
+            return [];
         }
 
-        return min($tag->discussions()->count(), $limit);
+        $decoded = json_decode($raw, true);
+        $values = is_array($decoded) ? $decoded : [$decoded ?? $raw];
+
+        return array_values(array_unique(array_filter(array_map('intval', $values))));
     }
 }

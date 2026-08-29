@@ -41,6 +41,7 @@ return [
         ->content(\Ramon\Avocado\Content\InjectOnlineUsers::class)
         // Preloads de dado — cada um sai cedo se não estiver na sua rota.
         ->content(\Ramon\Avocado\Content\PreloadTeamMembers::class)
+        ->content(\Ramon\Avocado\Content\PreloadShowcase::class)
         ->route('/discussions', 'avocado-discussions')
         ->route('/search', 'avocado-search'),
 
