@@ -103,7 +103,7 @@ ramon-avocado:
       custom_hero_enabled_label: Usar conteúdo personalizado no hero (HTML)
       custom_hero_enabled_help: "Substitui o conteúdo padrão do hero (ícone, título, descrição, botões Entrar/Cadastrar) pelo seu HTML. O wrapper do banner, a imagem de fundo e o overlay permanecem. Exibido apenas para visitantes — igual ao hero padrão."
       custom_hero_html_label: HTML do hero personalizado
-      custom_hero_html_help: "HTML injetado dentro do overlay do banner hero (substitui .AvocadoHome-heroBannerContent). Tags '<style>' inline são suportadas."
+      custom_hero_html_help: "HTML injetado dentro do overlay do banner hero (substitui .AvocadoHome-heroBannerContent). Tags style inline são suportadas."
       custom_hero_html_placeholder: |-
         <div class="AvocadoHome-heroBannerContent">
           <h1 class="AvocadoHome-heroBannerTitle">Bem-vindo!</h1>

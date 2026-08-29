@@ -26,8 +26,17 @@ export const trans = (key: string, fallback: string, params: Record<string, any>
   // `extract: true` força a Translator.trans devolver string em vez de
   // NestedStringArray (Mithril children); sem isso o typeof string é sempre
   // falso e caímos no fallback inglês, quebrando a troca de locale.
-  const out = app.translator?.trans(key, params, true);
-  if (typeof out === 'string' && out !== key) return out;
+  //
+  // O try/catch é obrigatório: o formatter ICU do Flarum lança SyntaxError
+  // quando uma tradução da comunidade contém tags desbalanceadas (ex.: um
+  // `<style>` sem fechamento). Sem o guard, uma unica string quebrada em um
+  // idioma derruba a página inteira de configurações da extensão.
+  try {
+    const out = app.translator?.trans(key, params, true);
+    if (typeof out === 'string' && out !== key) return out;
+  } catch (e) {
+    console.warn(`[avocado] invalid translation for "${key}"; falling back to the English default.`, e);
+  }
   return Object.entries(params).reduce<string>((s, [k, v]) => s.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v)), fallback);
 };
 

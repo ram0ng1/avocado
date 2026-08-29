@@ -80,7 +80,7 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
     this.state = new HomeState();
 
     // Preload tags in parallel — does NOT block the showcase fetch.
-    if (app.tagList?.load) app.tagList.load(['children', 'parent']).catch(() => {});
+    this.state.loadTags();
 
     this.state.loadShowcase();
     this.state.loadHome();

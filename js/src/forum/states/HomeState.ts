@@ -27,6 +27,9 @@ export default class HomeState {
   /** Request de hidratação dos firstPosts em voo (dedup entre home e showcase). */
   private firstPostsHydration: Promise<void> | null = null;
 
+  /** Preload da lista de tags em voo (dedup entre a home e o showcase). */
+  private tagListLoad: Promise<any> | null = null;
+
   // Memoization — invalidated when the store discussion count changes.
   private cachedPopular: any[] | null = null;
   private cachedLatest: any[] | null = null;
@@ -157,6 +160,20 @@ export default class HomeState {
     }
   }
 
+  /**
+   * Preload da lista de tags, memoizado.
+   *
+   * A home usa para as categorias e o showcase para resolver id → slug; sem o
+   * memo as duas disparariam GET /api/tags em paralelo no mesmo oninit.
+   */
+  loadTags(): Promise<any> {
+    if (this.tagListLoad) return this.tagListLoad;
+    const tagList = (app as any).tagList;
+    const load: Promise<any> = tagList?.load ? tagList.load(['children', 'parent']).catch(() => []) : Promise.resolve([]);
+    this.tagListLoad = load;
+    return load;
+  }
+
   /** Fetch the home feed (deduplicates against existing store contents). */
   loadHome(): Promise<void> {
     const existing = app.store.all('discussions');
@@ -187,11 +204,16 @@ export default class HomeState {
         // Attempt to populate showcase from the newly-fetched store as a side-effect.
         if (this.showcaseLoading && !this.showcaseFetched) {
           const fromStore = this.showcaseFromStore();
-          if (fromStore.length > 0) {
+          if (fromStore.length >= this.showcaseLimit()) {
             this.showcaseItems = fromStore;
             this.showcaseLoading = false;
             this.showcaseFetched = true;
           }
+          // Parcial não pinta: o feed da home traz só a 1ª página, então a tag
+          // pode ter mais discussões do que couberam nela. Marcar `fetched`
+          // aqui truncava o trilho no que o store por acaso tivesse; pintar
+          // sem marcar trocava a grade embaixo do usuário. O fetch por tag,
+          // já em voo, dá a palavra final.
         }
         m.redraw();
       })
@@ -254,13 +276,16 @@ export default class HomeState {
   /**
    * Fetch the showcase rail.
    *
-   * Resolves immediately when:
+   * Resolves synchronously when:
    *  - the showcase feature is disabled,
-   *  - no showcase tag is configured, or
+   *  - no showcase tag is configured,
+   *  - o boot trouxe o trilho pronto (Content\PreloadShowcase — caminho
+   *    normal, e o único sem skeleton), ou
    *  - the store already holds enough showcase items.
    *
    * Otherwise fetches each configured tag's slug + discussions in parallel
-   * and merges the results into `this.showcaseItems`.
+   * and merges the results into `this.showcaseItems`, mantendo o skeleton no
+   * ar até lá — um resultado parcial nunca é pintado.
    */
   loadShowcase(): Promise<void> {
     if (this.showcaseFetched || this.showcaseLoading) return Promise.resolve();
@@ -288,12 +313,19 @@ export default class HomeState {
       return Promise.resolve();
     }
 
-    this.showcaseLoading = true;
-    const expectedCount = Number(app.forum?.attribute('avocadoShowcaseCount') || 5);
-    const fromStore = this.showcaseFromStore();
-    const storeIsPopulated = this.allDiscussions().length >= 10;
+    // Payload do boot: síncrono, o 1º paint já sai com os cards definitivos.
+    const preloaded = this.showcaseFromBoot();
+    if (preloaded.length) {
+      this.showcaseItems = preloaded;
+      this.showcaseFetched = true;
+      return Promise.resolve();
+    }
 
-    if (fromStore.length > 0 && (fromStore.length >= expectedCount || storeIsPopulated)) {
+    this.showcaseLoading = true;
+    const expectedCount = this.showcaseLimit();
+    const fromStore = this.showcaseFromStore();
+
+    if (fromStore.length >= expectedCount) {
       // Mesmo caso do loadHome(): os itens do showcase saem do store que o boot
       // já preencheu. Resolver síncrono — o skeleton do showcase nunca chega a
       // pintar quando o dado está pronto.
@@ -302,6 +334,17 @@ export default class HomeState {
       this.showcaseFetched = true;
       return this.hydrateFirstPosts();
     }
+
+    // Store incompleto: ele só enxerga a primeira página do feed da home, e as
+    // discussões da tag de showcase que ficaram fora dela simplesmente não
+    // estão ali. Aceitar esse subconjunto como resultado final era o bug de
+    // "a tag tem 3 discussões mas o trilho mostra 1".
+    //
+    // E o parcial também não pode ser PINTADO enquanto o fetch corre: a grade
+    // sairia com 1 card ocupando a linha inteira e depois viraria 5 colunas,
+    // que é exatamente o salto que o skeleton existe para evitar. Segura o
+    // skeleton (dimensionado por avocadoShowcaseItemCount, que o servidor
+    // calcula com a contagem real) até o resultado definitivo chegar.
 
     return Promise.all(tagIds.map((id) => this.resolveTagSlug(id)))
       .then((slugs) => slugs.filter(Boolean) as string[])
@@ -316,8 +359,8 @@ export default class HomeState {
       .then((batches) => {
         if (this.showcaseFetched && this.showcaseItems.length) return;
         const seen = new Set<string>();
-        const limit = Number(app.forum?.attribute('avocadoShowcaseCount') || 5);
-        this.showcaseItems = (batches as any[][])
+        const limit = this.showcaseLimit();
+        const merged = (batches as any[][])
           .flat()
           .filter(Boolean)
           .filter((d) => {
@@ -328,6 +371,7 @@ export default class HomeState {
           })
           .sort((a, b) => (new Date(b.createdAt?.()) as any) - (new Date(a.createdAt?.()) as any))
           .slice(0, limit);
+        this.showcaseItems = merged;
         this.showcaseLoading = false;
         this.showcaseFetched = true;
         m.redraw();
@@ -339,11 +383,42 @@ export default class HomeState {
       });
   }
 
+  /**
+   * Showcase vindo do payload do boot (Content\PreloadShowcase).
+   *
+   * Roda dentro do oninit, antes do 1º view(): pushPayload insere os models no
+   * store sincronamente, então não há skeleton nem re-render. A ordem do `data`
+   * já vem do servidor (-createdAt) e é preservada.
+   */
+  private showcaseFromBoot(): any[] {
+    try {
+      const payload = (app as any).data?.avocadoShowcase;
+      if (!payload?.data?.length) return [];
+      const pushed = app.store.pushPayload(payload as any);
+      const items = (Array.isArray(pushed) ? pushed : [pushed]).filter(Boolean);
+      return items.slice(0, this.showcaseLimit());
+    } catch {
+      // Payload malformado nunca derruba a home — cai no caminho async.
+      return [];
+    }
+  }
+
+  /** Quantidade de cards configurada no admin (1–5, default 5). */
+  private showcaseLimit(): number {
+    const n = parseInt(String(app.forum?.attribute('avocadoShowcaseCount') ?? ''), 10);
+    return Number.isFinite(n) && n > 0 ? n : 5;
+  }
+
   private showcaseFromStore(): any[] {
     const ids = this.showcaseTagIds();
     if (!ids.size) return [];
-    const limit = Number(app.forum?.attribute('avocadoShowcaseCount') || 5);
-    return [...this.allDiscussions()]
+    const limit = this.showcaseLimit();
+    // `allDiscussions()` devolve as páginas do feed da home quando elas
+    // existem; uma discussão do showcase que esteja no store mas fora do feed
+    // (preload, navegação anterior) ficaria invisível. Aqui o universo certo é
+    // o store inteiro.
+    return [...(app.store.all('discussions') as any[])]
+      .filter(Boolean)
       .filter((d) => this.isShowcaseDiscussion(d))
       .sort((a, b) => {
         const aSticky = a.isSticky?.() ? 1 : 0;
@@ -355,11 +430,19 @@ export default class HomeState {
   }
 
   private resolveTagSlug(id: string): Promise<string | null> {
-    const cached = (app.store.all('tags') || []).find((t: any) => String(t.id?.()) === id) as any;
-    if (cached) return Promise.resolve(cached.slug?.() || null);
-    return app.store
-      .find('tags', id)
-      .then((tag: any) => tag?.slug?.() || null)
+    const fromStore = (): string | null => {
+      const tag = (app.store.all('tags') || []).find((t: any) => String(t.id?.()) === id) as any;
+      return tag?.slug?.() || null;
+    };
+
+    const cached = fromStore();
+    if (cached) return Promise.resolve(cached);
+
+    // GET /api/tags/{id} não serve aqui: o slug driver padrão do flarum/tags
+    // (Utf8SlugDriver) resolve a rota pela coluna `slug`, então um id numérico
+    // devolve 404 e o trilho ficava vazio. A listagem é o caminho confiável.
+    return this.loadTags()
+      .then(() => fromStore())
       .catch(() => null);
   }
 
@@ -371,7 +454,7 @@ export default class HomeState {
         filter: { tag: slug },
         include: SHOWCASE_INCLUDE,
         sort: '-createdAt',
-        'page[limit]': 5,
+        'page[limit]': this.showcaseLimit(),
       } as any)
       .then((results: any) => {
         const filtered = Array.isArray(results) ? results.filter(Boolean) : [];
