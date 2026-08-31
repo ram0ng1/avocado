@@ -51,12 +51,12 @@ jobs:
     steps:
       # §35.13 I3 — auditar todo egress (em modo audit; promover a block depois).
       - name: Harden Runner
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920  # v2.20.0
+        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c  # v2.21.0
         with:
           egress-policy: audit
 
       - name: Checkout do código
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           # fetch-depth: 0 traz todo o histórico E todas as tags — necessário
           # para calcular a próxima versão a partir da última tag.
@@ -140,7 +140,7 @@ jobs:
 
       - name: Publicar Release
         id: create_release
-        uses: release-drafter/release-drafter@eada3c96a64734dd381cfbda23511034e328ddb0  # v7.6.0
+        uses: release-drafter/release-drafter@34d80673e067bdc0c24568d3af899c216adcfaa9  # v7.7.0
         with:
           publish: true
           # Versão calculada acima — sobrepõe o version-resolver do
@@ -157,7 +157,7 @@ jobs:
       # §35.13 R4 — provenance assinada (SLSA) para os artefatos do release.
       - name: Atestar provenance dos artefatos
         if: steps.create_release.outcome == 'success'
-        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373  # v4.1.1
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8  # v4.2.2
         with:
           subject-path: |
             composer.json
