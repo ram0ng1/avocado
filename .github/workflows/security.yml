@@ -40,7 +40,7 @@ jobs:
       image: semgrep/semgrep:1.163.0
     steps:
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           # Histórico completo: o scan diff-aware da camada 2 precisa do commit
           # base disponível para comparar (--baseline-commit).
@@ -72,7 +72,7 @@ jobs:
         # Advanced Security) — nesse caso o upload emite warning. O artefato
         # ao final do job é o canal de resultados que sempre funciona.
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@7188fc363630916deb702c7fdcf4e481b751f97a  # v4.37.1
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938  # v4.37.9
         with:
           sarif_file: semgrep-generic.sarif
           category: semgrep
@@ -115,7 +115,7 @@ jobs:
       - name: Upload SARIF — Flarum v2
         if: always()
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@7188fc363630916deb702c7fdcf4e481b751f97a  # v4.37.1
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938  # v4.37.9
         with:
           sarif_file: semgrep-flarum.sarif
           category: flarum-v2-security
