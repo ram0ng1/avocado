@@ -927,44 +927,44 @@ app.initializers.add(
 
       const imageControls = canManageHero ? (
         <div className="DiscussionHero-imageControls">
-                      {discHeroUrl ? (
-                        <>
-                          <button
-                            type="button"
-                            className="DiscussionHero-imageBtn"
-                            onclick={startHeroUpload}
-                            disabled={heroBusy}
-                            aria-label={trans('ramon-avocado.forum.discussion.hero_image_replace', 'Replace image')}
-                            title={trans('ramon-avocado.forum.discussion.hero_image_replace', 'Replace image')}
-                          >
-                            <i className={heroBusy ? 'fas fa-spinner fa-spin' : 'fas fa-camera'} aria-hidden="true" />
-                            <span>{trans('ramon-avocado.forum.discussion.hero_image_replace', 'Replace image')}</span>
-                          </button>
-                          <button
-                            type="button"
-                            className="DiscussionHero-imageBtn DiscussionHero-imageBtn--danger"
-                            onclick={removeHeroImage}
-                            disabled={heroBusy}
-                            aria-label={trans('ramon-avocado.forum.discussion.hero_image_remove', 'Remove image')}
-                            title={trans('ramon-avocado.forum.discussion.hero_image_remove', 'Remove image')}
-                          >
-                            <i className="fas fa-trash" aria-hidden="true" />
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          type="button"
-                          className="DiscussionHero-imageBtn"
-                          onclick={startHeroUpload}
-                          disabled={heroBusy}
-                          aria-label={trans('ramon-avocado.forum.discussion.hero_image_add', 'Add image')}
-                          title={trans('ramon-avocado.forum.discussion.hero_image_add', 'Add image')}
-                        >
-                          <i className={heroBusy ? 'fas fa-spinner fa-spin' : 'fas fa-camera'} aria-hidden="true" />
-                          <span>{trans('ramon-avocado.forum.discussion.hero_image_add', 'Add image')}</span>
-                        </button>
-                      )}
-                    </div>
+          {discHeroUrl ? (
+            <>
+              <button
+                type="button"
+                className="DiscussionHero-imageBtn"
+                onclick={startHeroUpload}
+                disabled={heroBusy}
+                aria-label={trans('ramon-avocado.forum.discussion.hero_image_replace', 'Replace image')}
+                title={trans('ramon-avocado.forum.discussion.hero_image_replace', 'Replace image')}
+              >
+                <i className={heroBusy ? 'fas fa-spinner fa-spin' : 'fas fa-camera'} aria-hidden="true" />
+                <span>{trans('ramon-avocado.forum.discussion.hero_image_replace', 'Replace image')}</span>
+              </button>
+              <button
+                type="button"
+                className="DiscussionHero-imageBtn DiscussionHero-imageBtn--danger"
+                onclick={removeHeroImage}
+                disabled={heroBusy}
+                aria-label={trans('ramon-avocado.forum.discussion.hero_image_remove', 'Remove image')}
+                title={trans('ramon-avocado.forum.discussion.hero_image_remove', 'Remove image')}
+              >
+                <i className="fas fa-trash" aria-hidden="true" />
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="DiscussionHero-imageBtn"
+              onclick={startHeroUpload}
+              disabled={heroBusy}
+              aria-label={trans('ramon-avocado.forum.discussion.hero_image_add', 'Add image')}
+              title={trans('ramon-avocado.forum.discussion.hero_image_add', 'Add image')}
+            >
+              <i className={heroBusy ? 'fas fa-spinner fa-spin' : 'fas fa-camera'} aria-hidden="true" />
+              <span>{trans('ramon-avocado.forum.discussion.hero_image_add', 'Add image')}</span>
+            </button>
+          )}
+        </div>
       ) : null;
 
       // Uma versão do changelog não é uma discussão: tem cabeçalho próprio (ver
@@ -1219,48 +1219,48 @@ app.initializers.add(
               // de hero) e não pode ser irmão direto de vnodes sem key.
               <div className="AvocadoSkeleton-releaseHero">{renderReleaseHero(_cachedDisc, _skelTags, null, true)}</div>
             ) : (
-            <div className="AvocadoSkeleton-discussionHero">
-              <div className="container">
-                {/* Mirrors .DiscussionHero-inner: position reference + centering + padding */}
-                <div className="AvocadoSkeleton-heroInner">
-                  <div className="AvocadoSkeleton-nav">
-                    <div className="AvocadoSkeleton-backBtn" />
-                    <div className="AvocadoSkeleton-tag" />
-                    <div className="AvocadoSkeleton-tag" style="width:56px" />
-                  </div>
-                  <div className="AvocadoSkeleton-title" />
-                  <div className="AvocadoSkeleton-meta">
-                    <div className="AvocadoSkeleton-avatarStack">
-                      <div className="AvocadoSkeleton-stackItem" />
-                      <div className="AvocadoSkeleton-stackItem" />
-                      <div className="AvocadoSkeleton-stackItem" />
-                      {/* +more circle — mirrors DiscussionHero-participantsMore */}
-                      <div className="AvocadoSkeleton-stackItem AvocadoSkeleton-stackItem--more" />
+              <div className="AvocadoSkeleton-discussionHero">
+                <div className="container">
+                  {/* Mirrors .DiscussionHero-inner: position reference + centering + padding */}
+                  <div className="AvocadoSkeleton-heroInner">
+                    <div className="AvocadoSkeleton-nav">
+                      <div className="AvocadoSkeleton-backBtn" />
+                      <div className="AvocadoSkeleton-tag" />
+                      <div className="AvocadoSkeleton-tag" style="width:56px" />
                     </div>
-                    <div className="AvocadoSkeleton-metaChip AvocadoSkeleton-metaChip--md" />
-                    <div className="AvocadoSkeleton-metaChip AvocadoSkeleton-metaChip--sm" />
-                  </div>
-                  {/* Decoration icon skeleton — mirrors real icon shape when cached */}
-                  {_skelShowDeco && _skelHasFirstIcon && (
-                    <div className={`AvocadoSkeleton-decoContainer${_skelHasTwo ? ' is-two' : ''}${_skelHasDivider ? ' has-divider' : ''}`}>
-                      <div className={`AvocadoSkeleton-decoIcon${_skelFirstIconCls ? ' AvocadoSkeleton-decoIcon--icon' : ''}`}>
-                        {_skelFirstIconCls && <i className={_skelFirstIconCls} aria-hidden="true" />}
+                    <div className="AvocadoSkeleton-title" />
+                    <div className="AvocadoSkeleton-meta">
+                      <div className="AvocadoSkeleton-avatarStack">
+                        <div className="AvocadoSkeleton-stackItem" />
+                        <div className="AvocadoSkeleton-stackItem" />
+                        <div className="AvocadoSkeleton-stackItem" />
+                        {/* +more circle — mirrors DiscussionHero-participantsMore */}
+                        <div className="AvocadoSkeleton-stackItem AvocadoSkeleton-stackItem--more" />
                       </div>
-                      {_skelHasDivider && (
-                        <div className="AvocadoSkeleton-decoSep" aria-hidden="true">
-                          <i className={app.forum.attribute('avocadoHeroDecoDividerIcon') || 'fas fa-times'} />
-                        </div>
-                      )}
-                      {_skelHasTwo && (
-                        <div className={`AvocadoSkeleton-decoIcon${_skelSecondIconCls ? ' AvocadoSkeleton-decoIcon--icon' : ''}`}>
-                          {_skelSecondIconCls && <i className={_skelSecondIconCls} aria-hidden="true" />}
-                        </div>
-                      )}
+                      <div className="AvocadoSkeleton-metaChip AvocadoSkeleton-metaChip--md" />
+                      <div className="AvocadoSkeleton-metaChip AvocadoSkeleton-metaChip--sm" />
                     </div>
-                  )}
+                    {/* Decoration icon skeleton — mirrors real icon shape when cached */}
+                    {_skelShowDeco && _skelHasFirstIcon && (
+                      <div className={`AvocadoSkeleton-decoContainer${_skelHasTwo ? ' is-two' : ''}${_skelHasDivider ? ' has-divider' : ''}`}>
+                        <div className={`AvocadoSkeleton-decoIcon${_skelFirstIconCls ? ' AvocadoSkeleton-decoIcon--icon' : ''}`}>
+                          {_skelFirstIconCls && <i className={_skelFirstIconCls} aria-hidden="true" />}
+                        </div>
+                        {_skelHasDivider && (
+                          <div className="AvocadoSkeleton-decoSep" aria-hidden="true">
+                            <i className={app.forum.attribute('avocadoHeroDecoDividerIcon') || 'fas fa-times'} />
+                          </div>
+                        )}
+                        {_skelHasTwo && (
+                          <div className={`AvocadoSkeleton-decoIcon${_skelSecondIconCls ? ' AvocadoSkeleton-decoIcon--icon' : ''}`}>
+                            {_skelSecondIconCls && <i className={_skelSecondIconCls} aria-hidden="true" />}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
             )}
             <div className="Page-container container">
               {/* Sidebar FIRST (priority 100) — mirrors Flarum's containerItems() order.
@@ -1455,7 +1455,9 @@ app.initializers.add(
         if (labels) {
           const release = tagsAreChangelogProducts(this.composer?.fields?.tags || []);
           this.attrs.titlePlaceholder = release ? trans('ramon-avocado.forum.changelog.composer_title_placeholder', 'Release title…') : labels.title;
-          this.attrs.placeholder = release ? trans('ramon-avocado.forum.changelog.composer_body_placeholder', 'Write the release notes…') : labels.body;
+          this.attrs.placeholder = release
+            ? trans('ramon-avocado.forum.changelog.composer_body_placeholder', 'Write the release notes…')
+            : labels.body;
           // O core guarda o texto já traduzido (extractText), não a chave — passar a chave mostrava a chave crua no botão.
           this.attrs.submitLabel = release ? trans('ramon-avocado.forum.changelog.composer_submit', 'Publish release') : labels.submit;
         }
@@ -1621,7 +1623,9 @@ app.initializers.add(
       });
 
       override(RenameDiscussionModal.prototype, 'title', function (original) {
-        return tagsAreChangelogProducts(this.discussion?.tags?.() || []) ? trans('ramon-avocado.forum.changelog.edit_release', 'Edit release') : original();
+        return tagsAreChangelogProducts(this.discussion?.tags?.() || [])
+          ? trans('ramon-avocado.forum.changelog.edit_release', 'Edit release')
+          : original();
       });
 
       override(RenameDiscussionModal.prototype, 'content', function (original) {

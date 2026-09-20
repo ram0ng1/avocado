@@ -44,9 +44,7 @@ export const entryProduct = (discussion: any, products: any[]): any | null => {
 export const entryTypes = (discussion: any, product: any | null): any[] => {
   if (!product) return [];
   const productId = String(product.id?.());
-  return ((discussion?.tags?.() || []) as any[])
-    .filter((t) => t && String(t.parent?.()?.id?.() ?? '') === productId)
-    .sort(byPosition);
+  return ((discussion?.tags?.() || []) as any[]).filter((t) => t && String(t.parent?.()?.id?.() ?? '') === productId).sort(byPosition);
 };
 
 /** As sub-tags do produto, que viram os filtros de tipo da página. */

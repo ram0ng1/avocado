@@ -131,7 +131,12 @@ function svgField(this: Modal): Mithril.Children {
             {hasIcon ? trans('svg_replace_button') : trans('svg_upload_button')}
           </Button>
           {hasIcon && (
-            <Button className="Button Button--icon" icon="fas fa-trash" aria-label={extractText(trans('svg_remove_button'))} onclick={() => setSvg.call(this, '')} />
+            <Button
+              className="Button Button--icon"
+              icon="fas fa-trash"
+              aria-label={extractText(trans('svg_remove_button'))}
+              onclick={() => setSvg.call(this, '')}
+            />
           )}
         </div>
       </div>

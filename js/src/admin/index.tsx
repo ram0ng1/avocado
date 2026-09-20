@@ -197,10 +197,7 @@ const CARDS: CardDef[] = [
       <AdminTagPicker
         settingKey="avocado.featured_tags"
         label={trans('ramon-avocado.admin.settings.featured_tags_label', 'Featured Categories')}
-        help={trans(
-          'ramon-avocado.admin.settings.featured_tags_help',
-          'Selected categories appear highlighted on the homepage and categories page.'
-        )}
+        help={trans('ramon-avocado.admin.settings.featured_tags_help', 'Selected categories appear highlighted on the homepage and categories page.')}
         placeholder={trans('ramon-avocado.admin.settings.tag_picker_placeholder', 'Select categories…')}
       />
     ),
@@ -324,10 +321,7 @@ const CARDS: CardDef[] = [
           <AdminText
             settingKey="avocado.hero_image_position"
             label={trans('ramon-avocado.admin.settings.hero_image_position_label', 'Hero Image Position')}
-            help={trans(
-              'ramon-avocado.admin.settings.hero_image_position_help',
-              "CSS background-position value, e.g. 'center top' or 'center 20%'."
-            )}
+            help={trans('ramon-avocado.admin.settings.hero_image_position_help', "CSS background-position value, e.g. 'center top' or 'center 20%'.")}
             placeholder="center top"
           />
         )}
@@ -386,10 +380,7 @@ const CARDS: CardDef[] = [
         <AdminToggle
           settingKey="avocado.fixed_avatar_effect"
           label={trans('ramon-avocado.admin.settings.fixed_avatar_effect_label', 'Enable fixed avatar effect in discussion posts')}
-          help={trans(
-            'ramon-avocado.admin.settings.fixed_avatar_effect_help',
-            'Keep the post avatar sticky while reading long comments on desktop.'
-          )}
+          help={trans('ramon-avocado.admin.settings.fixed_avatar_effect_help', 'Keep the post avatar sticky while reading long comments on desktop.')}
         />
         <AdminToggle
           settingKey="avocado.threads_style"
@@ -831,10 +822,7 @@ const CARDS: CardDef[] = [
             <AdminSelect
               settingKey="avocado.post_cta_position"
               label={trans('ramon-avocado.admin.settings.post_cta_position_label', 'CTA position (after which post number)')}
-              help={trans(
-                'ramon-avocado.admin.settings.post_cta_position_help',
-                'Insert the CTA banner between this post number and the next one.'
-              )}
+              help={trans('ramon-avocado.admin.settings.post_cta_position_help', 'Insert the CTA banner between this post number and the next one.')}
               options={{
                 '1': trans('ramon-avocado.admin.settings.post_cta_position_1', 'After post #1'),
                 '2': trans('ramon-avocado.admin.settings.post_cta_position_2', 'After post #2'),

@@ -5,15 +5,7 @@ import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import trustedHtml from '../../common/trustedHtml';
 import ChangelogState, { ChangelogFilter } from '../states/ChangelogState';
 import { resolveCover } from '../utils/cover';
-import {
-  changelogProducts,
-  entryProduct,
-  entryTypes,
-  productTypes,
-  entryVersion,
-  groupByMonth,
-  dayLabel,
-} from '../utils/changelog';
+import { changelogProducts, entryProduct, entryTypes, productTypes, entryVersion, groupByMonth, dayLabel } from '../utils/changelog';
 import {
   trans,
   displayName,
@@ -265,7 +257,11 @@ export default class ChangelogPage extends Page {
                 style={{ '--tag-color': safeCssColor(tag.color?.()) ?? undefined }}
                 onclick={() => this.openComposer(tag)}
               >
-                {tag.icon?.() ? <i className={tag.icon()} aria-hidden="true" /> : <span className="AvocadoChangelog-product-dot" aria-hidden="true" />}
+                {tag.icon?.() ? (
+                  <i className={tag.icon()} aria-hidden="true" />
+                ) : (
+                  <span className="AvocadoChangelog-product-dot" aria-hidden="true" />
+                )}
                 {tag.name()}
               </button>
             ))}
@@ -299,11 +295,7 @@ export default class ChangelogPage extends Page {
 
     return (
       <nav className="AvocadoChangelog-products" aria-label={trans('ramon-avocado.forum.changelog.products_label', 'Products')}>
-        <a
-          className={`AvocadoChangelog-product${this.productSlug ? '' : ' is-active'}`}
-          href={allHref}
-          onclick={(e: MouseEvent) => go(e, allHref)}
-        >
+        <a className={`AvocadoChangelog-product${this.productSlug ? '' : ' is-active'}`} href={allHref} onclick={(e: MouseEvent) => go(e, allHref)}>
           <i className="fas fa-layer-group" aria-hidden="true" />
           {trans('ramon-avocado.forum.changelog.all_products', 'All products')}
         </a>
@@ -576,7 +568,9 @@ export default class ChangelogPage extends Page {
                 aria-expanded={open ? 'true' : 'false'}
                 onclick={() => this.toggleNotes(discussion)}
               >
-                {open ? trans('ramon-avocado.forum.changelog.hide_notes', 'Hide notes') : trans('ramon-avocado.forum.changelog.read_notes', 'Read the notes')}
+                {open
+                  ? trans('ramon-avocado.forum.changelog.hide_notes', 'Hide notes')
+                  : trans('ramon-avocado.forum.changelog.read_notes', 'Read the notes')}
                 <i className="fas fa-chevron-down" aria-hidden="true" />
               </button>
             </footer>

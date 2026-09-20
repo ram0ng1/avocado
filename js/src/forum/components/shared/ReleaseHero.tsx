@@ -155,7 +155,6 @@ export const renderReleaseHero = (discussion: any, tags: any[], imageControls: a
                 <span>{displayName(author)}</span>
               </a>
             )}
-
           </div>
 
           {icon && <i className={`ReleaseHero-icon ${icon}`} aria-hidden="true" />}

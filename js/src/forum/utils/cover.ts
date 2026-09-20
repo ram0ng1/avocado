@@ -120,9 +120,7 @@ export const resolveCover = (value: string | null | undefined, tags: any[]): Res
   }
 
   if (cover.mode === 'tags') {
-    const chosen = cover.tagIds
-      .map((id) => list.find((t) => String(t.id?.()) === id) ?? app.store.getById('tags', id))
-      .filter(Boolean);
+    const chosen = cover.tagIds.map((id) => list.find((t) => String(t.id?.()) === id) ?? app.store.getById('tags', id)).filter(Boolean);
     const colors = chosen.map(color).filter((c): c is string => !!c);
     return { colors, icon: chosen.map(iconOf).find(Boolean) ?? defaultIcon, gradient: coverGradient(colors) };
   }

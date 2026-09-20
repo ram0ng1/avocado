@@ -186,7 +186,11 @@ export class CoverPicker extends Component<CoverPickerAttrs> {
           aria-expanded={this.open ? 'true' : 'false'}
           onclick={() => this.setOpen(!this.open)}
         >
-          <span className="AvocadoChangelogField-swatch" style={resolved?.gradient ? { background: resolved.gradient } : undefined} aria-hidden="true" />
+          <span
+            className="AvocadoChangelogField-swatch"
+            style={resolved?.gradient ? { background: resolved.gradient } : undefined}
+            aria-hidden="true"
+          />
           <span>{hero ? trans('ramon-avocado.forum.changelog.cover_change', 'Cover colour') : label}</span>
           <i className="fas fa-chevron-down AvocadoChangelogField-caret" aria-hidden="true" />
         </button>
@@ -215,7 +219,9 @@ export class CoverPicker extends Component<CoverPickerAttrs> {
 
             {sources.length > 0 && (
               <div className="AvocadoChangelogField-group">
-                <div className="AvocadoChangelogField-popLabel">{trans('ramon-avocado.forum.changelog.cover_from_tags', 'From tags (pick one or more)')}</div>
+                <div className="AvocadoChangelogField-popLabel">
+                  {trans('ramon-avocado.forum.changelog.cover_from_tags', 'From tags (pick one or more)')}
+                </div>
                 <div className="AvocadoChangelogField-tagList">
                   {sources.map((tag: any) => {
                     const id = String(tag.id());
@@ -228,7 +234,11 @@ export class CoverPicker extends Component<CoverPickerAttrs> {
                         aria-pressed={on ? 'true' : 'false'}
                         onclick={() => toggleTag(id)}
                       >
-                        <span className="AvocadoChangelogField-dot" style={{ background: safeCssColor(tag.color?.()) ?? undefined }} aria-hidden="true" />
+                        <span
+                          className="AvocadoChangelogField-dot"
+                          style={{ background: safeCssColor(tag.color?.()) ?? undefined }}
+                          aria-hidden="true"
+                        />
                         {tag.name()}
                         {on && <i className="fas fa-check" aria-hidden="true" />}
                       </button>
