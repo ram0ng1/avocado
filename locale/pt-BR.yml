@@ -26,6 +26,23 @@ ramon-avocado:
       section_team: Página Equipe
       section_hero_image_tags: Imagem do hero nas discussões
       section_discussion: Página de discussão
+      section_home_categories: Categorias em destaque
+      section_showcase: Showcase / Portfólio
+      section_home_banner: Banner
+      section_online: Usuários online
+      section_guests: Visitantes
+      section_disc_hero_icon: Ícone do cabeçalho da discussão
+
+      # Casca das configurações: abas + busca
+      group_appearance: Aparência
+      group_home: Página inicial
+      group_discussions: Discussões
+      group_community: Comunidade
+      group_access: Acesso
+      groups_aria: Grupos de configuração
+      search_placeholder: "Buscar configuração…"
+      search_clear: Limpar busca
+      search_empty: Nenhuma configuração encontrada.
 
       # Estilo da página de discussão
       disc_style_label: Estilo da página de discussão
@@ -213,6 +230,39 @@ ramon-avocado:
       team_groups_label: Grupos a exibir
       team_groups_help: Os membros dos grupos selecionados aparecerão na página Equipe.
       team_groups_empty: Nenhum grupo encontrado.
+
+      # Ícones de tag (SVG)
+      section_tag_icon_svg: Ícones de tag (SVG)
+      tag_icon_svg_tags_notice: Isso precisa da extensão Tags, que não está ativada.
+      tag_icon_svg_standalone_notice: A extensão avulsa Tag Icon SVG está ativa, então ela continua cuidando dos ícones SVG e este interruptor não faz nada. Desative essa extensão para o tema assumir — os ícones já salvos são mantidos.
+      tag_icon_svg_label: Permitir SVG como ícone de tag
+      tag_icon_svg_help: Adiciona um campo de SVG ao modal Editar tag. Um SVG substitui o ícone Font Awesome em todo lugar onde o ícone da tag aparece — inclusive nos tipos do changelog. Os SVGs são sanitizados ao salvar. Recarregue o admin depois de ligar.
+
+      # Changelog
+      section_changelog: Changelog
+      changelog_enabled_label: Ativar a página de Changelog
+      changelog_enabled_help: Mostra uma página /changelog que transforma tags em produtos e as discussões delas em versões. Precisa da extensão Tags.
+      changelog_tags_label: Produtos
+      changelog_tags_help: Cada tag escolhida aqui é um changelog próprio (Alega, Avocado, outra extensão…). Cada discussão nela é uma versão, e as sub-tags dessa tag são os tipos de mudança — Adicionado, Corrigido, Removido, Segurança… — com cor e ícone da própria tag. Quem pode publicar é definido nas permissões da tag. Escolher um produto aqui também pede uma imagem de capa no compositor.
+      changelog_title_label: Título da página
+      changelog_title_placeholder: Changelog
+      changelog_description_label: Descrição da página
+      changelog_description_placeholder: "O que há de novo, o que foi corrigido e o que saiu — versão por versão."
+      changelog_version_help: "Cada versão tem um campo Versão no compositor, ao lado da imagem de capa — digite como quer que apareça, por exemplo “v2.4.0”. A capa é uma imagem enviada ou um banner na cor da tag. Versões sem número aparecem só com a data."
+    edit_tag:
+      svg_label: Ícone SVG
+      svg_text: Envie um arquivo .svg. Quando definido, substitui o ícone Font Awesome acima e se comporta igual em todos os lugares onde o ícone da tag aparece.
+      svg_current: Ícone SVG definido
+      svg_drop_title: Solte um arquivo .svg aqui
+      svg_drop_hint: "ou use o botão · até {max} KB"
+      svg_replace_hint: Solte outro arquivo .svg para substituir.
+      svg_upload_button: Escolher arquivo
+      svg_replace_button: Substituir
+      svg_remove_button: Remover SVG
+      svg_mono_title: Usar a cor do texto
+      svg_mono_help: Pinta o ícone com a cor atual, como um glifo Font Awesome. Desligue para manter as cores de dentro do SVG.
+      svg_invalid: Isso não é um arquivo SVG. Envie um .svg válido.
+      svg_too_large: "O SVG é muito grande (máximo de {max} KB)."
     footer_settings:
       footer_enabled: Ativar rodapé personalizado
       footer_company: Informações da empresa
@@ -437,6 +487,48 @@ ramon-avocado:
       member_since: "Desde"
       member_singular: membro
       member_plural: membros
+    changelog:
+      title: Changelog
+      description: "O que há de novo, o que foi corrigido e o que saiu — versão por versão."
+      products_label: Produtos
+      types_label: Filtrar por tipo
+      all_products: Todos os produtos
+      all_types: Todos os tipos
+      latest: Mais recente
+      version_label: Versão
+      version_placeholder: "Versão (ex.: v2.4.0)"
+      cover_color: Capa na cor da tag
+      new_release: Nova versão
+      composer_title: Nova versão
+      composer_title_placeholder: "Título da versão…"
+      composer_body_placeholder: "Escreva as notas da versão…"
+      composer_submit: Publicar versão
+      edit_release: Editar versão
+      cover_off: Sem capa (padrão da tag)
+      cover_change: Cor da capa
+      cover_title: Cor da capa
+      cover_auto: Automática
+      cover_auto_help: Da cor do produto até o primeiro tipo de mudança.
+      cover_from_tags: "Das tags (escolha uma ou mais)"
+      cover_presets: Predefinições
+      cover_tags_count: "{count, plural, one {# cor de tag} other {# cores de tags}}"
+      cover_preset_sunset: Pôr do sol
+      cover_preset_ocean: Oceano
+      cover_preset_forest: Floresta
+      cover_preset_violet: Violeta
+      cover_preset_ember: Brasa
+      cover_preset_slate: Ardósia
+      read_notes: Ler as notas
+      hide_notes: Ocultar notas
+      notes_loading: "Carregando as notas…"
+      notes_failed: Não foi possível carregar as notas.
+      replies: "{count, plural, one {# resposta} other {# respostas}}"
+      empty: Nenhuma versão publicada por enquanto.
+      empty_filtered: Nenhuma versão deste tipo por enquanto.
+      not_found: Produto não encontrado.
+      error: Não foi possível carregar o changelog.
+      retry: Tentar de novo
+      load_more: Carregar mais
     link:
       login_to_view: "Faça login para ver o link"
     user:
@@ -463,3 +555,5 @@ ramon-avocado:
     svg_forbidden_declaration: "O SVG contém uma declaração DOCTYPE ou ENTITY proibida."
     svg_parse_failed: "SVG inválido: não foi possível interpretar o XML."
     svg_invalid: "O arquivo enviado precisa ser um SVG válido."
+    tag_icon_svg_invalid: "Não foi possível ler o ícone SVG. Verifique se o código SVG é válido."
+    tag_icon_svg_too_large: "O ícone SVG é muito grande (máximo de {max} KB)."

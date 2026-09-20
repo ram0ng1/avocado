@@ -1,0 +1,55 @@
+// Ícone SVG de uma tag, dimensionado e alinhado como um glifo Font Awesome para
+// poder ocupar o lugar dele em qualquer ponto onde `tag.icon()` é renderizado.
+//
+// Renderizado pelo componente Icon do core leva o markup do SVG inline. Escrito
+// direto num atributo de classe (<i class={tag.icon()} />) é um elemento vazio,
+// pintado aqui a partir do data URI que o tema registra em `--tag-icon-svg` para
+// cada ícone (ver js/src/common/tagIconSvg.tsx).
+.TagIconSvg {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  line-height: 1;
+  vertical-align: -0.125em;
+  text-align: center;
+
+  > svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+    overflow: visible;
+  }
+
+  // Monochrome: paint every explicit colour with the current text colour,
+  // leaving `none`/`transparent` alone so cut-outs and strokes-only shapes
+  // keep their meaning. (The sanitizer moves fill/stroke from styles onto
+  // attributes so these selectors can see them.)
+  &--mono > svg {
+    *:not([fill="none" i]):not([fill="transparent" i]) {
+      fill: currentColor !important;
+    }
+
+    [stroke]:not([stroke="none" i]):not([stroke="transparent" i]) {
+      stroke: currentColor !important;
+    }
+  }
+
+  // Empty element: paint on a pseudo-element so the box has intrinsic size
+  // like a font glyph would, even where a theme forces `width: fit-content`
+  // on icons. Full colour as a background image...
+  &:empty::before {
+    content: '';
+    display: block;
+    width: 1em;
+    height: 1em;
+    background: var(--tag-icon-svg) center / contain no-repeat;
+  }
+
+  // ...or, for monochrome, the current text colour seen through the SVG's shape.
+  &--mono:empty::before {
+    background: currentColor;
+    -webkit-mask: var(--tag-icon-svg) center / contain no-repeat;
+    mask: var(--tag-icon-svg) center / contain no-repeat;
+  }
+}

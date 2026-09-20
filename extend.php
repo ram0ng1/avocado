@@ -17,7 +17,9 @@ use Ramon\Avocado\AvocadoServiceProvider;
 use Ramon\Avocado\Middleware\AddPerfHeaders;
 use Ramon\Avocado\Support\BookmarksRoute;
 use Ramon\Avocado\Support\BookmarksSchema;
+use Ramon\Avocado\Support\ChangelogSchema;
 use Ramon\Avocado\Support\HtmlSanitizer;
+use Ramon\Avocado\Support\TagIconSvg;
 
 return [
     (new Extend\ServiceProvider())
@@ -42,6 +44,7 @@ return [
         // Preloads de dado — cada um sai cedo se não estiver na sua rota.
         ->content(\Ramon\Avocado\Content\PreloadTeamMembers::class)
         ->content(\Ramon\Avocado\Content\PreloadShowcase::class)
+        ->content(\Ramon\Avocado\Content\PreloadChangelog::class)
         ->route('/discussions', 'avocado-discussions')
         ->route('/search', 'avocado-search'),
 
@@ -55,10 +58,17 @@ return [
         ]),
 
     (new Extend\Routes('forum'))
-        ->get('/team', 'avocado-team', \Ramon\Avocado\Controller\TeamPageController::class),
+        ->get('/team', 'avocado-team', \Ramon\Avocado\Controller\TeamPageController::class)
+        // Dois nomes para o mesmo controller: o front monta as URLs por nome
+        // (app.route), e /changelog/:product leva o slug da tag do produto.
+        ->get('/changelog', 'avocado-changelog', \Ramon\Avocado\Controller\ChangelogPageController::class)
+        ->get('/changelog/{product}', 'avocado-changelog.product', \Ramon\Avocado\Controller\ChangelogPageController::class),
 
     (new Extend\Middleware('forum'))
-        ->add(AddPerfHeaders::class),
+        ->add(AddPerfHeaders::class)
+        // /t/produto e /t/subtag do changelog → 302 para /changelog/... (só age com o
+        // flarum/tags e o changelog ligados; ver Middleware\RedirectChangelogTags).
+        ->add(\Ramon\Avocado\Middleware\RedirectChangelogTags::class),
 
     (new Extend\Frontend('admin'))
         ->js(__DIR__.'/js/dist/admin.js')
@@ -137,6 +147,7 @@ return [
 
     (new Extend\Model(\Flarum\Discussion\Discussion::class))
         ->hasOne('avocadoHero', \Ramon\Avocado\Model\DiscussionHero::class, 'discussion_id')
+        ->hasOne('avocadoChangelog', \Ramon\Avocado\Model\ChangelogEntry::class, 'discussion_id')
         ->hasMany('avocadoBookmark', \Ramon\Avocado\Model\Bookmark::class, 'discussion_id'),
 
     (new Extend\ApiResource(\Flarum\Api\Resource\DiscussionResource::class))
@@ -146,6 +157,18 @@ return [
         ->endpoint(
             [Endpoint\Index::class, Endpoint\Show::class],
             fn (Endpoint\Index|Endpoint\Show $endpoint) => $endpoint->eagerLoad('avocadoHero')
+        ),
+
+    // Versão e tipo de capa de uma entrada do changelog (tabela companheira). Como
+    // no bookmark, o eager-load decide com o banco na mão: sem a tabela migrada o
+    // endpoint segue sem ele em vez de derrubar toda listagem de discussões.
+    (new Extend\ApiResource(\Flarum\Api\Resource\DiscussionResource::class))
+        ->fields(\Ramon\Avocado\Api\ChangelogFields::class)
+        ->endpoint(
+            [Endpoint\Index::class, Endpoint\Show::class],
+            fn (Endpoint\Index|Endpoint\Show $endpoint) => ChangelogSchema::available()
+                ? $endpoint->eagerLoad('avocadoChangelog')
+                : $endpoint
         ),
 
     // Bookmarks do tema: campos e eager-load só existem quando o fof/bookmarks
@@ -186,6 +209,38 @@ return [
         ->post('/avocado/bookmark', 'avocado.bookmark.create', \Ramon\Avocado\Controller\CreateBookmarkController::class)
         ->patch('/avocado/bookmark', 'avocado.bookmark.update', \Ramon\Avocado\Controller\UpdateBookmarkController::class)
         ->delete('/avocado/bookmark', 'avocado.bookmark.delete', \Ramon\Avocado\Controller\DeleteBookmarkController::class),
+
+    // Ícone SVG nas tags (absorvido da extensão `ramon/tag-icon-svg`). Só existe
+    // com o flarum/tags ativo, e só quando a extensão avulsa NÃO está: as duas
+    // registrariam os mesmos campos no TagResource e sobrescreveriam `Icon` duas
+    // vezes. Com ela ativa o tema cede (o attribute `avocadoTagIconSvg` nem sai
+    // no forum e o front não instala nada). O switch em si é o
+    // `avocado.tag_icon_svg_enabled`, lido em TagIconSvg::enabled().
+    (new Extend\Conditional())
+        ->whenExtensionEnabled(TagIconSvg::TAGS_EXTENSION_ID, fn () => [
+            (new Extend\Conditional())
+                ->whenExtensionDisabled(TagIconSvg::STANDALONE_EXTENSION_ID, fn () => [
+                    (new Extend\Model(\Flarum\Tags\Tag::class))
+                        ->cast('icon_svg_mono', 'bool'),
+
+                    (new Extend\ApiResource(\Flarum\Tags\Api\Resource\TagResource::class))
+                        ->fields(\Ramon\Avocado\Api\TagIconSvgFields::class),
+
+                    (new Extend\Settings())
+                        ->serializeToForum('avocadoTagIconSvg', TagIconSvg::SETTING, fn ($value) => TagIconSvg::enabledFor($value)),
+                ]),
+        ]),
+
+    // As versões do changelog não contam como discussão: nem no total do autor,
+    // nem no da tag (Api\ChangelogCounts). Só o que sai no JSON muda.
+    (new Extend\ApiResource(\Flarum\Api\Resource\UserResource::class))
+        ->field('discussionCount', \Ramon\Avocado\Api\ChangelogCounts::forUsers(...)),
+
+    (new Extend\Conditional())
+        ->whenExtensionEnabled(TagIconSvg::TAGS_EXTENSION_ID, fn () => [
+            (new Extend\ApiResource(\Flarum\Tags\Api\Resource\TagResource::class))
+                ->field('discussionCount', \Ramon\Avocado\Api\ChangelogCounts::forTags(...)),
+        ]),
 
     (new Extend\Notification())
         ->type(\Ramon\Avocado\Notification\BookmarkReminderBlueprint::class, ['alert']),
@@ -272,6 +327,12 @@ return [
         ->serializeToForum('avocadoTeamPageGroups', 'avocado.team_page_groups')
         ->serializeToForum('avocadoTeamPageTitle', 'avocado.team_page_title')
         ->serializeToForum('avocadoTeamPageDescription', 'avocado.team_page_description')
+        // Changelog: cada tag em `changelog_tags` é um produto; cada discussão nela,
+        // uma versão. O título/descrição só personalizam o cabeçalho da página.
+        ->serializeToForum('avocadoChangelogEnabled', 'avocado.changelog_enabled', 'boolval')
+        ->serializeToForum('avocadoChangelogTags', 'avocado.changelog_tags')
+        ->serializeToForum('avocadoChangelogTitle', 'avocado.changelog_title')
+        ->serializeToForum('avocadoChangelogDescription', 'avocado.changelog_description')
         ->default('avocado.hero_image_position', 'center top')
         ->default('avocado.show_online_users', true)
         ->default('avocado.show_auth_buttons', false)
@@ -314,10 +375,18 @@ return [
         ->default('avocado.team_page_groups', '[]')
         ->default('avocado.team_page_title', '')
         ->default('avocado.team_page_description', '')
+        ->default('avocado.changelog_enabled', false)
+        ->default('avocado.changelog_tags', '[]')
+        ->default('avocado.changelog_title', '')
+        ->default('avocado.changelog_description', '')
+        ->default(TagIconSvg::SETTING, false)
         ->default('avocado.fontawesome_kit_enabled', false),
 
     (new Extend\SearchDriver(\Flarum\Search\Database\DatabaseSearchDriver::class))
-        ->addFilter(\Flarum\Discussion\Search\DiscussionSearcher::class, \Ramon\Avocado\Filter\BookmarkFilter::class),
+        ->addFilter(\Flarum\Discussion\Search\DiscussionSearcher::class, \Ramon\Avocado\Filter\BookmarkFilter::class)
+        // As versões do changelog moram na página dela, não nas listas de discussão
+        // (ver Search\HideChangelogFromDiscussionLists para o que continua listando).
+        ->addMutator(\Flarum\Discussion\Search\DiscussionSearcher::class, \Ramon\Avocado\Search\HideChangelogFromDiscussionLists::class),
 
     (new Extend\Policy())
         ->modelPolicy(\Flarum\Discussion\Discussion::class, \Ramon\Avocado\Access\DiscussionPolicy::class),
