@@ -2,10 +2,11 @@ import app from 'flarum/forum/app';
 import Component from 'flarum/common/Component';
 import type { ComponentAttrs } from 'flarum/common/Component';
 import Avatar from 'flarum/common/components/Avatar';
-import { trans, displayName, tagsRequireHeroImage } from '../../utils';
+import { trans, displayName, tagsRequireHeroImage, tagsAreChangelogProducts } from '../../utils';
 import InlineComposerState from '../../states/InlineComposerState';
 import TagPicker from './TagPicker';
 import ComposerTextEditor from './ComposerTextEditor';
+import { changelogChips } from './ChangelogFields';
 
 export interface IInlineComposerAttrs extends ComponentAttrs {
   /** The user authoring the discussion (drives the avatar + permission checks). */
@@ -75,6 +76,8 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
   view() {
     const { user } = this.attrs;
     const state = this.state;
+    // Com um produto do changelog escolhido o que se escreve é uma versão, não uma discussão.
+    const isRelease = tagsAreChangelogProducts(state.tags);
 
     return (
       <div className="AvocadoHome-composer">
@@ -83,7 +86,11 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
           <input
             className="AvocadoHome-composerTitle"
             type="text"
-            placeholder={trans('ramon-avocado.forum.home.composer_title_placeholder', 'Discussion title…')}
+            placeholder={
+              isRelease
+                ? trans('ramon-avocado.forum.changelog.composer_title_placeholder', 'Release title…')
+                : trans('ramon-avocado.forum.home.composer_title_placeholder', 'Discussion title…')
+            }
             value={state.title}
             oninput={(e: Event) => {
               state.title = (e.target as HTMLInputElement).value;
@@ -101,7 +108,11 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
           <ComposerTextEditor
             composer={state.composerProxy}
             value={state.body}
-            placeholder={trans('ramon-avocado.forum.home.composer_body_placeholder', 'Tell everyone what are you working on...')}
+            placeholder={
+              isRelease
+                ? trans('ramon-avocado.forum.changelog.composer_body_placeholder', 'Write the release notes…')
+                : trans('ramon-avocado.forum.home.composer_body_placeholder', 'Tell everyone what are you working on...')
+            }
             onchange={(value: string) => {
               state.body = value;
               m.redraw();
@@ -132,6 +143,19 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
   private renderHeroImageField() {
     const state = this.state;
     const previewUrl = state.heroImagePreview;
+
+    // Versão e capa colorida ficam na mesma linha do chip de imagem, e só
+    // aparecem quando uma das tags escolhidas é um produto do changelog.
+    const changelog = tagsAreChangelogProducts(state.tags)
+      ? changelogChips({
+          tags: state.tags,
+          version: state.changelogVersion,
+          onVersion: (value) => (state.changelogVersion = value),
+          cover: state.changelogCover,
+          onCover: (value) => (state.changelogCover = value),
+          hasImage: !!previewUrl,
+        })
+      : [];
 
     const onPick = (e: Event) => {
       const input = e.target as HTMLInputElement;
@@ -165,6 +189,7 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
               <i className="fas fa-times" aria-hidden="true" />
             </button>
           </span>
+          {changelog}
         </div>
       );
     }
@@ -176,6 +201,7 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
           <i className="fas fa-image" aria-hidden="true" />
           <span>{trans('ramon-avocado.forum.home.composer_hero_image_label', 'Hero image (optional)')}</span>
         </label>
+        {changelog}
       </div>
     );
   }
@@ -217,7 +243,9 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
     const isSubmitting = this.state.submitting;
     const label = isSubmitting
       ? trans('ramon-avocado.forum.home.composer_submitting', 'Posting…')
-      : trans('ramon-avocado.forum.home.composer_post', 'Post Discussion');
+      : tagsAreChangelogProducts(this.state.tags)
+        ? trans('ramon-avocado.forum.changelog.composer_submit', 'Publish release')
+        : trans('ramon-avocado.forum.home.composer_post', 'Post Discussion');
     const cls = `Button Button--primary AvocadoHome-composer-submit${isSubmitting ? ' is-loading' : ''}${!isValid ? ' is-disabled' : ''}`;
 
     return (

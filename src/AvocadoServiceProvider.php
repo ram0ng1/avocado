@@ -16,6 +16,7 @@ use Flarum\Foundation\Paths;
 use Flarum\Frontend\Frontend;
 use Illuminate\Filesystem\Filesystem;
 use Psr\Log\LoggerInterface;
+use Ramon\Avocado\Controller\ChangelogPageController;
 use Ramon\Avocado\Controller\TeamPageController;
 use Throwable;
 
@@ -57,7 +58,7 @@ class AvocadoServiceProvider extends AbstractServiceProvider
         // to inject the container and resolve the 'flarum.frontend.forum' string
         // itself. Resolving that binding also runs the content-callback wiring
         // registered via Extend\Frontend('forum'), so the page renders identically.
-        $this->container->when(TeamPageController::class)
+        $this->container->when([TeamPageController::class, ChangelogPageController::class])
             ->needs(Frontend::class)
             ->give(fn () => $this->container->make('flarum.frontend.forum'));
     }

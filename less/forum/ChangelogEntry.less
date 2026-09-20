@@ -1,0 +1,253 @@
+// ─── Página de uma versão do changelog ────────────────────────────────────────
+// Uma versão é a discussão de uma tag de produto. A página continua sendo a de
+// discussão — navegação lateral (responder, seguir, editar…), comentários e caixa
+// de resposta intactos. As alterações são leves, de propósito:
+//   1. o cabeçalho é o ReleaseHero, no lugar do hero de discussão;
+//   2. as notas (a 1ª publicação) usam a tipografia das notas do cartão do
+//      changelog, para a versão ler igual nos dois lugares.
+// `html.avocado-release` é a classe que o próprio cabeçalho põe enquanto existe.
+
+// ── Cabeçalho ─────────────────────────────────────────────────────────────────
+.ReleaseHero {
+  position: relative;
+  overflow: hidden;
+  background: var(--avocado-btn-dark);
+  background-size: cover;
+  background-position: center;
+  color: #fff;
+
+  // Imagem de capa: véu escuro para o título nunca depender da exposição da foto.
+  &--image::before,
+  &--gradient::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  &--image::before {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.62));
+  }
+
+  // Degradê das cores escolhidas: brilho no canto e um véu leve para o texto branco
+  // aguentar até as cores claras (amarelo, ciano).
+  &--gradient::before {
+    background:
+      radial-gradient(circle at 88% 8%, rgba(255, 255, 255, 0.24), transparent 55%),
+      linear-gradient(rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0.16));
+  }
+
+  // Sem imagem e sem cor escolhida: o padrão da tag — a cor dela, chapada, como o
+  // hero de discussão do tema (`--release-color` vem do ReleaseHero.tsx).
+  &--tag {
+    background: var(--release-color, var(--primary-color));
+  }
+
+  // Tag clara (amarelo, ciano…): o texto e as pílulas viram escuros, a mesma regra
+  // de luminância do hero de discussão.
+  &--lightTag {
+    color: #202126;
+
+    .ReleaseHero-back,
+    .ReleaseHero-label { background: rgba(0, 0, 0, 0.1); }
+    .ReleaseHero-back:hover { background: rgba(0, 0, 0, 0.18); }
+    .ReleaseHero-label--type { background: rgba(0, 0, 0, 0.16); }
+    .ReleaseHero-author .Avatar { border-color: rgba(0, 0, 0, 0.25); }
+    .ReleaseHero-version { background: rgba(0, 0, 0, 0.1); border-color: rgba(0, 0, 0, 0.22); color: #202126; }
+  }
+
+  .container { position: relative; z-index: 1; }
+
+  &-inner {
+    position: relative;
+    padding: 30px 0 34px;
+    font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  // Botões de imagem e de cor, no canto — herdam o desenho dos controles do hero de discussão.
+  &-tools {
+    position: absolute;
+    top: 14px;
+    right: 0;
+    z-index: 3;
+    display: flex;
+    gap: 6px;
+
+    .DiscussionHero-imageControls { position: static; }
+  }
+
+  &-nav {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 22px;
+    // Deixa espaço para os botões do canto em telas estreitas.
+    padding-right: 0;
+  }
+
+  &-back,
+  &-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 30px;
+    padding: 0 13px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    color: inherit;
+    font-size: 12.5px;
+    font-weight: 800;
+    text-decoration: none;
+    backdrop-filter: blur(4px);
+  }
+
+  &-back {
+    color: inherit;
+    transition: background var(--avocado-t-fast);
+
+    &:hover { background: rgba(255, 255, 255, 0.3); color: inherit; text-decoration: none; }
+    > i { font-size: 11px; }
+  }
+
+  &-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  &-label--type { background: rgba(255, 255, 255, 0.3); text-transform: uppercase; letter-spacing: 0.4px; font-size: 11.5px; }
+
+  &-when {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  &-version {
+    padding: 4px 11px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 9px;
+    background: rgba(0, 0, 0, 0.28);
+    color: #fff;
+    font-family: @font-mono;
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  &-date {
+    font-size: 14px;
+    font-weight: 700;
+    opacity: 0.88;
+  }
+
+  &-title {
+    max-width: 22ch;
+    margin: 0 0 22px;
+    font-size: 46px;
+    font-weight: 900;
+    line-height: 1.08;
+    letter-spacing: -0.7px;
+    color: inherit;
+    text-wrap: balance;
+  }
+
+  &-foot {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  &-author {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+
+    &:hover { color: inherit; text-decoration: none; opacity: 0.85; }
+
+    .Avatar {
+      --size: 32px;
+      width: 32px;
+      height: 32px;
+      font-size: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.55);
+    }
+  }
+
+  // O ícone do tipo, gigante e apagado, como na capa do cartão do changelog.
+  &-icon {
+    position: absolute;
+    right: 2%;
+    bottom: -36px;
+    z-index: -1;
+    font-size: 220px;
+    line-height: 1;
+    opacity: 0.16;
+    transform: rotate(-8deg);
+    pointer-events: none;
+  }
+}
+
+// Botão "Cor da capa" no estilo dos controles de imagem, com o painel à direita.
+.AvocadoChangelogField-heroBtn {
+  .AvocadoChangelogField-swatch { width: 16px; height: 16px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5); }
+}
+
+.AvocadoChangelogField-picker--hero {
+  .AvocadoChangelogField-pop { color: var(--home-title); }
+}
+
+// ── As notas: mesma tipografia das notas do cartão do changelog ──────────────
+// Só tipografia, só na 1ª publicação: nada é escondido nem reposicionado, e os
+// comentários abaixo continuam com o visual normal de post.
+html.avocado-release .PostStream-item[data-number="1"] .CommentPost .Post-body {
+  font-size: 17px;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+
+  > :first-child { margin-top: 0; }
+
+  p { margin: 0 0 14px; }
+
+  // Títulos viram rótulos de seção ("O que há de novo"), como o mês da linha do tempo.
+  h1, h2, h3, h4 {
+    margin: 30px 0 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--home-border);
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--home-muted);
+  }
+
+  ul, ol { margin: 0 0 16px; padding-left: 24px; }
+  li { margin: 6px 0; }
+  li::marker { color: var(--primary-color); font-weight: 900; }
+
+  img { max-width: 100%; height: auto; border-radius: 14px; }
+  hr { margin: 28px 0; border: 0; border-top: 1px solid var(--home-border); }
+}
+
+// ── Responsivo ────────────────────────────────────────────────────────────────
+@media @tablet {
+  .ReleaseHero-title { font-size: 38px; }
+}
+
+@media @phone {
+  .ReleaseHero {
+    &-inner { padding: 24px 0 26px; }
+    &-title { max-width: none; font-size: 30px; }
+    &-tools { top: 8px; }
+    &-nav { margin-top: 34px; }
+    &-icon { font-size: 140px; right: -10px; }
+  }
+
+  html.avocado-release .PostStream-item[data-number="1"] .CommentPost .Post-body { font-size: 16px; }
+}

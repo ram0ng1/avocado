@@ -1,0 +1,878 @@
+// ─── Changelog ────────────────────────────────────────────────────────────────
+// Linha do tempo de versões: à esquerda a versão e a data, num trilho com um nó
+// por lançamento (na cor do produto); à direita o cartão, com a capa, o produto,
+// os tipos da mudança (sub-tags, na cor de cada uma) e o resumo. Tudo lê os
+// tokens do tema (--home-*, --avocado-*), então o escuro não precisa de regras.
+//
+// `--product-color` vem inline da tag do produto; sem ele cai na cor primária.
+
+// Degradê da capa "na cor da tag": do produto (--cover-a) para a cor do primeiro
+// tipo (--cover-b). Sem tipo, o segundo ponto é o próprio produto clareado.
+.changelog-cover-gradient() {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--cover-a, var(--primary-color)) 78%, #000),
+    var(--cover-b, color-mix(in srgb, var(--cover-a, var(--primary-color)) 55%, #fff))
+  );
+}
+
+.AvocadoChangelog {
+  --changelog-when-w: 148px;
+  --changelog-gap: 30px;
+
+  max-width: var(--home-max-width, 1320px);
+  margin: 0 auto;
+  padding: 22px 12px 56px;
+  font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--home-title, #202126);
+
+  a { text-decoration: none; }
+
+  // ── Header ────────────────────────────────────────────────────────────────
+  &-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px 20px;
+    margin-bottom: 22px;
+  }
+
+  &-headerText { min-width: 0; }
+
+  // "Nova versão": a pílula escura do CTA do tema, com menu quando há vários produtos.
+  &-newWrap { position: relative; flex: 0 0 auto; }
+
+  &-new {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 20px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--avocado-btn-dark);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background var(--avocado-t-normal), transform 0.1s ease;
+
+    &:hover { background: var(--avocado-btn-dark-hover); }
+    &:active { transform: scale(0.97); }
+    &-caret { font-size: 11px; opacity: 0.75; }
+  }
+
+  &-newMenu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: var(--avocado-z-dropdown);
+    min-width: 200px;
+    padding: 6px;
+    border: 1px solid var(--home-border);
+    border-radius: 12px;
+    background: var(--body-bg);
+    box-shadow: var(--shadow-medium);
+  }
+
+  &-newItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--home-title);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+
+    > i { color: var(--tag-color, var(--primary-color)); width: 1.1em; text-align: center; }
+    &:hover { background: var(--avocado-surface-1); }
+  }
+
+  &-title {
+    font-size: 38px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    margin: 0;
+    color: var(--home-title, #1a1b21);
+  }
+
+  &-description {
+    margin: 8px 0 0;
+    max-width: 62ch;
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--home-muted, #6b6b72);
+  }
+
+  // ── Seletor de produto ────────────────────────────────────────────────────
+  &-products {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  &-product {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 16px;
+    border: 1px solid var(--home-border);
+    border-radius: 999px;
+    background: var(--body-bg);
+    color: var(--home-title);
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    transition: background var(--avocado-t-fast), border-color var(--avocado-t-fast), color var(--avocado-t-fast), transform 0.1s ease;
+
+    > i { color: var(--product-color, var(--primary-color)); }
+
+    &-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--product-color, var(--primary-color));
+    }
+
+    &:hover {
+      background: var(--avocado-surface-1);
+      border-color: var(--avocado-border-chip);
+    }
+
+    &:active { transform: scale(0.97); }
+
+    // O ativo é o pílula escura do CTA do tema; a cor do produto fica no ícone.
+    &.is-active {
+      background: var(--avocado-btn-dark);
+      border-color: transparent;
+      color: #fff;
+
+      > i { color: inherit; }
+      .AvocadoChangelog-product-dot { background: #fff; }
+
+      &:hover { background: var(--avocado-btn-dark-hover); }
+    }
+  }
+
+  // ── Filtro de tipo ────────────────────────────────────────────────────────
+  &-types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 30px;
+  }
+
+  &-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: var(--tag-bg, var(--avocado-surface-1));
+    color: var(--tag-color, var(--home-title));
+    font-size: 13px;
+    font-weight: 800;
+    transition: background var(--avocado-t-fast), color var(--avocado-t-fast), box-shadow var(--avocado-t-fast);
+
+    &:hover { box-shadow: inset 0 0 0 1px currentColor; }
+
+    &.is-active {
+      background: var(--tag-color, var(--avocado-btn-dark));
+      color: #fff;
+      box-shadow: none;
+    }
+
+    // "Todos os tipos" não tem cor própria: usa a pílula escura quando ativo.
+    &--all.is-active { background: var(--avocado-btn-dark); }
+  }
+
+  // ── Linha do tempo ────────────────────────────────────────────────────────
+  &-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 34px;
+  }
+
+  // Rótulo de seção (mês): caixa-alta pequena com um fio que corre até a borda.
+  &-month {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 0 0 16px;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--home-muted);
+
+    &::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--home-border);
+    }
+  }
+
+  &-list {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+
+    // O trilho: passa pelo meio do vão entre a coluna de data e o cartão.
+    &::before {
+      content: '';
+      position: absolute;
+      top: 10px;
+      bottom: 10px;
+      left: calc(var(--changelog-when-w) + var(--changelog-gap) / 2 - 1px);
+      width: 2px;
+      border-radius: 2px;
+      background: var(--home-border);
+    }
+  }
+
+  &-entry {
+    position: relative;
+    display: grid;
+    grid-template-columns: var(--changelog-when-w) minmax(0, 1fr);
+    column-gap: var(--changelog-gap);
+    align-items: start;
+
+    // O nó do trilho, alinhado à primeira linha do cartão.
+    &::before {
+      content: '';
+      position: absolute;
+      top: 24px;
+      left: calc(var(--changelog-when-w) + var(--changelog-gap) / 2 - 7px);
+      width: 14px;
+      height: 14px;
+      box-sizing: border-box;
+      border: 3px solid var(--product-color, var(--primary-color));
+      border-radius: 50%;
+      background: var(--body-bg);
+      z-index: 1;
+    }
+  }
+
+  // ── Coluna de versão + data ───────────────────────────────────────────────
+  &-when {
+    position: sticky;
+    top: 96px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    padding-top: 18px;
+    text-align: right;
+  }
+
+  &-version {
+    padding: 4px 10px;
+    border: 1px solid var(--avocado-border-chip);
+    border-radius: 9px;
+    background: var(--avocado-surface-1);
+    color: var(--home-title);
+    font-family: @font-mono;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  &-date {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--home-muted);
+  }
+
+  // ── Cartão ────────────────────────────────────────────────────────────────
+  &-card {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--home-border);
+    border-radius: 21px;
+    background: var(--body-bg);
+    transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--product-color, var(--primary-color)) 38%, var(--home-border));
+      box-shadow: var(--home-shadow);
+
+      .AvocadoChangelog-cover img { transform: scale(1.025); }
+    }
+  }
+
+  // Altura fixa em vez de aspect-ratio + max-height: com largura automática o
+  // navegador repassa o teto de altura para a largura e a capa encolhe.
+  &-cover {
+    display: block;
+    width: 100%;
+    height: 260px;
+    overflow: hidden;
+    background: var(--avocado-surface-1);
+
+    img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.35s ease;
+    }
+  }
+
+  // Capa sem imagem: banner na cor da tag, com o ícone do tipo gigante e apagado.
+  &-cover--color {
+    position: relative;
+    height: 150px;
+    .changelog-cover-gradient();
+
+    // Um brilho no canto de cima tira o degradê da cara de bloco chapado.
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.28), transparent 55%);
+    }
+  }
+
+  &-coverIcon {
+    position: absolute;
+    right: 28px;
+    bottom: -26px;
+    z-index: 1;
+    font-size: 130px;
+    line-height: 1;
+    color: #fff;
+    opacity: 0.2;
+    transform: rotate(-8deg);
+    pointer-events: none;
+  }
+
+  &-cardBody {
+    padding: 20px 22px 16px;
+  }
+
+  // ── Selos: mais recente · produto · tipos ─────────────────────────────────
+  &-labels {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+
+    &:empty { display: none; }
+  }
+
+  &-latest {
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--avocado-btn-dark);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+  }
+
+  &-productLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px;
+    border: 1px solid var(--home-border);
+    border-radius: 999px;
+    color: var(--home-title);
+    font-size: 12px;
+    font-weight: 700;
+
+    > i { color: var(--product-color, var(--primary-color)); }
+  }
+
+  &-typePill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--tag-bg);
+    color: var(--tag-color);
+    font-size: 12px;
+    font-weight: 800;
+
+    > i { font-size: 11px; }
+  }
+
+  // ── Texto ─────────────────────────────────────────────────────────────────
+  &-entryTitle {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: -0.3px;
+
+    a {
+      color: var(--home-title);
+      transition: color var(--avocado-t-fast);
+
+      &:hover { color: var(--primary-color); }
+    }
+  }
+
+  &-excerpt {
+    margin: 10px 0 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text-color);
+    opacity: 0.82;
+    .avocado-line-clamp(3);
+  }
+
+  // ── Notas completas (primeiro post, sob demanda) ──────────────────────────
+  &-notes {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--home-border);
+    font-size: 15.5px;
+    line-height: 1.65;
+    color: var(--text-color);
+    overflow-wrap: anywhere;
+
+    > :first-child { margin-top: 0; }
+    > :last-child { margin-bottom: 0; }
+
+    p { margin: 0 0 10px; }
+
+    // Títulos viram rótulos de seção ("O que há de novo"), como o mês da linha do tempo.
+    h1, h2, h3, h4 {
+      margin: 20px 0 6px;
+      font-size: 12.5px;
+      font-weight: 900;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--home-muted);
+    }
+
+    ul, ol {
+      margin: 0 0 10px;
+      padding-left: 22px;
+    }
+
+    li { margin: 3px 0; }
+    li::marker { color: var(--product-color, var(--primary-color)); font-weight: 900; }
+
+    img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 12px;
+    }
+
+    a { color: var(--primary-color); }
+  }
+
+  &-notesState {
+    margin: 14px 0 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--home-muted);
+  }
+
+  // ── Rodapé do cartão ──────────────────────────────────────────────────────
+  &-foot {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--avocado-border-soft);
+  }
+
+  &-author {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    color: var(--home-muted);
+    font-size: 13px;
+    font-weight: 700;
+
+    .Avatar {
+      --size: 24px;
+      width: 24px;
+      height: 24px;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &:hover { color: var(--home-title); }
+  }
+
+  &-replies {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--home-muted);
+    font-size: 13px;
+    font-weight: 700;
+
+    &:hover { color: var(--primary-color); }
+  }
+
+  &-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-left: auto;
+    min-height: 34px;
+    padding: 0 13px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--avocado-surface-1);
+    color: var(--home-title);
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background var(--avocado-t-fast), color var(--avocado-t-fast), transform 0.1s ease;
+
+    > i { font-size: 10px; transition: transform var(--avocado-t-fast); }
+
+    &:hover { color: var(--primary-color); }
+    &:active { transform: scale(0.95); }
+    &.is-open > i { transform: rotate(180deg); }
+  }
+
+  // ── Vazio / erro ──────────────────────────────────────────────────────────
+  &-error {
+    padding: 28px 18px;
+    border: 1px dashed var(--home-border);
+    border-radius: 16px;
+    text-align: center;
+    color: var(--home-muted);
+    font-weight: 700;
+
+    p { margin: 0 0 12px; }
+  }
+
+  &-retry {
+    display: inline-flex;
+    align-items: center;
+    height: 36px;
+    padding: 0 16px;
+    border: 1px solid var(--home-border);
+    border-radius: 999px;
+    background: var(--body-bg);
+    color: var(--home-title);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:hover { background: var(--avocado-surface-1); }
+  }
+
+  // ── Skeleton ──────────────────────────────────────────────────────────────
+  &-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+
+    .AvocadoChangelog-entry::before { display: none; }
+    .AvocadoChangelog-card:hover { transform: none; box-shadow: none; }
+  }
+
+  &-shimmer {
+    display: block;
+    border-radius: 8px;
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--home-muted, #6b6b72) 10%, transparent) 25%,
+      color-mix(in srgb, var(--home-muted, #6b6b72) 20%, transparent) 50%,
+      color-mix(in srgb, var(--home-muted, #6b6b72) 10%, transparent) 75%
+    );
+    background-size: 200% 100%;
+    animation: avocado-shimmer 1.4s ease-in-out infinite;
+
+    &--version { width: 64px; height: 26px; border-radius: 9px; }
+    &--date    { width: 44px; height: 12px; }
+    &--pills   { width: 140px; height: 20px; margin-bottom: 14px; border-radius: 999px; }
+    &--title   { width: 62%; height: 24px; margin-bottom: 14px; }
+    &--line    { width: 100%; height: 12px; margin-bottom: 8px; }
+    &--short   { width: 70%; }
+  }
+}
+
+// ── Responsivo ────────────────────────────────────────────────────────────────
+@media @tablet {
+  .AvocadoChangelog {
+    --changelog-when-w: 112px;
+    --changelog-gap: 24px;
+  }
+}
+
+// No celular o trilho some e a versão/data sobem para uma linha acima do cartão.
+@media @phone {
+  .AvocadoChangelog {
+    padding: 16px 10px 40px;
+
+    &-title { font-size: 26px; }
+
+    &-products {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      margin-right: -10px;
+      padding-right: 10px;
+      scrollbar-width: none;
+      &::-webkit-scrollbar { display: none; }
+    }
+
+    &-list::before,
+    &-entry::before { display: none; }
+
+    &-entry {
+      grid-template-columns: minmax(0, 1fr);
+      row-gap: 8px;
+    }
+
+    &-when {
+      position: static;
+      flex-direction: row;
+      align-items: center;
+      gap: 10px;
+      padding-top: 0;
+    }
+
+    &-card { border-radius: 16px; }
+    &-cover { height: auto; aspect-ratio: 16 / 9; }
+    &-cover--color { height: 110px; aspect-ratio: auto; }
+    &-coverIcon { font-size: 96px; right: 18px; }
+    &-cardBody { padding: 16px 16px 14px; }
+    &-entryTitle { font-size: 21px; }
+    &-excerpt { font-size: 15px; }
+  }
+}
+
+// ── Campos do changelog no compositor ─────────────────────────────────────────
+// Moram na mesma linha do chip de imagem (.AvocadoHome-composerHeroChipRow) e
+// herdam o desenho dele; aqui só o que é próprio: o input da versão e a amostra
+// do degradê no chip de "capa na cor da tag".
+
+.AvocadoChangelogField-version {
+  cursor: text;
+
+  // O chip "ativo" do hero reserva espaço para a miniatura; aqui não há.
+  &.is-set { padding-left: 12px; }
+}
+
+.AvocadoChangelogField-input {
+  width: 170px;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+
+  &::placeholder {
+    color: var(--muted-color, #8f9097);
+    font-weight: 500;
+  }
+}
+
+.AvocadoChangelogField-color {
+  font-family: inherit;
+
+  &.is-set { padding-left: 6px; }
+}
+
+.AvocadoChangelogField-swatch {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+  .changelog-cover-gradient();
+}
+
+// No modal de renomear a linha de chips não tem o filete e o respiro do compositor.
+.AvocadoChangelogField-modal .AvocadoHome-composerHeroChipRow {
+  padding: 0;
+  border-bottom: 0;
+  justify-content: center;
+}
+
+// ── Seletor de cor da capa (chip + painel) ────────────────────────────────────
+.AvocadoChangelogField-picker {
+  position: relative;
+  display: inline-flex;
+}
+
+.AvocadoChangelogField-caret {
+  margin-left: 2px;
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.AvocadoChangelogField-pop {
+  // `fixed` com coordenadas calculadas em ChangelogFields (popoverStyle): escapa do
+  // overflow do cabeçalho da versão e do compositor, e acima do compositor e dos modais.
+  position: fixed;
+  z-index: 1500;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 330px;
+  max-width: calc(100vw - 32px);
+  padding: 16px;
+  border: 1px solid var(--home-border, #eaeaf0);
+  border-radius: 16px;
+  background: var(--body-bg);
+  box-shadow: var(--shadow-medium);
+  text-align: left;
+  cursor: default;
+}
+
+.AvocadoChangelogField-popTitle {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--home-muted, #6b6b72);
+}
+
+.AvocadoChangelogField-popLabel {
+  margin-bottom: 8px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--home-muted, #6b6b72);
+}
+
+.AvocadoChangelogField-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--home-border, #eaeaf0);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--home-title, #202126);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--avocado-t-fast), background var(--avocado-t-fast);
+
+  .AvocadoChangelogField-swatch { width: 30px; height: 30px; }
+
+  &:hover { border-color: var(--avocado-border-chip, #d8dae2); }
+
+  &.is-active {
+    border-color: var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 8%, transparent);
+  }
+}
+
+.AvocadoChangelogField-optionText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+
+  strong { font-size: 13px; font-weight: 800; }
+  small { font-size: 12px; line-height: 1.35; color: var(--home-muted, #6b6b72); }
+}
+
+.AvocadoChangelogField-tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.AvocadoChangelogField-tagOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--home-border, #eaeaf0);
+  border-radius: 999px;
+  background: var(--body-bg);
+  color: var(--home-title, #202126);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color var(--avocado-t-fast), background var(--avocado-t-fast);
+
+  > i { font-size: 10px; color: var(--primary-color); }
+
+  &:hover { border-color: var(--avocado-border-chip, #d8dae2); }
+
+  &.is-active {
+    border-color: var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 8%, transparent);
+  }
+}
+
+.AvocadoChangelogField-dot {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.AvocadoChangelogField-presets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.AvocadoChangelogField-preset {
+  height: 46px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow var(--avocado-t-fast);
+
+  &:hover { transform: translateY(-1px); }
+  &:active { transform: scale(0.97); }
+
+  &.is-active { box-shadow: 0 0 0 2px var(--body-bg), 0 0 0 4px var(--primary-color); }
+}
+
+.AvocadoChangelogField-off {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--home-muted, #6b6b72);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover { background: var(--avocado-surface-1); color: var(--home-title, #202126); }
+}

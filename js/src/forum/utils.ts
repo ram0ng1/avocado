@@ -358,7 +358,46 @@ export const getFeaturedTagIds = (): Set<string> => parseTagIdSet(app.forum?.att
 // Set of tag IDs the admin marked as "asks for a hero image" — when one of
 // these tags is selected in the composer, the user gets an upload field for
 // the discussion's hero image.
-export const getHeroImageTagIds = (): Set<string> => parseTagIdSet(app.forum?.attribute('avocadoHeroImageTags'));
+//
+// Os produtos do changelog entram na conta sozinhos: cada versão pode levar uma
+// capa, e exigir que o admin repita as mesmas tags nos dois settings seria só
+// uma segunda chance de esquecer uma.
+export const getHeroImageTagIds = (): Set<string> => {
+  const ids = parseTagIdSet(app.forum?.attribute('avocadoHeroImageTags'));
+  if (app.forum?.attribute('avocadoChangelogEnabled')) {
+    parseTagIdSet(app.forum?.attribute('avocadoChangelogTags')).forEach((id) => ids.add(id));
+  }
+  return ids;
+};
+
+// ─── Changelog ────────────────────────────────────────────────────────────────
+// Tags escolhidas como produto no admin (só com o changelog ligado). A versão e
+// o tipo de capa só fazem sentido numa discussão que carregue uma delas.
+export const getChangelogProductIds = (): Set<string> =>
+  app.forum?.attribute('avocadoChangelogEnabled') ? parseTagIdSet(app.forum?.attribute('avocadoChangelogTags')) : new Set();
+
+export const tagsAreChangelogProducts = (tags: any[] | null | undefined): boolean => {
+  if (!Array.isArray(tags) || tags.length === 0) return false;
+  const products = getChangelogProductIds();
+  return products.size > 0 && tags.some((t) => products.has(String(t?.id?.() ?? '')));
+};
+
+/** Espelha ChangelogFields::VERSION_PATTERN e o maxLength(32) do servidor. */
+export const CHANGELOG_VERSION_MAX = 32;
+export const CHANGELOG_VERSION_PATTERN = /^[0-9A-Za-z][0-9A-Za-z .+_-]*$/;
+
+/**
+ * Atributos da discussão para os campos do changelog. Versão vazia ou inválida
+ * fica de fora (o servidor recusaria); a capa colorida só vale sem imagem.
+ * `cover` é o valor já codificado (ver utils/cover).
+ */
+export const changelogAttributes = (version: string, cover: string | null, hasImage: boolean): Record<string, string> => {
+  const attrs: Record<string, string> = {};
+  const trimmed = version.trim();
+  if (trimmed && trimmed.length <= CHANGELOG_VERSION_MAX && CHANGELOG_VERSION_PATTERN.test(trimmed)) attrs.changelogVersion = trimmed;
+  if (cover && !hasImage) attrs.changelogCover = cover;
+  return attrs;
+};
 
 // Resolve the hero image URL stored on a discussion (if any).
 export const getDiscussionHeroImageUrl = (discussion: any): string | null => {

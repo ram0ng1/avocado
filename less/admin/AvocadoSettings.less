@@ -8,6 +8,125 @@
   margin-top: 8px;
 }
 
+// ─── Barra de grupos + busca ──────────────────────────────────────────────────
+// A página é dividida em grupos (Aparência, Página inicial, Discussões,
+// Comunidade, Acesso) e a barra fica GRUDADA no topo: com o card aberto e o
+// scroll longo, trocar de grupo não pode exigir voltar ao começo da página.
+
+.AvocadoAdmin-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 10px 0;
+  background: var(--body-bg, #fff);
+}
+
+.AvocadoAdmin-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.AvocadoAdmin-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--control-bg-dark, #e7e7ed);
+  border-radius: 999px;
+  background: var(--body-bg, #fff);
+  color: var(--muted-color);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+
+  > i { font-size: 12px; }
+
+  &:hover { border-color: var(--primary-color); color: var(--text-color); }
+
+  &.is-active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+
+    .AvocadoAdmin-tabCount { background: rgba(255, 255, 255, 0.24); color: #fff; }
+  }
+}
+
+// Quantos cards o grupo tem — dá noção do tamanho antes de clicar.
+.AvocadoAdmin-tabCount {
+  min-width: 18px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--control-bg, #f0f0f5);
+  color: var(--muted-color);
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.AvocadoAdmin-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 260px;
+  min-width: 180px;
+  padding: 0 12px;
+  height: 36px;
+  border: 1px solid var(--control-bg-dark, #e7e7ed);
+  border-radius: 999px;
+  background: var(--control-bg, #f8f8fc);
+
+  > i { font-size: 12px; color: var(--muted-color); flex-shrink: 0; }
+
+  &:focus-within { border-color: var(--primary-color); }
+}
+
+.AvocadoAdmin-searchInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-color);
+
+  &::placeholder { color: var(--muted-color); }
+  // O X nativo do type=search duplicaria o botão de limpar ao lado.
+  &::-webkit-search-cancel-button { display: none; }
+}
+
+.AvocadoAdmin-searchClear {
+  border: 0;
+  background: none;
+  padding: 0 2px;
+  color: var(--muted-color);
+  cursor: pointer;
+  font-size: 12px;
+
+  &:hover { color: var(--text-color); }
+}
+
+.AvocadoAdmin-empty {
+  margin: 24px 0;
+  padding: 18px;
+  border: 1px dashed var(--control-bg-dark, #e3e4ea);
+  border-radius: 12px;
+  text-align: center;
+  color: var(--muted-color);
+  font-size: 13px;
+}
+
 // ─── Settings cards ───────────────────────────────────────────────────────────
 // Each section is wrapped in a card that matches the avocado forum design system.
 

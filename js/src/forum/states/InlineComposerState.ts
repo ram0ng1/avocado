@@ -1,5 +1,5 @@
 import app from 'flarum/forum/app';
-import { trans, uploadDiscussionHeroImage } from '../utils';
+import { trans, uploadDiscussionHeroImage, tagsAreChangelogProducts, changelogAttributes } from '../utils';
 
 /**
  * State backing the inline new-discussion composer.
@@ -29,6 +29,12 @@ export default class InlineComposerState {
   // is patched in the local store so the next page load already shows it.
   heroImageFile: File | null = null;
   heroImagePreview: string | null = null;
+
+  // Campos do changelog (só usados quando uma tag escolhida é um produto): o
+  // número da versão e o banner na cor da tag, que vale na ausência de imagem.
+  changelogVersion = '';
+  /** Capa colorida, já codificada (utils/cover); 'color' = automática, null = sem capa colorida. */
+  changelogCover: string | null = 'color';
 
   /** Required by Flarum's TextEditor — proxies the live composer body. */
   composerProxy = {
@@ -100,6 +106,8 @@ export default class InlineComposerState {
     this.tagPickerOpen = false;
     this.tagFilter = '';
     this.setHeroImageFile(null);
+    this.changelogVersion = '';
+    this.changelogCover = 'color';
   }
 
   /**
@@ -120,6 +128,9 @@ export default class InlineComposerState {
 
     const data: any = { title: this.title.trim(), content: this.body.trim() };
     if (this.tags.length > 0) data.relationships = { tags: this.tags };
+    if (tagsAreChangelogProducts(this.tags)) {
+      Object.assign(data, changelogAttributes(this.changelogVersion, this.changelogCover, !!this.heroImageFile));
+    }
 
     return app.store
       .createRecord('discussions')

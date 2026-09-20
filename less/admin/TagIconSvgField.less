@@ -1,0 +1,165 @@
+// Campo "Ícone SVG" do modal Editar tag: uma área de soltar/escolher arquivo com
+// a prévia do ícone (sobre a cor da tag e solto), e um interruptor para o modo
+// monocromático. Não há campo de código — o SVG entra só por arquivo.
+
+.EditTagModal .TagIconSvgField {
+  // ── Área de arquivo ───────────────────────────────────────────────────────
+  &-zone {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding: 14px;
+    border: 1.5px dashed var(--control-bg-dark, #d5d6de);
+    border-radius: 14px;
+    background: var(--control-bg);
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+
+    // Com ícone salvo a área vira um cartão sólido.
+    &.has-icon {
+      border-style: solid;
+      background: var(--body-bg);
+    }
+
+    &.is-over {
+      border-color: var(--primary-color);
+      background: color-mix(in srgb, var(--primary-color) 8%, var(--body-bg));
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 18%, transparent);
+    }
+
+    &.has-error { border-color: var(--alert-error-color, #b35c5c); }
+  }
+
+  // ── Prévias ───────────────────────────────────────────────────────────────
+  &-previews {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+  }
+
+  &-preview {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    background: var(--control-bg);
+    color: var(--muted-color);
+
+    // Ícone na cor de contraste sobre a cor da tag, como em rótulos e cartões.
+    &--onColor {
+      background: var(--tag-bg, var(--control-bg-dark, #e7e7ed));
+      color: var(--contrast-color, var(--muted-color));
+    }
+
+    // Ícone na cor da tag sobre fundo neutro, como no menu lateral.
+    &--plain {
+      background: var(--control-bg-dark, #eceef3);
+      color: var(--color, var(--muted-color));
+    }
+  }
+
+  // ── Texto ─────────────────────────────────────────────────────────────────
+  &-info {
+    flex: 1 1 140px;
+    min-width: 0;
+  }
+
+  &-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &-hint {
+    margin-top: 2px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--muted-color);
+  }
+
+  &-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+  }
+
+  &-error {
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--alert-error-color, #b35c5c);
+  }
+
+  // ── Interruptor "usar a cor do texto" ────────────────────────────────────
+  &-switch {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 14px;
+    cursor: pointer;
+
+    // O checkbox nativo continua no DOM (é o `bidi`), só some da vista.
+    > input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+
+  &-track {
+    position: relative;
+    flex: 0 0 auto;
+    width: 38px;
+    height: 22px;
+    margin-top: 1px;
+    border-radius: 999px;
+    background: var(--control-bg-dark, #d5d6de);
+    transition: background 0.15s ease;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+      transition: transform 0.15s ease;
+    }
+  }
+
+  &-switchText {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+
+    > strong { font-size: 13px; font-weight: 700; color: var(--text-color); }
+    > small { font-size: 12px; line-height: 1.4; color: var(--muted-color); }
+  }
+}
+
+// Estado do interruptor. Fora do bloco acima de propósito: um `&` no meio do
+// seletor expandiria para `.EditTagModal .TagIconSvgField` inteiro e o irmão
+// `+ .TagIconSvgField-track` nunca casaria — o interruptor ficava sempre "desligado".
+.EditTagModal .TagIconSvgField-switch > input:checked + .TagIconSvgField-track {
+  background: var(--primary-color);
+
+  &::after { transform: translateX(16px); }
+}
+
+.EditTagModal .TagIconSvgField-switch > input:focus-visible + .TagIconSvgField-track {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}

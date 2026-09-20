@@ -4,6 +4,7 @@
 // together are individually type-checked.
 import { extend, override } from 'flarum/common/extend';
 import trustedHtml from '../common/trustedHtml';
+import { installTagIconSvg } from '../common/tagIconSvg';
 import Button from 'flarum/common/components/Button';
 import PostControls from 'flarum/forum/utils/PostControls';
 import Tooltip from 'flarum/common/components/Tooltip';
@@ -34,6 +35,12 @@ import PageStructure from 'flarum/forum/components/PageStructure';
 import { tagPageView } from './components/TagsPage';
 import HomePage from './components/HomePage';
 import BookmarkModal from './components/BookmarkModal';
+// A página do changelog entra no bundle principal em vez de virar chunk: o
+// bundle principal tem o `?v=` da revisão na URL, mas no Windows as chaves do
+// rev-manifest dos chunks lazy usam barra invertida, a revisão nunca casa, o
+// chunk é pedido sem versão e fica em cache "immutable" por um ano no CDN e no
+// navegador — uma página nova chegava ao usuário com o JS antigo.
+import AvocadoChangelogPage from './components/ChangelogPage';
 // A página "Salvos" entra no bundle principal em vez de virar chunk: com o
 // fof/bookmarks ativo ela atende a rota dele, e o bundle dele usa ids numéricos
 // de webpack no `webpackChunkmodule_exports` compartilhado — a colisão de ids
@@ -87,6 +94,8 @@ import {
   displayName,
   getDiscussionHeroImageUrl,
   tagsRequireHeroImage,
+  tagsAreChangelogProducts,
+  changelogAttributes,
   uploadDiscussionHeroImage,
   deleteDiscussionHeroImage,
   canEditDiscussionHero,
@@ -102,6 +111,9 @@ import {
   BOOKMARKS_PATH,
 } from './utils/bookmarks';
 import { hoverCardAttrs } from './components/shared/UserHoverCard';
+import { changelogChips } from './components/shared/ChangelogFields';
+import { renderReleaseHero } from './components/shared/ReleaseHero';
+import { changelogTagTarget } from './utils/changelog';
 import WhoIsReading from './components/shared/WhoIsReading';
 import CakedayBadge from './components/shared/CakedayBadge';
 import TextEditor from 'flarum/common/components/TextEditor';
@@ -482,6 +494,20 @@ app.initializers.add(
     // ── 0. Register custom routes ─────────────────────────────────────────────
     // The /discussions page is always registered so direct links keep working.
     app.routes['avocado-team'] = { path: '/team', component: AvocadoTeamPage };
+    // Changelog: /changelog junta os produtos, /changelog/:product filtra um (slug da tag).
+    app.routes['avocado-changelog'] = { path: '/changelog', component: AvocadoChangelogPage };
+    app.routes['avocado-changelog.product'] = { path: '/changelog/:product', component: AvocadoChangelogPage };
+    // Ícone SVG nas tags: os overrides só agem com o switch ligado, e o
+    // flarum/tags é opcional para o tema — sem ele não há Tag para estender.
+    if ('flarum-tags' in flarum.extensions) installTagIconSvg();
+    // Tag de produto (ou de tipo) do changelog não tem página própria: todo link
+    // gerado por `app.route('tag', …)` — rótulos, menu lateral, cartões, o helper
+    // `app.route.tag` — já aponta para o changelog. É o lado "dentro do app" do
+    // redirecionamento; a entrada de fora por /t/… é o 302 do Middleware\RedirectChangelogTags.
+    override(app, 'route', function (original, name, params) {
+      const target = name === 'tag' ? changelogTagTarget(params?.tags) : null;
+      return target ? original(target.name, target.params) : original(name, params);
+    });
     app.routes['avocado-discussions'] = { path: '/discussions', component: AllDiscussionsPage };
     // Página "Salvos". Com o fof/bookmarks ativo quem registra a rota é ele
     // (registrar as duas derrubava o boot do Flarum — FastRoute recusa dois GET
@@ -899,53 +925,57 @@ app.initializers.add(
 
       const heroBusy = !!(this as any)._heroBusy;
 
+      const imageControls = canManageHero ? (
+        <div className="DiscussionHero-imageControls">
+          {discHeroUrl ? (
+            <>
+              <button
+                type="button"
+                className="DiscussionHero-imageBtn"
+                onclick={startHeroUpload}
+                disabled={heroBusy}
+                aria-label={trans('ramon-avocado.forum.discussion.hero_image_replace', 'Replace image')}
+                title={trans('ramon-avocado.forum.discussion.hero_image_replace', 'Replace image')}
+              >
+                <i className={heroBusy ? 'fas fa-spinner fa-spin' : 'fas fa-camera'} aria-hidden="true" />
+                <span>{trans('ramon-avocado.forum.discussion.hero_image_replace', 'Replace image')}</span>
+              </button>
+              <button
+                type="button"
+                className="DiscussionHero-imageBtn DiscussionHero-imageBtn--danger"
+                onclick={removeHeroImage}
+                disabled={heroBusy}
+                aria-label={trans('ramon-avocado.forum.discussion.hero_image_remove', 'Remove image')}
+                title={trans('ramon-avocado.forum.discussion.hero_image_remove', 'Remove image')}
+              >
+                <i className="fas fa-trash" aria-hidden="true" />
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="DiscussionHero-imageBtn"
+              onclick={startHeroUpload}
+              disabled={heroBusy}
+              aria-label={trans('ramon-avocado.forum.discussion.hero_image_add', 'Add image')}
+              title={trans('ramon-avocado.forum.discussion.hero_image_add', 'Add image')}
+            >
+              <i className={heroBusy ? 'fas fa-spinner fa-spin' : 'fas fa-camera'} aria-hidden="true" />
+              <span>{trans('ramon-avocado.forum.discussion.hero_image_add', 'Add image')}</span>
+            </button>
+          )}
+        </div>
+      ) : null;
+
+      // Uma versão do changelog não é uma discussão: tem cabeçalho próprio (ver
+      // ReleaseHero), que também põe `avocado-release` no <html> enquanto existe.
+      if (tagsAreChangelogProducts(tags)) return renderReleaseHero(discussion, tags, imageControls);
+
       return (
         <header className={heroClass} style={heroStyle}>
           <div className="container">
             <div className={innerClass} style={decorationIconStyle}>
-              {/* Hero image controls — only for users with rename permission
-                  on a discussion whose tag asks for an image. */}
-              {canManageHero && (
-                <div className="DiscussionHero-imageControls">
-                  {discHeroUrl ? (
-                    <>
-                      <button
-                        type="button"
-                        className="DiscussionHero-imageBtn"
-                        onclick={startHeroUpload}
-                        disabled={heroBusy}
-                        aria-label={trans('ramon-avocado.forum.discussion.hero_image_replace', 'Replace image')}
-                        title={trans('ramon-avocado.forum.discussion.hero_image_replace', 'Replace image')}
-                      >
-                        <i className={heroBusy ? 'fas fa-spinner fa-spin' : 'fas fa-camera'} aria-hidden="true" />
-                        <span>{trans('ramon-avocado.forum.discussion.hero_image_replace', 'Replace image')}</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="DiscussionHero-imageBtn DiscussionHero-imageBtn--danger"
-                        onclick={removeHeroImage}
-                        disabled={heroBusy}
-                        aria-label={trans('ramon-avocado.forum.discussion.hero_image_remove', 'Remove image')}
-                        title={trans('ramon-avocado.forum.discussion.hero_image_remove', 'Remove image')}
-                      >
-                        <i className="fas fa-trash" aria-hidden="true" />
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      className="DiscussionHero-imageBtn"
-                      onclick={startHeroUpload}
-                      disabled={heroBusy}
-                      aria-label={trans('ramon-avocado.forum.discussion.hero_image_add', 'Add image')}
-                      title={trans('ramon-avocado.forum.discussion.hero_image_add', 'Add image')}
-                    >
-                      <i className={heroBusy ? 'fas fa-spinner fa-spin' : 'fas fa-camera'} aria-hidden="true" />
-                      <span>{trans('ramon-avocado.forum.discussion.hero_image_add', 'Add image')}</span>
-                    </button>
-                  )}
-                </div>
-              )}
+              {imageControls}
               {/* Decoration icons wrapper — flexbox container for dynamic sizing */}
               {(showDecorationIcon && decorationIconClass) ||
               (showDecorationIcon && showDecoDivider) ||
@@ -1172,58 +1202,73 @@ app.initializers.add(
       const _skelHasTwo = _skelHasFirstIcon && _skelHasSecondIcon;
       const _skelHasDivider = _skelHasTwo && !!app.forum.attribute('avocadoHeroDecoDivider');
 
+      // Versão do changelog: vindo da lista, a discussão já está no store com tudo o
+      // que o cabeçalho mostra (tags, versão, capa, autor). O skeleton usa o próprio
+      // ReleaseHero — sem os botões de edição — em vez do hero cinza de discussão, que
+      // tem outro desenho e fazia a página "trocar de cara" ao terminar de carregar.
+      const _skelTags = _cachedDisc ? (_cachedDisc.tags?.() || []).filter(Boolean) : [];
+      const _skelRelease = !!_cachedDisc && tagsAreChangelogProducts(_skelTags);
+      // Uma versão quase sempre é só as notas: nada de três posts-fantasma para uma.
+      const _skelPosts = _skelRelease ? Math.min(3, 1 + (_cachedDisc.replyCount?.() || 0)) : 3;
+
       return (
         <div className="Page DiscussionPage DiscussionPage--skeleton">
           <div className="Page-main">
-            <div className="AvocadoSkeleton-discussionHero">
-              <div className="container">
-                {/* Mirrors .DiscussionHero-inner: position reference + centering + padding */}
-                <div className="AvocadoSkeleton-heroInner">
-                  <div className="AvocadoSkeleton-nav">
-                    <div className="AvocadoSkeleton-backBtn" />
-                    <div className="AvocadoSkeleton-tag" />
-                    <div className="AvocadoSkeleton-tag" style="width:56px" />
-                  </div>
-                  <div className="AvocadoSkeleton-title" />
-                  <div className="AvocadoSkeleton-meta">
-                    <div className="AvocadoSkeleton-avatarStack">
-                      <div className="AvocadoSkeleton-stackItem" />
-                      <div className="AvocadoSkeleton-stackItem" />
-                      <div className="AvocadoSkeleton-stackItem" />
-                      {/* +more circle — mirrors DiscussionHero-participantsMore */}
-                      <div className="AvocadoSkeleton-stackItem AvocadoSkeleton-stackItem--more" />
+            {_skelRelease ? (
+              // Embrulhado: o cabeçalho tem `key` (é o que faz o Mithril recriá-lo ao trocar
+              // de hero) e não pode ser irmão direto de vnodes sem key.
+              <div className="AvocadoSkeleton-releaseHero">{renderReleaseHero(_cachedDisc, _skelTags, null, true)}</div>
+            ) : (
+              <div className="AvocadoSkeleton-discussionHero">
+                <div className="container">
+                  {/* Mirrors .DiscussionHero-inner: position reference + centering + padding */}
+                  <div className="AvocadoSkeleton-heroInner">
+                    <div className="AvocadoSkeleton-nav">
+                      <div className="AvocadoSkeleton-backBtn" />
+                      <div className="AvocadoSkeleton-tag" />
+                      <div className="AvocadoSkeleton-tag" style="width:56px" />
                     </div>
-                    <div className="AvocadoSkeleton-metaChip AvocadoSkeleton-metaChip--md" />
-                    <div className="AvocadoSkeleton-metaChip AvocadoSkeleton-metaChip--sm" />
-                  </div>
-                  {/* Decoration icon skeleton — mirrors real icon shape when cached */}
-                  {_skelShowDeco && _skelHasFirstIcon && (
-                    <div className={`AvocadoSkeleton-decoContainer${_skelHasTwo ? ' is-two' : ''}${_skelHasDivider ? ' has-divider' : ''}`}>
-                      <div className={`AvocadoSkeleton-decoIcon${_skelFirstIconCls ? ' AvocadoSkeleton-decoIcon--icon' : ''}`}>
-                        {_skelFirstIconCls && <i className={_skelFirstIconCls} aria-hidden="true" />}
+                    <div className="AvocadoSkeleton-title" />
+                    <div className="AvocadoSkeleton-meta">
+                      <div className="AvocadoSkeleton-avatarStack">
+                        <div className="AvocadoSkeleton-stackItem" />
+                        <div className="AvocadoSkeleton-stackItem" />
+                        <div className="AvocadoSkeleton-stackItem" />
+                        {/* +more circle — mirrors DiscussionHero-participantsMore */}
+                        <div className="AvocadoSkeleton-stackItem AvocadoSkeleton-stackItem--more" />
                       </div>
-                      {_skelHasDivider && (
-                        <div className="AvocadoSkeleton-decoSep" aria-hidden="true">
-                          <i className={app.forum.attribute('avocadoHeroDecoDividerIcon') || 'fas fa-times'} />
-                        </div>
-                      )}
-                      {_skelHasTwo && (
-                        <div className={`AvocadoSkeleton-decoIcon${_skelSecondIconCls ? ' AvocadoSkeleton-decoIcon--icon' : ''}`}>
-                          {_skelSecondIconCls && <i className={_skelSecondIconCls} aria-hidden="true" />}
-                        </div>
-                      )}
+                      <div className="AvocadoSkeleton-metaChip AvocadoSkeleton-metaChip--md" />
+                      <div className="AvocadoSkeleton-metaChip AvocadoSkeleton-metaChip--sm" />
                     </div>
-                  )}
+                    {/* Decoration icon skeleton — mirrors real icon shape when cached */}
+                    {_skelShowDeco && _skelHasFirstIcon && (
+                      <div className={`AvocadoSkeleton-decoContainer${_skelHasTwo ? ' is-two' : ''}${_skelHasDivider ? ' has-divider' : ''}`}>
+                        <div className={`AvocadoSkeleton-decoIcon${_skelFirstIconCls ? ' AvocadoSkeleton-decoIcon--icon' : ''}`}>
+                          {_skelFirstIconCls && <i className={_skelFirstIconCls} aria-hidden="true" />}
+                        </div>
+                        {_skelHasDivider && (
+                          <div className="AvocadoSkeleton-decoSep" aria-hidden="true">
+                            <i className={app.forum.attribute('avocadoHeroDecoDividerIcon') || 'fas fa-times'} />
+                          </div>
+                        )}
+                        {_skelHasTwo && (
+                          <div className={`AvocadoSkeleton-decoIcon${_skelSecondIconCls ? ' AvocadoSkeleton-decoIcon--icon' : ''}`}>
+                            {_skelSecondIconCls && <i className={_skelSecondIconCls} aria-hidden="true" />}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
             <div className="Page-container container">
               {/* Sidebar FIRST (priority 100) — mirrors Flarum's containerItems() order.
                   With flex-direction:row-reverse the first DOM child ends up on the RIGHT. */}
               {renderDiscussionNavSkeleton(!!app.session.user)}
               <div className="Page-content">
                 <div className="AvocadoSkeleton-stream">
-                  {[0, 1, 2].map((i) => (
+                  {[0, 1, 2].slice(0, _skelPosts).map((i) => (
                     <div key={String(i)} className="AvocadoSkeleton-post">
                       <div className="AvocadoSkeleton-postAvatar" />
                       <div className="AvocadoSkeleton-postBody">
@@ -1392,6 +1437,31 @@ app.initializers.add(
       extend(DiscussionComposer.prototype, 'oninit', function () {
         this._avocadoHeroFile = null;
         this._avocadoHeroPreview = null;
+        this._avocadoVersion = '';
+        this._avocadoCover = 'color';
+        // Rótulos que o core define em initAttrs: guardados para voltar a eles
+        // quando a tag escolhida deixa de ser um produto do changelog.
+        this._avocadoLabels = {
+          title: this.attrs.titlePlaceholder,
+          body: this.attrs.placeholder,
+          submit: this.attrs.submitLabel,
+        };
+      });
+
+      // Com um produto do changelog escolhido o que se escreve é uma versão, não
+      // uma discussão: título do compositor, placeholders e botão dizem isso.
+      override(DiscussionComposer.prototype, 'view', function (original, vnode) {
+        const labels = this._avocadoLabels;
+        if (labels) {
+          const release = tagsAreChangelogProducts(this.composer?.fields?.tags || []);
+          this.attrs.titlePlaceholder = release ? trans('ramon-avocado.forum.changelog.composer_title_placeholder', 'Release title…') : labels.title;
+          this.attrs.placeholder = release
+            ? trans('ramon-avocado.forum.changelog.composer_body_placeholder', 'Write the release notes…')
+            : labels.body;
+          // O core guarda o texto já traduzido (extractText), não a chave — passar a chave mostrava a chave crua no botão.
+          this.attrs.submitLabel = release ? trans('ramon-avocado.forum.changelog.composer_submit', 'Publish release') : labels.submit;
+        }
+        return original(vnode);
       });
 
       extend(DiscussionComposer.prototype, 'onremove', function () {
@@ -1407,6 +1477,10 @@ app.initializers.add(
 
       extend(DiscussionComposer.prototype, 'headerItems', function (items) {
         const tags = this.composer?.fields?.tags || [];
+        if (tagsAreChangelogProducts(tags)) {
+          // ItemList do Flarum 2 não tem `replace`: setContent troca só o conteúdo e mantém a prioridade.
+          items.setContent('title', <h3>{trans('ramon-avocado.forum.changelog.composer_title', 'New release')}</h3>);
+        }
         if (!tagsRequireHeroImage(tags)) return;
 
         const setFile = (file) => {
@@ -1463,11 +1537,35 @@ app.initializers.add(
           </label>
         );
 
+        // Versão e capa na cor da tag: mesma linha do chip de imagem, só quando
+        // uma das tags escolhidas é um produto do changelog.
+        const changelog = tagsAreChangelogProducts(tags)
+          ? changelogChips({
+              tags,
+              version: this._avocadoVersion || '',
+              onVersion: (value) => (this._avocadoVersion = value),
+              cover: this._avocadoCover ?? null,
+              onCover: (value) => (this._avocadoCover = value),
+              hasImage: !!previewUrl,
+            })
+          : [];
+
         items.add(
           'avocadoHeroImage',
-          <div className="AvocadoHome-composerHeroChipRow AvocadoHome-composerHeroChipRow--modal">{chip}</div>,
+          <div className="AvocadoHome-composerHeroChipRow AvocadoHome-composerHeroChipRow--modal">
+            {chip}
+            {changelog}
+          </div>,
           50 // between 'title' (100) and the editor
         );
+      });
+
+      // A versão e o tipo de capa viajam com a própria discussão (atributos do
+      // DiscussionResource, ver Api\ChangelogFields); a imagem segue pelo upload.
+      extend(DiscussionComposer.prototype, 'data', function (data) {
+        const tags = this.composer?.fields?.tags || [];
+        if (!tagsAreChangelogProducts(tags)) return;
+        Object.assign(data, changelogAttributes(this._avocadoVersion || '', this._avocadoCover ?? null, !!this._avocadoHeroFile));
       });
 
       override(DiscussionComposer.prototype, 'onsubmit', function (original) {
@@ -1510,6 +1608,93 @@ app.initializers.add(
             app.discussions?.refresh?.();
             m.route.set(app.route.discussion(discussion));
           }, this.loaded.bind(this));
+      });
+    });
+
+    // ── 9d. RenameDiscussionModal: versão e capa de uma entrada do changelog ────
+    // Editar depois de publicar: quem pode renomear a discussão também acerta o
+    // número da versão e escolhe entre imagem e banner na cor da tag (a imagem
+    // em si é trocada nos controles do cabeçalho da discussão). Carregado sob
+    // demanda como o DiscussionComposer, então o patch espera o módulo existir.
+    flarum.reg.onLoad('core', 'forum/components/RenameDiscussionModal', (RenameDiscussionModal) => {
+      extend(RenameDiscussionModal.prototype, 'oninit', function () {
+        this._avocadoVersion = this.discussion.attribute?.('changelogVersion') || '';
+        this._avocadoCover = this.discussion.attribute?.('changelogCover') || null;
+      });
+
+      override(RenameDiscussionModal.prototype, 'title', function (original) {
+        return tagsAreChangelogProducts(this.discussion?.tags?.() || [])
+          ? trans('ramon-avocado.forum.changelog.edit_release', 'Edit release')
+          : original();
+      });
+
+      override(RenameDiscussionModal.prototype, 'content', function (original) {
+        const vnode = original();
+        const discussion = this.discussion;
+        if (!tagsAreChangelogProducts(discussion.tags?.() || [])) return vnode;
+
+        const groups = vnode?.children?.[0]?.children;
+        if (!Array.isArray(groups)) return vnode;
+
+        const hasImage = !!getDiscussionHeroImageUrl(discussion);
+        groups.splice(
+          1,
+          0,
+          <div className="Form-group AvocadoChangelogField-modal">
+            <div className="AvocadoHome-composerHeroChipRow">
+              {changelogChips({
+                tags: discussion.tags?.() || [],
+                version: this._avocadoVersion || '',
+                onVersion: (value) => (this._avocadoVersion = value),
+                cover: this._avocadoCover ?? null,
+                onCover: (value) => (this._avocadoCover = value),
+                hasImage,
+              })}
+            </div>
+          </div>
+        );
+
+        return vnode;
+      });
+
+      override(RenameDiscussionModal.prototype, 'onsubmit', function (original, e) {
+        const discussion = this.discussion;
+        if (!tagsAreChangelogProducts(discussion.tags?.() || [])) return original(e);
+
+        const version = (this._avocadoVersion || '').trim();
+        const savedVersion = discussion.attribute?.('changelogVersion') || '';
+        const savedCover = discussion.attribute?.('changelogCover') || null;
+        // Com imagem de capa o seletor de cor não aparece: o valor guardado fica como está.
+        const cover = getDiscussionHeroImageUrl(discussion) ? savedCover : (this._avocadoCover ?? null);
+
+        // Nada mudou no changelog: o fluxo de renomear do core segue como está.
+        if (version === savedVersion && cover === savedCover) return original(e);
+
+        e.preventDefault();
+        this.loading = true;
+
+        const attrs: Record<string, unknown> = { changelogVersion: version || null, changelogCover: cover };
+        const title = this.newTitle();
+        if (title && title !== this.currentTitle) attrs.title = title;
+
+        return discussion
+          .save(attrs)
+          .then(() => {
+            // Renomear cria um post de evento na discussão: atualiza o stream se ela está aberta.
+            if (attrs.title && app.viewingDiscussion(discussion)) {
+              app.current
+                .get('stream')
+                .update()
+                .then(() => m.redraw());
+            } else {
+              m.redraw();
+            }
+            this.hide();
+          })
+          .catch(() => {
+            this.loading = false;
+            m.redraw();
+          });
       });
     });
 
@@ -1670,6 +1855,16 @@ app.initializers.add(
             {trans('ramon-avocado.forum.bookmarks.title', 'Saved')}
           </LinkButton>,
           93
+        );
+      }
+
+      if (!items.has('avocadoChangelog') && app.forum?.attribute('avocadoChangelogEnabled')) {
+        items.add(
+          'avocadoChangelog',
+          <LinkButton href={app.route('avocado-changelog')} icon="fas fa-rocket">
+            {app.forum.attribute('avocadoChangelogTitle') || trans('ramon-avocado.forum.changelog.title', 'Changelog')}
+          </LinkButton>,
+          91
         );
       }
 
