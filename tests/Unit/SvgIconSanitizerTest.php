@@ -54,6 +54,43 @@ final class SvgIconSanitizerTest extends TestCase
         $this->assertStringNotContainsStringIgnoringCase('javascript:', $out);
     }
 
+    /**
+     * <title>/<desc> são "HTML integration points": embutido numa página, o que
+     * está dentro deles é lido pelo parser de HTML. Um <style> ali vira RAWTEXT, e
+     * o CDATA com que o sanitizador embrulha o CSS deixaria `</style><img onerror>`
+     * literal — fechando o elemento e criando um <img> executável.
+     */
+    public function testTitleAndDescKeepOnlyText(): void
+    {
+        $out = SvgIconSanitizer::sanitize(
+            '<svg '.self::NS.' viewBox="0 0 1 1">'
+            .'<title>Raio<style><![CDATA[</style><img src=x onerror=alert(1)>]]></style></title>'
+            .'<desc><g><style>.a{fill:red}</style></g>icone</desc>'
+            .'<rect width="1" height="1"/></svg>'
+        );
+
+        $this->assertNotNull($out);
+        $this->assertStringNotContainsStringIgnoringCase('onerror', $out);
+        $this->assertStringNotContainsStringIgnoringCase('<img', $out);
+        $this->assertStringNotContainsStringIgnoringCase('<style', $out);
+        $this->assertStringContainsString('<title>Raio</title>', $out, 'o texto do título fica');
+        $this->assertStringContainsString('<rect', $out);
+    }
+
+    public function testDropsStylesheetThatTriesToCloseItself(): void
+    {
+        $out = SvgIconSanitizer::sanitize(
+            '<svg '.self::NS.' viewBox="0 0 1 1">'
+            .'<style><![CDATA[.a{fill:red}</style><img src=x onerror=alert(1)>]]></style>'
+            .'<rect class="a" width="1" height="1"/></svg>'
+        );
+
+        $this->assertNotNull($out);
+        $this->assertStringNotContainsStringIgnoringCase('onerror', $out);
+        $this->assertStringNotContainsStringIgnoringCase('<style', $out);
+        $this->assertStringContainsString('<rect', $out);
+    }
+
     public function testRemovesExternalHrefButKeepsLocalReferences(): void
     {
         $out = SvgIconSanitizer::sanitize(

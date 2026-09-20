@@ -5,6 +5,8 @@ import Icon from 'flarum/common/components/Icon';
 import classList from 'flarum/common/utils/classList';
 import Tag from 'ext:flarum/tags/common/models/Tag';
 import type Mithril from 'mithril';
+import sanitizeSvgIcon from './svgIconSanitizer';
+import trustedHtml from './trustedHtml';
 
 /**
  * Ícone SVG nas tags — absorvido da extensão `ramon/tag-icon-svg`.
@@ -32,7 +34,8 @@ const STYLE_ID = 'TagIconSvg-styles';
 
 const SETTING_KEY = 'avocado.tag_icon_svg_enabled';
 
-const registry = new Map<string, string>();
+/** Hash do SVG recebido → markup JÁ sanitizado (null = não é um SVG utilizável). */
+const registry = new Map<string, string | null>();
 
 /**
  * No forum o veredito vem do servidor (`avocadoTagIconSvg` já considera switch,
@@ -79,14 +82,25 @@ function injectStyle(key: string, svg: string): void {
   style.appendChild(document.createTextNode(`.${ICON_PREFIX}-${key}{--tag-icon-svg:url("${dataUri}")}\n`));
 }
 
-/** Registra um SVG e devolve a string de classe que o renderiza. */
-export function svgIconName(svg: string, mono = true): string {
+/**
+ * Registra um SVG e devolve a string de classe que o renderiza — ou null quando
+ * ele não sobrevive à sanitização (quem chama cai no ícone Font Awesome).
+ *
+ * É AQUI que o markup é sanitizado no navegador, uma vez por SVG: tudo o que o
+ * tema embute sai deste registro, venha da API (já limpo pelo servidor) ou do
+ * arquivo que o admin acabou de escolher no modal (ainda cru). Ver svgIconSanitizer.
+ */
+export function svgIconName(svg: string, mono = true): string | null {
   const key = hash(svg);
 
   if (!registry.has(key)) {
-    registry.set(key, svg);
-    injectStyle(key, svg);
+    const clean = sanitizeSvgIcon(svg);
+
+    registry.set(key, clean);
+    if (clean) injectStyle(key, clean);
   }
+
+  if (!registry.get(key)) return null;
 
   return classList(ICON_PREFIX, mono ? `${ICON_PREFIX}--mono` : `${ICON_PREFIX}--color`, `${ICON_PREFIX}-${key}`);
 }
@@ -104,11 +118,11 @@ export function svgIconVnode(name: string, attrs: Record<string, any> = {}): Mit
 
   const { className, ...rest } = attrs;
 
-  // O markup já passou por SvgIconSanitizer no servidor (única entrada é a API
-  // de tags) — mesma garantia do `bioHtml`/post renderizado que trustedHtml documenta.
+  // Só sai do registro markup que passou por sanitizeSvgIcon (espelho do
+  // SvgIconSanitizer do servidor) — ver svgIconName.
   return (
     <i aria-hidden="true" {...rest} className={classList('icon', name, className)}>
-      {m.trust(svg)}
+      {trustedHtml(svg)}
     </i>
   );
 }
@@ -146,7 +160,7 @@ export function installTagIconSvg(): void {
   override(Tag.prototype, 'icon', function (original) {
     const svg = tagIconSvgActive() ? tagIconSvg(this) : null;
 
-    return svg ? svgIconName(svg, tagIconSvgMono(this)) : original();
+    return (svg && svgIconName(svg, tagIconSvgMono(this))) || original();
   });
 
   override(Icon.prototype, 'view', function (original, vnode) {

@@ -48,6 +48,15 @@ final class SvgIconSanitizer
         'feOffset', 'feSpecularLighting', 'feSpotLight', 'feTile', 'feTurbulence',
     ];
 
+    /**
+     * HTML integration points: once the SVG is inlined in a page, whatever sits
+     * inside these is read by the HTML parser, not the SVG one. A nested <style>
+     * becomes RAWTEXT there, so a `</style><img onerror=…>` kept literal by our
+     * own CDATA wrapper would break out. They keep their text and nothing else.
+     * (Mirrored in js/src/common/svgIconSanitizer.ts.)
+     */
+    private const TEXT_ONLY_ELEMENTS = ['title', 'desc'];
+
     /** CSS that can pull in outside resources or run code. */
     private const DANGEROUS_CSS = '/@import|expression\s*\(|javascript:|behavior\s*:|-moz-binding|url\s*\(\s*["\']?\s*[^#"\'\s)]/i';
 
@@ -122,6 +131,8 @@ final class SvgIconSanitizer
     {
         self::cleanAttributes($element);
 
+        $textOnly = in_array($element->localName, self::TEXT_ONLY_ELEMENTS, true);
+
         foreach (iterator_to_array($element->childNodes) as $child) {
             if ($child instanceof DOMComment
                 || $child instanceof DOMProcessingInstruction
@@ -134,18 +145,27 @@ final class SvgIconSanitizer
                 continue;
             }
 
-            if (! self::isAllowedElement($child)) {
+            if ($textOnly || ! self::isAllowedElement($child)) {
                 $element->removeChild($child);
                 continue;
             }
 
-            if ($child->localName === 'style' && preg_match(self::DANGEROUS_CSS, $child->textContent)) {
+            if ($child->localName === 'style' && self::isDangerousCss($child->textContent)) {
                 $element->removeChild($child);
                 continue;
             }
 
             self::clean($child);
         }
+    }
+
+    /**
+     * No stylesheet of an icon needs a `<`; one that has it is trying to close
+     * the element from the inside once the markup is re-read as HTML.
+     */
+    private static function isDangerousCss(string $css): bool
+    {
+        return str_contains($css, '<') || (bool) preg_match(self::DANGEROUS_CSS, $css);
     }
 
     private static function isAllowedElement(DOMElement $element): bool

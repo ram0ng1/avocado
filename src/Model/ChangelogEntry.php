@@ -54,7 +54,9 @@ class ChangelogEntry extends AbstractModel
 
     protected $keyType = 'int';
 
-    protected $fillable = ['discussion_id', 'version', 'cover'];
+    // Nada aqui é atribuído em massa: `write()` põe cada coluna pelo nome, como o
+    // DiscussionHero. A allowlist de escrita é o `writable()` de Api\ChangelogFields.
+    protected $guarded = ['*'];
 
     protected $casts = [
         'discussion_id' => 'integer',
@@ -73,8 +75,22 @@ class ChangelogEntry extends AbstractModel
      */
     public static function write(Discussion $discussion, array $values): void
     {
-        $entry = static::query()->firstOrNew(['discussion_id' => $discussion->id]);
-        $entry->fill($values);
+        $entry = self::query()->where('discussion_id', $discussion->id)->first();
+
+        if (! $entry instanceof self) {
+            $entry = new self();
+            $entry->discussion_id = (int) $discussion->id;
+        }
+
+        // Coluna a coluna, e só as duas que existem: os valores já chegam validados
+        // pelo Schema, mas nenhuma chave a mais de `$values` alcança o model.
+        if (array_key_exists('version', $values)) {
+            $entry->version = $values['version'];
+        }
+
+        if (array_key_exists('cover', $values)) {
+            $entry->cover = $values['cover'];
+        }
 
         if ($entry->version === null && $entry->cover === null) {
             if ($entry->exists) {
