@@ -221,13 +221,22 @@ return [
             (new Extend\Conditional())
                 ->whenExtensionDisabled(TagIconSvg::STANDALONE_EXTENSION_ID, fn () => [
                     (new Extend\Model(\Flarum\Tags\Tag::class))
-                        ->cast('icon_svg_mono', 'bool'),
+                        ->cast('icon_svg_mono', 'bool')
+                        ->cast('icon_svg_scale', 'int'),
 
                     (new Extend\ApiResource(\Flarum\Tags\Api\Resource\TagResource::class))
                         ->fields(\Ramon\Avocado\Api\TagIconSvgFields::class),
 
                     (new Extend\Settings())
                         ->serializeToForum('avocadoTagIconSvg', TagIconSvg::SETTING, fn ($value) => TagIconSvg::enabledFor($value)),
+
+                    // O tamanho do ícone tem coluna própria (migration posterior): o modal
+                    // de tag só oferece o controle quando o servidor aceita o campo. Num
+                    // Extend\Settings à parte de propósito: `serializeToForum` indexa pela
+                    // chave do setting, e um segundo attribute na mesma instância apagaria
+                    // o `avocadoTagIconSvg` de cima.
+                    (new Extend\Settings())
+                        ->serializeToForum('avocadoTagIconSvgScale', TagIconSvg::SETTING, fn ($value) => TagIconSvg::enabledFor($value) && TagIconSvg::scaleAvailable()),
                 ]),
         ]),
 

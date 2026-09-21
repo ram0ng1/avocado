@@ -20,6 +20,14 @@
   --changelog-when-w: 148px;
   --changelog-gap: 30px;
 
+  // Destaques da página (o CTA "Nova versão", o produto ativo, "todos os tipos",
+  // o selo "mais recente") seguem a cor primária do fórum, pelas variáveis do botão
+  // primário do Flarum — que já trazem o hover e o texto com contraste calculado
+  // (primária clara → texto escuro).
+  --changelog-accent: var(--button-primary-bg, var(--primary-color));
+  --changelog-accent-hover: var(--button-primary-bg-hover, color-mix(in srgb, var(--primary-color) 88%, #000));
+  --changelog-on-accent: var(--button-primary-color, #fff);
+
   max-width: var(--home-max-width, 1320px);
   margin: 0 auto;
   padding: 22px 12px 56px;
@@ -40,7 +48,7 @@
 
   &-headerText { min-width: 0; }
 
-  // "Nova versão": a pílula escura do CTA do tema, com menu quando há vários produtos.
+  // "Nova versão": a pílula do CTA, na cor primária do fórum, com menu quando há vários produtos.
   &-newWrap { position: relative; flex: 0 0 auto; }
 
   &-new {
@@ -51,14 +59,14 @@
     padding: 0 20px;
     border: 0;
     border-radius: 999px;
-    background: var(--avocado-btn-dark);
-    color: #fff;
+    background: var(--changelog-accent);
+    color: var(--changelog-on-accent);
     font-size: 14px;
     font-weight: 700;
     cursor: pointer;
     transition: background var(--avocado-t-normal), transform 0.1s ease;
 
-    &:hover { background: var(--avocado-btn-dark-hover); }
+    &:hover { background: var(--changelog-accent-hover); }
     &:active { transform: scale(0.97); }
     &-caret { font-size: 11px; opacity: 0.75; }
   }
@@ -150,16 +158,16 @@
 
     &:active { transform: scale(0.97); }
 
-    // O ativo é o pílula escura do CTA do tema; a cor do produto fica no ícone.
+    // O ativo é a pílula do CTA, na cor primária do fórum; ícone e ponto herdam o texto.
     &.is-active {
-      background: var(--avocado-btn-dark);
+      background: var(--changelog-accent);
       border-color: transparent;
-      color: #fff;
+      color: var(--changelog-on-accent);
 
       > i { color: inherit; }
-      .AvocadoChangelog-product-dot { background: #fff; }
+      .AvocadoChangelog-product-dot { background: currentColor; }
 
-      &:hover { background: var(--avocado-btn-dark-hover); }
+      &:hover { background: var(--changelog-accent-hover); }
     }
   }
 
@@ -186,13 +194,16 @@
     &:hover { box-shadow: inset 0 0 0 1px currentColor; }
 
     &.is-active {
-      background: var(--tag-color, var(--avocado-btn-dark));
+      background: var(--tag-color, var(--changelog-accent));
       color: #fff;
       box-shadow: none;
     }
 
-    // "Todos os tipos" não tem cor própria: usa a pílula escura quando ativo.
-    &--all.is-active { background: var(--avocado-btn-dark); }
+    // "Todos os tipos" não tem cor própria: usa a primária do fórum quando ativo.
+    &--all.is-active {
+      background: var(--changelog-accent);
+      color: var(--changelog-on-accent);
+    }
   }
 
   // ── Linha do tempo ────────────────────────────────────────────────────────
@@ -375,8 +386,8 @@
   &-latest {
     padding: 3px 9px;
     border-radius: 999px;
-    background: var(--avocado-btn-dark);
-    color: #fff;
+    background: var(--changelog-accent);
+    color: var(--changelog-on-accent);
     font-size: 11px;
     font-weight: 800;
     letter-spacing: 0.6px;

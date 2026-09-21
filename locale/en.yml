@@ -260,6 +260,9 @@ ramon-avocado:
       svg_remove_button: Remove SVG
       svg_mono_title: Match the text colour
       svg_mono_help: Paint the icon with the current colour, like a Font Awesome glyph. Turn off to keep the colours inside the SVG.
+      svg_size_title: Icon size
+      svg_size_help: Turn it up when the drawing looks small next to other icons — many SVGs come with empty space around them. Only the drawing grows; the space the icon takes stays the same.
+      svg_size_reset: Reset
       svg_invalid: That is not an SVG file. Send a valid .svg.
       svg_too_large: "The SVG is too large (maximum {max} KB)."
     footer_settings:
