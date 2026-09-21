@@ -35,14 +35,31 @@ final class TagIconSvg
 
     public const STANDALONE_EXTENSION_ID = 'ramon-tag-icon-svg';
 
+    /** Tamanho do ícone em % do glifo: 100 ocupa o mesmo espaço de um ícone Font Awesome. */
+    public const SCALE_MIN = 50;
+
+    public const SCALE_MAX = 250;
+
+    public const SCALE_DEFAULT = 100;
+
     private const TABLE = 'tags';
 
     private const COLUMN = 'icon_svg';
 
-    private const CACHE_KEY = 'avocado.tag_icon_svg_column_exists';
+    private const SCALE_COLUMN = 'icon_svg_scale';
 
-    /** Memo do request; null = ainda não checado. */
-    private static ?bool $columnExists = null;
+    /** Chave de cache por coluna (a de `icon_svg` é anterior à do tamanho e mantém o nome). */
+    private const CACHE_KEYS = [
+        self::COLUMN => 'avocado.tag_icon_svg_column_exists',
+        self::SCALE_COLUMN => 'avocado.tag_icon_svg_scale_column_exists',
+    ];
+
+    /**
+     * Memo do request por coluna; ausente = ainda não checada.
+     *
+     * @var array<string, bool>
+     */
+    private static array $columnExists = [];
 
     /** O settings guarda '0'/'1' como string: `(bool) '0'` é true, então todo consumidor coage aqui. */
     public static function enabled(SettingsRepositoryInterface $settings): bool
@@ -58,39 +75,55 @@ final class TagIconSvg
 
     public static function columnsAvailable(): bool
     {
-        if (self::$columnExists !== null) {
-            return self::$columnExists;
-        }
+        return self::hasColumn(self::COLUMN);
+    }
 
-        try {
-            $cache = resolve(CacheRepository::class);
-
-            if ($cache->get(self::CACHE_KEY)) {
-                return self::$columnExists = true;
-            }
-
-            $exists = resolve(ConnectionInterface::class)
-                ->getSchemaBuilder()
-                ->hasColumn(self::TABLE, self::COLUMN);
-
-            // Só o "existe" é cacheado: coluna criada não some sozinha, e o
-            // "não existe" precisa ser reavaliado para o recurso ligar assim que
-            // o admin migrar.
-            if ($exists) {
-                $cache->forever(self::CACHE_KEY, true);
-            }
-
-            return self::$columnExists = $exists;
-        } catch (Throwable) {
-            // Banco fora do ar ou install em andamento: o tema não é o lugar de estourar por isso.
-            return self::$columnExists = false;
-        }
+    /**
+     * O tamanho do ícone chegou numa migration posterior à do SVG. Na mesma janela
+     * entre o `composer update` e o `migrate` o ícone segue funcionando — só o
+     * campo do tamanho fica de fora do payload até a coluna nascer.
+     */
+    public static function scaleAvailable(): bool
+    {
+        return self::columnsAvailable() && self::hasColumn(self::SCALE_COLUMN);
     }
 
     /** Ponto de teste — zera o memo do request. */
     public static function forget(): void
     {
-        self::$columnExists = null;
+        self::$columnExists = [];
+    }
+
+    private static function hasColumn(string $column): bool
+    {
+        if (isset(self::$columnExists[$column])) {
+            return self::$columnExists[$column];
+        }
+
+        try {
+            $cache = resolve(CacheRepository::class);
+            $cacheKey = self::CACHE_KEYS[$column];
+
+            if ($cache->get($cacheKey)) {
+                return self::$columnExists[$column] = true;
+            }
+
+            $exists = resolve(ConnectionInterface::class)
+                ->getSchemaBuilder()
+                ->hasColumn(self::TABLE, $column);
+
+            // Só o "existe" é cacheado: coluna criada não some sozinha, e o
+            // "não existe" precisa ser reavaliado para o recurso ligar assim que
+            // o admin migrar.
+            if ($exists) {
+                $cache->forever($cacheKey, true);
+            }
+
+            return self::$columnExists[$column] = $exists;
+        } catch (Throwable) {
+            // Banco fora do ar ou install em andamento: o tema não é o lugar de estourar por isso.
+            return self::$columnExists[$column] = false;
+        }
     }
 
     private static function toggledOn(mixed $value): bool

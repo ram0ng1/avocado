@@ -9,14 +9,28 @@ import type ItemList from 'flarum/common/utils/ItemList';
 import EditTagModal from 'ext:flarum/tags/admin/components/EditTagModal';
 import type Mithril from 'mithril';
 
-import { svgIconName, svgIconVnode, tagIconSvgActive } from '../common/tagIconSvg';
+import {
+  ICON_SCALE_DEFAULT,
+  ICON_SCALE_MAX,
+  ICON_SCALE_MIN,
+  clampIconScale,
+  svgIconName,
+  svgIconVnode,
+  tagIconSvgActive,
+  tagIconSvgScalable,
+} from '../common/tagIconSvg';
 
 /** Espelha SvgIconSanitizer::MAX_BYTES no servidor. */
 const MAX_BYTES = 102400;
 
+/** Passo do controle de tamanho, em pontos percentuais. */
+const SCALE_STEP = 5;
+
 type Modal = EditTagModal & {
   iconSvg: Stream<string>;
   iconSvgMono: Stream<boolean>;
+  /** Tamanho em % do glifo; só existe quando o servidor aceita o campo (`tagIconSvgScalable`). */
+  iconSvgScale?: Stream<number>;
   iconSvgError: Stream<string | null>;
   /** Nome do arquivo escolhido nesta sessão; vazio quando o SVG veio do servidor. */
   iconSvgName: Stream<string>;
@@ -40,6 +54,8 @@ function setSvg(this: Modal, code: string, fileName = '') {
     this.iconSvg('');
     this.iconSvgName('');
     this.iconSvgError(null);
+    // O tamanho era daquele desenho; o próximo ícone começa em 100%.
+    this.iconSvgScale?.(ICON_SCALE_DEFAULT);
     return;
   }
 
@@ -89,11 +105,54 @@ function preview(name: string | null, className: string, style: Record<string, s
   );
 }
 
+/**
+ * Controle de tamanho: só com um ícone escolhido, e as duas prévias acima acompanham
+ * ao vivo. Muito SVG traz folga dentro do viewBox e sai miúdo ao lado dos outros.
+ */
+function sizeControl(this: Modal): Mithril.Children {
+  const stream = this.iconSvgScale;
+
+  if (!stream) return null;
+
+  const scale = stream();
+
+  return (
+    <div className="TagIconSvgField-size">
+      <div className="TagIconSvgField-sizeHead">
+        <label for="TagIconSvgField-sizeInput">{trans('svg_size_title')}</label>
+        {scale !== ICON_SCALE_DEFAULT && (
+          <button type="button" className="TagIconSvgField-sizeReset" onclick={() => stream(ICON_SCALE_DEFAULT)}>
+            {trans('svg_size_reset')}
+          </button>
+        )}
+        <output className="TagIconSvgField-sizeValue" for="TagIconSvgField-sizeInput">
+          {scale}%
+        </output>
+      </div>
+
+      <input
+        id="TagIconSvgField-sizeInput"
+        className="TagIconSvgField-sizeInput"
+        type="range"
+        min={ICON_SCALE_MIN}
+        max={ICON_SCALE_MAX}
+        step={SCALE_STEP}
+        value={scale}
+        // Quanto da trilha já foi percorrido, para pintá-la até o polegar.
+        style={{ '--fill': `${((scale - ICON_SCALE_MIN) / (ICON_SCALE_MAX - ICON_SCALE_MIN)) * 100}%` }}
+        oninput={(e: InputEvent) => stream(clampIconScale((e.target as HTMLInputElement).value))}
+      />
+
+      <div className="helpText">{trans('svg_size_help')}</div>
+    </div>
+  );
+}
+
 function svgField(this: Modal): Mithril.Children {
   const code = this.iconSvg();
   const hasIcon = !!code.trim();
   const color = this.color() || undefined;
-  const name = hasIcon ? svgIconName(code, this.iconSvgMono()) : null;
+  const name = hasIcon ? svgIconName(code, this.iconSvgMono(), this.iconSvgScale?.() ?? ICON_SCALE_DEFAULT) : null;
   const dropProps = {
     ondragover: (e: DragEvent) => {
       e.preventDefault();
@@ -143,6 +202,8 @@ function svgField(this: Modal): Mithril.Children {
 
       {this.iconSvgError() && <div className="TagIconSvgField-error">{this.iconSvgError()}</div>}
 
+      {hasIcon && sizeControl.call(this)}
+
       <label className="TagIconSvgField-switch">
         <input type="checkbox" bidi={this.iconSvgMono} />
         <span className="TagIconSvgField-track" aria-hidden="true" />
@@ -172,6 +233,8 @@ export default function extendEditTagModal() {
 
     modal.iconSvg = Stream(this.tag.attribute<string | null>('iconSvg') || '');
     modal.iconSvgMono = Stream(this.tag.attribute<boolean | null>('iconSvgMono') !== false);
+    // Sem a coluna do tamanho o servidor recusaria o campo: o controle nem aparece.
+    if (tagIconSvgScalable()) modal.iconSvgScale = Stream(clampIconScale(this.tag.attribute<number | null>('iconSvgScale')));
     modal.iconSvgError = Stream<string | null>(null);
     modal.iconSvgName = Stream('');
     modal.iconSvgOver = Stream(false);
@@ -188,6 +251,7 @@ export default function extendEditTagModal() {
 
     data.iconSvg = modal.iconSvg().trim() || null;
     data.iconSvgMono = modal.iconSvgMono();
+    if (modal.iconSvgScale) data.iconSvgScale = modal.iconSvgScale();
   });
 
   extend(EditTagModal.prototype, 'fields', function (this: EditTagModal, items: ItemList<any>) {
