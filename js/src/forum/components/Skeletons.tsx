@@ -95,3 +95,61 @@ export const renderDiscussionNavSkeleton = (isLoggedIn = true): any =>
       ]) // ul
     ) // nav
   ); // Page-sidebar
+
+// ── Support skeletons (linkrobins/support) ────────────────────────────────────
+// Reaproveitam as classes da própria extensão (.LinkRobinsSupport-list, -row,
+// -reply, -categoryCard) para que o esqueleto tenha a moldura, o recuo e as
+// divisórias do conteúdo que vai substituí-lo, e não uma caixa parecida.
+
+export const renderSupportListSkeleton = (count = 5): any =>
+  m(
+    'div',
+    { className: 'LinkRobinsSupport-list AvocadoSupport-skeletonList' },
+    Array.from({ length: count }, (_, i) =>
+      m('div', { key: i, className: 'LinkRobinsSupport-row AvocadoSupport-skeletonRow' }, [
+        m('div', { className: 'LinkRobinsSupport-row-main' }, [
+          m('div', { className: 'AvocadoHome-skeletonLine AvocadoSupport-skeletonLine--subject' }),
+          m('div', { className: 'AvocadoSupport-skeletonMeta' }, [
+            m('div', { className: 'AvocadoHome-skeletonLine AvocadoSupport-skeletonLine--metaCat' }),
+            m('div', { className: 'AvocadoHome-skeletonLine AvocadoSupport-skeletonLine--metaUser' }),
+            m('div', { className: 'AvocadoHome-skeletonLine AvocadoSupport-skeletonLine--metaDate' }),
+          ]),
+        ]),
+        m('div', { className: 'AvocadoHome-skeletonLine AvocadoSupport-skeletonLine--status' }),
+      ])
+    )
+  );
+
+export const renderSupportTicketSkeleton = (count = 3): any =>
+  m('div', { className: 'AvocadoSupport-skeletonTicket' }, [
+    m('div', { className: 'AvocadoHome-skeletonLine AvocadoSupport-skeletonLine--ticketMeta' }),
+    m(
+      'div',
+      { className: 'LinkRobinsSupport-replies' },
+      Array.from({ length: count }, (_, i) =>
+        m('div', { key: i, className: 'LinkRobinsSupport-reply AvocadoSupport-skeletonReply' }, [
+          m('div', { className: 'AvocadoSupport-skeletonMeta' }, [
+            m('div', { className: 'AvocadoHome-skeletonLine AvocadoSupport-skeletonLine--metaUser' }),
+            m('div', { className: 'AvocadoHome-skeletonLine AvocadoSupport-skeletonLine--metaDate' }),
+          ]),
+          m('div', { className: 'AvocadoHome-skeletonLine AvocadoSupport-skeletonLine--body' }),
+          m('div', { className: 'AvocadoHome-skeletonLine AvocadoSupport-skeletonLine--bodyShort' }),
+        ])
+      )
+    ),
+  ]);
+
+export const renderSupportCategoriesSkeleton = (count = 3): any =>
+  m(
+    'div',
+    { className: 'AvocadoSupport-skeletonCategories' },
+    Array.from({ length: count }, (_, i) =>
+      m('div', { key: i, className: 'LinkRobinsSupport-categoryCard AvocadoSupport-skeletonCategory' }, [
+        m('div', { className: 'AvocadoSupport-skeletonCategory-icon' }),
+        m('div', { className: 'AvocadoSupport-skeletonCategory-text' }, [
+          m('div', { className: 'AvocadoHome-skeletonLine AvocadoSupport-skeletonLine--catName' }),
+          m('div', { className: 'AvocadoHome-skeletonLine AvocadoSupport-skeletonLine--catDesc' }),
+        ]),
+      ])
+    )
+  );

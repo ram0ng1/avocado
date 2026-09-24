@@ -412,6 +412,11 @@ ramon-avocado:
       showcase_heading: "Showcase"
       ws_update_singular: "1 nova discussão"
       ws_update_plural: "{count} novas discussões"
+    support:
+      new_ticket_heading: Novo ticket
+      status_changed: marcou o ticket como
+      category_placeholder: Escolha uma categoria
+      category_label: Categoria do ticket
     discussions:
       title: Todas as discussões
       home: Voltar para o Início
