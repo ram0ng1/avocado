@@ -18,3 +18,13 @@ parameters:
     # rises, wire flarum/phpstan back in (pin a tag compatible with the phpstan
     # version) or add targeted ignoreErrors entries here.
     treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        # linkrobins/support é integração opcional: as classes dela entram nos
+        # extenders como string (ver Support\SupportEvents) e não existem no
+        # vendor do tema para a análise provar o class-string.
+        -
+            message: '#expects class-string<Flarum\\Database\\AbstractModel>, string given#'
+            path: extend.php
+        -
+            message: '#expects class-string<Flarum\\Api\\Resource\\AbstractResource>, string given#'
+            path: extend.php

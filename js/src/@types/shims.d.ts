@@ -15,7 +15,9 @@ declare const flarum: {
   reg: {
     asyncModuleImport(id: string): Promise<{ default: any }>;
     addChunkModule(id: string, mod: any): void;
-    onLoad(id: string, callback: () => void): void;
+    // (namespace, module path, handler) — o handler roda na hora se o módulo já
+    // estiver registrado, e fica guardado até o registro quando não.
+    onLoad(namespace: string, id: string, handler: (module: any) => void): void;
   };
   extensions: Record<string, unknown>;
   [key: string]: any;

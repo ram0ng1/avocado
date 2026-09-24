@@ -118,7 +118,9 @@ import WhoIsReading from './components/shared/WhoIsReading';
 import CakedayBadge from './components/shared/CakedayBadge';
 import TextEditor from 'flarum/common/components/TextEditor';
 import listItems from 'flarum/common/helpers/listItems';
+import classList from 'flarum/common/utils/classList';
 import humanTime from 'flarum/common/utils/humanTime';
+import { installSupportCompat, isSupportPage, isSupportTicketPage, supportToolbar } from './utils/support';
 
 // ─── Settings helpers ─────────────────────────────────────────────────────────
 
@@ -500,6 +502,9 @@ app.initializers.add(
     // Ícone SVG nas tags: os overrides só agem com o switch ligado, e o
     // flarum/tags é opcional para o tema — sem ele não há Tag para estender.
     if ('flarum-tags' in flarum.extensions) installTagIconSvg();
+    // linkrobins/support: novo ticket pelo composer e esqueletos de carregamento
+    // no lugar dos spinners da extensão. Inerte quando ela não está instalada.
+    installSupportCompat();
     // Tag de produto (ou de tipo) do changelog não tem página própria: todo link
     // gerado por `app.route('tag', …)` — rótulos, menu lateral, cartões, o helper
     // `app.route.tag` — já aponta para o changelog. É o lado "dentro do app" do
@@ -1732,6 +1737,12 @@ app.initializers.add(
     //   DiscussionPage keeps its custom hero; IndexPage handles WelcomeHero itself.
     override(PageStructure.prototype, 'sidebar', function (original) {
       if (this.attrs.className?.includes('DiscussionPage')) return original();
+      // As páginas do linkrobins/support trazem os próprios controles (o botão
+      // "Novo ticket" e os filtros de status) na sidebar. Aqui ela sai da coluna
+      // lateral e volta em providedContent() como barra horizontal — trocá-la
+      // pelo nav do tema, como acontece com as demais extensões, deixava a
+      // página sem nenhuma forma de abrir um ticket.
+      if (isSupportPage(this.attrs.className)) return null;
       return (
         <div className="AvocadoNav-helper">
           <IndexSidebar key={m.route.get()} />
@@ -1746,16 +1757,22 @@ app.initializers.add(
     // (e.g. LeaderboardPage uses className="IndexPage LeaderboardPage") do NOT have
     // 'IndexPage--avocadoRoot', so they are correctly treated as extension pages.
     const isExtensionPage = (cls) => !cls.includes('DiscussionPage') && !cls.includes('IndexPage--avocadoRoot');
+    // A página de um ticket do linkrobins/support traz o próprio hero (o mesmo
+    // da discussão, montado em utils/support.tsx) e por isso fica de fora das
+    // duas camadas que apagam o hero das demais páginas de extensão.
+    const keepsOwnHero = (cls) => isSupportTicketPage(cls);
 
     // Layer 1: remove the 'hero' item from the layout list.
     extend(PageStructure.prototype, 'mainItems', function (items) {
-      if (isExtensionPage(this.attrs.className || '')) items.remove('hero');
+      const cls = this.attrs.className || '';
+      if (isExtensionPage(cls) && !keepsOwnHero(cls)) items.remove('hero');
     });
 
     // Layer 2: make providedHero() return null so that even if another extension's
     // extend() re-adds the 'hero' item after ours, it renders nothing.
     override(PageStructure.prototype, 'providedHero', function (original) {
-      if (isExtensionPage(this.attrs.className || '')) return null;
+      const cls = this.attrs.className || '';
+      if (isExtensionPage(cls) && !keepsOwnHero(cls)) return null;
       return original();
     });
 
@@ -1764,7 +1781,17 @@ app.initializers.add(
     // app.title is set by each page's oncreate via app.setTitle(); it holds the
     // page-specific title string (without the forum name suffix).
     override(PageStructure.prototype, 'providedContent', function (original) {
-      if (!isExtensionPage(this.attrs.className || '')) return original();
+      const cls = this.attrs.className || '';
+      if (!isExtensionPage(cls)) return original();
+      // O título e o "voltar" de um ticket já estão no hero dele.
+      if (keepsOwnHero(cls)) {
+        return (
+          <div className="Page-content" id="main-content">
+            {supportToolbar(this)}
+            {this.content}
+          </div>
+        );
+      }
       return (
         <div className="Page-content" id="main-content">
           <div className="AvocadoExtensionPage-header">
@@ -1781,6 +1808,7 @@ app.initializers.add(
               {trans('ramon-avocado.forum.header.back_home', 'Back to Home')}
             </a>
           </div>
+          {supportToolbar(this)}
           {this.content}
         </div>
       );
@@ -1791,9 +1819,12 @@ app.initializers.add(
     // AvocadoExtensionNav is kept alongside so HomePage.less selectors still match.
     // The extension's sideNav.less uses .IndexPage-nav.sideNav (higher specificity)
     // to override Flarum core's sideNav styles with the avocado design.
+    // A className do vnode é preservada como no core: subclasses do IndexSidebar
+    // (o SupportIndexSidebar do linkrobins/support, por exemplo) herdam esta view
+    // e identificam a própria nav por ela.
     override(IndexSidebar.prototype, 'view', function () {
       return (
-        <nav className="IndexPage-nav sideNav AvocadoExtensionNav">
+        <nav className={classList('IndexPage-nav sideNav AvocadoExtensionNav', this.attrs.className)}>
           <ul>{listItems(this.items().toArray())}</ul>
         </nav>
       );

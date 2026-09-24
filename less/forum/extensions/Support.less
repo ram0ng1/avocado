@@ -1,0 +1,1169 @@
+// ── linkrobins/support — Avocado Design System ───────────────────────────────
+// Extensão: linkrobins/support (https://github.com/linkrobins/support)
+//
+// A extensão monta as três páginas dela (lista, novo ticket e ticket) com uma
+// sidebar própria, e é lá que ficam o botão "Novo ticket" e os filtros de
+// status. O tema não desenha coluna lateral em página de extensão, então o JS
+// (js/src/forum/utils/support.tsx) tira essa sidebar da coluna e a devolve como
+// barra horizontal logo abaixo do cabeçalho — é o .AvocadoSupport-toolbar que
+// esta folha veste. Sem isso a página ficava sem nenhuma forma de abrir um
+// ticket, que é o bug que originou o arquivo.
+//
+// Os seletores levam .LinkRobinsSupport-page ou .AvocadoSupport-toolbar junto
+// (duas classes) para ganhar da folha da própria extensão, que usa uma classe
+// só, sem depender da ordem em que o forum.css é concatenado.
+
+// ─── 0. Tokens de status ─────────────────────────────────────────────────────
+// A extensão fixa um hex por status (aberto, em andamento, aguardando…). Os
+// mesmos papéis viram tokens aqui para que o modo escuro possa clarear cada um
+// — no escuro o hex original fica escuro demais sobre a tinta de 14%.
+
+:root {
+  --avocado-support-open:     #0f8ba3;
+  --avocado-support-progress: #a96d0c;
+  --avocado-support-awaiting: #7d4ba0;
+  --avocado-support-resolved: #1c8549;
+  --avocado-support-closed:   #6b7280;
+  --avocado-support-danger:   #c0392b;
+}
+
+[data-theme^=dark],
+body.dark-mode {
+  --avocado-support-open:     #4fc9de;
+  --avocado-support-progress: #e8a33d;
+  --avocado-support-awaiting: #c191dd;
+  --avocado-support-resolved: #5bd08a;
+  --avocado-support-closed:   #9aa3ab;
+  --avocado-support-danger:   #ef8b80;
+}
+
+// Selo/tinta: fundo com 14% da cor e texto na cor cheia.
+.avocado-support-tint(@color) {
+  background: color-mix(in srgb, @color 14%, transparent);
+  color: @color;
+}
+
+// ─── 1. Barra de controles (Novo ticket + filtros) ───────────────────────────
+
+.AvocadoSupport-toolbar {
+  // Telefone: o core posiciona .App-primaryControl e .App-titleControl de forma
+  // absoluta no cabeçalho do aparelho (o "+" à direita, os filtros no centro),
+  // exatamente como faz na home. A barra em si não ocupa espaço — mesma
+  // mecânica do .AvocadoNav-helper.
+  @media @phone {
+    height: 0;
+    overflow: hidden;
+  }
+
+  @media @tablet-up {
+    margin-bottom: 22px;
+
+    // Desfaz a coluna: o .sideNav do core tem largura fixa no desktop e vira
+    // uma faixa rolante com régua no tablet.
+    .IndexPage-nav.sideNav {
+      width: auto;
+      padding: 0;
+      overflow: visible;
+      white-space: normal;
+
+      &:after {
+        display: none;
+      }
+
+      > ul {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        width: auto;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        > li {
+          display: block;
+          width: auto;
+          margin: 0;
+        }
+      }
+    }
+
+    // Os filtros ocupam a linha e empurram o botão primário para a direita.
+    .IndexPage-nav.sideNav > ul > li.item-nav {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    // Filtros de status: o SelectDropdown já chega expandido no tablet+
+    // (Dropdown--expanded do core), então basta deitar a lista e vestir cada
+    // item como as abas da página "Salvos".
+    .IndexPage-nav.sideNav .Dropdown--select .Dropdown-menu {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+
+      > li {
+        width: auto;
+        margin: 0;
+
+        > a {
+          .avocado-pill-btn(34px; 14px; 13px);
+          width: auto;
+          background: var(--avocado-surface-1);
+          color: var(--text-color);
+          font-weight: 600;
+          text-decoration: none;
+
+          // O tema transforma o ícone da nav lateral numa bolinha de 28px; numa
+          // aba ele é só o ícone.
+          .Button-icon:not(.TagIcon) {
+            flex: 0 0 auto;
+            width: auto;
+            height: auto;
+            line-height: 1;
+            margin: 0;
+            background: none;
+            border-radius: 0;
+            font-size: 12px;
+            color: var(--muted-color);
+          }
+
+          .Button-label {
+            flex: 0 1 auto;
+            .avocado-truncate();
+          }
+
+          &:hover,
+          &:focus {
+            background: color-mix(in srgb, var(--avocado-surface-1) 60%, #d0d0d8);
+            color: var(--text-color);
+            text-decoration: none;
+          }
+        }
+
+        &.active > a {
+          &,
+          &:hover,
+          &:focus {
+            background: var(--primary-color);
+            color: #fff;
+            font-weight: 600;
+          }
+
+          .Button-icon:not(.TagIcon) {
+            color: inherit;
+            background: none;
+          }
+        }
+      }
+
+      // O separador (que só aparece quando o admin manda a navegação do fórum
+      // para as páginas do support) é uma régua de 1px de altura; deitado, vira
+      // o traço que divide os links do fórum dos filtros de status.
+      > .Dropdown-separator {
+        width: 1px;
+        height: 20px;
+        margin: 0 2px;
+        background-color: var(--avocado-border-chip);
+      }
+    }
+
+    // "Novo ticket": o botão primário do fórum, no fim da linha. O core o deixa
+    // em bloco na coluna lateral (Button--block) e a extensão pede width:100%,
+    // duas regras que só fazem sentido enquanto ele é uma coluna.
+    .IndexPage-nav.sideNav .App-primaryControl {
+      margin: 0 0 0 auto;
+      flex: 0 0 auto;
+
+      > .Button {
+        .avocado-pill-btn(38px; 18px; 14px);
+        width: auto;
+        margin: 0;
+        white-space: nowrap;
+      }
+    }
+  }
+}
+
+// ─── 2. Cabeçalho das páginas ────────────────────────────────────────────────
+// O tema já desenha o título da página (app.title, que as três páginas do
+// support definem no oninit) no .AvocadoExtensionPage-header, com o link de
+// volta. O <h1> da extensão repetiria o mesmo texto logo abaixo — some, e o
+// resto do cabeçalho dela (voltar, selo de status, categoria, autor, data e o
+// menu de moderação) fica.
+
+.LinkRobinsSupport-page .LinkRobinsSupport-title {
+  display: none;
+}
+
+.LinkRobinsSupport-page {
+  .LinkRobinsSupport-header {
+    margin-bottom: 20px;
+  }
+
+  .LinkRobinsSupport-ticket-header {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--avocado-border-subtle);
+  }
+
+  // O menu de moderação é ancorado no topo do cabeçalho da extensão, onde antes
+  // havia o título; sem ele, sobe para a linha do título do tema.
+  .LinkRobinsSupport-ticket-actions {
+    top: -56px;
+  }
+
+  @media @phone {
+    .LinkRobinsSupport-ticket-actions {
+      top: -44px;
+    }
+  }
+}
+
+// ─── 3. Lista de tickets ─────────────────────────────────────────────────────
+
+.LinkRobinsSupport-page {
+  .LinkRobinsSupport-list {
+    .avocado-card(@border-radius);
+    background: var(--body-bg);
+    overflow: hidden;
+  }
+
+  .LinkRobinsSupport-row {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--avocado-border-soft);
+    transition: background var(--avocado-t-fast);
+
+    &:hover {
+      background: var(--avocado-surface-1);
+    }
+  }
+
+  .LinkRobinsSupport-row-subject {
+    font-weight: 700;
+    color: var(--heading-color, var(--text-color));
+  }
+
+  .LinkRobinsSupport-row-meta {
+    color: var(--muted-color);
+    font-size: 12px;
+  }
+
+  .LinkRobinsSupport-row-deletedBadge {
+    padding: 1px 8px;
+    border-radius: 999px;
+    color: var(--avocado-support-danger);
+    background: color-mix(in srgb, var(--avocado-support-danger) 12%, transparent);
+  }
+}
+
+// ─── 4. Selos de status ──────────────────────────────────────────────────────
+
+.LinkRobinsSupport-page .LinkRobinsSupport-status {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+
+  &.is-open     { .avocado-support-tint(var(--avocado-support-open)); }
+  &.is-progress { .avocado-support-tint(var(--avocado-support-progress)); }
+  &.is-awaiting { .avocado-support-tint(var(--avocado-support-awaiting)); }
+  &.is-resolved { .avocado-support-tint(var(--avocado-support-resolved)); }
+  &.is-closed   { .avocado-support-tint(var(--avocado-support-closed)); }
+}
+
+// ─── 5. Estado vazio ─────────────────────────────────────────────────────────
+// Mesma forma dos vazios do tema (.AvocadoSearch-empty): boia grande e apagada
+// por cima de uma linha de texto. A extensão renderiza só a frase, então o
+// ícone entra por ::before.
+
+.LinkRobinsSupport-page .LinkRobinsSupport-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 56px 24px;
+  border: 1px dashed var(--avocado-border-chip);
+  border-radius: @border-radius;
+  background: var(--avocado-surface-2);
+  color: var(--muted-color);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: center;
+
+  &:before {
+    content: "\f1cd"; // fa-life-ring
+    font-family: "Font Awesome 7 Free", "Font Awesome 6 Free", "Font Awesome 5 Free";
+    font-weight: 900;
+    font-size: 40px;
+    line-height: 1;
+    opacity: 0.45;
+  }
+
+  &.LinkRobinsSupport-empty--blocked {
+    border-color: color-mix(in srgb, var(--avocado-support-danger) 35%, transparent);
+    background: color-mix(in srgb, var(--avocado-support-danger) 8%, transparent);
+    color: var(--avocado-support-danger);
+
+    &:before {
+      content: "\f05e"; // fa-ban
+    }
+  }
+}
+
+// O vazio do fim de um ticket (onde mora o botão "Reabrir") não é a lista: ali a
+// boia estaria repetindo o que o cabeçalho já diz.
+.LinkRobinsSupport-page .LinkRobinsSupport-replies + .LinkRobinsSupport-empty,
+.LinkRobinsSupport-page .LinkRobinsSupport-empty:has(.LinkRobinsSupport-reopenRow) {
+  padding: 28px 24px;
+
+  &:before {
+    display: none;
+  }
+}
+
+// ─── 6. Ticket: meta, barra da equipe e respostas ─────────────────────────────
+
+.LinkRobinsSupport-page {
+  .LinkRobinsSupport-ticket-meta {
+    color: var(--muted-color);
+    font-size: 13px;
+  }
+
+  .LinkRobinsSupport-decision {
+    .LinkRobinsSupport-decision-pending  { color: var(--avocado-support-progress); }
+    .LinkRobinsSupport-decision-accepted { color: var(--avocado-support-resolved); }
+    .LinkRobinsSupport-decision-rejected { color: var(--avocado-support-danger); }
+  }
+
+  .LinkRobinsSupport-staffBar {
+    padding: 12px 16px;
+    border: 1px solid var(--avocado-border-subtle);
+    border-radius: @border-radius;
+    background: var(--avocado-surface-2);
+  }
+
+  .LinkRobinsSupport-staffBar-statusSelect,
+  .LinkRobinsSupport-staffBtn {
+    border: 1px solid var(--avocado-border-chip);
+    border-radius: 999px;
+    background-color: var(--body-bg);
+    color: var(--text-color);
+
+    &:hover:not(:disabled),
+    &:focus {
+      border-color: var(--primary-color);
+    }
+  }
+
+  .LinkRobinsSupport-staffBar-statusSelect:focus {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 25%, transparent);
+  }
+
+  .LinkRobinsSupport-staffBar-assign {
+    border-left-color: var(--avocado-border-chip);
+  }
+
+  // ── Respostas: as linhas da discussão ──────────────────────────────────────
+  // Mesmo desenho do post na página /d/ (DiscussionPage.less): sem cartão,
+  // coluna do avatar à esquerda, nome · data em cima do texto, uma régua fina
+  // entre uma resposta e a outra. Os tokens --disc-* são os da discussão; o
+  // DarkMode.less já os redefine para o escuro, e a seção 9 repete isso aqui.
+  --disc-bg:     #ffffff;
+  --disc-border: #f0f0f4;
+  --disc-text:   #43454e;
+  --disc-title:  #202126;
+  --disc-muted:  #8f9097;
+  --disc-avatar: 48px;
+  --disc-gap:    24px;
+
+  @media @tablet {
+    --disc-avatar: 40px;
+    --disc-gap:    18px;
+  }
+
+  @media @phone {
+    --disc-avatar: 36px;
+    --disc-gap:    12px;
+  }
+
+  .LinkRobinsSupport-replies {
+    gap: 0;
+    margin-bottom: 8px;
+  }
+
+  .LinkRobinsSupport-reply {
+    display: grid;
+    grid-template-columns: var(--disc-avatar) 1fr;
+    column-gap: var(--disc-gap);
+    align-items: start;
+    padding: 20px 0;
+    border: 0;
+    border-bottom: 1px solid var(--disc-border);
+    border-radius: 0;
+    background: transparent;
+
+    // Cabeçalho, corpo e editor ficam todos na coluna do texto; o avatar
+    // (primeiro filho, posto pelo JS) ocupa a coluna da esquerda inteira.
+    > *:nth-child(n + 2) {
+      grid-column: 2;
+    }
+
+    &:last-child {
+      border-bottom: 0;
+    }
+
+    // Nota interna: a tinta de "em andamento" diz "só a equipe vê", com o
+    // mesmo recuo das outras linhas para o texto não sair do eixo.
+    &.is-internal {
+      padding: 16px;
+      margin: 6px 0;
+      border-radius: @border-radius;
+      border-bottom: 0;
+      background: color-mix(in srgb, var(--avocado-support-progress) 7%, transparent);
+      box-shadow: inset 3px 0 0 color-mix(in srgb, var(--avocado-support-progress) 55%, transparent);
+    }
+
+    &.is-deleted {
+      opacity: 0.6;
+    }
+  }
+
+  .AvocadoSupport-replySide {
+    grid-column: 1;
+    grid-row: 1 / span 3;
+    width: var(--disc-avatar);
+  }
+
+  .AvocadoSupport-replyAvatar.Avatar {
+    width: var(--disc-avatar);
+    height: var(--disc-avatar);
+    font-size: calc(var(--disc-avatar) * 0.35);
+    line-height: var(--disc-avatar);
+    border-radius: 999px;
+    border: 2px solid var(--avocado-online-ring);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+  }
+
+  .LinkRobinsSupport-reply-header {
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 8px;
+    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  }
+
+  .LinkRobinsSupport-reply-author {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--disc-title);
+
+    a {
+      color: inherit;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .LinkRobinsSupport-reply-date {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--disc-muted);
+
+    &:before {
+      content: "·";
+      margin-right: 6px;
+    }
+  }
+
+  .LinkRobinsSupport-reply-edited {
+    font-size: 12px;
+    color: var(--disc-muted);
+  }
+
+  .LinkRobinsSupport-reply-actions {
+    margin-left: auto;
+    align-self: center;
+  }
+
+  .LinkRobinsSupport-reply-body {
+    line-height: 1.72;
+    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    color: var(--disc-text);
+
+    p {
+      margin: 0 0 14px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  .LinkRobinsSupport-reply-deletedBadge {
+    .avocado-support-tint(var(--avocado-support-danger));
+  }
+
+  .LinkRobinsSupport-reply-action--danger {
+    &,
+    &:hover,
+    &:focus {
+      color: var(--avocado-support-danger) !important;
+    }
+
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--avocado-support-danger) 8%, transparent) !important;
+    }
+  }
+
+  .LinkRobinsSupport-internalToggle {
+    color: var(--muted-color);
+  }
+
+  .LinkRobinsSupport-uploadStatus {
+    border-radius: @border-radius;
+    background: var(--avocado-surface-1);
+    color: var(--muted-color);
+  }
+}
+
+// ─── 7. Novo ticket: categorias e formulário ──────────────────────────────────
+
+.LinkRobinsSupport-page {
+  .LinkRobinsSupport-categoryCard {
+    .avocado-card(@border-radius);
+    background: var(--body-bg);
+    padding: 16px 18px;
+
+    &:hover,
+    &:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 8px 24px rgba(26, 26, 36, 0.06);
+    }
+  }
+
+  .LinkRobinsSupport-categoryCard-name {
+    font-weight: 700;
+  }
+
+  .LinkRobinsSupport-categoryCard-desc,
+  .LinkRobinsSupport-pickerHint {
+    color: var(--muted-color);
+  }
+
+  .LinkRobinsSupport-chosenCategory {
+    background: var(--avocado-surface-1);
+    border: 1px solid var(--avocado-border-chip);
+  }
+
+  // "Voltar para as categorias": link discreto, sem sublinhado, como os demais
+  // controles de texto do tema.
+  .LinkRobinsSupport-backBtn {
+    color: var(--muted-color);
+    font-size: 13px;
+    font-weight: 700;
+
+    &:hover,
+    &:focus {
+      color: var(--primary-color);
+      text-decoration: none;
+    }
+  }
+
+  // O formulário vira um cartão: assunto e mensagem passam a ler como um bloco
+  // só, em vez de dois campos soltos na página.
+  .LinkRobinsSupport-form {
+    .avocado-card(@border-radius);
+    background: var(--body-bg);
+    padding: 20px;
+
+    .Form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--heading-color, var(--text-color));
+    }
+  }
+
+  .LinkRobinsSupport-form .FormControl {
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: var(--avocado-surface-1);
+    transition: border-color var(--avocado-t-fast), background var(--avocado-t-fast);
+
+    &:focus {
+      border-color: var(--primary-color);
+      background: var(--body-bg);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 14%, transparent);
+    }
+  }
+}
+
+// ── Caixa "clique para escrever" (novo ticket e resposta) ────────────────────
+// O core dimensiona o .ReplyPlaceholder para o fluxo de uma discussão: 104px de
+// altura mínima e a coluna do avatar de 64px. Dentro de um formulário isso vira
+// um bloco cinza enorme com um avatar (e a moldura que outras extensões põem
+// nele) do tamanho de um post.
+
+.LinkRobinsSupport-page {
+  .LinkRobinsSupport-composePreview .ReplyPlaceholder,
+  .LinkRobinsSupport-replyPrompt .ReplyPlaceholder {
+    min-height: 0;
+    padding: 12px 14px;
+    border: 1px dashed var(--avocado-border-chip);
+    border-radius: 12px;
+    background: var(--avocado-surface-1);
+    transition: border-color var(--avocado-t-fast), background var(--avocado-t-fast);
+
+    .Post-container {
+      grid-template-columns: 40px 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .Post-avatar {
+      width: 36px;
+      height: 36px;
+      font-size: 18px;
+      line-height: 36px;
+    }
+
+    .Post-header {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--avocado-muted-label);
+    }
+
+    &:hover,
+    &:focus {
+      border-color: var(--primary-color);
+      background: var(--body-bg);
+    }
+  }
+
+  // Prévia ao vivo enquanto o composer está aberto: mesmo recuo de avatar da
+  // caixa que ela substitui, para o bloco não "pular" ao começar a escrever.
+  .LinkRobinsSupport-composePreview .CommentPost,
+  .LinkRobinsSupport-replyPrompt .CommentPost {
+    border: 1px solid var(--avocado-border-subtle);
+    background: var(--avocado-surface-2);
+    padding: 14px;
+
+    .Post-container {
+      grid-template-columns: 40px 1fr;
+      gap: 12px;
+    }
+
+    .Post-avatar {
+      width: 36px;
+      height: 36px;
+      font-size: 18px;
+      line-height: 36px;
+    }
+  }
+}
+
+// ─── 7a. Novo ticket no composer ─────────────────────────────────────────────
+// O botão "Novo ticket" abre o composer do fórum em vez de mandar para a página
+// de escolha de categoria (js/src/forum/utils/support.tsx). Categoria e assunto
+// ficam no cabeçalho do composer, na mesma linha, como o título e as tags de
+// uma discussão nova.
+
+// A cor vem da categoria escolhida (style inline, só hexadecimal); sem
+// categoria, a do fórum.
+.AvocadoSupport-ticketComposer {
+  --avocado-support-cat: var(--primary-color);
+
+  // A coluna do avatar fica como o core a desenha: a barra de controles do
+  // editor compensa essa largura com uma margem negativa fixa (-105px), então
+  // estreitar a coluna aqui joga o botão "Enviar ticket" para fora do composer.
+  .ComposerBody-header {
+    margin-bottom: 10px;
+
+    // Os três itens (identidade, assunto, categoria) são linhas empilhadas; o
+    // core deita os <li> lado a lado, o que embaralhava o cabeçalho.
+    > li {
+      display: block;
+      width: 100%;
+      margin: 0;
+      white-space: normal;
+    }
+  }
+}
+
+@media @phone {
+  .AvocadoSupport-composerSubject.FormControl {
+    font-size: 15px;
+  }
+}
+
+// Linha de identidade: diz o que está sendo escrito, com o ícone da categoria.
+.AvocadoSupport-composerHeading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 2px 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--muted-color);
+
+  &-icon {
+    .avocado-flex-center();
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    font-size: 11px;
+    background: color-mix(in srgb, var(--avocado-support-cat, var(--primary-color)) 14%, transparent);
+    color: var(--avocado-support-cat, var(--primary-color));
+  }
+}
+
+// Assunto: campo de texto no corpo do composer, no tamanho de fonte do resto
+// dele — o que muda em relação a um input comum é só a ausência de moldura.
+.AvocadoSupport-composerSubject.FormControl {
+  width: 100%;
+  height: auto;
+  padding: 7px 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-color);
+
+  &::placeholder {
+    color: var(--avocado-muted-placeholder);
+    font-weight: 500;
+  }
+
+  &:focus {
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+}
+
+// Categoria: chip abaixo do assunto, no lugar em que uma discussão mostra as
+// tags dela. A régua separa o cabeçalho do editor, que vem logo abaixo sem
+// moldura nenhuma.
+.AvocadoSupport-composerCategoryRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--avocado-border-soft);
+}
+
+// Espaço reservado do chip enquanto as categorias não chegaram: mesma altura e
+// mesmo raio do chip real, com o brilho dos outros esqueletos do tema.
+.AvocadoSupport-composerCategory--loading {
+  display: block;
+  width: 150px;
+  height: 30px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f0f0f4 25%, #e6e6eb 50%, #f0f0f4 75%);
+  background-size: 800px 100%;
+  animation: avocado-shimmer 1.4s infinite;
+}
+
+.AvocadoSupport-composerCategory {
+  flex: 0 0 auto;
+  max-width: 100%;
+
+  > .Dropdown-toggle.Button {
+    .avocado-pill-btn(30px; 13px; 12.5px);
+    max-width: 100%;
+    background: color-mix(in srgb, var(--avocado-support-cat, var(--primary-color)) 12%, transparent);
+    color: var(--avocado-support-cat, var(--primary-color));
+
+    .Button-label {
+      .avocado-truncate();
+    }
+
+    .Button-caret {
+      opacity: 0.7;
+      font-size: 11px;
+    }
+
+    &:hover,
+    &:focus {
+      background: color-mix(in srgb, var(--avocado-support-cat, var(--primary-color)) 20%, transparent);
+      color: var(--avocado-support-cat, var(--primary-color));
+    }
+  }
+}
+
+// ─── 7b. Esqueletos de carregamento ──────────────────────────────────────────
+// JS: renderSupportListSkeleton / renderSupportTicketSkeleton /
+// renderSupportCategoriesSkeleton (components/Skeletons.tsx), instalados por
+// installSupportSkeletons() no lugar dos spinners da extensão.
+// As caixas já vêm com as classes reais (.LinkRobinsSupport-list, -row, -reply,
+// -categoryCard); aqui só se desligam os estados interativos e se dão medidas
+// às linhas, que herdam o shimmer de .AvocadoHome-skeletonLine.
+
+.AvocadoSupport-skeletonRow,
+.AvocadoSupport-skeletonReply,
+.AvocadoSupport-skeletonCategory {
+  cursor: default;
+  pointer-events: none;
+}
+
+.LinkRobinsSupport-page .AvocadoSupport-skeletonRow {
+  &:hover {
+    background: none;
+  }
+
+  // A coluna do assunto é flex: sem isto as barras se encostam, porque o recuo
+  // do texto real vem de margens que um <div> vazio não tem.
+  .LinkRobinsSupport-row-main {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  // Assuntos têm comprimentos diferentes; repetir a mesma barra cinco vezes
+  // parece defeito, não carregamento.
+  &:nth-child(2n) .AvocadoSupport-skeletonLine--subject   { width: 34%; }
+  &:nth-child(3n) .AvocadoSupport-skeletonLine--subject   { width: 52%; }
+  &:nth-child(2n) .AvocadoSupport-skeletonLine--metaCat   { width: 74px; }
+  &:nth-child(3n) .AvocadoSupport-skeletonLine--metaUser  { width: 56px; }
+}
+
+.AvocadoSupport-skeletonMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.AvocadoSupport-skeletonTicket {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.AvocadoSupport-skeletonReply {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.AvocadoSupport-skeletonCategories {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.AvocadoSupport-skeletonCategory {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+
+  &-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: linear-gradient(90deg, #f0f0f4 25%, #e6e6eb 50%, #f0f0f4 75%);
+    background-size: 800px 100%;
+    animation: avocado-shimmer 1.4s infinite;
+  }
+
+  &-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+// Medidas espelhando cada trecho de texto que vai entrar no lugar.
+.AvocadoSupport-skeletonLine {
+  &--subject   { height: 16px; width: 46%; }                       // assunto do ticket
+  &--metaCat   { height: 11px; width: 90px; }                      // categoria
+  &--metaUser  { height: 11px; width: 70px; }                      // autor
+  &--metaDate  { height: 11px; width: 130px; }                     // data
+  &--status    { height: 22px; width: 84px; border-radius: 999px; flex-shrink: 0; } // selo
+  &--ticketMeta { height: 14px; width: 60%; }                      // linha de meta do ticket
+  &--body      { height: 13px; width: 92%; }                       // corpo da resposta
+  &--bodyShort { height: 13px; width: 64%; }
+  &--catName   { height: 15px; width: 180px; }                     // nome da categoria
+  &--catDesc   { height: 12px; width: 78%; }                       // descrição
+}
+
+@media @phone {
+  .AvocadoSupport-skeletonLine {
+    &--subject { width: 72%; }
+    &--metaDate { width: 100px; }
+  }
+}
+
+// ─── 7c. Página do ticket: o hero da discussão ───────────────────────────────
+// O JS (renderTicketHero em utils/support.tsx) monta, pelo slot `hero` do
+// PageStructure, o mesmo .DiscussionHero da página /d/: fundo na cor da
+// categoria, voltar, selos, título e quem participou. Toda a folha do hero é a
+// do DiscussionPage.less — aqui só o que a página de um ticket tem de
+// diferente.
+
+.Page.AvocadoSupport-ticketPage {
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+
+  // O App.less esconde .Page-hero em toda página de extensão com um seletor
+  // de quatro classes (`.Page:not(.DiscussionPage):not(.IndexPage--avocadoRoot)
+  // .Page-hero`); este precisa de cinco para ganhar.
+  &.IndexPage.LinkRobinsSupport-page .Page-hero {
+    display: block !important;
+  }
+
+  @media @tablet-up {
+    .Page-content {
+      margin-top: 24px;
+    }
+  }
+
+  // O cabeçalho da extensão repete no corpo o que o hero já mostra (título,
+  // status, categoria, autor, data, decisão). Sobra o menu de moderação, que
+  // sai do canto absoluto e fica alinhado à direita, acima da barra da equipe.
+  .LinkRobinsSupport-ticket-header {
+    display: flex;
+    justify-content: flex-end;
+    min-height: 0;
+    margin: 0 0 4px;
+    padding: 0;
+    border: 0;
+
+    .LinkRobinsSupport-ticket-meta,
+    .LinkRobinsSupport-decision {
+      display: none;
+    }
+
+    .LinkRobinsSupport-ticket-actions {
+      position: static;
+      top: auto;
+      right: auto;
+    }
+
+    // Sem nada dentro (leitor comum não vê o menu), nem o espaço.
+    &:empty {
+      display: none;
+    }
+  }
+
+  .LinkRobinsSupport-staffBar {
+    margin-bottom: 8px;
+  }
+
+  // Sem coluna lateral: a caixa de resposta ocupa a largura da leitura.
+  .LinkRobinsSupport-replyPrompt {
+    margin-top: 16px;
+  }
+}
+
+// Selos do hero: os mesmos pills brancos que as tags usam sobre a cor do hero.
+.AvocadoSupport-hero {
+  .LinkRobinsSupport-status,
+  .AvocadoSupport-heroDecision {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.92);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .AvocadoSupport-heroDeleted {
+    color: var(--avocado-support-danger);
+  }
+
+  .AvocadoSupport-heroDecision {
+    &--pending  { color: var(--avocado-support-progress); }
+    &--accepted { color: var(--avocado-support-resolved); }
+    &--rejected { color: var(--avocado-support-danger); }
+  }
+
+  // Cor do texto do selo por status, sobre o pill branco. A seção 4 dá a cada
+  // status um fundo tingido (mesma especificidade; esta vem depois e ganha).
+  .LinkRobinsSupport-status {
+    &.is-open     { color: var(--avocado-support-open);     background: rgba(255, 255, 255, 0.92); }
+    &.is-progress { color: var(--avocado-support-progress); background: rgba(255, 255, 255, 0.92); }
+    &.is-awaiting { color: var(--avocado-support-awaiting); background: rgba(255, 255, 255, 0.92); }
+    &.is-resolved { color: var(--avocado-support-resolved); background: rgba(255, 255, 255, 0.92); }
+    &.is-closed   { color: var(--avocado-support-closed);   background: rgba(255, 255, 255, 0.92); }
+  }
+}
+
+// ─── 7d. Linha do tempo: eventos de status e pausas ──────────────────────────
+// Montados pelo JS (buildTimeline) entre as respostas, no desenho do EventPost
+// da discussão: bolinha com ícone na coluna do avatar, uma linha de texto
+// apagado ao lado — "fulano marcou o ticket como RESOLVIDO · há 2 dias".
+
+.Page.AvocadoSupport-ticketPage {
+  .AvocadoSupport-event {
+    display: grid;
+    grid-template-columns: var(--disc-avatar) 1fr;
+    column-gap: var(--disc-gap);
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--disc-border);
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+
+  .AvocadoSupport-event-side {
+    .avocado-flex-center();
+    width: var(--disc-avatar);
+  }
+
+  .AvocadoSupport-event-icon {
+    .avocado-flex-center();
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(143, 143, 149, 0.1);
+    color: var(--disc-muted);
+    font-size: 13px;
+  }
+
+  .AvocadoSupport-event-info {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    color: var(--disc-muted);
+    line-height: 1.5;
+
+    time {
+      color: var(--disc-muted);
+
+      &:before {
+        content: "·";
+        margin-right: 6px;
+      }
+    }
+  }
+
+  .AvocadoSupport-event-user {
+    color: var(--disc-title);
+    font-weight: 700;
+    text-decoration: none;
+
+    &:hover {
+      color: var(--primary-color);
+      text-decoration: none;
+    }
+  }
+
+  // O selo de status já vem estilizado (seção 4); aqui só ganha o tamanho de
+  // um chip inline.
+  .AvocadoSupport-event-info .LinkRobinsSupport-status {
+    padding: 2px 9px;
+    font-size: 10px;
+  }
+
+  // "7 meses depois": a mesma faixa do PostStream, recuada até a coluna do texto.
+  .AvocadoSupport-timeGap {
+    padding: 18px 0 18px calc(var(--disc-avatar) + var(--disc-gap));
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--disc-muted);
+    border-bottom: 1px solid var(--disc-border);
+
+    @media @phone {
+      padding-left: 0;
+    }
+  }
+}
+
+// ─── 8. Post fora do fluxo de uma discussão ──────────────────────────────────
+// A extensão reaproveita o .ReplyPlaceholder e a prévia do composer (.Post
+// .CommentPost.editing) fora de um PostStream. O tema, no desktop, tira o
+// .Post-container do grid e joga o avatar para position:absolute, contando com
+// o recuo que só a página da discussão dá ao post — aqui isso põe o avatar em
+// cima do texto. O layout nativo volta só dentro das páginas do support.
+
+@media @desktop-up {
+  .LinkRobinsSupport-page .CommentPost:not(.ReplyPlaceholder) {
+    padding: 14px;
+    border-radius: @border-radius;
+
+    .Post-container {
+      display: grid;
+    }
+
+    .Post-side {
+      position: static;
+      left: auto;
+      top: auto;
+      width: auto;
+    }
+  }
+}
+
+// ─── 9. Modo escuro ──────────────────────────────────────────────────────────
+// As cores vêm todas de tokens (que o bloco 0 já redefine no escuro); o que
+// sobra é o brilho dos esqueletos próprios desta folha, que no claro é um
+// cinza sólido — o mesmo ajuste que o DarkMode.less faz nos do tema.
+
+[data-theme^=dark],
+body.dark-mode {
+  // Tokens da discussão que a página do ticket reaproveita (seção 6): os
+  // mesmos valores que o DarkMode.less dá ao .Page.DiscussionPage.
+  .LinkRobinsSupport-page {
+    --disc-bg:     var(--body-bg);
+    --disc-border: rgba(255, 255, 255, 0.08);
+    --disc-text:   var(--text-color);
+    --disc-title:  var(--heading-color, #e8e9f2);
+    --disc-muted:  var(--muted-color);
+  }
+
+  .AvocadoSupport-skeletonCategory-icon,
+  .AvocadoSupport-composerCategory--loading {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.06) 25%,
+      rgba(255, 255, 255, 0.11) 50%,
+      rgba(255, 255, 255, 0.06) 75%
+    );
+    background-size: 800px 100%;
+  }
+
+  // O hover das abas de filtro mistura com um cinza claro; no escuro ele
+  // clareia a pílula em vez de escurecê-la.
+  .AvocadoSupport-toolbar .IndexPage-nav.sideNav .Dropdown--select .Dropdown-menu > li > a {
+    &:hover,
+    &:focus {
+      background: color-mix(in srgb, var(--avocado-surface-1) 70%, #fff);
+    }
+  }
+}

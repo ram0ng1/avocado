@@ -19,6 +19,7 @@ use Ramon\Avocado\Support\BookmarksRoute;
 use Ramon\Avocado\Support\BookmarksSchema;
 use Ramon\Avocado\Support\ChangelogSchema;
 use Ramon\Avocado\Support\HtmlSanitizer;
+use Ramon\Avocado\Support\SupportEvents;
 use Ramon\Avocado\Support\TagIconSvg;
 
 return [
@@ -399,4 +400,32 @@ return [
 
     (new Extend\Policy())
         ->modelPolicy(\Flarum\Discussion\Discussion::class, \Ramon\Avocado\Access\DiscussionPolicy::class),
+
+    // linkrobins/support: linha do tempo de status dos tickets (ver
+    // Support\SupportEvents). Tudo dentro do Conditional: com a extensão
+    // desligada não existe a classe do resource nem do modelo para estender —
+    // o `::class` ali é só uma string, mas o extender resolveria a classe no
+    // boot e estouraria. O modelo é observado pelo service provider, o ator
+    // vem do middleware e o campo entra no ticket com a relação eager-carregada
+    // nas listagens.
+    (new Extend\Conditional())
+        ->whenExtensionEnabled(SupportEvents::EXTENSION_ID, fn () => [
+            (new Extend\ServiceProvider())
+                ->register(SupportEventsServiceProvider::class),
+
+            (new Extend\Middleware('api'))
+                ->add(\Ramon\Avocado\Middleware\RememberActor::class),
+
+            (new Extend\Model(SupportEvents::TICKET_MODEL))
+                ->hasMany('avocadoEvents', \Ramon\Avocado\Model\SupportEvent::class, 'ticket_id'),
+
+            (new Extend\ApiResource(SupportEvents::TICKET_RESOURCE))
+                ->fields(\Ramon\Avocado\Api\SupportEventFields::class)
+                ->endpoint(
+                    [Endpoint\Index::class, Endpoint\Show::class],
+                    fn (Endpoint\Index|Endpoint\Show $endpoint) => SupportEvents::available()
+                        ? $endpoint->eagerLoad(['avocadoEvents', 'avocadoEvents.user'])
+                        : $endpoint
+                ),
+        ]),
 ];

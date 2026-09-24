@@ -2142,7 +2142,8 @@
 
 // ── Home link ─────────────────────────────────────────────────────────────────
 
-.AvocadoDiscussions-homeLink {
+.AvocadoDiscussions-homeLink,
+.AvocadoExtensionPage-homeLink {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -2150,11 +2151,17 @@
   font-weight: 700;
   color: var(--primary-color);
   text-decoration: none;
+  transition: opacity var(--avocado-t-fast);
 
   i { font-size: 12px; }
 
-  &:hover {
-    text-decoration: underline;
+  // Nas páginas do tema a regra global de links (App.less) já anula qualquer
+  // sublinhado, então o `underline` que ficava aqui só aparecia nas páginas de
+  // extensão — o mesmo link com dois hovers diferentes. O realce é a opacidade.
+  &:hover, &:focus {
+    color: var(--primary-color);
+    text-decoration: none;
+    opacity: 0.72;
   }
 }
 
@@ -2235,22 +2242,11 @@
   line-height: 1.2;
 }
 
+// Mesmo link de voltar das páginas do tema (.AvocadoDiscussions-homeLink, logo
+// acima): o bloco abaixo só acrescenta o seletor da página de extensão, para os
+// dois não poderem divergir.
 .AvocadoExtensionPage-homeLink {
   flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--primary-color);
-  text-decoration: none;
-
-  .fas { font-size: 12px; }
-
-  &:hover, &:focus {
-    text-decoration: underline;
-    color: var(--primary-color);
-  }
 }
 
 .AvocadoNav-helper {
