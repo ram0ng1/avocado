@@ -66,7 +66,7 @@ const CARDS: CardDef[] = [
     group: 'appearance',
     icon: 'fas fa-image',
     title: () => trans('ramon-avocado.admin.settings.section_logo', 'Logo'),
-    keywords: 'logo svg marca spinner carregamento loading avatar padrão default',
+    keywords: 'logo svg marca spinner carregamento loading avatar padrão default link interno favicon ícone icon',
     body: () => (
       <>
         <AdminToggle
@@ -91,6 +91,26 @@ const CARDS: CardDef[] = [
             </div>
           </>
         )}
+
+        <SubDivider />
+        {/* Ícone de link interno: fica fora do toggle do logo — vale com ou sem
+            logo próprio. Desenhado como máscara na cor do link, então segue o
+            colored accents (o favicon tem cor própria e quebrava isso). */}
+        <div className="Form-group">
+          <label className="AvocadoAdmin-label">{trans('ramon-avocado.admin.settings.link_icon_svg_label', 'Internal link icon (SVG)')}</label>
+          <UploadImageButton
+            name="avocado-link-icon"
+            routePath="avocado/link-icon-svg"
+            value={app.data.settings['avocado.link_icon_svg']}
+            url={resolveAssetUrl(app.data.settings['avocado.link_icon_svg'])}
+          />
+          <p className="helpText">
+            {trans(
+              'ramon-avocado.admin.settings.link_icon_svg_help',
+              'Replaces the favicon in links to other discussions of the forum (#123). It is painted in the link color, so it follows colored accents — only the shape of the SVG is used.'
+            )}
+          </p>
+        </div>
 
         <SubDivider />
         <AdminToggle
