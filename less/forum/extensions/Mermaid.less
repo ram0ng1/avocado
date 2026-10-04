@@ -1,0 +1,31 @@
+// ── datlechin/flarum-mermaid ─────────────────────────────────────────────────
+// A extensão troca o <pre><code class="language-mermaid"> por um
+// .MermaidDiagram com o SVG e já tira a paleta das variáveis do fórum
+// (--body-bg, --text-color, --primary-color), redesenhando quando o
+// data-theme muda. Aqui só ganha a moldura dos blocos de código do tema.
+
+.Post-body .MermaidDiagram {
+  margin: 14px 0;
+  padding: 20px 16px;
+  border: 1px solid var(--avocado-border-subtle);
+  border-radius: 12px;
+  // Fundo transparente de propósito: os rótulos das arestas são pintados com
+  // --body-bg pela extensão, e um fundo próprio deixaria cada um num retângulo.
+  background: transparent;
+  overflow-x: auto;
+  // `safe` evita que um diagrama mais largo que o post seja cortado à esquerda
+  // quando a centralização empurra o começo dele para fora da área rolável.
+  justify-content: safe center;
+}
+
+// Diagrama inválido: a extensão marca o <code> e deixa o fonte à mostra. A
+// borda vermelha dela fica colada ao texto (o tema zera o padding do <code>),
+// então o aviso passa para a borda do próprio bloco.
+.Post-body pre:has(> code.language-mermaid[data-mermaid-error]) {
+  border-color: color-mix(in srgb, var(--alert-error-color, #d83e3e) 60%, transparent);
+}
+
+.Post-body pre code.language-mermaid[data-mermaid-error] {
+  border-left: 0;
+  padding-left: 0;
+}

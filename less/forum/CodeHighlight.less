@@ -1,0 +1,106 @@
+// ── highlight.js ─────────────────────────────────────────────────────────────
+// O BBCode CODE (s9e, usado também pelos blocos ``` do Markdown) carrega o
+// hljs-loader, que injeta o tema "github" no <head> DEPOIS do forum.css. Esse
+// tema tem cores fixas para fundo claro: no escuro, string e número (#032f62)
+// somem sobre o <pre> #0d1117. Aqui as classes hljs-* passam a ler os tokens
+// --avocado-code-* (common/variables.less), que trocam com o tema do fórum.
+//
+// Especificidade: o tema injetado usa .hljs-x (0,1,0) e chega por último, então
+// todo seletor daqui leva o `pre` na frente para ganhar sem depender da ordem.
+
+// O tema injetado pinta .hljs de branco com texto #24292e — fora da página da
+// discussão (perfil, busca, mensagens) isso vira um bloco branco no escuro.
+// O fundo e a cor de base continuam sendo os do <pre> do tema.
+html pre code.hljs {
+  background: transparent;
+  color: inherit;
+}
+
+pre {
+  .hljs-keyword,
+  .hljs-doctag,
+  .hljs-template-tag,
+  .hljs-template-variable,
+  .hljs-type,
+  .hljs-variable.language_ {
+    color: var(--avocado-code-keyword);
+  }
+
+  .hljs-title,
+  .hljs-title.class_,
+  .hljs-title.class_.inherited__,
+  .hljs-title.function_ {
+    color: var(--avocado-code-title);
+  }
+
+  .hljs-attr,
+  .hljs-attribute,
+  .hljs-literal,
+  .hljs-meta,
+  .hljs-number,
+  .hljs-operator,
+  .hljs-variable,
+  .hljs-selector-attr,
+  .hljs-selector-class,
+  .hljs-selector-id {
+    color: var(--avocado-code-constant);
+  }
+
+  .hljs-regexp,
+  .hljs-string,
+  .hljs-meta .hljs-string {
+    color: var(--avocado-code-string);
+  }
+
+  .hljs-built_in,
+  .hljs-symbol {
+    color: var(--avocado-code-builtin);
+  }
+
+  .hljs-comment,
+  .hljs-code,
+  .hljs-formula {
+    color: var(--avocado-code-comment);
+  }
+
+  .hljs-name,
+  .hljs-quote,
+  .hljs-selector-tag,
+  .hljs-selector-pseudo {
+    color: var(--avocado-code-tag);
+  }
+
+  // Interpolação (${…}) volta para a cor do texto do bloco.
+  .hljs-subst {
+    color: inherit;
+  }
+
+  .hljs-section {
+    color: var(--avocado-code-constant);
+    font-weight: 700;
+  }
+
+  .hljs-bullet {
+    color: var(--avocado-code-bullet);
+  }
+
+  .hljs-emphasis {
+    color: inherit;
+    font-style: italic;
+  }
+
+  .hljs-strong {
+    color: inherit;
+    font-weight: 700;
+  }
+
+  .hljs-addition {
+    color: var(--avocado-code-addition);
+    background-color: var(--avocado-code-addition-bg);
+  }
+
+  .hljs-deletion {
+    color: var(--avocado-code-deletion);
+    background-color: var(--avocado-code-deletion-bg);
+  }
+}

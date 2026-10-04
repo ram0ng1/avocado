@@ -486,6 +486,9 @@ ramon-avocado:
       in_reply_to: In reply to
       op_badge: OP
       copy_code: "Copy code"
+      gallery_prev: "Previous photos"
+      gallery_next: "Next photos"
+      gallery_count: "{count} photos"
     messages:
       deleted_message: Message deleted
     tags:
