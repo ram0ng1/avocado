@@ -1,0 +1,31 @@
+// ── Rótulo de link interno (core: less/common/UrlLink.less) ──────────────────
+// Um link colado para outra discussão vira `[favicon] #123`. O favicon é uma
+// imagem com cores próprias, então não acompanha o colored accents: o resto do
+// rótulo troca de cor com a categoria e o ícone fica parado.
+//
+// Com o "Ícone de link interno" do admin (card Logo), content/LinkIconStyle.php
+// põe o SVG em --avocado-link-icon e marca o <html>. Aí o favicon some e um
+// ::before desenha o ícone como máscara pintada com currentColor — a cor do link,
+// que é a que o colored accents troca. Só o formato do SVG conta.
+
+html[data-avocado-link-icon] .UrlLink--discussion {
+  // !important: dentro do post, a regra de imagem do DiscussionPage.less (e a
+  // exceção do favicon logo abaixo dela) chegam a 0,7,2 de especificidade — o
+  // favicon precisa sumir em qualquer contexto em que o rótulo apareça.
+  .UrlLink-favicon {
+    display: none !important;
+  }
+
+  &::before {
+    content: "";
+    // Mesmo encaixe que o core dá ao favicon: do tamanho do texto, centrado na
+    // linha sem empurrar a altura dela.
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+    align-self: center;
+    background-color: currentColor;
+    -webkit-mask: var(--avocado-link-icon) center / contain no-repeat;
+    mask: var(--avocado-link-icon) center / contain no-repeat;
+  }
+}

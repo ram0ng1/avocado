@@ -1209,6 +1209,20 @@ html:not(.lrBadgeLabels--phone) {
     }
   }
 
+  // Favicon do rótulo de link interno (core: UrlLink.less). Um link colado para
+  // outra discussão do fórum vira `[favicon] #3023`, e a regra de imagem acima
+  // dava ao favicon a margem de 12px e o raio de screenshot — o rótulo crescia
+  // para uma pílula alta com o ícone caído no canto. A classe extra ganha das
+  // duas regras de imagem (inclusive dentro de [center]) e devolve o ícone ao
+  // tamanho de texto que o core desenhou.
+  img.UrlLink-favicon:not(.Avatar):not(.emoji):not([class*="avatar"]) {
+    display: inline;
+    max-width: none;
+    margin: 0;
+    border-radius: 2px;
+    vertical-align: middle;
+  }
+
   hr {
     border: none;
     border-top: 1px solid var(--disc-border);
