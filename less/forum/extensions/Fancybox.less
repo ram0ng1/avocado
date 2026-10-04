@@ -1,0 +1,176 @@
+// ── flectar/flarum-fancybox ──────────────────────────────────────────────────
+// Duas peças: a galeria dentro do post (2+ imagens seguidas viram um
+// .fancybox-gallery.f-carousel) e o lightbox (.fancybox__container, montado no
+// <body>). O JS da extensão monta o carrossel sem setas nem pontos, então com o
+// slide em 100% só a 1ª foto aparecia e nada indicava que havia outras. O
+// forum bundle põe setas e um contador "1 / 3" no carrossel (initGalleryNav em
+// index.tsx); aqui eles e as fotos ganham o acabamento do tema. Segue o mesmo
+// carrossel arrastável dela, e o clique na foto segue abrindo o lightbox.
+//
+// Uma foto por página de propósito: o carrossel centraliza cada página
+// (`center: true`, sem opção exposta), então com 2+ fotos por página a última
+// ficava sozinha no meio, com um vão do lado.
+
+// ── Galeria no post ──────────────────────────────────────────────────────────
+.Post-body .fancybox-gallery.f-carousel {
+  --f-carousel-gap: 8px;
+  margin: 14px 0;
+
+  .f-carousel__slide {
+    // Proporção fixa: fotos de alturas diferentes não fazem o post pular a
+    // cada troca. A foto inteira continua a um clique, no lightbox.
+    aspect-ratio: 16 / 10;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--avocado-surface-1);
+    cursor: zoom-in;
+
+    a {
+      display: block;
+      height: 100%;
+      border-bottom: none;
+    }
+  }
+
+  .f-carousel__viewport.is-dragging .f-carousel__slide {
+    cursor: grabbing;
+  }
+
+  // Mesmo número de :not() da regra de imagem do DiscussionPage.less, com mais
+  // classes na frente — precisa ganhar dela para zerar a margem e o raio.
+  .f-carousel__slide img:not(.Avatar):not(.emoji):not([class*="avatar"]) {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    margin: 0;
+    border-radius: 0;
+    object-fit: cover;
+    transition: transform var(--avocado-t-medium);
+  }
+
+  .f-carousel__slide:hover img:not(.Avatar):not(.emoji):not([class*="avatar"]) {
+    transform: scale(1.02);
+  }
+
+  // Setas (botões com data-carousel-go-prev/next, injetados por initGalleryNav).
+  .avocado-gallery-nav {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    width: 36px;
+    height: 36px;
+    margin-top: -18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(12, 12, 16, 0.55);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background var(--avocado-t-fast), opacity var(--avocado-t-fast);
+
+    &:hover {
+      background: rgba(12, 12, 16, 0.75);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--button-primary-bg, var(--primary-color));
+      outline-offset: 2px;
+    }
+
+    // Fim da fila: o carrossel marca o botão, e ele some em vez de ficar inerte.
+    &[aria-disabled] {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    &--prev { left: 10px; }
+    &--next { right: 10px; }
+  }
+
+  .avocado-gallery-count {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: rgba(12, 12, 16, 0.55);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+}
+
+// Imagem solta: só o cursor avisa que ela abre ampliada.
+.Post-body a[data-fancybox="single"] {
+  cursor: zoom-in;
+}
+
+// ── Lightbox ─────────────────────────────────────────────────────────────────
+// O fundo do lightbox fica escuro nos dois temas (é o padrão de visualizador de
+// foto); o que muda é o acabamento dos controles, que seguem os do fórum.
+// `body` na frente: a CSS da extensão entra depois do tema e declara estas
+// mesmas variáveis em .fancybox__container — com especificidade igual, ela venceria.
+body .fancybox__container {
+  --fancybox-backdrop-bg: rgba(10, 10, 13, 0.92);
+  --f-toolbar-font: @font-sans;
+  --f-toolbar-padding: 12px;
+  --f-toolbar-gap: 6px;
+  --f-toolbar-font-size: 14px;
+  --f-toolbar-font-weight: 600;
+  --f-toolbar-text-shadow: none;
+
+  // Botões da barra: pílulas translúcidas em vez de quadrados colados.
+  --f-button-width: 40px;
+  --f-button-height: 40px;
+  --f-button-border-radius: 12px;
+  --f-button-bg: rgba(255, 255, 255, 0.08);
+  --f-button-hover-bg: rgba(255, 255, 255, 0.16);
+  --f-button-active-bg: rgba(255, 255, 255, 0.22);
+  --f-button-color: rgba(255, 255, 255, 0.85);
+  --f-button-hover-color: #fff;
+  --f-button-svg-width: 20px;
+  --f-button-svg-height: 20px;
+  --f-button-svg-filter: none;
+  --f-button-transition: background var(--avocado-t-fast), color var(--avocado-t-fast);
+
+  --f-arrow-bg: rgba(255, 255, 255, 0.10);
+  --f-arrow-hover-bg: rgba(255, 255, 255, 0.18);
+  --f-arrow-color: rgba(255, 255, 255, 0.85);
+  --f-arrow-hover-color: #fff;
+  --f-arrow-svg-stroke-width: 2;
+
+  // Miniaturas: cantos do tema e a selecionada marcada com a cor primária.
+  --f-thumb-border-radius: 8px;
+  --f-thumb-opacity: 0.55;
+  --f-thumb-hover-opacity: 1;
+  --f-thumb-selected-opacity: 1;
+  --f-thumb-focus-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.65);
+  --f-thumb-selected-shadow: inset 0 0 0 2px var(--button-primary-bg, var(--primary-color));
+
+  --f-progressbar-color: var(--button-primary-bg, var(--primary-color));
+  --f-spinner-color-2: var(--button-primary-bg, var(--primary-color));
+
+  font-family: @font-sans;
+
+  .fancybox__backdrop {
+    backdrop-filter: blur(6px);
+  }
+
+  // Foto ampliada com o mesmo arredondamento das imagens do post.
+  img.f-panzoom__content {
+    border-radius: 10px;
+  }
+}

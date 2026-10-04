@@ -487,6 +487,9 @@ ramon-avocado:
       in_reply_to: Em resposta a
       op_badge: POST ORIGINAL
       copy_code: "Copiar código"
+      gallery_prev: "Fotos anteriores"
+      gallery_next: "Próximas fotos"
+      gallery_count: "{count} fotos"
     messages:
       deleted_message: Mensagem apagada
     tags:
