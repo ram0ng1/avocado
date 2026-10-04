@@ -54,6 +54,10 @@ ramon-avocado:
         a página de hoje de qualquer forma.
       disc_style_default: Padrão
       disc_style_editorial: Editorial (corrente da conversa)
+      reply_to_header_label: 'Mostrar "Em resposta a" nas respostas'
+      reply_to_header_help: "Um post que abre com a menção a outro post mostra \"Em resposta a\" com o avatar do autor embaixo do nome, e a menção sai do começo do texto. Passar o mouse destaca o post original; clicar leva até ele. Menções no meio do texto, menções a usuários e citações continuam como estão."
+      reply_dock_label: Bolha de resposta flutuante
+      reply_dock_help: "Mantém uma bolha \"Escreva uma resposta…\" na base da tela durante toda a discussão, alinhada aos posts. Visitantes veem um convite para entrar. Desligada, fica só a caixa de resposta no fim da discussão."
 
       # Posição do badge de grupo no post
       post_badge_position_label: Posição do badge de grupo no post
@@ -88,6 +92,15 @@ ramon-avocado:
       showcase_image_style_help: Escolha entre exibição compacta ou em altura completa da imagem.
       showcase_image_style_default: Padrão (Compacto)
       showcase_image_style_full: Imagem completa
+
+      # Lista de discussões da home
+      section_home_feed: Lista de discussões
+      home_feed_sort_label: Ordem
+      home_feed_sort_help: Discussões populares ordena por respostas, curtidas, visualizações e atividade recente. Atividade recente segue a última resposta, como a lista padrão de discussões. Discussões fixadas ficam no topo nas duas.
+      home_feed_sort_popular: Discussões populares
+      home_feed_sort_latest: Atividade recente
+      home_feed_count_label: Quantidade de discussões
+      home_feed_count_help: Quantas discussões a lista da página inicial mostra. Vale também para a página Seguindo.
 
       # Section title overrides
       section_titles_heading: Títulos de seção
@@ -386,6 +399,7 @@ ramon-avocado:
       new_discussion: Nova Discussão
       no_tags_found: Nenhuma tag encontrada
       or: "ou"
+      latest_heading: Discussões recentes
       popular_heading: Discussões populares
       popular_no_discussions: "Nenhuma discussão por enquanto."
       replies: respostas
@@ -470,6 +484,7 @@ ramon-avocado:
       view_profile: Ver perfil
       message: Mensagem
     post:
+      in_reply_to: Em resposta a
       op_badge: POST ORIGINAL
       copy_code: "Copiar código"
     messages:
@@ -495,6 +510,10 @@ ramon-avocado:
       member_since: "Desde"
       member_singular: membro
       member_plural: membros
+    composer:
+      remove_reply: Remover resposta
+      guest_pill: Entre para responder
+
     changelog:
       title: Changelog
       description: "O que há de novo, o que foi corrigido e o que saiu — versão por versão."

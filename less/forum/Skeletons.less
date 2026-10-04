@@ -332,6 +332,23 @@
       // parecer passar por trás do nó.
       .AvocadoSkeleton-postAvatar {
         box-shadow: 0 0 0 3px var(--body-bg, #fff);
+        // O nó tem de ser OPACO para esconder a linha. A cor do skeleton é
+        // translúcida no escuro (DarkMode.less), então ela vai como camada por
+        // cima de um fundo na cor da página.
+        background: linear-gradient(var(--avocado-skel-avatar, #e7e7ed), var(--avocado-skel-avatar, #e7e7ed)) var(--body-bg, #fff);
+      }
+
+      // O pulso em opacidade no post inteiro deixava o nó translúcido a cada
+      // ciclo e a linha aparecia atravessando o avatar. Pulsa só o corpo; o nó
+      // fica parado e opaco.
+      .AvocadoSkeleton-post {
+        animation: none;
+
+        &:nth-child(2) .AvocadoSkeleton-postBody { animation-delay: 0.18s; }
+        &:nth-child(3) .AvocadoSkeleton-postBody { animation-delay: 0.36s; }
+      }
+      .AvocadoSkeleton-postBody {
+        animation: avocado-pulse 1.5s ease-in-out infinite;
       }
 
       // A variante alarga a coluna de leitura; o skeleton tem de nascer na mesma

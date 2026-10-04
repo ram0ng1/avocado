@@ -45,6 +45,7 @@ return [
         // Preloads de dado — cada um sai cedo se não estiver na sua rota.
         ->content(\Ramon\Avocado\Content\PreloadTeamMembers::class)
         ->content(\Ramon\Avocado\Content\PreloadShowcase::class)
+        ->content(\Ramon\Avocado\Content\PreloadHomeFeed::class)
         ->content(\Ramon\Avocado\Content\PreloadChangelog::class)
         ->route('/discussions', 'avocado-discussions')
         ->route('/search', 'avocado-search'),
@@ -282,6 +283,14 @@ return [
         // Content\DiscussionStyle escreve antes do primeiro paint.
         ->default('avocado.discussion_style', 'default')
         ->serializeToForum('avocadoDiscussionStyle', 'avocado.discussion_style')
+        // Pílula "Escreva uma resposta…" fixa na base da tela em toda a discussão
+        // (js/src/forum/utils/composerDock.ts). Desligada, sobra só a do fim.
+        ->default('avocado.reply_dock_enabled', true)
+        ->serializeToForum('avocadoReplyDockEnabled', 'avocado.reply_dock_enabled', 'boolval')
+        // "↳ Em resposta a" no topo de um post que abre com menção a outro post
+        // (js/src/forum/utils/replyTo.ts). Desligado, a menção fica no texto.
+        ->default('avocado.reply_to_header', true)
+        ->serializeToForum('avocadoReplyToHeader', 'avocado.reply_to_header', 'boolval')
         // Onde os badges de grupo aparecem no post: 'default' (camada desligada —
         // disco do core sobre o avatar), 'inline' (ao lado do nome), 'below'
         // (linha própria), 'side' (embaixo do avatar) ou 'side_icons' (embaixo do
@@ -311,6 +320,9 @@ return [
         ->serializeToForum('avocadoCategoriesHeading',  'avocado.categories_heading')
         ->serializeToForum('avocadoPopularHeading',     'avocado.popular_heading')
         ->serializeToForum('avocadoFollowingHeading',   'avocado.following_heading')
+        // Lista da home: ordem (popular | latest) e quantidade (5 a 20).
+        ->serializeToForum('avocadoHomeFeedSort', 'avocado.home_feed_sort')
+        ->serializeToForum('avocadoHomeFeedCount', 'avocado.home_feed_count', fn ($n) => max(1, min(20, (int) $n ?: 5)))
         ->serializeToForum('avocadoCustomHeroEnabled',  'avocado.custom_hero_enabled', 'boolval')
         ->serializeToForum('avocadoCustomHeroHtml',     'avocado.custom_hero_html', fn ($html) => HtmlSanitizer::sanitize((string) $html))
         ->serializeToForum('avocadoColoredEnabled', 'avocado.colored_enabled', 'boolval')
@@ -368,6 +380,8 @@ return [
         ->default('avocado.categories_heading', '')
         ->default('avocado.popular_heading', '')
         ->default('avocado.following_heading', '')
+        ->default('avocado.home_feed_sort', 'popular')
+        ->default('avocado.home_feed_count', '5')
         ->default('avocado.custom_hero_enabled', false)
         ->default('avocado.custom_hero_html', '')
         ->default('avocado.colored_enabled', false)

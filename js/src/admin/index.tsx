@@ -269,6 +269,39 @@ const CARDS: CardDef[] = [
   },
   {
     group: 'home',
+    icon: 'fas fa-list',
+    title: () => trans('ramon-avocado.admin.settings.section_home_feed', 'Discussion list'),
+    keywords: 'lista list discussões discussions populares popular recentes recente latest ordem sort quantidade count feed',
+    body: () => (
+      <>
+        <AdminSelect
+          settingKey="avocado.home_feed_sort"
+          label={trans('ramon-avocado.admin.settings.home_feed_sort_label', 'Order')}
+          help={trans(
+            'ramon-avocado.admin.settings.home_feed_sort_help',
+            'Popular ranks by replies, likes, views and recent activity. Latest activity follows the most recent reply, like the standard discussion list. Pinned discussions stay on top in both.'
+          )}
+          options={{
+            popular: trans('ramon-avocado.admin.settings.home_feed_sort_popular', 'Popular discussions'),
+            latest: trans('ramon-avocado.admin.settings.home_feed_sort_latest', 'Latest activity'),
+          }}
+          default="popular"
+        />
+        <AdminSelect
+          settingKey="avocado.home_feed_count"
+          label={trans('ramon-avocado.admin.settings.home_feed_count_label', 'Number of discussions')}
+          help={trans(
+            'ramon-avocado.admin.settings.home_feed_count_help',
+            'How many discussions the homepage list shows. Also applies to the Following page.'
+          )}
+          options={{ '5': '5', '10': '10', '15': '15', '20': '20' }}
+          default="5"
+        />
+      </>
+    ),
+  },
+  {
+    group: 'home',
     icon: 'fas fa-heading',
     title: () => trans('ramon-avocado.admin.settings.section_titles_heading', 'Section titles'),
     keywords: 'títulos titulos titles seções secoes sections popular following categorias heading',
@@ -288,7 +321,11 @@ const CARDS: CardDef[] = [
         <AdminText
           settingKey="avocado.popular_heading"
           label={trans('ramon-avocado.admin.settings.popular_heading_label', 'Popular Discussions Title')}
-          placeholder={trans('ramon-avocado.forum.home.popular_heading', 'Popular discussions')}
+          placeholder={
+            app.data.settings['avocado.home_feed_sort'] === 'latest'
+              ? trans('ramon-avocado.forum.home.latest_heading', 'Latest discussions')
+              : trans('ramon-avocado.forum.home.popular_heading', 'Popular discussions')
+          }
         />
         <AdminText
           settingKey="avocado.following_heading"
@@ -405,7 +442,8 @@ const CARDS: CardDef[] = [
     group: 'discussions',
     icon: 'fas fa-comments',
     title: () => trans('ramon-avocado.admin.settings.section_discussion', 'Discussion page'),
-    keywords: 'discussão discussion página page estilo style editorial spine badge grupo group posição position',
+    keywords:
+      'discussão discussion página page estilo style editorial spine badge grupo group posição position bolha bubble resposta reply composer menção mention em resposta in reply',
     body: () => (
       <>
         <AdminSelect
@@ -420,6 +458,22 @@ const CARDS: CardDef[] = [
             editorial: trans('ramon-avocado.admin.settings.disc_style_editorial', 'Editorial (conversation spine)'),
           }}
           default="default"
+        />
+        <AdminToggle
+          settingKey="avocado.reply_to_header"
+          label={trans('ramon-avocado.admin.settings.reply_to_header_label', 'Show "In reply to" on replies')}
+          help={trans(
+            'ramon-avocado.admin.settings.reply_to_header_help',
+            'A post that opens with a mention of another post shows "In reply to" with the author’s avatar under the name, and the mention leaves the start of the text. Hovering highlights the original post; clicking goes to it. Mentions elsewhere in the text, user mentions and quotes stay as they are.'
+          )}
+        />
+        <AdminToggle
+          settingKey="avocado.reply_dock_enabled"
+          label={trans('ramon-avocado.admin.settings.reply_dock_label', 'Floating reply bubble')}
+          help={trans(
+            'ramon-avocado.admin.settings.reply_dock_help',
+            'Keeps a "Write a reply…" bubble at the bottom of the screen throughout the discussion, aligned with the posts. Guests see an invitation to log in. Turned off, only the reply box at the end of the discussion remains.'
+          )}
         />
         <AdminSelect
           settingKey="avocado.post_badge_position"
