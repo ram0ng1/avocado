@@ -6,11 +6,20 @@ const SHOWCASE_INCLUDE = 'user,firstPost,lastPostedUser,lastPost,tags';
 /** Teto de posts por request de hidratação (ver `hydrateFirstPosts`). */
 const HYDRATE_LIMIT = 50;
 
+/** Espelham o default e o teto de `avocado.home_feed_count` (extend.php / admin). */
+const DEFAULT_FEED_COUNT = 5;
+const MAX_FEED_COUNT = 20;
+
+/** Tamanho da página que a index entrega no boot (padrão do Flarum). */
+const INDEX_PAGE_SIZE = 20;
+
+export type HomeFeedSort = 'popular' | 'latest';
+
 /**
  * State for the Avocado home page.
  *
  * Owns:
- *  - The cached "popular" / "latest" / "topCategories" computations.
+ *  - The cached home feed (popular or latest, admin-chosen) and "topCategories".
  *  - The async showcase-discussions fetch and its per-slug cache.
  *  - The showcase tag-ID parsing from `app.forum.attribute('avocadoShowcaseTag')`.
  *
@@ -27,12 +36,15 @@ export default class HomeState {
   /** Request de hidratação dos firstPosts em voo (dedup entre home e showcase). */
   private firstPostsHydration: Promise<void> | null = null;
 
+  /** Complemento da lista quando a página do boot não cobre a contagem (ver `fillFeed`). */
+  private feedExtra: any[] = [];
+  private feedFill: Promise<void> | null = null;
+
   /** Preload da lista de tags em voo (dedup entre a home e o showcase). */
   private tagListLoad: Promise<any> | null = null;
 
   // Memoization — invalidated when the store discussion count changes.
-  private cachedPopular: any[] | null = null;
-  private cachedLatest: any[] | null = null;
+  private cachedFeed: any[] | null = null;
   private cachedStoreSize = -1;
 
   // ── Read-only getters ──────────────────────────────────────────────────
@@ -92,40 +104,50 @@ export default class HomeState {
     return (d.tags?.() || []).some((t: any) => ids.has(String(t?.id?.())));
   }
 
-  /** Discussions for the "Popular" / "Following" rail. */
-  popularDiscussions(limit = 5): any[] {
-    this.invalidateIfStoreChanged();
-    if (this.cachedPopular?.length) return this.cachedPopular;
+  /** Ordem da lista da home (admin): `popular` (pontuação) ou `latest` (última atividade). */
+  feedSort(): HomeFeedSort {
+    return app.forum?.attribute('avocadoHomeFeedSort') === 'latest' ? 'latest' : 'popular';
+  }
 
-    const result = [...this.allDiscussions()]
-      .filter((d) => !this.isShowcaseDiscussion(d))
+  /** Quantas discussões a lista da home mostra (admin: 5 a 20). */
+  feedCount(): number {
+    const n = Math.round(numberOr(Number(app.forum?.attribute('avocadoHomeFeedCount')), DEFAULT_FEED_COUNT));
+    return Math.min(MAX_FEED_COUNT, Math.max(1, n));
+  }
+
+  /** Discussions for the home rail, in the admin-chosen order and count. */
+  feedDiscussions(): any[] {
+    this.invalidateIfStoreChanged();
+    if (this.cachedFeed?.length) return this.cachedFeed;
+
+    const sort = this.feedSort();
+    const lastPosted = (d: any): number => {
+      const at = d.lastPostedAt?.();
+      return at ? new Date(at).getTime() : 0;
+    };
+
+    const result = this.feedCandidates()
       .sort((a, b) => {
         const aSticky = a.isSticky?.() ? 1 : 0;
         const bSticky = b.isSticky?.() ? 1 : 0;
         if (bSticky !== aSticky) return bSticky - aSticky;
-        return this.discussionScore(b) - this.discussionScore(a);
+        return sort === 'latest' ? lastPosted(b) - lastPosted(a) : this.discussionScore(b) - this.discussionScore(a);
       })
-      .slice(0, limit);
+      .slice(0, this.feedCount());
 
-    if (result.length > 0) this.cachedPopular = result;
+    if (result.length > 0) this.cachedFeed = result;
     return result;
   }
 
-  /** Discussions sorted by most-recent activity. */
-  latestDiscussions(): any[] {
-    this.invalidateIfStoreChanged();
-    if (this.cachedLatest?.length) return this.cachedLatest;
-
-    const result = [...this.allDiscussions()]
-      .sort((a, b) => {
-        const aDate = a.lastPostedAt?.() ? new Date(a.lastPostedAt()) : new Date(0);
-        const bDate = b.lastPostedAt?.() ? new Date(b.lastPostedAt()) : new Date(0);
-        return (bDate as any) - (aDate as any);
-      })
-      .slice(0, 10);
-
-    if (result.length > 0) this.cachedLatest = result;
-    return result;
+  /** O que pode entrar na lista: a página da index + o complemento de `fillFeed`, sem o showcase. */
+  private feedCandidates(): any[] {
+    const seen = new Set<string>();
+    return [...this.allDiscussions(), ...this.feedExtra].filter((d) => {
+      const id = String(d?.id?.() ?? '');
+      if (!id || seen.has(id) || this.isShowcaseDiscussion(d)) return false;
+      seen.add(id);
+      return true;
+    });
   }
 
   /** Top-level tags sorted by their admin-defined position. */
@@ -145,17 +167,15 @@ export default class HomeState {
 
   // ── Mutating actions ───────────────────────────────────────────────────
 
-  /** Drop memoized popular/latest when the store grows or shrinks. */
+  /** Drop the memoized feed when the store grows or shrinks. */
   invalidate(): void {
-    this.cachedPopular = null;
-    this.cachedLatest = null;
+    this.cachedFeed = null;
   }
 
   private invalidateIfStoreChanged(): void {
     const current = app.store.all('discussions').length;
     if (current !== this.cachedStoreSize) {
-      this.cachedPopular = null;
-      this.cachedLatest = null;
+      this.cachedFeed = null;
       this.cachedStoreSize = current;
     }
   }
@@ -194,6 +214,8 @@ export default class HomeState {
       // discussão), mas o botão de curtir ainda precisa do post em si: sem ele
       // o contador fica em 0 e o clique não faz nada. Busca em segundo plano,
       // fora do caminho do primeiro paint.
+      this.feedFromBoot();
+      this.fillFeed();
       return this.hydrateFirstPosts();
     }
     this.invalidate();
@@ -201,6 +223,7 @@ export default class HomeState {
       .find('discussions', { include: ['user', 'lastPostedUser', 'tags', 'firstPost'], 'page[limit]': 20 } as any)
       .then(() => {
         this.homeLoading = false;
+        this.fillFeed();
         // Attempt to populate showcase from the newly-fetched store as a side-effect.
         if (this.showcaseLoading && !this.showcaseFetched) {
           const fromStore = this.showcaseFromStore();
@@ -221,6 +244,63 @@ export default class HomeState {
         this.homeLoading = false;
         m.redraw();
       });
+  }
+
+  /**
+   * Complemento da lista vindo do payload do boot (Content\PreloadHomeFeed).
+   *
+   * Roda no oninit, antes do 1º view(): pushPayload insere os models no store
+   * sincronamente, então a lista já nasce com a contagem do admin e o
+   * `fillFeed` logo em seguida não tem o que buscar.
+   */
+  private feedFromBoot(): void {
+    try {
+      const payload = (app as any).data?.avocadoHomeFeed;
+      if (!payload?.data?.length || this.feedExtra.length) return;
+      const pushed = app.store.pushPayload(payload as any);
+      this.feedExtra = (Array.isArray(pushed) ? pushed : [pushed]).filter(Boolean);
+      // Só vale para a 1ª entrada na home; voltar a ela usa o store.
+      delete (app as any).data.avocadoHomeFeed;
+      this.invalidate();
+    } catch {
+      /* payload malformado — o fillFeed cobre */
+    }
+  }
+
+  /**
+   * Completa a lista quando a contagem do admin passa do que a página do boot
+   * cobre: a index traz 20 discussões e as do showcase saem da conta, então
+   * com 15 ou 20 itens a lista podia ficar curta. Um GET a mais, só nesse
+   * caso; os itens novos entram no fim (ou na ordem da pontuação) depois do
+   * 1º paint, que já sai com o que havia.
+   */
+  fillFeed(): Promise<void> {
+    if (this.feedFill) return this.feedFill;
+
+    const count = this.feedCount();
+    const available = this.feedCandidates().length;
+    // Página do boot incompleta = o fórum não tem mais que isso; nada a buscar.
+    if (available >= count || this.allDiscussions().length < INDEX_PAGE_SIZE) return Promise.resolve();
+
+    const sort = this.feedSort() === 'latest' ? '-lastPostedAt' : '';
+    const params: Record<string, unknown> = {
+      include: SHOWCASE_INCLUDE,
+      'page[limit]': Math.min(HYDRATE_LIMIT, count + INDEX_PAGE_SIZE),
+    };
+    if (sort) params.sort = sort;
+
+    this.feedFill = app.store
+      .find('discussions', params as any)
+      .then((items: any) => {
+        this.feedExtra = Array.isArray(items) ? items.filter(Boolean) : [];
+        this.invalidate();
+        m.redraw();
+      })
+      .catch(() => {
+        /* complemento é opcional — a lista fica com o que já tinha */
+      });
+
+    return this.feedFill;
   }
 
   /**
