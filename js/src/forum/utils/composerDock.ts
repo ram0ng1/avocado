@@ -22,6 +22,13 @@ import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
 /** Distância da pílula até a base da tela; espelha @composer-gap no Composer.less. */
 const DOCK_GAP = 16;
 
+/**
+ * Opção do admin (Aparência › "Bolha de resposta flutuante"). Desligada, o
+ * compositor e a placeholder do fim voltam a ser os do core — o CSS todo do
+ * Composer.less depende da classe `avocado-reply-dock` no <html>.
+ */
+const dockEnabled = (): boolean => !!app.forum?.attribute('avocadoReplyDockEnabled');
+
 /** A placeholder do fim da discussão está na tela (a pílula fixa cede o lugar). */
 let endPlaceholderVisible = false;
 
@@ -31,14 +38,17 @@ let endPlaceholderVisible = false;
  * O layout do tema não é o do core (as margens fixas de 220px/205px do
  * Composer.less do Flarum deixavam o cartão torto), e a coluna muda com a
  * largura da tela, a nav lateral e o painel fixado — por isso medir em vez de
- * espelhar breakpoints. Sem coluna (home, tags, perfil) as variáveis saem e o
- * CSS centraliza o cartão.
+ * espelhar breakpoints. Sem coluna nenhuma (perfil, configurações) as variáveis
+ * saem e o CSS centraliza o cartão.
  */
 const syncColumn = (): void => {
   const host = document.querySelector<HTMLElement>('.App-composer');
   if (!host) return;
 
-  const column = document.querySelector<HTMLElement>('.DiscussionPage .PostStream');
+  // Na discussão, a coluna de posts; nas listas (tag, home, /discussions), a
+  // pilha de discussões — o mesmo alinhamento da coluna de leitura da página.
+  const column =
+    document.querySelector<HTMLElement>('.DiscussionPage .PostStream') || document.querySelector<HTMLElement>('.AvocadoHome-threadStack');
   const rect = column?.getBoundingClientRect();
 
   if (!rect || rect.width === 0) {
@@ -75,7 +85,7 @@ const guestIcon = () => m('i.icon.far.fa-comment.AvocadoReplyDock-guestIcon', { 
  * O Mithril não volta a mexer nesses nós enquanto o vnode deles não muda.
  */
 const guestifyPlaceholder = (el: Element | null): void => {
-  if (app.session.user || !el || el.tagName !== 'BUTTON') return;
+  if (!dockEnabled() || app.session.user || !el || el.tagName !== 'BUTTON') return;
 
   const side = el.querySelector('.Post-side');
   if (side && !side.querySelector('.AvocadoReplyDock-guestIcon')) {
@@ -106,7 +116,7 @@ const currentDiscussion = (): any => {
  */
 const ReplyDock = {
   view() {
-    if (!app.forum.attribute('avocadoReplyDockEnabled')) return null;
+    if (!dockEnabled()) return null;
 
     const discussion = currentDiscussion();
     if (!discussion) return null;
@@ -138,7 +148,7 @@ const ReplyDock = {
 
 const mountDock = (): void => {
   const container = document.querySelector('.App-composer .container') || document.querySelector('.App-composer');
-  if (!container || document.getElementById('avocado-reply-dock')) return;
+  if (!dockEnabled() || !container || document.getElementById('avocado-reply-dock')) return;
 
   const root = document.createElement('div');
   root.id = 'avocado-reply-dock';
@@ -147,6 +157,11 @@ const mountDock = (): void => {
 };
 
 export default function installComposerDock(): void {
+  // beforeMount: depois de app.forum existir e antes do primeiro render.
+  app.beforeMount(() => {
+    document.documentElement.classList.toggle('avocado-reply-dock', dockEnabled());
+  });
+
   window.addEventListener('resize', scheduleSync, { passive: true });
 
   // A página de discussão monta a pílula (uma vez) e reposiciona a cada

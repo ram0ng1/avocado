@@ -15,6 +15,7 @@ import SortDropdown from './shared/SortDropdown';
 import WsUpdateBanner from './shared/WsUpdateBanner';
 import OnlineUsers from './shared/OnlineUsers';
 import InlineComposer from './shared/InlineComposer';
+import FloatingInlineComposer, { composerPlacement } from './shared/FloatingInlineComposer';
 
 /**
  * AllDiscussionsPage — `/discussions` route.
@@ -64,6 +65,11 @@ export default class AllDiscussionsPage extends Page {
       app.modal.show(() => (flarum as any).reg.asyncModuleImport('flarum/forum/components/LogInModal'));
       return;
     }
+    // Já aberto (o campo continua na página): leva o foco de volta ao cartão.
+    if (this.composerOpen) {
+      document.querySelector<HTMLInputElement>('.AvocadoComposerDock .AvocadoHome-composerTitle')?.focus();
+      return;
+    }
     this.composerOpen = true;
     m.redraw();
   }
@@ -88,6 +94,7 @@ export default class AllDiscussionsPage extends Page {
     const isLoadingNext = this.feedState.isLoadingNext();
     const isInitialLoading = this.feedState.isInitialLoading();
     const currentSort = (this.feedState.getParams() as any).sort || 'latest';
+    const composerMode = composerPlacement();
 
     return (
       <div className="AvocadoDiscussions">
@@ -114,10 +121,20 @@ export default class AllDiscussionsPage extends Page {
           <OnlineUsers />
         </div>
 
-        {user && !this.composerOpen && this.renderComposerTrigger(user)}
-        {this.composerOpen && (
-          <InlineComposer user={user} onClose={() => this.closeComposer()} onSubmitted={(disc: any) => this.onDiscussionSubmitted(disc)} />
-        )}
+        {/* Com efeito, o campo fica (recolhido) para o cartão sair dele e voltar para ele. */}
+        {user && (composerMode !== 'default' || !this.composerOpen) && this.renderComposerTrigger(user)}
+        {this.composerOpen &&
+          (composerMode !== 'default' ? (
+            <FloatingInlineComposer
+              alignTo=".AvocadoHome-postInput"
+              placement={composerMode}
+              user={user}
+              onClose={() => this.closeComposer()}
+              onSubmitted={(disc: any) => this.onDiscussionSubmitted(disc)}
+            />
+          ) : (
+            <InlineComposer user={user} onClose={() => this.closeComposer()} onSubmitted={(disc: any) => this.onDiscussionSubmitted(disc)} />
+          ))}
 
         <WsUpdateBanner pendingCount={this.feedState.pendingCount()} onFlush={() => this.feedState.flushPending()} />
 

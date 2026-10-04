@@ -126,6 +126,15 @@
   .avocado-badges--custom.avocado-badges--below .Page.DiscussionPage .Post-header .PostUser-badges {
     margin-left: 0;
   }
+
+  // A prévia ao vivo da resposta é markup do core: `header > .PostUser`, sem o
+  // `li.item-user` em volta. A coluna vai no próprio `.PostUser`.
+  .avocado-badges--custom.avocado-badges--below .Page.DiscussionPage .CommentPost.editing .Post-header > .PostUser {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
 }
 
 // ── position: side / side_icons ───────────────────────────────────────────────
@@ -223,10 +232,10 @@
     z-index: auto;
   }
 
-  // ...e o do cabeçalho sai de cena. Exceção: a pré-visualização do composer,
-  // que é markup do core sem `.Post-side-inner` — sem ela o preview ficaria sem
-  // badge nenhum.
-  .avocado-badges--custom.avocado-badges--side .Page.DiscussionPage .CommentPost:not(.editing) .Post-header .PostUser-badges {
+  // ...e o do cabeçalho sai de cena. Vale também para a prévia ao vivo da
+  // resposta, que ganha o mesmo clone no `.Post-side` (index.tsx, logo depois
+  // do §18b).
+  .avocado-badges--custom.avocado-badges--side .Page.DiscussionPage .CommentPost .Post-header .PostUser-badges {
     display: none !important;
   }
 

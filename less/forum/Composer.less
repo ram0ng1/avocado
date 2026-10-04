@@ -10,11 +10,23 @@
 //     alça de arrastar visível; minimizado, vira a mesma pílula.
 //
 // Posição da coluna e visibilidade da pílula: js/src/forum/utils/composerDock.ts.
+//
+// Tudo depende da opção "Bolha de resposta flutuante" (classe
+// `avocado-reply-dock` no <html>): desligada, o compositor e a placeholder do
+// fim voltam ao desenho do core. A pílula fixa nem é montada nesse caso.
 // ─────────────────────────────────────────────────────────────────────────────
 
 @composer-gap: 16px; // espelha DOCK_GAP em composerDock.ts
+// Os `min()`/`max()` de reserva vão escapados (~"…"): sem isso o LESS os
+// resolve na compilação (max(24px, calc(50% - 460px)) virava só 24px) e o
+// cartão sem coluna medida colava na esquerda em vez de centralizar.
 @composer-radius: 18px;
 @composer-pill-height: 52px;
+
+// Título da nova discussão sem cantos arredondados (o .FormControl dá o raio).
+.DiscussionComposer-title {
+  border-radius: 0;
+}
 
 // ── Pílula (desenho comum à fixa e à do fim da lista) ────────────────────────
 
@@ -29,7 +41,7 @@
   padding: 0 22px 0 10px;
   overflow: hidden;
   border: 1px solid var(--avocado-border-chip);
-  border-radius: 999px;
+  border-radius: var(--border-radius); // o mesmo dos botões (.Button), não cápsula
   background: var(--body-bg);
   color: var(--muted-color);
   font-size: 15px;
@@ -70,8 +82,8 @@
 .AvocadoReplyDock {
   .avocado-composer-pill();
   pointer-events: auto;
-  width: var(--avocado-composer-width, min(920px, calc(100% - 30px)));
-  margin-left: var(--avocado-composer-left, max(15px, calc(50% - 460px)));
+  width: var(--avocado-composer-width, ~"min(920px, calc(100% - 30px))");
+  margin-left: var(--avocado-composer-left, ~"max(15px, calc(50% - 460px))");
   border-color: transparent;
   // Halo na cor de fundo da página (--body-bg: branco no claro, escuro no
   // escuro): o conteúdo que passa por trás se apaga, como no Waterhole.
@@ -123,145 +135,154 @@
   }
 }
 
-// ── 1b. Placeholder do fim da lista ──────────────────────────────────────────
+// Desenho da placeholder e casca do compositor só com a opção ligada.
+html.avocado-reply-dock {
+  // ── 1b. Placeholder do fim da lista ──────────────────────────────────────────
 
-.PostStream > .PostStream-item:has(> .ReplyPlaceholder) {
-  position: relative;
-  margin-top: 32px;
-  // Espaço para a pílula pousar acima da base da tela, no mesmo lugar da fixa.
-  padding-bottom: @composer-gap;
-  // A corrente da variante editorial é um background do PostStream inteiro
-  // (DiscussionEditorial.less) e seguia por baixo da pílula até o fim da
-  // página. O fundo opaco do item faz a linha terminar onde a pílula começa.
-  background: var(--body-bg);
-}
-
-.PostStream > .PostStream-item > .ReplyPlaceholder {
-  .avocado-composer-pill();
-
-  // O layout de post do core (coluna de avatar de 64px, 104px de altura) vira
-  // uma linha só: avatar pequeno + o convite.
-  .Post-container {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    min-width: 0;
-    margin: 0;
-    padding: 0;
-  }
-  .Post-side {
-    position: static;
-    flex: none;
-    width: auto;
-    margin: 0;
-    padding: 0;
-  }
-  // Visitante: ícone no lugar do avatar (composerDock.ts › guestifyPlaceholder).
-  .AvocadoReplyDock-guestIcon {
-    display: block;
-    width: 32px;
-    font-size: 17px;
-    text-align: center;
-  }
-  .Post-avatar {
-    --size: 32px;
-    position: static;
-    width: 32px;
-    height: 32px;
-    margin: 0;
-    font-size: 14px;
-    line-height: 32px;
-  }
-  .Post-main {
-    flex: 1;
-    min-width: 0;
-    min-height: 0;
-    margin: 0;
-    padding: 0;
-  }
-  .Post-header {
-    position: static;
-    display: block;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    font-size: 15px;
-    line-height: 1.4;
-    color: var(--muted-color);
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-}
-
-// O divisor de 1px que o core põe entre itens não cabe acima da pílula.
-.PostStream > .PostStream-item:has(+ .PostStream-item > .ReplyPlaceholder)::after {
-  display: none;
-}
-
-// ── 2. Casca do compositor (tablet e acima) ──────────────────────────────────
-// No celular o core abre o compositor em tela cheia, com o teclado — fica.
-
-@media @tablet-up {
-  .App-composer .container {
-    width: auto;
-    max-width: none;
-    padding: 0;
-  }
-
-  // `.App .App-composer` ganha das margens fixas do core (.App--discussion …).
-  .App .App-composer .Composer:not(.fullScreen) {
-    // Coluna medida pelo composerDock.ts; sem coluna, cartão centralizado.
-    width: var(--avocado-composer-width, min(920px, calc(100% - 48px)));
-    margin: 0 0 @composer-gap var(--avocado-composer-left, max(24px, calc(50% - 460px)));
-    border-radius: @composer-radius;
+  .PostStream > .PostStream-item:has(> .ReplyPlaceholder) {
+    position: relative;
+    margin-top: 32px;
+    // Espaço para a pílula pousar acima da base da tela, no mesmo lugar da fixa.
+    padding-bottom: @composer-gap;
+    // A corrente da variante editorial é um background do PostStream inteiro
+    // (DiscussionEditorial.less) e seguia por baixo da pílula até o fim da
+    // página. O fundo opaco do item faz a linha terminar onde a pílula começa.
     background: var(--body-bg);
-    box-shadow:
-      0 0 0 1px var(--avocado-border-subtle),
-      var(--shadow-lifted);
+  }
 
-    &.active {
+  .PostStream > .PostStream-item > .ReplyPlaceholder {
+    .avocado-composer-pill();
+
+    // O layout de post do core (coluna de avatar de 64px, 104px de altura) vira
+    // uma linha só: avatar pequeno + o convite.
+    .Post-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      min-width: 0;
+      margin: 0;
+      padding: 0;
+    }
+    .Post-side {
+      position: static;
+      flex: none;
+      width: auto;
+      margin: 0;
+      padding: 0;
+    }
+    // Visitante: ícone no lugar do avatar (composerDock.ts › guestifyPlaceholder).
+    .AvocadoReplyDock-guestIcon {
+      display: block;
+      width: 32px;
+      font-size: 17px;
+      text-align: center;
+    }
+    .Post-avatar {
+      --size: 32px;
+      position: static;
+      width: 32px;
+      height: 32px;
+      margin: 0;
+      font-size: 14px;
+      line-height: 32px;
+    }
+    .Post-main {
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      margin: 0;
+      padding: 0;
+    }
+    .Post-header {
+      position: static;
+      display: block;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-size: 15px;
+      line-height: 1.4;
+      color: var(--muted-color);
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+  }
+
+  // O divisor de 1px que o core põe entre itens não cabe acima da pílula.
+  .PostStream > .PostStream-item:has(+ .PostStream-item > .ReplyPlaceholder)::after {
+    display: none;
+  }
+
+  // ── 2. Casca do compositor (tablet e acima) ──────────────────────────────────
+  // No celular o core abre o compositor em tela cheia, com o teclado — fica.
+
+  @media @tablet-up {
+    .App-composer .container {
+      width: auto;
+      max-width: none;
+      padding: 0;
+    }
+
+    // `.App .App-composer` ganha das margens fixas do core (.App--discussion …).
+    .App .App-composer .Composer:not(.fullScreen) {
+      // Coluna medida pelo composerDock.ts; sem coluna, cartão centralizado.
+      width: var(--avocado-composer-width, ~"min(920px, calc(100% - 48px))");
+      margin: 0 0 @composer-gap var(--avocado-composer-left, ~"max(24px, calc(50% - 460px))");
+      border-radius: @composer-radius;
+      background: var(--body-bg);
       box-shadow:
-        0 0 0 2px var(--primary-color),
+        0 0 0 1px var(--avocado-border-subtle),
         var(--shadow-lifted);
+
+      &.active {
+        box-shadow:
+          0 0 0 2px var(--primary-color),
+          var(--shadow-lifted);
+      }
     }
-  }
 
-  // Alça de arrastar visível (o core já faz o arraste; só ganha o puxador).
-  .Composer-handle {
-    cursor: ns-resize;
-
-    &::before {
-      content: "";
-      position: absolute;
-      top: 6px;
-      left: 50%;
-      width: 44px;
-      height: 4px;
-      border-radius: 999px;
-      background: var(--avocado-border-chip);
-      transform: translateX(-50%);
+    // A camada de "enviando" do core tem cantos retos embaixo (e 14px em cima):
+    // por cima do cartão ela quadrava os cantos dele durante o envio.
+    .App .App-composer .Composer:not(.fullScreen) .ComposerBody-loading {
+      border-radius: @composer-radius;
     }
-  }
 
-  // Minimizado: a mesma pílula, no mesmo lugar do cartão.
-  .App .App-composer .Composer.minimized {
-    height: @composer-pill-height !important;
-    border-radius: 999px;
-    // O core só esconde o editor (visibility), ele segue ocupando altura: o
-    // título vai no topo e o resto é cortado.
-    overflow: hidden;
-    box-shadow:
-      0 0 0 1px var(--avocado-border-subtle),
-      var(--shadow-medium);
+    // Alça de arrastar visível (o core já faz o arraste; só ganha o puxador).
+    .Composer-handle {
+      cursor: ns-resize;
 
-    .Composer-content {
-      padding-top: 15px;
-      padding-left: 22px;
+      &::before {
+        content: "";
+        position: absolute;
+        top: 6px;
+        left: 50%;
+        width: 44px;
+        height: 4px;
+        border-radius: 999px;
+        background: var(--avocado-border-chip);
+        transform: translateX(-50%);
+      }
     }
-    .Composer-controls {
-      top: 50%;
-      transform: translateY(-50%);
+
+    // Minimizado: a mesma pílula, no mesmo lugar do cartão.
+    .App .App-composer .Composer.minimized {
+      height: @composer-pill-height !important;
+      border-radius: var(--border-radius);
+      // O core só esconde o editor (visibility), ele segue ocupando altura: o
+      // título vai no topo e o resto é cortado.
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px var(--avocado-border-subtle),
+        var(--shadow-medium);
+
+      .Composer-content {
+        padding-top: 15px;
+        padding-left: 22px;
+      }
+      .Composer-controls {
+        top: 50%;
+        transform: translateY(-50%);
+      }
     }
   }
 }

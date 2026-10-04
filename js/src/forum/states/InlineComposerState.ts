@@ -17,6 +17,8 @@ export default class InlineComposerState {
   body = '';
   tags: any[] = [];
   preview = false;
+  /** Tela cheia do cartão flutuante: a prévia, quando ligada, fica ao lado do editor. */
+  fullScreen = false;
   submitting = false;
   tagBypassReqs = false;
   tagPickerOpen = false;
