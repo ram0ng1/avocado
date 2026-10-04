@@ -210,6 +210,31 @@ const CARDS: CardDef[] = [
   // ── Página inicial ─────────────────────────────────────────────────────────
   {
     group: 'home',
+    icon: 'fas fa-pen-to-square',
+    title: () => trans('ramon-avocado.admin.settings.section_home_composer', 'New discussion'),
+    keywords: 'compositor composer nova discussão new discussion flutuante floating efeito effect bolha bubble home página inicial',
+    body: () => (
+      <AdminSelect
+        settingKey="avocado.new_discussion_composer"
+        label={trans('ramon-avocado.admin.settings.new_discussion_composer_label', 'New-discussion composer')}
+        help={trans(
+          'ramon-avocado.admin.settings.new_discussion_composer_help',
+          'How the composer opens from the "Tell everyone…" field on the home page and on /discussions.'
+        )}
+        options={{
+          default: trans('ramon-avocado.admin.settings.new_discussion_composer_default', 'Default — opens in place of the field, no effect'),
+          inline: trans('ramon-avocado.admin.settings.new_discussion_composer_inline', 'In place, with effect — the field turns into the composer'),
+          floating: trans(
+            'ramon-avocado.admin.settings.new_discussion_composer_floating',
+            'Floating — the field flies to the bottom of the screen (resizable, pull down into a bubble)'
+          ),
+        }}
+        default="floating"
+      />
+    ),
+  },
+  {
+    group: 'home',
     icon: 'fas fa-tags',
     title: () => trans('ramon-avocado.admin.settings.section_home_categories', 'Featured categories'),
     keywords: 'categorias categories destaque featured tags home página inicial',
@@ -492,7 +517,23 @@ const CARDS: CardDef[] = [
           label={trans('ramon-avocado.admin.settings.reply_dock_label', 'Floating reply bubble')}
           help={trans(
             'ramon-avocado.admin.settings.reply_dock_help',
-            'Keeps a "Write a reply…" bubble at the bottom of the screen throughout the discussion, aligned with the posts. Guests see an invitation to log in. Turned off, only the reply box at the end of the discussion remains.'
+            'Keeps a "Write a reply…" bubble at the bottom of the screen throughout the discussion, aligned with the posts. Guests see an invitation to log in. Turned off, the composer and the reply box at the end of the discussion go back to Flarum’s default look.'
+          )}
+        />
+        <AdminToggle
+          settingKey="avocado.composer_morph"
+          label={trans('ramon-avocado.admin.settings.composer_morph_label', 'Composer full screen effect')}
+          help={trans(
+            'ramon-avocado.admin.settings.composer_morph_help',
+            'Going into and out of full screen, the composer grows from its size to fill the screen (and back), like the home page composer. Phones and "reduce motion" keep Flarum’s instant switch.'
+          )}
+        />
+        <AdminToggle
+          settingKey="avocado.composer_preview"
+          label={trans('ramon-avocado.admin.settings.composer_preview_label', 'Preview inside the composer')}
+          help={trans(
+            'ramon-avocado.admin.settings.composer_preview_help',
+            'The composer gets a preview button that swaps the editor for the formatted post; in full screen it splits the screen into editor and live preview. The preview Flarum draws at the end of the discussion while you reply goes away. Turned off, Flarum’s default preview comes back.'
           )}
         />
         <AdminSelect

@@ -23,7 +23,19 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
     const state = this.attrs.state;
     const limits = this.readLimits();
     const { primaryCount, secondaryCount } = this.countSelected(state);
+    const filtered = this.filteredItems(state, limits);
+    const instruction = this.computeInstruction(state, limits, primaryCount, secondaryCount);
 
+    return (
+      <div className="AvocadoHome-tagPicker">
+        {this.renderTrigger(state, instruction)}
+        {state.tagPickerOpen && this.renderDropdown(state, filtered, limits, primaryCount, secondaryCount)}
+      </div>
+    );
+  }
+
+  /** Tags na ordem da lista (mães seguidas das filhas), já filtradas pela busca. */
+  protected filteredItems(state: InlineComposerState, limits: ReturnType<TagPicker['readLimits']>) {
     const allTags = (app.store.all('tags') as any[]).filter(Boolean);
     const rootTags = allTags.filter((t) => !t.isChild?.()).sort((a, b) => (a.position?.() ?? 9999) - (b.position?.() ?? 9999));
 
@@ -40,16 +52,7 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
     const visible = limits.maxSecondary === 0 && !state.tagBypassReqs ? tagItems.filter(({ isChild }) => !isChild) : tagItems;
 
     const filter = (state.tagFilter || '').toLowerCase();
-    const filtered = filter ? visible.filter(({ tag }) => tag.name?.().toLowerCase().includes(filter)) : visible;
-
-    const instruction = this.computeInstruction(state, limits, primaryCount, secondaryCount);
-
-    return (
-      <div className="AvocadoHome-tagPicker">
-        {this.renderTrigger(state, instruction)}
-        {state.tagPickerOpen && this.renderDropdown(state, filtered, limits, primaryCount, secondaryCount)}
-      </div>
-    );
+    return filter ? visible.filter(({ tag }) => tag.name?.().toLowerCase().includes(filter)) : visible;
   }
 
   // ── Subviews ───────────────────────────────────────────────────────────
@@ -97,7 +100,7 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
     );
   }
 
-  private renderDropdown(
+  protected renderDropdown(
     state: InlineComposerState,
     items: { tag: any; isChild: boolean }[],
     limits: ReturnType<TagPicker['readLimits']>,
@@ -146,7 +149,7 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
     );
   }
 
-  private renderItem(
+  protected renderItem(
     state: InlineComposerState,
     tag: any,
     isChild: boolean,
@@ -191,7 +194,7 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
 
   // ── Helpers ────────────────────────────────────────────────────────────
 
-  private readLimits() {
+  protected readLimits() {
     const rawMaxP = parseInt(app.forum.attribute('maxPrimaryTags') as string);
     const rawMaxS = parseInt(app.forum.attribute('maxSecondaryTags') as string);
     return {
@@ -203,14 +206,14 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
     };
   }
 
-  private countSelected(state: InlineComposerState) {
+  protected countSelected(state: InlineComposerState) {
     return {
       primaryCount: state.tags.filter((t) => t.position?.() !== null && !t.isChild?.()).length,
       secondaryCount: state.tags.filter((t) => t.position?.() === null).length,
     };
   }
 
-  private canSelectTag(
+  protected canSelectTag(
     tag: any,
     state: InlineComposerState,
     limits: ReturnType<TagPicker['readLimits']>,
@@ -225,7 +228,7 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
     return true;
   }
 
-  private computeInstruction(
+  protected computeInstruction(
     state: InlineComposerState,
     limits: ReturnType<TagPicker['readLimits']>,
     primaryCount: number,

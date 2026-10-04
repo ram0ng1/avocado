@@ -7,6 +7,7 @@ import InlineComposerState from '../../states/InlineComposerState';
 import TagPicker from './TagPicker';
 import ComposerTextEditor from './ComposerTextEditor';
 import { changelogChips } from './ChangelogFields';
+import { renderPostPreview } from '../../utils/composerPreview';
 
 export interface IInlineComposerAttrs extends ComponentAttrs {
   /** The user authoring the discussion (drives the avatar + permission checks). */
@@ -104,7 +105,7 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
 
         {tagsRequireHeroImage(state.tags) && this.renderHeroImageField()}
 
-        <div className={`AvocadoHome-composerBody${state.preview ? ' is-preview' : ''}`}>
+        <div className={`AvocadoHome-composerBody${state.preview ? (state.fullScreen ? ' is-split' : ' is-preview') : ''}`}>
           <ComposerTextEditor
             composer={state.composerProxy}
             value={state.body}
@@ -294,33 +295,7 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
     if (!justOpened && this.lastPreviewedContent === content) return;
     this.lastPreviewedContent = content;
 
-    if (!content.trim()) {
-      dom.replaceChildren();
-      const empty = document.createElement('span');
-      empty.className = 'AvocadoHome-composerPreviewEmpty';
-      empty.textContent = trans('ramon-avocado.forum.home.composer_preview_empty', 'Nothing to preview.');
-      dom.appendChild(empty);
-      return;
-    }
-
-    const s9e = (window as any).s9e;
-    if (s9e?.TextFormatter?.preview) {
-      s9e.TextFormatter.preview(content, dom);
-      (app as any).visuals?.processPost?.(dom);
-      // Sticker / lottie spans rely on a deferred async fetch; clone-and-replace
-      // forces the IntersectionObserver to re-attach when the canvas wasn't created.
-      setTimeout(() => {
-        if (!this.state.preview) return;
-        dom.querySelectorAll('.Sticker--tgs, .Sticker--lottie').forEach((el) => {
-          if (el.querySelector('canvas')) return;
-          const clone = el.cloneNode(true) as Element;
-          clone.removeAttribute('data-tgs-init');
-          clone.removeAttribute('data-lottie-init');
-          el.parentNode?.replaceChild(clone, el);
-        });
-      }, 200);
-    } else {
-      dom.textContent = content;
-    }
+    // A mesma renderização da prévia dentro do compositor do core.
+    renderPostPreview(dom, content, () => this.state.preview);
   }
 }

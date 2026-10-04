@@ -62,6 +62,12 @@
         position: relative;
         top: 2px;
       }
+
+      // O selo de verificado acompanha o nome (DiscussionPage.less tira 1px dele).
+      .Post-header > ul > li.item-verified .VerifiedPopover-anchor,
+      .Post-header > ul > li.item-verified > .VerifiedBadge {
+        top: 1px;
+      }
     }
 
     .Post-main {

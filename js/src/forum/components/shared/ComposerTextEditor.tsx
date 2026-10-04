@@ -1,3 +1,4 @@
+import app from 'flarum/forum/app';
 import TextEditor from 'flarum/common/components/TextEditor';
 import LoadingIndicator from 'flarum/common/components/LoadingIndicator';
 import listItems from 'flarum/common/helpers/listItems';
@@ -45,6 +46,53 @@ export interface IComposerTextEditorAttrs {
  * the existing selectors in `less/forum/HomePage.less`.
  */
 export default class ComposerTextEditor extends TextEditor {
+  oncreate(vnode: any) {
+    super.oncreate(vnode);
+
+    // fof/upload: a galeria "My media" insere o arquivo escolhido em
+    // `app.composer.editor` (o compositor do core), não no editor de onde ela
+    // foi aberta — daqui o arquivo não chegava a lugar nenhum. O upload direto
+    // usa o editor da própria barra e funciona. No clique, o editor deste
+    // compositor é emprestado ao do core enquanto houver modal aberto.
+    this.element.addEventListener(
+      'click',
+      (e: Event) => {
+        if ((e.target as HTMLElement).closest?.('.item-fof-upload-media')) this.lendEditor();
+      },
+      true
+    );
+  }
+
+  /**
+   * Põe este editor no lugar de `app.composer.editor` e devolve o original
+   * quando não sobrar modal aberto por um tempo. O tempo cobre a troca da
+   * galeria pelo modal de nome de exibição que o fof/upload abre antes de
+   * inserir (carregado sob demanda, há um intervalo sem modal nenhum).
+   */
+  private lendEditor(): void {
+    const own = (this.attrs as IComposerTextEditorAttrs).composer?.editor;
+    const global = app.composer as any;
+    if (!own || global.editor === own) return;
+
+    const previous = global.editor;
+    global.editor = own;
+
+    const QUIET_MS = 1500;
+    let closedSince = 0;
+    const timer = window.setInterval(() => {
+      const open = (app.modal as any).isModalOpen?.() ?? !!(app.modal as any).modalList?.length;
+      if (open) {
+        closedSince = 0;
+        return;
+      }
+      closedSince ||= Date.now();
+      if (Date.now() - closedSince < QUIET_MS) return;
+
+      window.clearInterval(timer);
+      if (global.editor === own) global.editor = previous;
+    }, 200);
+  }
+
   controlItems(): ItemList<Children> {
     const items = super.controlItems();
     const { previewControl, closeControl, submitControl } = this.attrs as IComposerTextEditorAttrs;

@@ -287,9 +287,23 @@ return [
         ->default('avocado.discussion_style', 'default')
         ->serializeToForum('avocadoDiscussionStyle', 'avocado.discussion_style')
         // Pílula "Escreva uma resposta…" fixa na base da tela em toda a discussão
-        // (js/src/forum/utils/composerDock.ts). Desligada, sobra só a do fim.
+        // (js/src/forum/utils/composerDock.ts). Desligada, compositor e placeholder do fim voltam ao core.
         ->default('avocado.reply_dock_enabled', true)
         ->serializeToForum('avocadoReplyDockEnabled', 'avocado.reply_dock_enabled', 'boolval')
+        // Prévia dentro do compositor do core: botão de prévia e tela dividida em
+        // tela cheia; a prévia no fim da discussão sai (js/src/forum/utils/composerPreview.ts).
+        ->default('avocado.composer_preview', true)
+        ->serializeToForum('avocadoComposerPreview', 'avocado.composer_preview', 'boolval')
+        // Tela cheia do compositor do core com a metamorfose do compositor da home
+        // (js/src/forum/utils/composerMorph.ts).
+        ->default('avocado.composer_morph', true)
+        ->serializeToForum('avocadoComposerMorph', 'avocado.composer_morph', 'boolval')
+        // Como abre o compositor de nova discussão da home e de /discussions
+        // (FloatingInlineComposer.tsx): 'default' = no lugar do campo, sem efeito
+        // (o de antes); 'inline' = no lugar do campo, com a metamorfose;
+        // 'floating' = cartão na base da tela, com alça e bolha.
+        ->default('avocado.new_discussion_composer', 'floating')
+        ->serializeToForum('avocadoNewDiscussionComposer', 'avocado.new_discussion_composer')
         // "↳ Em resposta a" no topo de um post que abre com menção a outro post
         // (js/src/forum/utils/replyTo.ts). Desligado, a menção fica no texto.
         ->default('avocado.reply_to_header', true)

@@ -278,6 +278,22 @@
   }
 }
 
+// Recolhido enquanto o cartão flutuante está aberto (FloatingInlineComposer):
+// fica no DOM, sem altura, para o cartão medir a coluna e voltar para ele.
+.AvocadoHome-postInput.is-away {
+  height: 0;
+  min-height: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-top-width: 0;
+  border-bottom-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .AvocadoHome-postInput-avatar {
   width: 38px;
   height: 38px;
@@ -300,7 +316,7 @@
   gap: 6px;
   height: 36px;
   padding: 0 16px;
-  border-radius: 999px;
+  border-radius: var(--border-radius); // o mesmo do "Responder" da discussão (.Button)
   border: none;
   background: var(--primary-color);
   color: #fff;
@@ -1513,6 +1529,151 @@
   // No overflow:hidden — allows tag picker dropdown to escape the container
 }
 
+// Os quadros em que o editor ainda monta a barra: o cartão já está no DOM (para
+// ser medido inteiro) mas não aparece nem ocupa espaço.
+.AvocadoComposerDock.is-preparing {
+  height: 0;
+  margin: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+
+// ── No lugar do campo, com efeito (FloatingInlineComposer, placement inline) ─
+// O cartão é o do modo padrão (borda primária etc.); só ganha a entrada.
+.AvocadoComposerDock--inline {
+  margin-bottom: 22px;
+
+  .AvocadoHome-composer {
+    margin-bottom: 0;
+  }
+}
+
+// ── Cartão flutuante (FloatingInlineComposer) ────────────────────────────────
+// O compositor fica na base da tela, alinhado ao campo "Tell everyone…" que o
+// abriu, como o compositor de resposta na discussão (Composer.less): o campo
+// voa até lá e vira o cartão, e o espaço dele na página se fecha. Borda
+// como a do .Composer do core: contorno discreto em repouso e o anel de 2px na
+// cor primária quando está em uso (o `.active` do core vira `:focus-within`).
+
+.AvocadoComposerDock--floating {
+  position: fixed;
+  left: var(--avocado-dock-left, ~"max(16px, calc(50% - 460px))");
+  bottom: 16px;
+  z-index: var(--zindex-composer);
+  width: var(--avocado-dock-width, ~"min(920px, calc(100% - 32px))");
+  // Entrada e saída: FloatingInlineComposer.tsx (o campo vira o cartão).
+
+  html.has-mobile-tab & {
+    @media @phone {
+      bottom: calc(56px + 16px);
+    }
+  }
+
+  .AvocadoHome-composer {
+    margin: 0;
+    border: 0;
+    box-shadow:
+      0 0 0 1px var(--avocado-border-subtle),
+      var(--shadow-lifted);
+    transition: box-shadow 0.2s;
+
+    &:focus-within {
+      box-shadow:
+        0 0 0 2px var(--primary-color),
+        var(--shadow-lifted);
+    }
+  }
+
+  // Preso na base, o seletor de tags abre para cima.
+  .AvocadoHome-tagPickerDropdown {
+    top: auto;
+    bottom: calc(100% + 6px);
+  }
+
+  // Altura do editor (e da prévia, que toma o lugar dele) vem da alça.
+  .AvocadoHome-composerBody .TextEditor-editor,
+  .AvocadoHome-composerBody.is-preview .AvocadoHome-composerPreviewArea {
+    height: var(--avocado-dock-editor-h, 140px);
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    resize: none;
+  }
+
+  // Alça de arrastar, como a .Composer-handle do core: faixa no topo do cartão
+  // com o puxador no meio.
+  .AvocadoComposerDock-handle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    height: 14px;
+    cursor: ns-resize;
+    touch-action: none;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 5px;
+      left: 50%;
+      width: 44px;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--avocado-border-chip);
+      transform: translateX(-50%);
+      transition: background var(--avocado-t-fast), width var(--avocado-t-fast);
+    }
+
+    &:hover::before {
+      background: var(--muted-color);
+    }
+  }
+
+  &.is-resizing {
+    cursor: ns-resize;
+    user-select: none;
+
+    .AvocadoComposerDock-handle::before {
+      width: 56px;
+      background: var(--primary-color);
+    }
+  }
+
+  // Puxado além do mínimo: o cartão se arredonda e esmaece, avisando que ao
+  // soltar vira bolha.
+  &.will-minimize .AvocadoHome-composer {
+    border-radius: 28px;
+    opacity: 0.88;
+    transition:
+      border-radius var(--avocado-t-normal),
+      opacity var(--avocado-t-normal);
+  }
+
+  // ── Bolha (cartão minimizado) ──────────────────────────────────────────────
+  // A mesma pílula da "Escreva uma resposta…" da discussão (Composer.less), na
+  // largura do cartão. O cartão fica montado, escondido, com o que foi escrito.
+  &.is-minimized {
+    .AvocadoHome-composer,
+    .AvocadoComposerDock-handle {
+      display: none;
+    }
+  }
+
+  .AvocadoComposerDock-bubble {
+    width: 100%;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .AvocadoComposerDock-bubbleIcon {
+    flex: none;
+    margin-left: auto;
+    color: var(--muted-color);
+    font-size: 13px;
+  }
+}
+
 .AvocadoHome-composer-header {
   display: flex;
   align-items: center;
@@ -2637,4 +2798,111 @@
 .AvocadoHome .AvocadoExtensionNav .sideNav-more,
 .AvocadoHome .AvocadoExtensionNav li.item-more {
   display: none !important;
+}
+
+// ── Controles e tela cheia do cartão (FloatingInlineComposer) ────────────────
+// Minimizar, tela cheia e fechar no canto, como os `.Composer-controls` do core.
+
+.AvocadoComposerDock {
+  position: relative;
+
+  .AvocadoComposerDock-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 3;
+    display: flex;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  // O título não passa por baixo dos botões.
+  .AvocadoHome-composer-header {
+    padding-right: 128px;
+  }
+}
+
+// `position: fixed` do cartão flutuante ganha do `relative` acima.
+.AvocadoComposerDock--floating {
+  position: fixed;
+}
+
+// Tela cheia: o cartão ocupa a tela; editor e prévia lado a lado.
+.AvocadoComposerDock.is-fullscreen {
+  position: fixed;
+  inset: 0;
+  left: 0;
+  width: auto;
+  margin: 0;
+  z-index: calc(var(--zindex-header) + 10);
+
+  .AvocadoHome-composer {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .AvocadoHome-composerBody {
+    flex: 1;
+    min-height: 0;
+
+    .TextEditor {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    // O editor ocupa a altura toda (a área clicável também, não só o texto).
+    .TextEditor-editorContainer {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+    // Extensões embrulham o editor (menções, emoji): os invólucros esticam junto.
+    .TextEditor-editorContainer div:has(.TextEditor-editor) {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+    .TextEditor-editor {
+      flex: 1;
+      height: auto;
+      min-height: 0;
+    }
+    ul.TextEditor-controls {
+      border-radius: 0 !important;
+    }
+  }
+
+}
+
+.AvocadoHome-composerBody.is-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+
+  .TextEditor {
+    grid-column: 1;
+  }
+
+  .AvocadoHome-composerPreviewArea {
+    display: block;
+    grid-column: 2;
+    grid-row: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 12px 24px;
+    border-left: 1px solid var(--control-bg);
+  }
+}
+
+// A página não rola por trás da tela cheia.
+html.avocado-composer-fullscreen {
+  overflow: hidden;
 }
