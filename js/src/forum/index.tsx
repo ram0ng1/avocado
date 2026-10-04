@@ -3779,3 +3779,30 @@ app.initializers.add(
   },
   -200
 );
+
+// ── Botão "Responder" do flarum/mentions sem rejeição solta ───────────────────
+// O `reply()` do flarum/mentions encadeia `.then()` na ação de responder do core
+// e ninguém trata a rejeição. O core rejeita de propósito quando não há o que
+// abrir: visitante (abre o login e rejeita sem motivo) ou quem recusa descartar
+// a resposta já aberta. O login abre normalmente; só sobrava um
+// "Uncaught (in promise) undefined" no console. Prioridade baixa para rodar
+// depois do initializer do flarum/mentions, que é quem adiciona o botão.
+app.initializers.add(
+  'avocado-mentions-reply-rejection',
+  () => {
+    extend(CommentPost.prototype, 'actionItems', function (items: any) {
+      if (!items.has('reply')) return;
+
+      const button: any = items.get('reply');
+      const onclick = button?.attrs?.onclick;
+      if (typeof onclick !== 'function') return;
+
+      button.attrs.onclick = (e: MouseEvent) => {
+        const result = onclick(e);
+        if (result && typeof result.catch === 'function') result.catch(() => {});
+        return result;
+      };
+    });
+  },
+  -200
+);
