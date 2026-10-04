@@ -77,6 +77,23 @@
   --shadow-subtle:                0 1px 6px rgba(0, 0, 0, 0.06);
   --shadow-medium:                0 8px 24px rgba(0, 0, 0, 0.12);
   --shadow-lifted:                0 12px 32px rgba(0, 0, 0, 0.18);
+
+  // ── Realce de sintaxe (highlight.js) ─────────────────────────────────────────
+  // Paleta GitHub clara. O hljs-loader do BBCode CODE injeta o tema "github"
+  // fixo, que fica ilegível sobre o <pre> escuro; estes tokens assumem as cores
+  // (ver forum/CodeHighlight.less) e trocam junto com o tema do fórum.
+  --avocado-code-keyword:         #cf222e;       // keyword, doctag, template-tag
+  --avocado-code-title:           #8250df;       // função, classe
+  --avocado-code-constant:        #0550ae;       // número, literal, atributo, meta
+  --avocado-code-string:          #0a3069;       // string, regexp
+  --avocado-code-builtin:         #953800;       // built-in, símbolo
+  --avocado-code-comment:         #6e7781;
+  --avocado-code-tag:             #116329;       // nome de tag, seletor, citação
+  --avocado-code-bullet:          #6c5600;
+  --avocado-code-addition:        #116329;
+  --avocado-code-addition-bg:     #dafbe1;
+  --avocado-code-deletion:        #82071e;
+  --avocado-code-deletion-bg:     #ffebe9;
 }
 
 [data-theme^=dark] {
@@ -105,4 +122,18 @@
   --shadow-subtle:                0 1px 6px rgba(0, 0, 0, 0.30);
   --shadow-medium:                0 8px 24px rgba(0, 0, 0, 0.40);
   --shadow-lifted:                0 12px 32px rgba(0, 0, 0, 0.50);
+
+  // ── Realce de sintaxe no escuro (paleta GitHub escura) ───────────────────────
+  --avocado-code-keyword:         #ff7b72;
+  --avocado-code-title:           #d2a8ff;
+  --avocado-code-constant:        #79c0ff;
+  --avocado-code-string:          #a5d6ff;
+  --avocado-code-builtin:         #ffa657;
+  --avocado-code-comment:         #8b949e;
+  --avocado-code-tag:             #7ee787;
+  --avocado-code-bullet:          #f2cc60;
+  --avocado-code-addition:        #aff5b4;
+  --avocado-code-addition-bg:     #033a16;
+  --avocado-code-deletion:        #ffdcd7;
+  --avocado-code-deletion-bg:     #67060c;
 }

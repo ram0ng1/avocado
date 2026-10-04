@@ -222,6 +222,63 @@ const initCodeBlocks = (root: HTMLElement | null) => {
   });
 };
 
+// ─── Fancybox gallery arrows (flectar/flarum-fancybox) ────────────────────────
+// A extensão monta o carrossel da galeria sem setas nem pontos: só a 1ª foto
+// aparece e nada indica que há mais. O carrossel já trata, por delegação no
+// próprio container, cliques em [data-carousel-go-prev/next] (e atualiza o
+// aria-disabled deles) e reescreve [data-carousel-page/pages] a cada troca —
+// então basta pôr os botões e o contador lá dentro. O
+// refreshContent dela roda dentro do oncreate/onupdate original do CommentPost,
+// antes destes hooks, por isso o carrossel já está pronto (.fancybox-ready).
+const initGalleryNav = (root: HTMLElement | null) => {
+  if (!root) return;
+  root.querySelectorAll<HTMLElement>('.fancybox-gallery.fancybox-ready').forEach((gallery) => {
+    if (gallery.querySelector(':scope > .avocado-gallery-nav')) return;
+
+    const count = gallery.querySelectorAll('.f-carousel__slide').length;
+    if (count < 2) return;
+
+    const makeIcon = (cls: string) => {
+      const i = document.createElement('i');
+      i.className = `fas ${cls}`;
+      i.setAttribute('aria-hidden', 'true');
+      return i;
+    };
+    const makeButton = (dir: 'prev' | 'next', label: string, icon: string) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `avocado-gallery-nav avocado-gallery-nav--${dir}`;
+      btn.setAttribute(`data-carousel-go-${dir}`, '');
+      btn.setAttribute('aria-label', label);
+      btn.appendChild(makeIcon(icon));
+      return btn;
+    };
+
+    const prev = makeButton('prev', trans('ramon-avocado.forum.post.gallery_prev', 'Previous photos'), 'fa-chevron-left');
+    const next = makeButton('next', trans('ramon-avocado.forum.post.gallery_next', 'Next photos'), 'fa-chevron-right');
+    // Estado inicial: o carrossel só reavalia os botões na próxima troca, e a
+    // galeria abre na 1ª página com `infinite: false`.
+    prev.setAttribute('aria-disabled', 'true');
+
+    // Uma foto por página (Fancybox.less), então página = foto.
+    const page = document.createElement('span');
+    page.setAttribute('data-carousel-page', '');
+    page.textContent = '1';
+    const pages = document.createElement('span');
+    pages.setAttribute('data-carousel-pages', '');
+    pages.textContent = String(count);
+
+    const counter = document.createElement('span');
+    counter.className = 'avocado-gallery-count';
+    counter.setAttribute('title', trans('ramon-avocado.forum.post.gallery_count', '{count} photos', { count }));
+    const numbers = document.createElement('span');
+    numbers.append(page, ' / ', pages);
+    counter.append(makeIcon('fa-images'), numbers);
+
+    gallery.append(prev, next, counter);
+  });
+};
+
 // ─── Reaction count: inject "1" badge when extension omits it ────────────────
 // fof/reactions only renders <span class="count"> when count > 1.
 // For count=1 we parse the aria-label and inject the count manually.
@@ -2653,6 +2710,7 @@ app.initializers.add(
       syncUserOnline(this);
       gateGuestLinks(this);
       initCodeBlocks(this.element);
+      initGalleryNav(this.element);
       fixReactionCounts(this.element);
       fixUnreactButton(this.element);
       initThreadsTitleBlock(this);
@@ -2663,6 +2721,7 @@ app.initializers.add(
       syncUserOnline(this);
       gateGuestLinks(this);
       initCodeBlocks(this.element);
+      initGalleryNav(this.element);
       fixReactionCounts(this.element);
       fixUnreactButton(this.element);
       initThreadsTitleBlock(this);
