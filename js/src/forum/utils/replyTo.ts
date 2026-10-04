@@ -48,12 +48,12 @@ const attr = (tag: string, name: string): string => {
   return match ? match[1] : '';
 };
 
-/** Texto puro do miolo da âncora (o formatter só põe o nome, mas sem confiar nisso). */
-const plainText = (html: string): string => {
-  const el = document.createElement('div');
-  el.innerHTML = html;
-  return (el.textContent || '').trim();
-};
+/**
+ * Texto puro do miolo da âncora (o formatter só põe o nome, mas sem confiar
+ * nisso). DOMParser monta um documento inerte — não roda script nem carrega
+ * nada —, ao contrário de jogar a string num elemento da página.
+ */
+const plainText = (html: string): string => (new DOMParser().parseFromString(html, 'text/html').body.textContent || '').trim();
 
 const parsePublished = (contentHtml: unknown): (ReplyParent & { rest: string }) | null => {
   if (typeof contentHtml !== 'string') return null;
