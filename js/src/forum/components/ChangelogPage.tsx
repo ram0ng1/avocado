@@ -61,6 +61,9 @@ export default class ChangelogPage extends Page {
 
   /** Menu "Nova versão" aberto (só existe com mais de um produto para escolher). */
   private createMenuOpen = false;
+
+  /** Changelog desligado: a página só espera o reload que traz o 404 do servidor. */
+  private disabled = false;
   private onDocumentClick = (e: Event) => {
     if (this.createMenuOpen && !(e.target as HTMLElement | null)?.closest?.('.AvocadoChangelog-newWrap')) {
       this.createMenuOpen = false;
@@ -71,6 +74,15 @@ export default class ChangelogPage extends Page {
   oninit(vnode: any) {
     super.oninit(vnode);
     this.bodyClass = 'App--index';
+
+    // Desligado (ou sem o flarum/tags), quem chega aqui veio de um link interno —
+    // fof/links, menu, histórico — que navega sem passar pelo servidor. Recarrega
+    // a URL para o ChangelogPageController responder o 404 de verdade.
+    if (!app.forum.attribute('avocadoChangelogEnabled') || !('flarum-tags' in flarum.extensions)) {
+      this.disabled = true;
+      window.location.replace(window.location.href);
+      return;
+    }
 
     app.setTitle(this.pageTitle());
 
@@ -86,6 +98,7 @@ export default class ChangelogPage extends Page {
 
   oncreate(vnode: any) {
     super.oncreate(vnode);
+    if (this.disabled) return;
     document.addEventListener('click', this.onDocumentClick);
   }
 
@@ -95,6 +108,8 @@ export default class ChangelogPage extends Page {
   }
 
   onbeforeupdate() {
+    if (this.disabled) return false;
+
     const product = routeParam('product');
     const type = routeParam('type');
 
@@ -180,6 +195,8 @@ export default class ChangelogPage extends Page {
   // ── View ────────────────────────────────────────────────────────────────────
 
   view() {
+    if (this.disabled) return <div className="AvocadoChangelog" />;
+
     const products = changelogProducts();
     const description =
       app.forum.attribute<string>('avocadoChangelogDescription') ||
