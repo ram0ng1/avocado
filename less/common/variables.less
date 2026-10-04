@@ -30,12 +30,6 @@
 :root {
   // ── Core theme tokens ────────────────────────────────────────────────────────
   --avocado-primary-bg:           lighten(@primary-color, 40%);
-  // Primária do FÓRUM, congelada aqui no :root. Os destaques coloridos
-  // (forum/colored.less) trocam --primary-color pela cor da tag no <body>; uma
-  // custom property resolve o var() onde é declarada, então esta continua com a
-  // primária do admin mesmo dentro de body.colored--active. Para o que deve
-  // seguir a marca, não a tag (ex.: chip "↩ Nome" do compositor).
-  --avocado-forum-primary:        var(--primary-color);
   --avocado-unapproved-bg:        #fdddc2;
   --text-on-dark:                 rgba(255, 255, 255, 0.92);
   --text-on-dark-muted:           rgba(255, 255, 255, 0.58);

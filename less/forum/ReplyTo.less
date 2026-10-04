@@ -61,8 +61,9 @@
 }
 
 // ── Chip no cabeçalho do compositor: "↩ [avatar] Nome ×" ─────────────────────
-// Na primária do fórum, não na da tag: com destaques coloridos o --primary-color
-// vira a cor da tag (ver --avocado-forum-primary em common/variables.less).
+// Na cor de destaque, a mesma do botão de enviar ao lado: com destaques coloridos
+// ela vira a cor da tag (forum/colored.less troca --button-primary-*), e o
+// --primary-color dentro do compositor não acompanha.
 .ComposerBody-header > li.item-avocadoReplyTo {
   margin-left: 10px;
   vertical-align: top;
@@ -76,8 +77,8 @@
   margin-top: -1px;
   padding: 0 2px 0 8px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--avocado-forum-primary, var(--primary-color)) 10%, transparent);
-  color: var(--avocado-forum-primary, var(--primary-color));
+  background: color-mix(in srgb, var(--button-primary-bg, var(--primary-color)) 10%, transparent);
+  color: var(--button-primary-bg, var(--primary-color));
   font-size: 13px;
   font-weight: 600;
   line-height: 1;
@@ -115,7 +116,7 @@
 
   &:hover,
   &:focus-visible {
-    background: color-mix(in srgb, var(--avocado-forum-primary, var(--primary-color)) 16%, transparent);
+    background: color-mix(in srgb, var(--button-primary-bg, var(--primary-color)) 16%, transparent);
   }
 }
 
