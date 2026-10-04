@@ -54,6 +54,10 @@ ramon-avocado:
         either way.
       disc_style_default: Default
       disc_style_editorial: Editorial (conversation spine)
+      reply_to_header_label: 'Show "In reply to" on replies'
+      reply_to_header_help: "A post that opens with a mention of another post shows \"In reply to\" with the author's avatar under the name, and the mention leaves the start of the text. Hovering highlights the original post; clicking goes to it. Mentions elsewhere in the text, user mentions and quotes stay as they are."
+      reply_dock_label: Floating reply bubble
+      reply_dock_help: "Keeps a \"Write a reply…\" bubble at the bottom of the screen throughout the discussion, aligned with the posts. Guests see an invitation to log in. Turned off, only the reply box at the end of the discussion remains."
 
       # Group badge position in posts
       post_badge_position_label: Group badge position in posts
@@ -87,6 +91,15 @@ ramon-avocado:
       showcase_image_style_help: Choose between compact or full-height image display.
       showcase_image_style_default: Default (Compact)
       showcase_image_style_full: Full Image
+
+      # Homepage discussion list
+      section_home_feed: Discussion list
+      home_feed_sort_label: Order
+      home_feed_sort_help: Popular ranks by replies, likes, views and recent activity. Latest activity follows the most recent reply, like the standard discussion list. Pinned discussions stay on top in both.
+      home_feed_sort_popular: Popular discussions
+      home_feed_sort_latest: Latest activity
+      home_feed_count_label: Number of discussions
+      home_feed_count_help: How many discussions the homepage list shows. Also applies to the Following page.
 
       # Section title overrides
       section_titles_heading: Section titles
@@ -385,6 +398,7 @@ ramon-avocado:
       new_discussion: New Discussion
       no_tags_found: No tags found
       or: "or"
+      latest_heading: Latest discussions
       popular_heading: Popular discussions
       popular_no_discussions: "No discussions yet."
       replies: Replies
@@ -469,6 +483,7 @@ ramon-avocado:
       view_profile: View profile
       message: Message
     post:
+      in_reply_to: In reply to
       op_badge: OP
       copy_code: "Copy code"
     messages:
@@ -494,6 +509,10 @@ ramon-avocado:
       member_since: "Since"
       member_singular: member
       member_plural: members
+    composer:
+      remove_reply: Remove reply
+      guest_pill: Log in to reply
+
     changelog:
       title: Changelog
       description: "What's new, what's fixed and what's gone — release by release."

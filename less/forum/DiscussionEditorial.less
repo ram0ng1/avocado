@@ -162,5 +162,26 @@
     .Page.DiscussionPage .CommentPost.editing {
       padding-left: var(--disc-post-pad);
     }
+
+    // O core desenha a prévia a 50% de opacidade no post inteiro, e o avatar
+    // translúcido deixava a linha atravessá-lo. A prévia fica opaca, o
+    // apagado passa para o conteúdo, e um disco na cor da página por trás do
+    // avatar faz o papel do nó opaco dos posts normais.
+    .Page.DiscussionPage .CommentPost.editing {
+      opacity: 1;
+
+      .Post-main,
+      .Post-side > * {
+        opacity: 0.5;
+      }
+      .Post-side {
+        background: radial-gradient(
+            circle calc(var(--disc-avatar) / 2 + 3px) at 50% calc(var(--disc-avatar) / 2),
+            var(--body-bg) 99%,
+            transparent 100%
+          )
+          no-repeat;
+      }
+    }
   }
 }

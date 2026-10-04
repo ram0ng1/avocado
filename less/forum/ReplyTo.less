@@ -1,0 +1,141 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// "↳ Em resposta a [avatar] Nome" — linha entre o cabeçalho e o corpo de um
+// post que abre com menção a outro post (js/src/forum/utils/replyTo.ts).
+// ─────────────────────────────────────────────────────────────────────────────
+
+.AvocadoReplyTo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  width: fit-content;
+  max-width: 100%;
+  margin: -4px 0 10px;
+  line-height: 1.3;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.AvocadoReplyTo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  // O tema pinta todo <a> do post de primária com !important (DiscussionPage.less).
+  color: var(--muted-color) !important;
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--primary-color) !important;
+    text-decoration: none;
+
+    .AvocadoReplyTo-label {
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+  }
+}
+
+.AvocadoReplyTo-icon {
+  flex: none;
+  width: 15px;
+  height: 15px;
+}
+
+.AvocadoReplyTo-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  color: var(--text-color);
+
+  .AvocadoReplyTo-name {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+// Linha da prévia ao vivo da resposta (contêiner montado pelo replyTo.ts).
+.AvocadoReplyTo-slot .AvocadoReplyTo {
+  margin-top: 0;
+}
+
+// ── Chip no cabeçalho do compositor: "↩ [avatar] Nome ×" ─────────────────────
+.ComposerBody-header > li.item-avocadoReplyTo {
+  margin-left: 10px;
+  vertical-align: top;
+}
+.AvocadoReplyChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 260px;
+  height: 22px;
+  margin-top: -1px;
+  padding: 0 2px 0 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  color: var(--primary-color);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+.AvocadoReplyChip-icon {
+  font-size: 12px;
+}
+.AvocadoReplyChip-avatar {
+  --size: 18px;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  font-size: 9px;
+  line-height: 18px;
+  margin: 0 !important;
+}
+.AvocadoReplyChip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.AvocadoReplyChip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: inherit;
+  font-size: 11px;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: color-mix(in srgb, var(--primary-color) 16%, transparent);
+  }
+}
+
+.AvocadoReplyTo-avatar {
+  --size: 18px;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  font-size: 9px;
+  line-height: 18px;
+  // O tema põe anel/margem nos avatares do cabeçalho; aqui é um avatar de texto.
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+
+// Post respondido em destaque enquanto o mouse está na linha, e um brilho curto
+// quando o clique rola até ele.
+.PostStream-item.AvocadoReplyTo-target > .Post,
+.PostStream-item.AvocadoReplyTo-flash > .Post {
+  background: color-mix(in srgb, var(--primary-color) 7%, transparent);
+  transition: background var(--avocado-t-normal);
+}
+.PostStream-item > .Post {
+  transition: background 0.6s;
+}

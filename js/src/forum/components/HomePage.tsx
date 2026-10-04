@@ -98,7 +98,7 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
         if (!id) return;
         const sid = String(id);
 
-        // Drop memoized popular/latest so the next render reflects the change.
+        // Drop the memoized feed so the next render reflects the change.
         this.state.invalidate();
 
         if (kind === 'post') {
@@ -143,7 +143,11 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
     const user = app.session.user;
     const isFollowingPage = app.current.get?.('routeName') === 'following';
 
-    const popular = this.state.homeLoading ? [] : isFollowingPage ? this.state.allDiscussions().slice(0, 5) : this.state.popularDiscussions(5);
+    const popular = this.state.homeLoading
+      ? []
+      : isFollowingPage
+        ? this.state.allDiscussions().slice(0, this.state.feedCount())
+        : this.state.feedDiscussions();
 
     return (
       <div className="AvocadoHome">
@@ -656,7 +660,10 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
   private renderPopularSection(popular: any[], isFollowingPage: boolean) {
     const heading = isFollowingPage
       ? (app.forum?.attribute('avocadoFollowingHeading') as string)?.trim() || trans('ramon-avocado.forum.home.following_heading', 'Following')
-      : (app.forum?.attribute('avocadoPopularHeading') as string)?.trim() || trans('ramon-avocado.forum.home.popular_heading', 'Popular discussions');
+      : (app.forum?.attribute('avocadoPopularHeading') as string)?.trim() ||
+        (this.state.feedSort() === 'latest'
+          ? trans('ramon-avocado.forum.home.latest_heading', 'Latest discussions')
+          : trans('ramon-avocado.forum.home.popular_heading', 'Popular discussions'));
 
     const showcaseTagIds = this.state.showcaseTagIds();
 

@@ -121,6 +121,8 @@ import listItems from 'flarum/common/helpers/listItems';
 import classList from 'flarum/common/utils/classList';
 import humanTime from 'flarum/common/utils/humanTime';
 import { installSupportCompat, isSupportPage, isSupportTicketPage, supportToolbar } from './utils/support';
+import installComposerDock from './utils/composerDock';
+import installReplyTo from './utils/replyTo';
 
 // ─── Settings helpers ─────────────────────────────────────────────────────────
 
@@ -505,6 +507,10 @@ app.initializers.add(
     // linkrobins/support: novo ticket pelo composer e esqueletos de carregamento
     // no lugar dos spinners da extensão. Inerte quando ela não está instalada.
     installSupportCompat();
+    // Compositor flutuante alinhado à coluna e pílula de resposta grudada (Composer.less).
+    installComposerDock();
+    // "↳ Em resposta a" no topo das respostas (admin, aba Discussões).
+    installReplyTo();
     // Tag de produto (ou de tipo) do changelog não tem página própria: todo link
     // gerado por `app.route('tag', …)` — rótulos, menu lateral, cartões, o helper
     // `app.route.tag` — já aponta para o changelog. É o lado "dentro do app" do
