@@ -122,6 +122,9 @@ import classList from 'flarum/common/utils/classList';
 import humanTime from 'flarum/common/utils/humanTime';
 import { installSupportCompat, isSupportPage, isSupportTicketPage, supportToolbar } from './utils/support';
 import installComposerDock from './utils/composerDock';
+import installComposerPreview from './utils/composerPreview';
+import installComposerMorph from './utils/composerMorph';
+import installTagsModal from './utils/tagsModal';
 import installReplyTo from './utils/replyTo';
 
 // ─── Settings helpers ─────────────────────────────────────────────────────────
@@ -566,6 +569,11 @@ app.initializers.add(
     installSupportCompat();
     // Compositor flutuante alinhado à coluna e pílula de resposta grudada (Composer.less).
     installComposerDock();
+    // Prévia dentro do compositor (botão e tela dividida em tela cheia), no
+    // lugar da prévia no fim da discussão (admin, aba Discussões).
+    installComposerPreview();
+    // Tela cheia do compositor do core com metamorfose (admin, aba Discussões).
+    installComposerMorph();
     // "↳ Em resposta a" no topo das respostas (admin, aba Discussões).
     installReplyTo();
     // Tag de produto (ou de tipo) do changelog não tem página própria: todo link
@@ -2617,6 +2625,38 @@ app.initializers.add(
       );
     });
 
+    // A prévia ao vivo da resposta (o <article class="CommentPost editing"> da
+    // ReplyPlaceholder) é markup do core, não um CommentPost: o sideItems acima
+    // não passa por ela, e nas posições "embaixo do avatar" os badges ficavam no
+    // cabeçalho. Aqui ela ganha o mesmo wrapper + clone, e o CSS dos posts vale.
+    extend('flarum/forum/components/ReplyPlaceholder', 'view', function (vnode) {
+      if (!['side', 'side_icons'].includes(String(app.forum?.attribute('avocadoPostBadgePosition') || 'inline'))) return;
+      if (document.documentElement.classList.contains('lrBadgeLabels')) return;
+      if (vnode?.tag !== 'article') return;
+      const badges = app.session.user?.badges?.().toArray?.() ?? [];
+      if (!badges.length) return;
+
+      const findByClass = (node, cls) => {
+        if (!node || typeof node !== 'object') return null;
+        const classes = String(node.attrs?.className || '').split(' ');
+        if (classes.includes(cls)) return node;
+        for (const child of Array.isArray(node.children) ? node.children : []) {
+          const found = findByClass(child, cls);
+          if (found) return found;
+        }
+        return null;
+      };
+
+      const side = findByClass(vnode, 'Post-side');
+      if (!side || !Array.isArray(side.children)) return;
+      side.children = [
+        <div className="Post-side-inner" key="avocado-side-inner">
+          {side.children}
+          <ul className="PostUser-badges badges badges--packed PostUser-badges--inSide">{listItems(badges)}</ul>
+        </div>,
+      ];
+    });
+
     // ── 19. CommentPost oncreate/onupdate (badges + duplicate avatar fix) ────────
     // Avatar duplicate: CSS in DiscussionPage.less already hides .PostUser-name .Avatar
     // via display:none !important — no JS removal needed (avatar.remove() caused removeChild
@@ -3865,3 +3905,8 @@ app.initializers.add(
   },
   -200
 );
+
+// ── "Editar tags" abre o modal do tema ────────────────────────────────────────
+// Prioridade baixa: roda depois do initializer do flarum/tags, que é quem põe o
+// item "Editar tags" no menu da discussão (utils/tagsModal.ts troca o clique).
+app.initializers.add('avocado-tags-modal', () => installTagsModal(), -200);

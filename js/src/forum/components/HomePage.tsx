@@ -38,6 +38,7 @@ import HomeState from '../states/HomeState';
 import ThreadCard from './shared/ThreadCard';
 import OnlineUsers from './shared/OnlineUsers';
 import InlineComposer from './shared/InlineComposer';
+import FloatingInlineComposer, { composerPlacement } from './shared/FloatingInlineComposer';
 import OverflowNav from './shared/OverflowNav';
 
 /** Hex → "r,g,b" string, used by inline rgba() styles in showcase cards. */
@@ -132,7 +133,11 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
       app.modal.show(() => (flarum as any).reg.asyncModuleImport('flarum/forum/components/LogInModal'));
       return;
     }
-    if (this.composerOpen) return;
+    // Já aberto (o campo continua na página): leva o foco de volta ao cartão.
+    if (this.composerOpen) {
+      document.querySelector<HTMLInputElement>('.AvocadoComposerDock .AvocadoHome-composerTitle')?.focus();
+      return;
+    }
     this.composerOpen = true;
     m.redraw();
   }
@@ -149,22 +154,32 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
         ? this.state.allDiscussions().slice(0, this.state.feedCount())
         : this.state.feedDiscussions();
 
+    const composerMode = composerPlacement();
+    const closeComposer = () => {
+      this.composerOpen = false;
+      m.redraw();
+    };
+    const onSubmitted = (disc: any) => m.route.set(app.route.discussion(disc));
+
     return (
       <div className="AvocadoHome">
         <div className="AvocadoHome-wrapper">
           <div className="AvocadoHome-main">
             {!user && this.renderHeroBanner()}
-            {user && !this.composerOpen && this.renderComposerTrigger(user)}
-            {this.composerOpen && (
-              <InlineComposer
-                user={user}
-                onClose={() => {
-                  this.composerOpen = false;
-                  m.redraw();
-                }}
-                onSubmitted={(disc: any) => m.route.set(app.route.discussion(disc))}
-              />
-            )}
+            {/* Com efeito, o campo fica (recolhido) para o cartão sair dele e voltar para ele. */}
+            {user && (composerMode !== 'default' || !this.composerOpen) && this.renderComposerTrigger(user)}
+            {this.composerOpen &&
+              (composerMode !== 'default' ? (
+                <FloatingInlineComposer
+                  alignTo=".AvocadoHome-postInput"
+                  placement={composerMode}
+                  user={user}
+                  onClose={closeComposer}
+                  onSubmitted={onSubmitted}
+                />
+              ) : (
+                <InlineComposer user={user} onClose={closeComposer} onSubmitted={onSubmitted} />
+              ))}
 
             {!isFollowingPage && this.renderCategoriesSection()}
             {this.renderShowcaseSlider()}

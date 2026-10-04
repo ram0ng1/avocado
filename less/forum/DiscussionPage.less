@@ -790,6 +790,19 @@
     // Hide our --inSide clone (only relevant when JS injects it on real posts)
     .PostUser-badges--inSide { display: none !important; }
   }
+
+  // Badge do core (posição "padrão do Flarum"): no fluxo, o `margin-left`
+  // negativo contava a partir do fim do nome — o disco mudava de lugar conforme
+  // o tamanho do nome e empurrava o que vem depois (o selo de verificado) para
+  // cima dele. Absoluto, ancorado no avatar (que fica a avatar + gap à esquerda
+  // do cabeçalho), cai no mesmo canto do clone dos posts. As outras posições
+  // trazem a lista de volta ao fluxo (PostBadges.less).
+  html:not(.avocado-badges--custom) .Page.DiscussionPage .CommentPost.editing .Post-header > .PostUser > .PostUser-badges {
+    position: absolute;
+    top: 0;
+    left: calc(-1 * (var(--disc-avatar) + var(--disc-gap)) - 15px);
+    margin-left: 0;
+  }
 }
 
 // Ambos os blocos @phone abaixo ficam sob `html:not(.lrBadgeLabels--phone)`:
@@ -909,6 +922,18 @@ html:not(.lrBadgeLabels--phone) {
   .Page.DiscussionPage .Post-header > ul > li.item-verified .VerifiedPopover-anchor,
   .Page.DiscussionPage .Post-header > ul > li.item-verified > .VerifiedBadge {
     margin-left: 0;
+  }
+}
+
+// Centro do selo de verificado no centro do nome: alinhado pela linha de base
+// do <li>, ele ficava ~1px abaixo. O post do autor da discussão desce o nome
+// 2px (Post.less, `Post--by-start-user`) e lá o selo acompanha. Vale também
+// para a prévia da resposta, que leva o mesmo `ul > li.item-verified`.
+@media @tablet-up {
+  .Page.DiscussionPage .Post-header > ul > li.item-verified .VerifiedPopover-anchor,
+  .Page.DiscussionPage .Post-header > ul > li.item-verified > .VerifiedBadge {
+    position: relative;
+    top: -1px;
   }
 }
 

@@ -201,17 +201,19 @@
     margin-bottom: 0;
   }
 
+  // O mesmo botão dos outros modais (DiscussionModals.less): geometria do
+  // "Responder", raio do tema.
   &-save,
   &-cancel,
   &-remove {
-    height: 36px;
-    padding: 0 16px;
-    border-radius: 999px;
+    height: 38px;
+    padding: 0 20px;
+    border-radius: var(--border-radius);
     font-weight: 700;
     font-size: @font-sm;
   }
 
-  // A ação primária deixa de atravessar o modal: pill compacta à direita.
+  // A ação primária deixa de atravessar o modal: compacta, à direita.
   &-save {
     flex: 0 0 auto;
   }

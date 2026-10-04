@@ -56,8 +56,18 @@ ramon-avocado:
       disc_style_editorial: Editorial (corrente da conversa)
       reply_to_header_label: 'Mostrar "Em resposta a" nas respostas'
       reply_to_header_help: "Um post que abre com a menção a outro post mostra \"Em resposta a\" com o avatar do autor embaixo do nome, e a menção sai do começo do texto. Passar o mouse destaca o post original; clicar leva até ele. Menções no meio do texto, menções a usuários e citações continuam como estão."
+      composer_morph_label: Efeito de tela cheia do compositor
+      composer_morph_help: "Ao entrar e sair da tela cheia, o compositor cresce do tamanho em que está até ocupar a tela (e volta), como o compositor da home. No celular e com \"reduzir movimento\" a troca segue instantânea, como no Flarum."
+      composer_preview_label: Prévia dentro do compositor
+      composer_preview_help: "O compositor ganha um botão de prévia que troca o editor pelo post formatado; em tela cheia ele divide a tela em editor e prévia ao vivo. A prévia que o Flarum desenha no fim da discussão enquanto você responde sai. Desligada, a prévia padrão do Flarum volta."
       reply_dock_label: Bolha de resposta flutuante
-      reply_dock_help: "Mantém uma bolha \"Escreva uma resposta…\" na base da tela durante toda a discussão, alinhada aos posts. Visitantes veem um convite para entrar. Desligada, fica só a caixa de resposta no fim da discussão."
+      reply_dock_help: "Mantém uma bolha \"Escreva uma resposta…\" na base da tela durante toda a discussão, alinhada aos posts. Visitantes veem um convite para entrar. Desligada, o compositor e a caixa de resposta no fim da discussão voltam ao visual padrão do Flarum."
+      section_home_composer: Nova discussão
+      new_discussion_composer_label: Compositor de nova discussão
+      new_discussion_composer_help: "Como o compositor abre a partir do campo \"Conte a todos…\" na home e em /discussions."
+      new_discussion_composer_default: Padrão — abre no lugar do campo, sem efeito
+      new_discussion_composer_inline: No lugar, com efeito — o campo se transforma no compositor
+      new_discussion_composer_floating: Flutuante — o campo voa até a base da tela (muda de tamanho, puxado para baixo vira bolha)
 
       # Posição do badge de grupo no post
       post_badge_position_label: Posição do badge de grupo no post
@@ -515,9 +525,15 @@ ramon-avocado:
       member_since: "Desde"
       member_singular: membro
       member_plural: membros
+    tags_modal:
+      title: Editar tags
+      cancel: Cancelar
+      save: Salvar
     composer:
       remove_reply: Remover resposta
       guest_pill: Entre para responder
+      hide_preview: Esconder prévia
+      resize_handle: Arraste para mudar o tamanho · puxe para baixo para minimizar
 
     changelog:
       title: Changelog
