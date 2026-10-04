@@ -79,7 +79,10 @@ const guestifyPlaceholder = (el: Element | null): void => {
 
   const side = el.querySelector('.Post-side');
   if (side && !side.querySelector('.AvocadoReplyDock-guestIcon')) {
-    side.innerHTML = '<i class="icon far fa-comment AvocadoReplyDock-guestIcon" aria-hidden="true"></i>';
+    const icon = document.createElement('i');
+    icon.className = 'icon far fa-comment AvocadoReplyDock-guestIcon';
+    icon.setAttribute('aria-hidden', 'true');
+    side.replaceChildren(icon);
   }
 
   const header = el.querySelector('.Post-header');
