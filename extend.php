@@ -35,6 +35,7 @@ return [
         ->content(\Ramon\Avocado\Content\AddHeroBannerPreload::class)
         ->content(\Ramon\Avocado\Content\CustomLoadingSpinner::class)
         ->content(\Ramon\Avocado\Content\HideLogoFlash::class)
+        ->content(\Ramon\Avocado\Content\LinkIconStyle::class)
         ->content(\Ramon\Avocado\Content\DiscussionStyle::class)
         ->content(\Ramon\Avocado\Content\SearchStyle::class)
         // No CSS-deferral injector here: Flarum core already emits async CSS
@@ -206,6 +207,8 @@ return [
         ->delete('/avocado/auth-image', 'avocado.auth_image.delete', \Ramon\Avocado\Controller\DeleteAuthImageController::class)
         ->post('/avocado/logo-svg', 'avocado.logo_svg.upload', \Ramon\Avocado\Controller\UploadLogoSvgController::class)
         ->delete('/avocado/logo-svg', 'avocado.logo_svg.delete', \Ramon\Avocado\Controller\DeleteLogoSvgController::class)
+        ->post('/avocado/link-icon-svg', 'avocado.link_icon_svg.upload', \Ramon\Avocado\Controller\UploadLinkIconSvgController::class)
+        ->delete('/avocado/link-icon-svg', 'avocado.link_icon_svg.delete', \Ramon\Avocado\Controller\DeleteLinkIconSvgController::class)
         ->post('/avocado/discussion-hero', 'avocado.discussion_hero.upload', \Ramon\Avocado\Controller\UploadDiscussionHeroController::class)
         ->delete('/avocado/discussion-hero', 'avocado.discussion_hero.delete', \Ramon\Avocado\Controller\DeleteDiscussionHeroController::class)
         ->post('/avocado/bookmark', 'avocado.bookmark.create', \Ramon\Avocado\Controller\CreateBookmarkController::class)

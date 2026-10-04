@@ -215,6 +215,8 @@ ramon-avocado:
       logo_svg_help: Envie um logotipo SVG personalizado para seu fórum.
       logo_enabled_label: Ativar logotipo personalizado
       logo_enabled_help: Exibir o logotipo personalizado no cabeçalho.
+      link_icon_svg_label: Ícone de link interno (SVG)
+      link_icon_svg_help: "Substitui o favicon nos links para outras discussões do fórum (#123). É pintado na cor do link, então acompanha o colored accents — só o formato do SVG é usado."
 
       # Loading spinner
       custom_loading_spinner_label: Spinner de carregamento personalizado
