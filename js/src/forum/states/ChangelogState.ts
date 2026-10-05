@@ -3,7 +3,9 @@ import app from 'flarum/forum/app';
 /** Espelha PAGE_LIMIT do Content\PreloadChangelog. */
 export const CHANGELOG_PAGE_LIMIT = 12;
 
-const INCLUDE = ['user', 'firstPost', 'tags'];
+// Sem firstPost: o resumo vem em `avocadoExcerpt` e as notas buscam o post pelo
+// linkage (ChangelogPage › toggleNotes). Espelha o Content\PreloadChangelog.
+const INCLUDE = ['user', 'tags'];
 
 export interface ChangelogFilter {
   /** Slugs dos produtos — mais de um vira OR num único request. */

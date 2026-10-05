@@ -6,6 +6,8 @@ namespace Ramon\Avocado\Tests\Security;
 
 use Flarum\Frontend\Document;
 use Flarum\Settings\SettingsRepositoryInterface;
+use Illuminate\Cache\ArrayStore;
+use Illuminate\Cache\Repository;
 use Illuminate\Contracts\Filesystem\Factory;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Mockery;
@@ -28,7 +30,7 @@ final class LinkIconStyleTest extends TestCase
     use MockeryPHPUnitIntegration;
 
     /** @return list<string> */
-    private function render(?string $setting, ?string $fileContents): array
+    private function render(?string $setting, ?string $fileContents, ?Repository $cache = null): array
     {
         $settings = Mockery::mock(SettingsRepositoryInterface::class);
         $settings->allows('get')->with('avocado.link_icon_svg')->andReturn($setting);
@@ -44,7 +46,7 @@ final class LinkIconStyleTest extends TestCase
         $document = (new ReflectionClass(Document::class))->newInstanceWithoutConstructor();
         $document->head = [];
 
-        (new LinkIconStyle($settings, $factory))($document, Mockery::mock(ServerRequestInterface::class));
+        (new LinkIconStyle($settings, $factory, $cache ?? new Repository(new ArrayStore())))($document, Mockery::mock(ServerRequestInterface::class));
 
         return $document->head;
     }
@@ -100,5 +102,31 @@ final class LinkIconStyleTest extends TestCase
     public function test_non_svg_file_emits_nothing(): void
     {
         self::assertSame([], $this->render('avocado-link-icon-abc.svg', '<html><body>oi</body></html>'));
+    }
+
+    public function test_cached_style_is_reused_while_the_path_is_the_same(): void
+    {
+        $cache = new Repository(new ArrayStore());
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z"/></svg>';
+        $first = $this->render('avocado-link-icon-abc.svg', $svg, $cache);
+
+        // Mesmo caminho: sai do cache, sem tocar no disco (o arquivo "sumiu").
+        self::assertSame($first, $this->render('avocado-link-icon-abc.svg', null, $cache));
+
+        // Upload novo = nome novo: o cache antigo não vale, e o arquivo é lido e
+        // sanitizado de novo.
+        $other = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/></svg>';
+        $second = $this->render('avocado-link-icon-def.svg', $other, $cache);
+        self::assertCount(2, $second);
+        self::assertNotSame($first[0], $second[0]);
+    }
+
+    public function test_failures_are_not_cached(): void
+    {
+        $cache = new Repository(new ArrayStore());
+        self::assertSame([], $this->render('avocado-link-icon-abc.svg', null, $cache));
+
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z"/></svg>';
+        self::assertCount(2, $this->render('avocado-link-icon-abc.svg', $svg, $cache));
     }
 }

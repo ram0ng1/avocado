@@ -6,6 +6,7 @@ namespace Ramon\Avocado\Content;
 
 use Flarum\Frontend\Document;
 use Flarum\Settings\SettingsRepositoryInterface;
+use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Contracts\Filesystem\Factory;
 use Psr\Http\Message\ServerRequestInterface;
 use Ramon\Avocado\Support\SvgIconSanitizer;
@@ -20,12 +21,21 @@ use Ramon\Avocado\Support\SvgIconSanitizer;
  *
  * O atributo no <html> é o que liga as regras de forum/UrlLink.less — sem ele o
  * rótulo segue com o favicon, como no core.
+ *
+ * O <style> pronto fica no cache do Flarum, junto do caminho que o gerou: este
+ * content roda em toda página, e sem o cache cada uma pagava exists() + get() no
+ * disco e o parse do sanitizador. O upload grava o arquivo com nome novo
+ * (sufixo aleatório) e o delete zera a setting, então o caminho já é a versão —
+ * trocou o ícone, o caminho não bate e a próxima página refaz.
  */
 class LinkIconStyle
 {
+    private const CACHE_KEY = 'avocado.link_icon_style.v1';
+
     public function __construct(
         protected SettingsRepositoryInterface $settings,
         protected Factory $filesystem,
+        protected Cache $cache,
     ) {}
 
     public function __invoke(Document $document, ServerRequestInterface $request): void
@@ -36,10 +46,32 @@ class LinkIconStyle
             return;
         }
 
+        $cached = $this->cache->get(self::CACHE_KEY);
+
+        if (is_array($cached) && ($cached['path'] ?? null) === $path && is_string($cached['uri'] ?? null)) {
+            $uri = $cached['uri'];
+        } else {
+            $uri = $this->buildUri($path);
+
+            if ($uri === null) {
+                // Falha (arquivo sumiu, SVG recusado) não vai para o cache: a
+                // próxima página tenta de novo, como antes.
+                return;
+            }
+
+            $this->cache->forever(self::CACHE_KEY, ['path' => $path, 'uri' => $uri]);
+        }
+
+        $document->head[] = '<style id="avocado-link-icon">:root{--avocado-link-icon:url("' . $uri . '")}</style>';
+        $document->head[] = '<script>document.documentElement.dataset.avocadoLinkIcon="true"</script>';
+    }
+
+    private function buildUri(string $path): ?string
+    {
         $disk = $this->filesystem->disk('flarum-assets');
 
         if (!$disk->exists($path)) {
-            return;
+            return null;
         }
 
         // Sanitizado de novo na saída: o arquivo foi limpo no upload, mas o disco
@@ -47,12 +79,9 @@ class LinkIconStyle
         $svg = SvgIconSanitizer::sanitize((string) $disk->get($path));
 
         if ($svg === null) {
-            return;
+            return null;
         }
 
-        $uri = 'data:image/svg+xml;base64,' . base64_encode($svg);
-
-        $document->head[] = '<style id="avocado-link-icon">:root{--avocado-link-icon:url("' . $uri . '")}</style>';
-        $document->head[] = '<script>document.documentElement.dataset.avocadoLinkIcon="true"</script>';
+        return 'data:image/svg+xml;base64,' . base64_encode($svg);
     }
 }

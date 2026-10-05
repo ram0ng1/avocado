@@ -32,16 +32,21 @@ class ChangelogFields
     /** Espelha CHANGELOG_VERSION_PATTERN em forum/utils. */
     private const VERSION_PATTERN = '/^[0-9A-Za-z][0-9A-Za-z .+_\-]*$/';
 
+    public function __construct(
+        protected ChangelogSchema $schema
+    ) {
+    }
+
     /** @return list<Schema\Attribute> */
     public function __invoke(): array
     {
-        $writable = static fn (Discussion $discussion, Context $context): bool => ChangelogSchema::available()
+        $writable = fn (Discussion $discussion, Context $context): bool => $this->schema->available()
             && ($context->creating() || $context->getActor()->can('rename', $discussion));
 
         // O 1º argumento é o model quando há um no contexto (serialização) e o próprio
         // Context quando não há. `write()` deixa a relação posta, então a resposta de
         // um create/patch que mexe nos campos já sai com eles.
-        $visible = static fn (mixed $model = null): bool => ChangelogSchema::available()
+        $visible = fn (mixed $model = null): bool => $this->schema->available()
             && (! $model instanceof Discussion || $model->relationLoaded('avocadoChangelog'));
 
         return [

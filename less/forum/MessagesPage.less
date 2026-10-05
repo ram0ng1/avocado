@@ -75,65 +75,6 @@
   }
 }
 
-// ── DiscussionListPane — override width + fix close transition ────────────────
-// Core positions the pane with: left: calc(-6px - var(--pane-width))
-// We must override --pane-width so the closed position stays fully off-screen.
-:root {
-  --pane-width: 450px;
-}
-
-@media @tablet-up {
-  aside.DiscussionListPane {
-    width: var(--pane-width) !important;
-    // Closed state: fully off-screen (matches core calc)
-    left: calc(-6px - var(--pane-width)) !important;
-    transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    // Use Flarum global theme variables (auto adapt to dark mode)
-    background: var(--body-bg) !important;
-    border-right: 1px solid var(--control-bg) !important;
-    box-shadow: 0 6px 6px var(--shadow-color) !important;
-    overflow-y: auto !important;
-
-    // Open state
-    .paneShowing & {
-      left: 0 !important;
-    }
-
-    // Pinned (desktop-hd) — no transition
-    .panePinned & {
-      left: 0 !important;
-      transition: none !important;
-    }
-
-    // DiscussionList container: DiscussionPage.less sets #f4f4f7 here — reset it
-    // so transparent items fall through to the pane background (body-bg)
-    .DiscussionList {
-      background: transparent !important;
-      padding: 0 !important;
-    }
-
-    // DiscussionListItem inside pane — flat rows, no card style
-    .DiscussionListItem {
-      width: 100% !important;
-      margin: 0 !important;
-      border-radius: 0 !important;
-      // Remove avocado card background so items blend with pane bg
-      background: transparent !important;
-      &:hover { background: var(--control-bg) !important; }
-    }
-    .DiscussionListItem-content {
-      padding-left: 16px !important;
-      padding-right: 16px !important;
-    }
-    // itemCount / stats badge
-    .item-count,
-    .DiscussionListItem-stats,
-    .itemCount9 {
-      right: 12px !important;
-    }
-  }
-}
-
 .MessagesPage-sidebar {
   width: 450px !important;
   min-width: 450px !important;

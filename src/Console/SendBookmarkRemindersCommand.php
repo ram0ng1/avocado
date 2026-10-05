@@ -6,7 +6,6 @@ namespace Ramon\Avocado\Console;
 
 use Carbon\Carbon;
 use Flarum\Notification\NotificationSyncer;
-use Flarum\Settings\SettingsRepositoryInterface;
 use Illuminate\Console\Command;
 use Ramon\Avocado\Model\Bookmark;
 use Ramon\Avocado\Notification\BookmarkReminderBlueprint;
@@ -28,9 +27,9 @@ class SendBookmarkRemindersCommand extends Command
 
     public const BATCH = 500;
 
-    public function handle(NotificationSyncer $notifications, SettingsRepositoryInterface $settings): void
+    public function handle(NotificationSyncer $notifications, BookmarksSetting $bookmarks): void
     {
-        if (! BookmarksSetting::enabled($settings)) {
+        if (! $bookmarks->enabled()) {
             $this->info('Bookmark system disabled; skipping.');
 
             return;

@@ -16,13 +16,19 @@ use Flarum\Settings\SettingsRepositoryInterface;
  * filtro, campos da API, comando de lembretes) já passa por aqui — um único
  * ponto cobre todos. Ver BookmarksSchema.
  */
-class BookmarksSetting
+final class BookmarksSetting
 {
-    public static function enabled(SettingsRepositoryInterface $settings): bool
+    public function __construct(
+        private readonly SettingsRepositoryInterface $settings,
+        private readonly BookmarksSchema $schema,
+    ) {
+    }
+
+    public function enabled(): bool
     {
-        $value = $settings->get('avocado.bookmarks_enabled', true);
+        $value = $this->settings->get('avocado.bookmarks_enabled', true);
         $enabled = $value === null ? true : (bool) filter_var($value, FILTER_VALIDATE_BOOL);
 
-        return $enabled && BookmarksSchema::available();
+        return $enabled && $this->schema->available();
     }
 }

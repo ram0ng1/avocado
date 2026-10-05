@@ -124,7 +124,7 @@ export class AvocadoUserPostsPage extends AvocadoUserBase {
         filter: { author: user.username(), type: 'comment' },
         sort: '-createdAt',
         page: { offset: this.offset, limit: PAGE_SIZE },
-        include: 'user,discussion,discussion.tags,discussion.firstPost',
+        include: 'user,discussion,discussion.tags',
       })
       .then((results: any) => {
         const items = Array.isArray(results) ? results : [];
@@ -195,7 +195,8 @@ export class AvocadoUserDiscussionsPage extends AvocadoUserBase {
         filter: { author: user.username() },
         sort: '-createdAt',
         page: { offset: this.offset, limit: PAGE_SIZE },
-        include: 'user,firstPost,lastPostedUser,lastPost,tags',
+        // Sem firstPost/lastPost: o ThreadCard lê tudo de atributos da discussão.
+        include: 'user,lastPostedUser,tags',
       })
       .then((results: any) => {
         const items = Array.isArray(results) ? results : [];
@@ -272,7 +273,7 @@ export class AvocadoUserLikesPage extends AvocadoUserBase {
         filter: { type: 'comment', likedBy: user.id() },
         sort: '-createdAt',
         page: { offset: this.offset, limit: PAGE_SIZE },
-        include: 'user,discussion,discussion.tags,discussion.firstPost',
+        include: 'user,discussion,discussion.tags',
       })
       .then((results: any) => {
         const items = Array.isArray(results) ? results : [];
@@ -341,7 +342,7 @@ export class AvocadoUserMentionsPage extends AvocadoUserBase {
         filter: { type: 'comment', mentioned: user.id() },
         sort: '-createdAt',
         page: { offset: this.offset, limit: PAGE_SIZE },
-        include: 'user,discussion,discussion.tags,discussion.firstPost',
+        include: 'user,discussion,discussion.tags',
       })
       .then((results: any) => {
         const items = Array.isArray(results) ? results : [];

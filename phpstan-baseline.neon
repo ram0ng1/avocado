@@ -61,11 +61,6 @@ parameters:
 			path: src/Api/DiscussionFields.php
 
 		-
-			message: "#^Negated boolean expression is always true\\.$#"
-			count: 1
-			path: src/AvocadoServiceProvider.php
-
-		-
 			message: "#^Negated boolean expression is always false\\.$#"
 			count: 1
 			path: src/Content/AddHeroBannerPreload.php

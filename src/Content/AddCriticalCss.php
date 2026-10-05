@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Ramon\Avocado\Content;
 
-use Flarum\Foundation\Config;
 use Flarum\Frontend\Document;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -25,16 +24,17 @@ class AddCriticalCss
 {
     public function __construct(
         protected SettingsRepositoryInterface $settings,
-        protected Config $config,
+        protected ThemeFonts $fonts,
     ) {}
 
     public function __invoke(Document $document, ServerRequestInterface $request): void
     {
-        $baseUrl  = rtrim((string) $this->config->url(), '/');
-        $fontBase = $baseUrl . '/assets/fonts/';
-
-        $normalFont = htmlspecialchars($fontBase . 'dm-sans-variable.woff2', ENT_QUOTES, 'UTF-8');
-        $italicFont = htmlspecialchars($fontBase . 'dm-sans-italic.woff2', ENT_QUOTES, 'UTF-8');
+        // Única declaração das @font-face da DM Sans (o less/common/fonts.less saiu):
+        // mesma URL do preload do AddCriticalPreloads, ver ThemeFonts. São as mesmas
+        // 4 faces de antes — a itálica do apelido 'DM Sans' vinha só do LESS e agora
+        // mora aqui, para o itálico real continuar valendo onde 'DM Sans' vem primeiro.
+        $normalFont = htmlspecialchars($this->fonts->url(ThemeFonts::NORMAL), ENT_QUOTES, 'UTF-8');
+        $italicFont = htmlspecialchars($this->fonts->url(ThemeFonts::ITALIC), ENT_QUOTES, 'UTF-8');
 
         // ── Logo size reservation ─────────────────────────────────────────────
         // The theme's main CSS gates logo constraints behind
@@ -140,6 +140,7 @@ class AddCriticalCss
         @font-face{font-family:'DM Sans Variable';font-weight:100 900;font-style:normal;font-display:swap;src:url('{$normalFont}') format('woff2-variations')}
         @font-face{font-family:'DM Sans Variable';font-weight:100 900;font-style:italic;font-display:swap;src:url('{$italicFont}') format('woff2-variations')}
         @font-face{font-family:'DM Sans';font-weight:100 900;font-style:normal;font-display:swap;src:url('{$normalFont}') format('woff2-variations')}
+        @font-face{font-family:'DM Sans';font-weight:100 900;font-style:italic;font-display:swap;src:url('{$italicFont}') format('woff2-variations')}
         html,body{margin:0;padding:0}
         body{font-family:'DM Sans Variable','DM Sans','Segoe UI',sans-serif;overflow-x:hidden}
         *,*::before,*::after{box-sizing:border-box}

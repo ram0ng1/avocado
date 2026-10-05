@@ -21,8 +21,10 @@ class SupportEventsServiceProvider extends AbstractServiceProvider
             return;
         }
 
+        // A mesma instância (singleton) que o middleware RememberActor alimenta.
+        $events = $this->container->make(SupportEvents::class);
         $model = SupportEvents::TICKET_MODEL;
 
-        $model::updated(fn ($ticket) => SupportEvents::onTicketUpdated($ticket));
+        $model::updated(fn ($ticket) => $events->onTicketUpdated($ticket));
     }
 }

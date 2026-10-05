@@ -8,7 +8,7 @@ use Flarum\Frontend\Document;
 use Flarum\Locale\TranslatorInterface;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Ramon\Avocado\Support\HtmlSanitizer;
+use Ramon\Avocado\Support\SanitizedHtmlCache;
 
 class CustomLoadingSpinner
 {
@@ -17,6 +17,7 @@ class CustomLoadingSpinner
     public function __construct(
         protected SettingsRepositoryInterface $settings,
         protected TranslatorInterface $translator,
+        protected SanitizedHtmlCache $sanitizer,
     ) {}
 
     public function __invoke(Document $document, ServerRequestInterface $request): void
@@ -39,8 +40,9 @@ class CustomLoadingSpinner
             if ($raw === '') return;
             // Defense-in-depth: scrub admin-pasted HTML before it lands in innerHTML.
             // Inline scripts created via innerHTML do not run, but `<img onerror>`,
-            // `<svg onload>`, and the like do.
-            $clean = HtmlSanitizer::sanitize($raw);
+            // `<svg onload>`, and the like do. Resultado em cache (por hash da
+            // entrada): este content roda em toda página.
+            $clean = $this->sanitizer->sanitize('loading_spinner_custom', $raw);
             if ($clean === '') return;
             $this->injectSpinner($document, $this->wrap($clean), $primaryColor);
             return;

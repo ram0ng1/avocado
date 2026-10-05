@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace Ramon\Avocado\Support;
 
 use Carbon\Carbon;
-use Illuminate\Contracts\Cache\Repository as CacheRepository;
-use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Model;
+use Psr\Log\LoggerInterface;
 use Ramon\Avocado\Model\SupportEvent;
 use Throwable;
 
@@ -22,9 +21,11 @@ use Throwable;
  * do request (lembrado pelo Middleware\RememberActor, já que um evento de
  * modelo não sabe quem está logado).
  *
- * A checagem da tabela segue a mesma regra do BookmarksSchema: código novo pelo
- * composer chega antes do `flarum migrate`, e nessa janela gravar ou ler a
- * tabela derrubaria a página do ticket.
+ * Singleton (AvocadoServiceProvider): o middleware grava o ator e o gancho do
+ * modelo o lê na mesma instância. A checagem da tabela segue a regra do
+ * BookmarksSchema (ver SchemaInspector): código novo pelo composer chega antes
+ * do `flarum migrate`, e nessa janela gravar ou ler a tabela derrubaria a
+ * página do ticket.
  */
 final class SupportEvents
 {
@@ -44,20 +45,13 @@ final class SupportEvents
 
     private const CACHE_KEY = 'avocado.support_events_table_exists';
 
-    /** Memo do request; null = ainda não checado. */
-    private static ?bool $exists = null;
-
     /** Quem está agindo neste request (null = visitante ou fora de um request). */
-    private static ?int $actorId = null;
+    private ?int $actorId = null;
 
-    public static function rememberActor(?int $actorId): void
-    {
-        self::$actorId = $actorId;
-    }
-
-    public static function actorId(): ?int
-    {
-        return self::$actorId;
+    public function __construct(
+        private readonly SchemaInspector $schema,
+        private readonly LoggerInterface $logger,
+    ) {
     }
 
     /** O modelo da extensão existe no autoload (extensão instalada)? */
@@ -66,31 +60,19 @@ final class SupportEvents
         return class_exists(self::TICKET_MODEL);
     }
 
-    public static function available(): bool
+    public function rememberActor(?int $actorId): void
     {
-        if (self::$exists !== null) {
-            return self::$exists;
-        }
+        $this->actorId = $actorId;
+    }
 
-        try {
-            $cache = resolve(CacheRepository::class);
+    public function actorId(): ?int
+    {
+        return $this->actorId;
+    }
 
-            if ($cache->get(self::CACHE_KEY)) {
-                return self::$exists = true;
-            }
-
-            $exists = resolve(ConnectionInterface::class)
-                ->getSchemaBuilder()
-                ->hasTable(self::TABLE);
-
-            if ($exists) {
-                $cache->forever(self::CACHE_KEY, true);
-            }
-
-            return self::$exists = $exists;
-        } catch (Throwable) {
-            return self::$exists = false;
-        }
+    public function available(): bool
+    {
+        return $this->schema->hasTable(self::TABLE, self::CACHE_KEY);
     }
 
     /**
@@ -98,10 +80,10 @@ final class SupportEvents
      * quando ele de fato mudou. Nunca deixa uma falha própria subir — a
      * gravação do ticket já aconteceu e não pode ser desfeita por um log.
      */
-    public static function onTicketUpdated(Model $ticket): void
+    public function onTicketUpdated(Model $ticket): void
     {
         try {
-            if (! $ticket->wasChanged('status') || ! self::available()) {
+            if (! $ticket->wasChanged('status') || ! $this->available()) {
                 return;
             }
 
@@ -114,7 +96,7 @@ final class SupportEvents
 
             SupportEvent::query()->create([
                 'ticket_id'   => (int) $ticket->getKey(),
-                'user_id'     => self::$actorId,
+                'user_id'     => $this->actorId,
                 'type'        => SupportEvent::TYPE_STATUS,
                 'from_status' => $from === null ? null : (string) $from,
                 'to_status'   => $to === null ? null : (string) $to,
@@ -122,17 +104,10 @@ final class SupportEvents
             ]);
         } catch (Throwable $e) {
             try {
-                resolve(\Psr\Log\LoggerInterface::class)->warning('[avocado] support event not recorded', ['exception' => $e]);
+                $this->logger->warning('[avocado] support event not recorded', ['exception' => $e]);
             } catch (Throwable) {
                 // sem logger não há mais o que fazer
             }
         }
-    }
-
-    /** Ponto de teste — zera os memos do request. */
-    public static function forget(): void
-    {
-        self::$exists = null;
-        self::$actorId = null;
     }
 }

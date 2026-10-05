@@ -3,7 +3,10 @@ import type Discussion from 'flarum/common/models/Discussion';
 import type { DiscussionListParams } from 'flarum/forum/states/DiscussionListState';
 import type { PaginatedListRequestParams } from 'flarum/common/states/PaginatedListState';
 
-const FEED_INCLUDE = ['user', 'firstPost', 'lastPostedUser', 'lastPost', 'tags'];
+// Sem firstPost/lastPost: o ThreadCard lê resumo, curtidas e a última resposta
+// de atributos da discussão, e incluir os posts custava o render do s9e de dois
+// posts inteiros por card.
+const FEED_INCLUDE = ['user', 'lastPostedUser', 'tags'];
 
 /**
  * `DiscussionFeedState` is `DiscussionListState` with the extras Avocado's

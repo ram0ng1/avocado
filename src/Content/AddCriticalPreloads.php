@@ -22,6 +22,7 @@ class AddCriticalPreloads
     public function __construct(
         protected SettingsRepositoryInterface $settings,
         protected Config $config,
+        protected ThemeFonts $fonts,
     ) {}
 
     public function __invoke(Document $document, ServerRequestInterface $request): void
@@ -30,7 +31,9 @@ class AddCriticalPreloads
         $ownHost  = parse_url($baseUrl, PHP_URL_HOST);
 
         // ── 1. Font preload ───────────────────────────────────────────────────
-        $fontUrl = $baseUrl . '/assets/fonts/dm-sans-variable.woff2';
+        // Mesma URL da @font-face do AddCriticalCss (ThemeFonts), para o preload
+        // ser reaproveitado em vez de virar um segundo download.
+        $fontUrl = $this->fonts->url(ThemeFonts::NORMAL);
 
         $document->head[] = sprintf(
             '<link rel="preload" as="font" type="font/woff2" href="%s" crossorigin="anonymous">',

@@ -190,4 +190,64 @@ final class HtmlSanitizerTest extends TestCase
             self::assertSame($once, HtmlSanitizer::sanitize($once), "Not idempotent for: {$payload}");
         }
     }
+
+    // ── Esquema ofuscado (auditoria de segurança) ───────────────────────────
+    // O navegador ignora tab/quebra de linha no meio de uma URL e controles no
+    // começo: `java&#9;script:` roda como `javascript:`. O xlink:href não passa
+    // pelo escape de URL do libxml, então a checagem precisa normalizar.
+
+    /** @return array<string, array{string}> */
+    public static function obfuscatedSchemeProvider(): array
+    {
+        return [
+            'tab em xlink:href'      => ['<svg><a xlink:href="java&#9;script:alert(1)"><text>x</text></a></svg>'],
+            'quebra de linha'        => ['<svg><a xlink:href="java&#10;script:alert(1)"><text>x</text></a></svg>'],
+            'controle no começo'     => ['<svg><a xlink:href="&#1;javascript:alert(1)"><text>x</text></a></svg>'],
+            'tab em href comum'      => ['<a href="java&#9;script:alert(1)">x</a>'],
+            'vbscript com espaços'   => ['<a href=" vb&#9;script:alert(1)">x</a>'],
+        ];
+    }
+
+    #[DataProvider('obfuscatedSchemeProvider')]
+    public function test_obfuscated_script_scheme_is_stripped(string $payload): void
+    {
+        $out = HtmlSanitizer::sanitize($payload);
+
+        self::assertStringNotContainsString('alert(1)', $out, $out);
+        self::assertStringContainsString('x', $out);
+    }
+
+    public function test_smil_animate_rewriting_href_is_stripped(): void
+    {
+        $out = HtmlSanitizer::sanitize(
+            '<svg><a><animate attributeName="href" values="javascript:alert(1)"/><text y="20">x</text></a></svg>'
+        );
+
+        self::assertStringNotContainsString('<animate', $out);
+        self::assertStringNotContainsString('alert(1)', $out);
+        self::assertStringContainsString('<text', $out);
+    }
+
+    public function test_set_and_foreign_object_are_stripped(): void
+    {
+        $out = HtmlSanitizer::sanitize(
+            '<svg><set attributeName="href" to="javascript:alert(1)"/>'
+            . '<foreignObject><div onclick="alert(2)">y</div></foreignObject><rect/></svg>'
+        );
+
+        self::assertStringNotContainsString('<set', $out);
+        self::assertStringNotContainsString('foreignobject', strtolower($out));
+        self::assertStringNotContainsString('alert(', $out);
+        self::assertStringContainsString('<rect', $out);
+    }
+
+    public function test_is_dangerous_url_sees_what_the_browser_sees(): void
+    {
+        self::assertTrue(HtmlSanitizer::isDangerousUrl("java	script:alert(1)"));
+        self::assertTrue(HtmlSanitizer::isDangerousUrl(" javascript:alert(1)"));
+        self::assertTrue(HtmlSanitizer::isDangerousUrl("data:text/
+html,<b>"));
+        self::assertFalse(HtmlSanitizer::isDangerousUrl('https://example.com/javascript:not-a-scheme'));
+        self::assertFalse(HtmlSanitizer::isDangerousUrl('/relative/path'));
+    }
 }

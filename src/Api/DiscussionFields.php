@@ -7,6 +7,7 @@ namespace Ramon\Avocado\Api;
 use DOMDocument;
 use DOMXPath;
 use Flarum\Api\Context;
+use Flarum\Api\Resource\DiscussionResource;
 use Flarum\Api\Resource\EloquentBuffer;
 use Flarum\Api\Schema;
 use Flarum\Discussion\Discussion;
@@ -22,6 +23,9 @@ class DiscussionFields
      * truncagem por palavra do front sem mandar o post inteiro.
      */
     private const EXCERPT_LENGTH = 300;
+
+    /** O cartão de resposta do card corta em 100; a folga cobre a truncagem por palavra. */
+    private const LAST_POST_EXCERPT_LENGTH = 200;
 
     protected Filesystem $disk;
 
@@ -94,6 +98,35 @@ class DiscussionFields
 
                     return fn (): ?string => $this->firstImage($this->firstPost($discussion, $context));
                 }),
+
+            // ── Resumo da última resposta ─────────────────────────────────────
+            // O cartão "última resposta" do ThreadCard mostrava
+            // `discussion.lastPost().contentPlain()`, o que obrigava as listas a
+            // pedir `include=lastPost` — o s9e renderizando um post inteiro por
+            // card (mais menções, likers e permissões) para 100 caracteres de
+            // texto. Mesmo esquema do avocadoExcerpt: lê o XML guardado.
+            //
+            // Sem resposta o card não mostra o cartão, então nem carrega o post.
+            // Listagem e Show (o refetch do tempo real é um Show); incluída em
+            // outro recurso a discussão não vira card.
+            Schema\Str::make('avocadoLastPostExcerpt')
+                ->nullable()
+                ->visible(fn (Discussion $discussion, Context $context) => $context->listing(DiscussionResource::class) || $context->showing(DiscussionResource::class))
+                ->get(function (Discussion $discussion, Context $context) {
+                    if ((int) $discussion->comment_count <= 1 || ! $discussion->last_post_id) {
+                        return null;
+                    }
+
+                    EloquentBuffer::add($discussion, 'lastPost');
+
+                    return function () use ($discussion, $context): ?string {
+                        $post = $this->bufferedPost($discussion, 'lastPost', $context);
+
+                        return $post === null || empty($post->parsed_content)
+                            ? null
+                            : $this->plainExcerpt($post->parsed_content, self::LAST_POST_EXCERPT_LENGTH);
+                    };
+                }),
         ];
     }
 
@@ -105,7 +138,16 @@ class DiscussionFields
      */
     private function firstPost(Discussion $discussion, Context $context): ?CommentPost
     {
-        if (! $discussion->relationLoaded('firstPost')) {
+        return $this->bufferedPost($discussion, 'firstPost', $context);
+    }
+
+    /**
+     * `firstPost`/`lastPost` pelo buffer de relações, com o escopo (visibilidade)
+     * da relação no schema de discussões.
+     */
+    private function bufferedPost(Discussion $discussion, string $relation, Context $context): ?CommentPost
+    {
+        if (! $discussion->relationLoaded($relation)) {
             // A relação é procurada na resource de discussões, não em
             // `$context->collection`: quando a discussão é serializada como
             // recurso *incluído* (de um /posts, por exemplo) a collection do
@@ -113,16 +155,16 @@ class DiscussionFields
             $resource = $context->api->getResource('discussions');
 
             /** @var Schema\Relationship\ToOne|null $relationship */
-            $relationship = collect($context->fields($resource))->first(fn ($field) => $field->name === 'firstPost');
+            $relationship = collect($context->fields($resource))->first(fn ($field) => $field->name === $relation);
 
-            EloquentBuffer::load($discussion, 'firstPost', $relationship, $context);
+            EloquentBuffer::load($discussion, $relation, $relationship, $context);
         }
 
         // Se mesmo assim a relação não veio (o buffer já tinha sido consumido
         // por outro campo neste documento), cai no lazy-load em vez de estourar.
-        $post = $discussion->relationLoaded('firstPost')
-            ? $discussion->getRelation('firstPost')
-            : $discussion->firstPost;
+        $post = $discussion->relationLoaded($relation)
+            ? $discussion->getRelation($relation)
+            : $discussion->{$relation};
 
         return $post instanceof CommentPost ? $post : null;
     }
@@ -153,7 +195,7 @@ class DiscussionFields
      * Uma única passada de parse cobre o que era feito em quatro (dois
      * `preg_replace` mais o load do `removeFormatting`).
      */
-    private function plainExcerpt(string $xml): ?string
+    private function plainExcerpt(string $xml, int $length = self::EXCERPT_LENGTH): ?string
     {
         if (trim($xml) === '') {
             return null;
@@ -181,6 +223,28 @@ class DiscussionFields
             $node->parentNode?->replaceChild($dom->createTextNode(' '), $node);
         }
 
+        // Menções guardam a sintaxe crua como texto (`@"Fulano"#p12`); o post
+        // renderizado mostra só o nome (templates do flarum/mentions). Respostas
+        // costumam abrir com uma, então o resumo da última resposta saía com o
+        // código no lugar do nome.
+        $mentions = [
+            'POSTMENTION'  => ['', 'displayname'],
+            'USERMENTION'  => ['@', 'displayname'],
+            'GROUPMENTION' => ['@', 'groupname'],
+            'TAGMENTION'   => ['', 'tagname'],
+        ];
+
+        foreach ($mentions as $tag => [$prefix, $attribute]) {
+            /** @var \DOMElement $node */
+            foreach ($xpath->query('//'.$tag) as $node) {
+                $name = $node->getAttribute($attribute);
+
+                if ($name !== '') {
+                    $node->parentNode?->replaceChild($dom->createTextNode($prefix.$name), $node);
+                }
+            }
+        }
+
         // `e`/`s` são a marcação em si (os `**` do negrito, o `>` da citação):
         // saem sem espaço, senão partiriam a palavra que estavam decorando.
         foreach ($xpath->query('//e | //s') as $node) {
@@ -189,7 +253,7 @@ class DiscussionFields
 
         $plain = trim(preg_replace('/\s+/', ' ', $dom->documentElement->textContent) ?? '');
 
-        return $plain === '' ? null : mb_substr($plain, 0, self::EXCERPT_LENGTH);
+        return $plain === '' ? null : mb_substr($plain, 0, $length);
     }
 
     /**

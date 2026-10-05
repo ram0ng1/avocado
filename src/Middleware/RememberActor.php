@@ -18,12 +18,17 @@ use Ramon\Avocado\Support\SupportEvents;
  */
 class RememberActor implements MiddlewareInterface
 {
+    public function __construct(
+        protected SupportEvents $events
+    ) {
+    }
+
     #[\Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $actor = RequestUtil::getActor($request);
 
-        SupportEvents::rememberActor($actor->isGuest() ? null : (int) $actor->id);
+        $this->events->rememberActor($actor->isGuest() ? null : (int) $actor->id);
 
         return $handler->handle($request);
     }

@@ -15,7 +15,7 @@ export type ComposerPlacement = 'floating' | 'inline';
  */
 export const composerPlacement = (): 'default' | ComposerPlacement => {
   const mode = app.forum?.attribute<string>('avocadoNewDiscussionComposer');
-  return mode === 'default' || mode === 'inline' ? mode : 'floating';
+  return mode === 'default' || mode === 'floating' ? mode : 'inline';
 };
 
 export interface IFloatingInlineComposerAttrs extends IInlineComposerAttrs {
