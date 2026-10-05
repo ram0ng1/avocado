@@ -8,7 +8,6 @@ use Flarum\Discussion\Discussion;
 use Flarum\Foundation\ValidationException;
 use Flarum\Http\RequestUtil;
 use Flarum\Locale\TranslatorInterface;
-use Flarum\Settings\SettingsRepositoryInterface;
 use Flarum\User\Exception\PermissionDeniedException;
 use Illuminate\Support\Arr;
 use Laminas\Diactoros\Response\JsonResponse;
@@ -26,14 +25,14 @@ use Ramon\Avocado\Support\BookmarksSetting;
 class DeleteBookmarkController implements RequestHandlerInterface
 {
     public function __construct(
-        protected SettingsRepositoryInterface $settings,
+        protected BookmarksSetting $bookmarks,
         protected TranslatorInterface $translator,
     ) {
     }
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        if (! BookmarksSetting::enabled($this->settings)) {
+        if (! $this->bookmarks->enabled()) {
             throw new PermissionDeniedException();
         }
 

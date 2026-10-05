@@ -60,11 +60,11 @@
 }
 
 // ─── Backdrop ────────────────────────────────────────────────────────────────
-// `.Modal-backdrop` é irmão do .ModalManager, daí o :has() no body em vez de um
-// seletor descendente (mesmo padrão do SearchModal).
-body:has(.ModalManager .RenameDiscussionModal),
-body:has(.ModalManager .TagDiscussionModal),
-body:has(.ModalManager .AvocadoBookmarkModal) {
+// `.Modal-backdrop` é irmão do .ModalManager, daí a classe no body em vez de um
+// seletor descendente. Ela vem de js/src/forum/utils/modalBackdrop.ts (Rename,
+// TagDiscussion, AvocadoBookmark e AvocadoTagsModal) e substitui o antigo
+// body:has(.ModalManager …), que era reavaliado a cada mutação de DOM da página.
+body.avocado-backdrop--dim {
   .Modal-backdrop {
     background: rgba(15, 15, 20, 0.42);
     backdrop-filter: blur(4px);

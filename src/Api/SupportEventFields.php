@@ -22,11 +22,16 @@ use Ramon\Avocado\Support\SupportEvents;
  */
 class SupportEventFields
 {
+    public function __construct(
+        protected SupportEvents $events
+    ) {
+    }
+
     public function __invoke(): array
     {
         return [
             Schema\Arr::make('avocadoEvents')
-                ->visible(fn () => SupportEvents::available())
+                ->visible(fn () => $this->events->available())
                 ->get(function (Model $ticket): array {
                     if (! $ticket->relationLoaded('avocadoEvents')) {
                         $ticket->load('avocadoEvents.user');

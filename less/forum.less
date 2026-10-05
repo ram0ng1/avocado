@@ -1,4 +1,12 @@
-@import "common/fonts.less";
+// As @font-face da DM Sans moram só no CSS crítico inline (src/Content/AddCriticalCss.php,
+// URLs de src/Content/ThemeFonts.php), com a mesma URL do preload — uma declaração
+// aqui com outra URL fazia a fonte ser baixada duas vezes em alguns ambientes.
+//
+// O CSS do tema é montado em três partes (ver extend.php): esta folha, as folhas
+// de cada extensão de terceiros (registradas só com a extensão ativa, para um
+// fórum sem ela não baixar o CSS) e forum-tail.less. O Flarum compila todas no
+// MESMO Less_Parser, na ordem de registro: variáveis e mixins daqui valem nas
+// outras e a ordem da cascata é a mesma de quando tudo era importado aqui.
 @import "common/common.less";
 
 @import "forum/App.less";
@@ -24,28 +32,13 @@
 @import "forum/UserPage.less";
 @import "forum/SearchPage.less";
 @import "forum/SearchModal.less";
-@import "forum/MessagesPage.less";
-@import "forum/extensions/LeaderboardPage.less";
-@import "forum/extensions/Gamification.less";
-@import "forum/extensions/BadgeLabels.less";
-@import "forum/extensions/FofBookmarks.less";
+// No ponto em que ficava o MessagesPage.less (de onde saiu): vale sem o flarum/messages.
+@import "forum/DiscussionListPane.less";
+// Subiram de depois das folhas de extensão para cá: nenhuma delas toca em
+// pre/code/.UrlLink com especificidade que dependa da ordem (as regras de
+// código das bolhas de mensagem são mais específicas e ganham de todo jeito).
 @import "forum/CodeHighlight.less";
 @import "forum/UrlLink.less";
-// Depois do DiscussionPage.less: a galeria zera a margem/raio que a regra de
-// imagem do post aplica, e o diagrama reusa a moldura dos blocos de código.
-@import "forum/extensions/Fancybox.less";
-@import "forum/extensions/Mermaid.less";
-// Depois do sideNav.less e do Post.less de propósito: a barra de controles do
-// support reaproveita a nav lateral do Flarum e a prévia do composer dele usa
-// o .Post fora de uma discussão — os dois precisam ganhar dessas folhas.
-@import "forum/extensions/Support.less";
-@import "forum/Skeletons.less";
-@import "forum/Reactions.less";
-@import "forum/DarkMode.less";
-@import "forum/colored.less";
-@import "forum/TeamPage.less";
-@import "forum/Changelog.less";
-@import "forum/ChangelogEntry.less";
-@import "forum/Bookmarks.less";
-@import "forum/UserCard.less";
-@import "forum/Presence.less";
+// Aqui entram, via extend.php, as folhas por extensão: MessagesPage,
+// LeaderboardPage, Gamification, BadgeLabels, FofBookmarks, Fancybox, Mermaid e
+// Support — nessa ordem, a mesma de antes.

@@ -227,9 +227,32 @@ export const coverPosition = (user: any): string => {
 // the footer field legitimately ships animation CSS that gets hoisted into
 // <head>. Instead its body is scrubbed (see SANITIZE_DANGER_CSS) and the node
 // dropped only when it carries an injection/exfil sink.
-const SANITIZE_STRIP_ELS = ['script', 'iframe', 'object', 'embed', 'link', 'meta', 'base', 'form', 'noscript', 'template'];
+// SVG <foreignObject> and the SMIL animation elements go too: an <animate
+// attributeName="href" values="javascript:…"> rewrites a link at runtime, past
+// any attribute check. Selectors for SVG elements are case-sensitive, hence the
+// camelCase names.
+const SANITIZE_STRIP_ELS = [
+  'script',
+  'iframe',
+  'object',
+  'embed',
+  'link',
+  'meta',
+  'base',
+  'form',
+  'noscript',
+  'template',
+  'foreignObject',
+  'animate',
+  'set',
+  'animateMotion',
+  'animateTransform',
+];
 const SANITIZE_URL_ATTRS = ['href', 'src', 'action', 'formaction', 'xlink:href', 'srcset', 'background', 'poster'];
 const SANITIZE_DANGER_SCHEME = /^\s*(?:javascript|vbscript|data:text\/html)/i;
+// The browser drops tab/newline anywhere in a URL and trims leading controls, so
+// `java&#9;script:` runs as `javascript:` — test the scheme it will actually see.
+const isDangerousUrl = (value: string): boolean => SANITIZE_DANGER_SCHEME.test(value.replace(/[\u0000-\u0020\u007F]+/g, ''));
 const SANITIZE_DANGER_STYLE = /expression\s*\(|javascript:|vbscript:|@import/i;
 // <style> body sinks reaching every visitor as page CSS: @import (remote/data:
 // fetch = exfil + injection), expression()/behavior/-moz-binding (legacy script
@@ -273,7 +296,7 @@ const sanitizeAdminHtmlOnce = (raw: string): string => {
         el.removeAttribute(attr.name);
         return;
       }
-      if (SANITIZE_URL_ATTRS.includes(name) && SANITIZE_DANGER_SCHEME.test(attr.value)) {
+      if (SANITIZE_URL_ATTRS.includes(name) && isDangerousUrl(attr.value)) {
         el.removeAttribute(attr.name);
         return;
       }

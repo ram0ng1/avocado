@@ -9,7 +9,6 @@ use Flarum\Discussion\Discussion;
 use Flarum\Foundation\ValidationException;
 use Flarum\Http\RequestUtil;
 use Flarum\Locale\TranslatorInterface;
-use Flarum\Settings\SettingsRepositoryInterface;
 use Flarum\User\Exception\PermissionDeniedException;
 use Illuminate\Support\Arr;
 use Laminas\Diactoros\Response\JsonResponse;
@@ -30,14 +29,14 @@ class UpdateBookmarkController implements RequestHandlerInterface
     public const NOTE_MAX_LENGTH = 1000;
 
     public function __construct(
-        protected SettingsRepositoryInterface $settings,
+        protected BookmarksSetting $bookmarks,
         protected TranslatorInterface $translator,
     ) {
     }
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        if (! BookmarksSetting::enabled($this->settings)) {
+        if (! $this->bookmarks->enabled()) {
             throw new PermissionDeniedException();
         }
 

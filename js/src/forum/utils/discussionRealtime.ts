@@ -1,7 +1,10 @@
 import app from 'flarum/forum/app';
 import { bindRealtime, pushPayloadDiscussion } from '../realtime';
 
-const INCLUDE = 'user,firstPost,lastPostedUser,lastPost,tags';
+// O firstPost fica: se o post já estiver no store (curtido daqui, visto na
+// discussão), é ele que o card lê para as curtidas, e o refetch o mantém em dia.
+// A última resposta vem em `avocadoLastPostExcerpt`, então o lastPost sai.
+const INCLUDE = 'user,firstPost,lastPostedUser,tags';
 
 export interface DiscussionFeedHandlers {
   /** Returns true when the broadcast should affect the calling feed. */
@@ -26,7 +29,7 @@ export interface DiscussionFeedHandlers {
  *
  *  1. Resolves the broadcast payload into a Discussion model via the store.
  *  2. Optionally drops events that don't apply to this feed (`filter`).
- *  3. Refetches with full includes so cards have user/firstPost/tags ready.
+ *  3. Refetches with the includes the cards need (user/firstPost/tags).
  *  4. Updates the supplied tracking sets and triggers the consumer hook.
  *
  * Returns the unbind function from `bindRealtime` — call it from `onremove`.

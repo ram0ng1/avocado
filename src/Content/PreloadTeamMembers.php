@@ -6,6 +6,7 @@ namespace Ramon\Avocado\Content;
 
 use Flarum\Api\Client;
 use Flarum\Frontend\Document;
+use Flarum\Http\RequestUtil;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -43,6 +44,15 @@ class PreloadTeamMembers
     public function __invoke(Document $document, ServerRequestInterface $request): void
     {
         if ($request->getAttribute('routeName') !== self::ROUTE) {
+            return;
+        }
+
+        // Mesmo gate do endpoint (UserResource Index → can('searchUsers')). Sem a
+        // permissão — o caso de todo visitante deslogado aqui — cada sub-request
+        // montava o pipeline da API inteiro só para levar 403 e cair no catch,
+        // uma vez por grupo. O front já trata a ausência do preload (busca e
+        // recebe o mesmo 403), então sair cedo não muda nada na tela.
+        if (RequestUtil::getActor($request)->cannot('searchUsers')) {
             return;
         }
 

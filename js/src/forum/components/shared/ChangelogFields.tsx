@@ -56,6 +56,7 @@ export class CoverPicker extends Component<CoverPickerAttrs> {
     this.open = open;
     this.watcher?.destroy();
     this.watcher = null;
+    this.listen(open);
 
     // O modal do Flarum 2 fecha com a API CloseWatcher — não é um `keydown`, então
     // stopPropagation não segura. O observador mais novo recebe o Esc primeiro: com o
@@ -67,6 +68,7 @@ export class CoverPicker extends Component<CoverPickerAttrs> {
         watcher.onclose = () => {
           this.watcher = null;
           this.open = false;
+          this.listen(false);
           m.redraw();
         };
         this.watcher = watcher;
@@ -91,23 +93,46 @@ export class CoverPicker extends Component<CoverPickerAttrs> {
     if (!this.watcher) this.setOpen(false);
   };
 
-  oncreate(vnode: any) {
-    super.oncreate(vnode);
-    document.addEventListener('click', this.onDocumentClick, true);
-    document.addEventListener('keydown', this.onKeyDown, true);
-    window.addEventListener('resize', this.place);
-    window.addEventListener('scroll', this.place, true);
+  /**
+   * Os ouvintes globais só existem com o painel aberto. Antes ficavam presos o
+   * tempo todo em que o chip estava montado — inclusive um scroll em captura e não
+   * passivo, que rodava a cada rolagem de qualquer elemento da página.
+   * (Ligados no clique que abre: o próprio clique já passou da fase de captura do
+   * document, então não chega no onDocumentClick e não fecha o painel na hora.)
+   */
+  private listening = false;
+
+  private listen(on: boolean) {
+    if (this.listening === on) return;
+    this.listening = on;
+    const method = on ? 'addEventListener' : 'removeEventListener';
+    document[method]('click', this.onDocumentClick, true);
+    document[method]('keydown', this.onKeyDown as EventListener, true);
+    window[method]('resize', this.schedulePlace, { passive: true } as any);
+    window[method]('scroll', this.schedulePlace, { capture: true, passive: true } as any);
+    if (!on && this.placeFrame) {
+      cancelAnimationFrame(this.placeFrame);
+      this.placeFrame = 0;
+    }
   }
 
   onremove(vnode: any) {
     super.onremove(vnode);
     this.watcher?.destroy();
     this.watcher = null;
-    document.removeEventListener('click', this.onDocumentClick, true);
-    document.removeEventListener('keydown', this.onKeyDown, true);
-    window.removeEventListener('resize', this.place);
-    window.removeEventListener('scroll', this.place, true);
+    this.listen(false);
   }
+
+  /** Rolagem/resize disparam várias vezes por quadro: mede e posiciona uma vez só. */
+  private placeFrame = 0;
+
+  private schedulePlace = () => {
+    if (this.placeFrame) return;
+    this.placeFrame = requestAnimationFrame(() => {
+      this.placeFrame = 0;
+      this.place();
+    });
+  };
 
   /**
    * Põe o painel no lugar. Absoluto ele era cortado pelo `overflow: hidden` do

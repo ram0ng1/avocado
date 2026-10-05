@@ -5,6 +5,7 @@
 import { extend, override } from 'flarum/common/extend';
 import trustedHtml from '../common/trustedHtml';
 import { installTagIconSvg } from '../common/tagIconSvg';
+import { measureTightViewBox } from '../common/logoViewBox';
 import Button from 'flarum/common/components/Button';
 import PostControls from 'flarum/forum/utils/PostControls';
 import Tooltip from 'flarum/common/components/Tooltip';
@@ -34,13 +35,14 @@ import PageStructure from 'flarum/forum/components/PageStructure';
 // flarum.reg.onLoad() applies the patch after the module is loaded.
 import { tagPageView } from './components/TagsPage';
 import HomePage from './components/HomePage';
-import BookmarkModal from './components/BookmarkModal';
-// A página do changelog entra no bundle principal em vez de virar chunk: o
-// bundle principal tem o `?v=` da revisão na URL, mas no Windows as chaves do
-// rev-manifest dos chunks lazy usam barra invertida, a revisão nunca casa, o
-// chunk é pedido sem versão e fica em cache "immutable" por um ano no CDN e no
-// navegador — uma página nova chegava ao usuário com o JS antigo.
-import AvocadoChangelogPage from './components/ChangelogPage';
+import normalizeRevManifest from './utils/revManifest';
+// O modal de lembrete dos salvos e a página do changelog viraram chunks lazy
+// (≈14 KB a menos no bundle de toda página). Antes eles iam no bundle principal
+// porque, no Windows, o chunk era pedido sem `?v=` e ficava preso em cache
+// "immutable" no CDN; o `normalizeRevManifest` (initializer abaixo) devolve o
+// `?v=<hash do conteúdo>` às URLs dos chunks, então um chunk alterado é uma URL nova.
+const BookmarkModal = () => import('./components/BookmarkModal');
+const AvocadoChangelogPage = () => import('./components/ChangelogPage');
 // A página "Salvos" entra no bundle principal em vez de virar chunk: com o
 // fof/bookmarks ativo ela atende a rota dele, e o bundle dele usa ids numéricos
 // de webpack no `webpackChunkmodule_exports` compartilhado — a colisão de ids
@@ -59,10 +61,11 @@ import { buildUserPhoneNav, buildHero, buildSidebar } from './components/UserPro
 // webpackChunkName comments so each import() becomes its own JS chunk
 // registered with flarum.reg.addChunkModule().
 
-// `webpackPrefetch: true` faz o webpack emitir `<link rel="prefetch">` para
-// AllDiscussionsPage e TagPage (rotas mais prováveis após a home/tags). O
-// browser baixa esses chunks em idle, sem bloquear o first paint. Search*
-// e TeamPage ficam sem prefetch — só baixam quando o usuário navega.
+// Sem `webpackPrefetch` de propósito: o loader da Flarum só substitui o carregamento
+// do chunk (`flarum.reg.loadChunk`), e o `<link rel="prefetch">` do webpack usaria a
+// URL do runtime (`/assets/forum/components/X.js`), que não existe — o chunk mora em
+// `/assets/js/ramon-avocado/forum/components/`. Além disso o prefetch somaria esses
+// bytes a todo primeiro acesso. Todos os chunks baixam só quando a rota é aberta.
 
 const AllDiscussionsPage = () => import('./components/AllDiscussionsPage');
 const AvocadoTagPage = () => import('./components/TagPage');
@@ -125,7 +128,11 @@ import installComposerDock from './utils/composerDock';
 import installComposerPreview from './utils/composerPreview';
 import installComposerMorph from './utils/composerMorph';
 import installTagsModal from './utils/tagsModal';
+import installModalBackdropClasses from './utils/modalBackdrop';
 import installReplyTo from './utils/replyTo';
+import { realtimeAvailable } from './realtime';
+import Application from 'flarum/common/Application';
+import extractText from 'flarum/common/utils/extractText';
 
 // ─── Settings helpers ─────────────────────────────────────────────────────────
 
@@ -345,9 +352,11 @@ const syncUserOnline = (component) => {
   if (!root) return;
   const side = root.querySelector('.Post-side');
   if (!side) return;
-  side.classList.remove('Post-side--online');
-  const userOnlineEl = root.querySelector('.PostUser-name .UserOnline') || root.querySelector('.Post-header .UserOnline');
-  if (userOnlineEl) side.classList.add('Post-side--online');
+  // Roda a cada redraw (o "online" vence com o tempo, sem o model mudar), então
+  // só escreve no DOM quando o estado muda: remover e repor a classe todo redraw
+  // gerava mutação de atributo à toa em cada post visível.
+  const online = !!root.querySelector('.PostUser-name .UserOnline, .Post-header .UserOnline');
+  if (side.classList.contains('Post-side--online') !== online) side.classList.toggle('Post-side--online', online);
 };
 
 const isExternalLink = (link) => {
@@ -513,6 +522,10 @@ const addThreadsBackLabel = (root: HTMLElement | null) => {
   }
 };
 
+// Prioridade alta: precisa rodar antes de qualquer initializer que carregue chunk
+// (o core lê o rev-manifest uma vez só, na primeira carga). Ver utils/revManifest.
+app.initializers.add('avocado-rev-manifest', normalizeRevManifest, 1000);
+
 app.initializers.add(
   'ramon-avocado',
   () => {
@@ -616,9 +629,8 @@ app.initializers.add(
     app.beforeMount(() => {
       // Preload eager removido — Lighthouse acusava ~537 KB de "JS não usado"
       // porque os 4 chunks baixavam mesmo em rotas que nunca os consomem
-      // (home, /discussions, /tags). Em vez disso, AllDiscussionsPage e
-      // TagPage têm `webpackPrefetch: true` na declaração (browser baixa em
-      // idle); Search* e TeamPage carregam só na navegação.
+      // (home, /discussions, /tags). Agora todos carregam só na navegação
+      // (sem prefetch: ver o comentário junto das rotas lazy, no topo).
 
       // Theme class on <html> — added whenever V2 is active
       document.documentElement.classList.add('avocado-theme');
@@ -630,8 +642,11 @@ app.initializers.add(
 
       // Custom SVG logo override.
       // PHP adds <style>#home-link{visibility:hidden}</style> to <head> so the
-      // forum title never flashes. We fetch the SVG, find its content bounds via
-      // getBBox, set a tight viewBox, then inline it so whitespace is cropped.
+      // forum title never flashes. Caminho rápido: com o viewBox já medido no
+      // admin, o HideLogoFlash embute o SVG e um script no <head> troca o
+      // conteúdo do #home-link ainda no parse — aqui só sobra conferir.
+      // Fallback (logo novo, ainda sem medida): busca o SVG, mede o recorte com
+      // getBBox (common/logoViewBox) e insere, como sempre foi.
       if (settingEnabled('avocadoLogoEnabled', false)) {
         const logoSvgPath = app.forum.attribute('avocadoLogoSvg');
         const homeLink = document.getElementById('home-link');
@@ -643,7 +658,9 @@ app.initializers.add(
           if (hide) hide.remove();
         };
 
-        if (homeLink && logoUrl) {
+        if (homeLink && homeLink.querySelector('svg.AvocadoLogoSvg')) {
+          restoreVisibility();
+        } else if (homeLink && logoUrl) {
           fetch(logoUrl)
             .then((r) => (r.ok ? r.text() : Promise.reject()))
             .then((svgText) => {
@@ -652,37 +669,7 @@ app.initializers.add(
               const svgEl = svgDoc.documentElement;
               if (svgEl.nodeName !== 'svg') throw new Error('not-svg');
 
-              // Insert offscreen so getBBox works (requires DOM presence).
-              const probe = document.createElement('div');
-              probe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:2000px;height:2000px;overflow:hidden;';
-              document.body.appendChild(probe);
-              probe.appendChild(svgEl);
-
-              let tightViewBox = null;
-              try {
-                let x0 = Infinity,
-                  y0 = Infinity,
-                  x1 = -Infinity,
-                  y1 = -Infinity;
-                svgEl.querySelectorAll('path,rect,circle,ellipse,polygon,polyline,line,text,image,use').forEach((el) => {
-                  if (el.closest('defs')) return;
-                  try {
-                    const b = el.getBBox();
-                    if (b.width > 0 && b.height > 0) {
-                      x0 = Math.min(x0, b.x);
-                      y0 = Math.min(y0, b.y);
-                      x1 = Math.max(x1, b.x + b.width);
-                      y1 = Math.max(y1, b.y + b.height);
-                    }
-                  } catch (_) {}
-                });
-                if (isFinite(x0)) {
-                  const pad = (x1 - x0) * 0.03; // 3% padding
-                  tightViewBox = `${x0 - pad} ${y0 - pad} ${x1 - x0 + pad * 2} ${y1 - y0 + pad * 2}`;
-                }
-              } catch (_) {}
-
-              document.body.removeChild(probe);
+              const tightViewBox = measureTightViewBox(svgEl);
 
               const out = svgEl.cloneNode(true);
               if (tightViewBox) out.setAttribute('viewBox', tightViewBox);
@@ -733,6 +720,10 @@ app.initializers.add(
         if (logoHide) {
           const homeLink = document.getElementById('home-link');
           const revealFn = () => {
+            // Desliga o observador também quando quem revela é o timeout: sem isso
+            // ele ficava vigiando o documento inteiro (subtree) para sempre quando
+            // a <img> não aparecia, rodando um querySelector a cada mutação.
+            obs.disconnect();
             if (homeLink) homeLink.style.visibility = '';
             logoHide.remove();
           };
@@ -1056,31 +1047,9 @@ app.initializers.add(
               {(showDecorationIcon && decorationIconClass) ||
               (showDecorationIcon && showDecoDivider) ||
               (showDecorationIcon && isTwoIconScreen && iconCount >= 2 && decorationIconClass2) ? (
-                <div
-                  className="DiscussionHero-decorationsContainer"
-                  oncreate={(vnode) => {
-                    // ResizeObserver to ensure icons render properly
-                    const container = vnode.dom;
-                    const observer = new ResizeObserver(() => {
-                      // Just observe - don't modify layout to avoid conflicts with CSS padding
-                      // This ensures icons render at their true size
-                    });
-
-                    // Observe container and all icons
-                    observer.observe(container);
-                    container.querySelectorAll('.DiscussionHero-decorationIcon, .DiscussionHero-decoSeparator').forEach((el) => {
-                      observer.observe(el);
-                    });
-
-                    // Cleanup
-                    vnode.dom._iconObserver = observer;
-                  }}
-                  onremove={(vnode) => {
-                    if (vnode.dom._iconObserver) {
-                      vnode.dom._iconObserver.disconnect();
-                    }
-                  }}
-                >
+                // Sem ResizeObserver aqui: o que existia tinha callback vazio (só
+                // observava, nunca mexia no layout) — custo de observação sem efeito.
+                <div className="DiscussionHero-decorationsContainer">
                   {/* Decoration icon: first child tag icon */}
                   {showDecorationIcon && decorationIconClass && (
                     <div
@@ -2004,6 +1973,7 @@ app.initializers.add(
       );
 
       // Nota/lembrete do bookmark — só faz sentido quando já está salvo.
+      // BookmarkModal é o loader lazy (chunk); o ModalManager do core aceita a função async.
       if (saved) {
         items.add(
           'avocadoBookmarkEdit',
@@ -2746,25 +2716,48 @@ app.initializers.add(
       });
     }
 
-    extend(CommentPost.prototype, 'oncreate', function () {
-      syncUserOnline(this);
-      gateGuestLinks(this);
-      initCodeBlocks(this.element);
-      initGalleryNav(this.element);
-      fixReactionCounts(this.element);
-      fixUnreactButton(this.element);
-      initThreadsTitleBlock(this);
-    });
+    // O onupdate do CommentPost roda a cada redraw da página (rolagem do
+    // PostStream, evento do realtime, alerta...) em TODOS os posts montados. As
+    // varreduras abaixo só têm o que fazer quando o HTML do post muda, e isso só
+    // acontece quando o model recebe dados novos (pushData troca `freshness` por
+    // um Date novo — mesmo truque do core para invalidar subárvores) ou quando o
+    // post entra/sai da edição ou do "revelar" de post oculto. Guardamos essa
+    // assinatura no componente e pulamos o resto quando nada mudou.
+    // Na edição a prévia se reescreve sozinha, então ali roda todo redraw, como antes.
+    const postDomChanged = (component): boolean => {
+      const post = component.attrs?.post;
+      const editing = !!component.isEditing?.();
+      const fresh = post?.freshness;
+      const reveal = !!component.revealContent;
+      const changed =
+        editing ||
+        component._avFresh !== fresh ||
+        component._avEditing !== editing ||
+        component._avReveal !== reveal ||
+        component._avEl !== component.element;
+      component._avFresh = fresh;
+      component._avEditing = editing;
+      component._avReveal = reveal;
+      component._avEl = component.element;
+      return changed;
+    };
 
-    // FIX: guard before DOM ops — onupdate fires on every parent redraw.
+    const enhancePost = (component) => {
+      syncUserOnline(component);
+      if (!postDomChanged(component)) return;
+      gateGuestLinks(component);
+      initCodeBlocks(component.element);
+      initGalleryNav(component.element);
+      fixReactionCounts(component.element);
+      fixUnreactButton(component.element);
+      initThreadsTitleBlock(component);
+    };
+
+    extend(CommentPost.prototype, 'oncreate', function () {
+      enhancePost(this);
+    });
     extend(CommentPost.prototype, 'onupdate', function () {
-      syncUserOnline(this);
-      gateGuestLinks(this);
-      initCodeBlocks(this.element);
-      initGalleryNav(this.element);
-      fixReactionCounts(this.element);
-      fixUnreactButton(this.element);
-      initThreadsTitleBlock(this);
+      enhancePost(this);
     });
 
     // ── 20. CommentPost actionItems (share button) ────────────────────────────
@@ -2858,7 +2851,8 @@ app.initializers.add(
     const syncThreadsClass = (el: HTMLElement) => {
       if (!el) return;
       const enabled = settingEnabled('avocadoThreadsStyle', false);
-      el.classList.toggle('avocado-threads', enabled);
+      // Roda a cada redraw: só escreve quando muda, para não gerar mutação à toa.
+      if (el.classList.contains('avocado-threads') !== enabled) el.classList.toggle('avocado-threads', enabled);
     };
 
     extend(DiscussionPage.prototype, 'oncreate', function () {
@@ -3614,55 +3608,72 @@ app.initializers.add(
       };
     }
 
-    // ── 25. Notification polling (fallback — only when no WebSocket is live) ────
-    // flarum/realtime sets app.websocket (Pusher) whose connection.state = 'connected'.
-    (() => {
-      const INTERVAL_MS = 30_000;
+    // ── 25. Contadores do usuário sem websocket (fallback leve) ───────────────
+    // Com o flarum/realtime ativo NÃO há polling nenhum: as notificações chegam
+    // pelo canal private-user (o próprio realtime soma os contadores) e o Pusher
+    // reconecta sozinho — o core e as fof também não fazem polling. Antes, toda aba
+    // logada pedia GET /users/{id} completo + app.dialogs.load() a cada 30 s
+    // sempre que o socket não estava "connected" (inclusive enquanto conectava).
+    // Sem o realtime instalado fica só um fallback barato: aba visível, só os
+    // contadores (sparse fieldset, ~150 bytes em vez da ficha inteira), intervalo
+    // de 1 min que dobra até 5 min enquanto nada muda. A lista de conversas não é
+    // recarregada aqui: o DialogListState do flarum/messages já recarrega ao abrir
+    // quando `messageCount` mudou.
+    if (!realtimeAvailable()) {
+      const MIN_MS = 60_000;
+      const MAX_MS = 300_000;
+      const FIELDS = ['unreadNotificationCount', 'newNotificationCount', 'messageCount'];
+      let delay = MIN_MS;
+      let timer: number | undefined;
+      let lastPoll = Date.now();
 
-      const isWebSocketActive = () => {
-        try {
-          // flarum/realtime: app.websocket is the Pusher instance
-          return app.websocket?.connection?.state === 'connected' || !!window.Echo;
-        } catch (_) {
-          return false;
-        }
+      const snapshot = (user: any) => FIELDS.map((f) => user?.attribute?.(f)).join('|');
+
+      const schedule = () => {
+        window.clearTimeout(timer);
+        timer = document.hidden ? undefined : window.setTimeout(poll, delay);
       };
 
       const poll = () => {
-        if (document.hidden) return;
-        if (!app.session?.user) return;
-        if (isWebSocketActive()) return;
-
-        const userId = app.session.user.id?.();
-        if (!userId) return;
+        const user = app.session?.user;
+        if (document.hidden || !user) return;
+        lastPoll = Date.now();
+        const before = snapshot(user);
 
         app
           .request({
             method: 'GET',
-            url: `${app.forum.attribute('apiUrl')}/users/${userId}`,
+            url: `${app.forum.attribute('apiUrl')}/users/${user.id()}`,
+            params: { fields: { users: FIELDS.join(',') } },
             errorHandler: () => {},
           })
-          .then((payload) => {
+          .then((payload: any) => {
             app.store.pushPayload(payload);
-            m.redraw();
+            const changed = snapshot(user) !== before;
+            delay = changed ? MIN_MS : Math.min(delay * 2, MAX_MS);
+            if (changed) m.redraw();
           })
-          .catch(() => {});
-
-        if (typeof app.dialogs?.load === 'function') {
-          try {
-            app.dialogs.load();
-          } catch (_) {}
-        }
+          .catch(() => {
+            delay = Math.min(delay * 2, MAX_MS);
+          })
+          .finally(schedule);
       };
 
-      setTimeout(() => {
-        poll();
-        setInterval(poll, INTERVAL_MS);
-      }, 5000);
-      document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) poll();
-      });
-    })();
+      if (app.session?.user) {
+        schedule();
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) {
+            window.clearTimeout(timer);
+            timer = undefined;
+            return;
+          }
+          // Voltou para a aba: atualiza já se faz tempo, e recomeça do intervalo mínimo.
+          delay = MIN_MS;
+          if (Date.now() - lastPoll >= MIN_MS) poll();
+          else schedule();
+        });
+      }
+    }
 
     // ── 25b. flarum/realtime — custom event handlers ──────────────────────────
     // Strategy: subscribe directly via app.websocket (Pusher instance) rather
@@ -3754,18 +3765,25 @@ app.initializers.add(
         }
       };
 
-      // Poll until app.websocket is initialised (set during Application.mount).
-      const MAX = 15_000,
-        TICK = 300;
-      let elapsed = 0;
-      const timer = setInterval(() => {
-        elapsed += TICK;
-        if (bindChannels()) {
-          clearInterval(timer);
-        } else if (elapsed >= MAX) {
-          clearInterval(timer);
-        }
-      }, TICK);
+      // Sem o realtime não há socket para esperar (antes ficava 15 s testando
+      // app.websocket a cada 300 ms em toda página à toa).
+      if (!realtimeAvailable()) return;
+
+      // O realtime cria app.websocket num extend de Application.mount, que o boot
+      // chama logo depois dos initializers. Fazemos o mesmo extend e adiamos para
+      // a microtask seguinte: o mount é síncrono, então ali todos os extends dele
+      // (inclusive o do realtime, registrado antes ou depois do nosso) já rodaram
+      // e o socket existe — sem polling.
+      extend(Application.prototype as any, 'mount', () => {
+        queueMicrotask(() => {
+          if (bindChannels()) return;
+          // Rede de segurança: falha pontual no subscribe — tenta poucas vezes.
+          let tries = 0;
+          const timer = window.setInterval(() => {
+            if (bindChannels() || ++tries >= 10) window.clearInterval(timer);
+          }, 1000);
+        });
+      });
     })();
 
     // ── 24. DiscussionListItem infoItems (excerpt) ────────────────────────────
@@ -3853,27 +3871,44 @@ app.initializers.add(
 // reaction is removed and the gamification/likes integration is active.
 // This alert breaks the seamless UX, so we intercept and silently drop it.
 //
-// Approach: patch app.translator.trans() so the warning key returns null.
-// Then patch app.alerts.show() to skip null/falsy children on warning alerts.
-// Double-patching is necessary because trans() may return a VNode array in some
-// Flarum 2 locales, making string comparison unreliable.
+// O filtro fica só no app.alerts.show (chamado raramente). Antes o
+// app.translator.trans — a função mais quente do front, chamada centenas de
+// vezes por redraw — era embrulhado inteiro só para anular esta chave.
+// Reconhecemos o aviso pelo texto: a tradução crua da chave vira uma regex (os
+// placeholders ICU como {reaction} viram curinga) comparada com o texto do
+// alerta via extractText, que funciona tanto com string quanto com vnodes.
 app.initializers.add(
   'avocado-suppress-reaction-converted-warning',
   () => {
+    if (!('fof-reactions' in flarum.extensions)) return;
     const SUPPRESS_KEY = 'fof-reactions.forum.warning';
+    let matcher: RegExp | null | undefined;
 
-    // Patch 1: translator → return null for the warning key
-    const origTrans = app.translator.trans.bind(app.translator);
-    (app.translator as any).trans = function (key: string, ...rest: any[]) {
-      if (key === SUPPRESS_KEY) return null;
-      return origTrans.apply(app.translator, [key, ...rest] as any);
+    const isSuppressed = (children: any): boolean => {
+      if (matcher === undefined) {
+        const raw = (app.translator as any).translations?.[SUPPRESS_KEY];
+        matcher =
+          typeof raw === 'string' && raw
+            ? new RegExp(
+                '^' +
+                  raw
+                    .split(/\{[^}]*\}/)
+                    .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+                    .join('.*') +
+                  '$',
+                's'
+              )
+            : null;
+      }
+      if (!matcher) return false;
+      return matcher.test(extractText(children).trim());
     };
 
-    // Patch 2: alerts.show → skip null/empty warning children
     const _show = app.alerts.show.bind(app.alerts);
-    (app.alerts as any).show = function (attrs: any, children: any) {
-      if (attrs?.type === 'warning' && (children === null || children === '' || children === undefined)) return;
-      return _show.call(app.alerts, attrs, children);
+    // Repassa todos os argumentos: show() também aceita (componente, attrs, filhos).
+    (app.alerts as any).show = function (...args: any[]) {
+      if (args[0]?.type === 'warning' && isSuppressed(args[1])) return;
+      return (_show as any)(...args);
     };
   },
   -200
@@ -3910,3 +3945,7 @@ app.initializers.add(
 // Prioridade baixa: roda depois do initializer do flarum/tags, que é quem põe o
 // item "Editar tags" no menu da discussão (utils/tagsModal.ts troca o clique).
 app.initializers.add('avocado-tags-modal', () => installTagsModal(), -200);
+
+// ── Classes do backdrop por modal ─────────────────────────────────────────────
+// Substituem os `body:has(.ModalManager …)` do LESS (ver utils/modalBackdrop.ts).
+app.initializers.add('avocado-modal-backdrop', () => installModalBackdropClasses());

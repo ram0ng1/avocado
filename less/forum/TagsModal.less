@@ -8,10 +8,9 @@
 // um dropdown flutuante e passa a ser o corpo do diálogo.
 // ─────────────────────────────────────────────────────────────────────────────
 
-body:has(.ModalManager .AvocadoTagsModal) .Modal-backdrop {
-  background: rgba(15, 15, 20, 0.42);
-  backdrop-filter: blur(4px);
-}
+// O fundo escurecido com blur é o mesmo dos modais da discussão: a regra
+// `body.avocado-backdrop--dim .Modal-backdrop` mora em DiscussionModals.less e a
+// classe vem de js/src/forum/utils/modalBackdrop.ts (antes era um body:has()).
 
 .Modal.AvocadoTagsModal {
   max-width: 480px;

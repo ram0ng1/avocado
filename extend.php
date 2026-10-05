@@ -18,9 +18,21 @@ use Ramon\Avocado\Middleware\AddPerfHeaders;
 use Ramon\Avocado\Support\BookmarksRoute;
 use Ramon\Avocado\Support\BookmarksSchema;
 use Ramon\Avocado\Support\ChangelogSchema;
-use Ramon\Avocado\Support\HtmlSanitizer;
+use Ramon\Avocado\Support\SanitizedHtmlCache;
 use Ramon\Avocado\Support\SupportEvents;
 use Ramon\Avocado\Support\TagIconSvg;
+
+// id da extensão => folha em less/forum/, na ordem da cascata (ver o uso abaixo).
+$extensionStylesheets = [
+    'flarum-messages' => 'MessagesPage.less',
+    'huseyinfiliz-leaderboard' => 'extensions/LeaderboardPage.less',
+    'fof-gamification' => 'extensions/Gamification.less',
+    'linkrobins-badge-labels' => 'extensions/BadgeLabels.less',
+    BookmarksRoute::CONFLICTING_EXTENSION_ID => 'extensions/FofBookmarks.less',
+    'flectar-fancybox' => 'extensions/Fancybox.less',
+    'datlechin-mermaid' => 'extensions/Mermaid.less',
+    'linkrobins-support' => 'extensions/Support.less',
+];
 
 return [
     (new Extend\ServiceProvider())
@@ -50,6 +62,25 @@ return [
         ->content(\Ramon\Avocado\Content\PreloadChangelog::class)
         ->route('/discussions', 'avocado-discussions')
         ->route('/search', 'avocado-search'),
+
+    // CSS por extensão: cada folha só entra no forum.css com a extensão ativa
+    // (o MessagesPage.less sozinho tem ~1,8 mil linhas, e o flarum/messages
+    // costuma estar desligado). O Flarum compila todas as folhas de css() num
+    // único Less_Parser, na ordem de registro dos extenders — por isso elas
+    // ficam entre o forum.less e o forum-tail.less, na ordem em que eram
+    // importadas, e enxergam as variáveis/mixins do common sem importar nada.
+    // Ligar/desligar uma extensão dispara a recompilação dos assets no core.
+    ...array_map(
+        fn (string $extensionId, string $sheet) => (new Extend\Conditional())
+            ->whenExtensionEnabled($extensionId, fn () => [
+                (new Extend\Frontend('forum'))->css(__DIR__.'/less/forum/'.$sheet),
+            ]),
+        array_keys($extensionStylesheets),
+        $extensionStylesheets,
+    ),
+
+    (new Extend\Frontend('forum'))
+        ->css(__DIR__.'/less/forum-tail.less'),
 
     // A página "Salvos" só existe quando o fof/bookmarks não está ativo: duas
     // rotas GET no mesmo `/bookmarks` derrubam o boot do Flarum inteiro
@@ -162,6 +193,15 @@ return [
             fn (Endpoint\Index|Endpoint\Show $endpoint) => $endpoint->eagerLoad('avocadoHero')
         ),
 
+    // Curtidas do primeiro post como atributo da discussão: o botão de curtir dos
+    // cards lê daqui em vez de exigir `include=firstPost` (render do post inteiro)
+    // ou um GET /api/posts extra depois do boot.
+    (new Extend\Conditional())
+        ->whenExtensionEnabled('flarum-likes', fn () => [
+            (new Extend\ApiResource(\Flarum\Api\Resource\DiscussionResource::class))
+                ->fields(\Ramon\Avocado\Api\DiscussionLikeFields::class),
+        ]),
+
     // Versão e tipo de capa de uma entrada do changelog (tabela companheira). Como
     // no bookmark, o eager-load decide com o banco na mão: sem a tabela migrada o
     // endpoint segue sem ele em vez de derrubar toda listagem de discussões.
@@ -169,7 +209,7 @@ return [
         ->fields(\Ramon\Avocado\Api\ChangelogFields::class)
         ->endpoint(
             [Endpoint\Index::class, Endpoint\Show::class],
-            fn (Endpoint\Index|Endpoint\Show $endpoint) => ChangelogSchema::available()
+            fn (Endpoint\Index|Endpoint\Show $endpoint) => resolve(ChangelogSchema::class)->available()
                 ? $endpoint->eagerLoad('avocadoChangelog')
                 : $endpoint
         ),
@@ -191,7 +231,7 @@ return [
                     // eager-load sai do endpoint em vez de derrubar toda
                     // listagem de discussões com "Base table or view not found".
                     // Guests não têm bookmark nenhum — a query também não entra.
-                    fn (Endpoint\Index|Endpoint\Show $endpoint) => BookmarksSchema::available()
+                    fn (Endpoint\Index|Endpoint\Show $endpoint) => resolve(BookmarksSchema::class)->available()
                         ? $endpoint->eagerLoadWhere('avocadoBookmark', function ($query, \Flarum\Api\Context $context) {
                             $actor = $context->getActor();
                             $query->where('user_id', $actor->isGuest() ? 0 : (int) $actor->id);
@@ -220,7 +260,7 @@ return [
     // registrariam os mesmos campos no TagResource e sobrescreveriam `Icon` duas
     // vezes. Com ela ativa o tema cede (o attribute `avocadoTagIconSvg` nem sai
     // no forum e o front não instala nada). O switch em si é o
-    // `avocado.tag_icon_svg_enabled`, lido em TagIconSvg::enabled().
+    // `avocado.tag_icon_svg_enabled`, lido em TagIconSvg->enabled().
     (new Extend\Conditional())
         ->whenExtensionEnabled(TagIconSvg::TAGS_EXTENSION_ID, fn () => [
             (new Extend\Conditional())
@@ -233,7 +273,7 @@ return [
                         ->fields(\Ramon\Avocado\Api\TagIconSvgFields::class),
 
                     (new Extend\Settings())
-                        ->serializeToForum('avocadoTagIconSvg', TagIconSvg::SETTING, fn ($value) => TagIconSvg::enabledFor($value)),
+                        ->serializeToForum('avocadoTagIconSvg', TagIconSvg::SETTING, fn ($value) => resolve(TagIconSvg::class)->enabledFor($value)),
 
                     // O tamanho do ícone tem coluna própria (migration posterior): o modal
                     // de tag só oferece o controle quando o servidor aceita o campo. Num
@@ -241,19 +281,46 @@ return [
                     // chave do setting, e um segundo attribute na mesma instância apagaria
                     // o `avocadoTagIconSvg` de cima.
                     (new Extend\Settings())
-                        ->serializeToForum('avocadoTagIconSvgScale', TagIconSvg::SETTING, fn ($value) => TagIconSvg::enabledFor($value) && TagIconSvg::scaleAvailable()),
+                        ->serializeToForum('avocadoTagIconSvgScale', TagIconSvg::SETTING, fn ($value) => resolve(TagIconSvg::class)->enabledFor($value) && resolve(TagIconSvg::class)->scaleAvailable()),
                 ]),
         ]),
 
     // As versões do changelog não contam como discussão: nem no total do autor,
     // nem no da tag (Api\ChangelogCounts). Só o que sai no JSON muda.
     (new Extend\ApiResource(\Flarum\Api\Resource\UserResource::class))
-        ->field('discussionCount', \Ramon\Avocado\Api\ChangelogCounts::forUsers(...)),
+        ->field('discussionCount', fn ($field) => resolve(\Ramon\Avocado\Api\ChangelogCounts::class)->forUsers($field)),
+
+    // As contagens acima ficam no cache entre requests; qualquer escrita que
+    // possa mudar "quais discussões são versão" invalida. Os nomes de evento do
+    // flarum/tags são só strings aqui: com a extensão desligada nunca disparam.
+    (new Extend\Event())
+        ->listen(\Flarum\Discussion\Event\Started::class, \Ramon\Avocado\Listener\FlushChangelogCounts::class)
+        ->listen(\Flarum\Discussion\Event\Deleted::class, \Ramon\Avocado\Listener\FlushChangelogCounts::class)
+        ->listen(\Flarum\Discussion\Event\Hidden::class, \Ramon\Avocado\Listener\FlushChangelogCounts::class)
+        ->listen(\Flarum\Discussion\Event\Restored::class, \Ramon\Avocado\Listener\FlushChangelogCounts::class)
+        ->listen('Flarum\Tags\Event\DiscussionWasTagged', \Ramon\Avocado\Listener\FlushChangelogCounts::class)
+        // Evento do Eloquent, não o `Deleting` do flarum/tags: dispara depois do
+        // DELETE (e do cascade em discussion_tag), sem janela para um request
+        // concorrente regravar o cache com o valor antigo.
+        ->listen('eloquent.deleted: Flarum\Tags\Tag', \Ramon\Avocado\Listener\FlushChangelogCounts::class)
+        // Fontes e fire.webp vão para public/assets junto com a recompilação de
+        // assets do core, e não mais no boot de todo request (Support\BundledAssets).
+        ->listen(\Flarum\Foundation\Event\ClearingCache::class, \Ramon\Avocado\Listener\SyncBundledAssets::class)
+        ->listen(\Flarum\Extension\Event\Enabled::class, \Ramon\Avocado\Listener\SyncBundledAssets::class),
 
     (new Extend\Conditional())
         ->whenExtensionEnabled(TagIconSvg::TAGS_EXTENSION_ID, fn () => [
+            // As tags de cada discussão passam pela TagPolicy do flarum/tags, que
+            // olha a tag mãe de cada filha — sem eager-load, uma consulta por tag
+            // filha (45 na home). Carregar `tags.parent` junto vira uma consulta.
+            (new Extend\ApiResource(\Flarum\Api\Resource\DiscussionResource::class))
+                ->endpoint(
+                    [Endpoint\Index::class, Endpoint\Show::class],
+                    fn (Endpoint\Index|Endpoint\Show $endpoint) => $endpoint->eagerLoad('tags.parent')
+                ),
+
             (new Extend\ApiResource(\Flarum\Tags\Api\Resource\TagResource::class))
-                ->field('discussionCount', \Ramon\Avocado\Api\ChangelogCounts::forTags(...)),
+                ->field('discussionCount', fn ($field) => resolve(\Ramon\Avocado\Api\ChangelogCounts::class)->forTags($field)),
         ]),
 
     (new Extend\Notification())
@@ -302,7 +369,7 @@ return [
         // (FloatingInlineComposer.tsx): 'default' = no lugar do campo, sem efeito
         // (o de antes); 'inline' = no lugar do campo, com a metamorfose;
         // 'floating' = cartão na base da tela, com alça e bolha.
-        ->default('avocado.new_discussion_composer', 'floating')
+        ->default('avocado.new_discussion_composer', 'inline')
         ->serializeToForum('avocadoNewDiscussionComposer', 'avocado.new_discussion_composer')
         // "↳ Em resposta a" no topo de um post que abre com menção a outro post
         // (js/src/forum/utils/replyTo.ts). Desligado, a menção fica no texto.
@@ -341,7 +408,9 @@ return [
         ->serializeToForum('avocadoHomeFeedSort', 'avocado.home_feed_sort')
         ->serializeToForum('avocadoHomeFeedCount', 'avocado.home_feed_count', fn ($n) => max(1, min(20, (int) $n ?: 5)))
         ->serializeToForum('avocadoCustomHeroEnabled',  'avocado.custom_hero_enabled', 'boolval')
-        ->serializeToForum('avocadoCustomHeroHtml',     'avocado.custom_hero_html', fn ($html) => HtmlSanitizer::sanitize((string) $html))
+        // Sanitizado com cache por hash (Support\SanitizedHtmlCache): o payload do
+        // fórum sai em toda página e o HTML só muda quando o admin salva.
+        ->serializeToForum('avocadoCustomHeroHtml',     'avocado.custom_hero_html', fn ($html) => resolve(SanitizedHtmlCache::class)->sanitize('custom_hero_html', (string) $html))
         ->serializeToForum('avocadoColoredEnabled', 'avocado.colored_enabled', 'boolval')
         ->serializeToForum('avocadoColoredBorderStyle', 'avocado.colored_border_style', null, 'none')
         ->serializeToForum('avocadoThreadsStyle', 'avocado.threads_style', 'boolval')
@@ -352,7 +421,7 @@ return [
         ->serializeToForum(
             'avocadoBookmarksEnabled',
             'avocado.bookmarks_enabled',
-            fn ($value) => (bool) filter_var($value ?? true, FILTER_VALIDATE_BOOL) && BookmarksSchema::available()
+            fn ($value) => (bool) filter_var($value ?? true, FILTER_VALIDATE_BOOL) && resolve(BookmarksSchema::class)->available()
         )
         // Relógio de 12h (2:30 PM) ou 24h (14:30) nos horários que o tema
         // desenha — hoje o seletor de lembrete e o horário no card salvo.
@@ -454,7 +523,7 @@ return [
                 ->fields(\Ramon\Avocado\Api\SupportEventFields::class)
                 ->endpoint(
                     [Endpoint\Index::class, Endpoint\Show::class],
-                    fn (Endpoint\Index|Endpoint\Show $endpoint) => SupportEvents::available()
+                    fn (Endpoint\Index|Endpoint\Show $endpoint) => resolve(SupportEvents::class)->available()
                         ? $endpoint->eagerLoad(['avocadoEvents', 'avocadoEvents.user'])
                         : $endpoint
                 ),

@@ -28,8 +28,12 @@ class PreloadChangelog
     /** Espelha CHANGELOG_PAGE_LIMIT do ChangelogState. */
     private const PAGE_LIMIT = 12;
 
-    /** Espelha o include do ChangelogState. */
-    private const INCLUDES = 'user,firstPost,tags';
+    /**
+     * Espelha o include do ChangelogState. Sem firstPost: o card lê o resumo do
+     * atributo `avocadoExcerpt` e as notas buscam o post sob demanda pelo
+     * linkage, então o post incluído só custava o render do s9e.
+     */
+    private const INCLUDES = 'user,tags';
 
     public function __construct(
         protected Client $api,

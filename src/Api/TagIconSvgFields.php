@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Ramon\Avocado\Api;
 
 use Flarum\Api\Schema;
-use Flarum\Settings\SettingsRepositoryInterface;
 use Flarum\Tags\Tag;
 use Ramon\Avocado\Support\SvgIconSanitizer;
 use Ramon\Avocado\Support\TagIconSvg;
@@ -25,15 +24,16 @@ use Ramon\Avocado\Support\ValidSvgIcon;
 class TagIconSvgFields
 {
     public function __construct(
-        protected SettingsRepositoryInterface $settings
+        protected TagIconSvg $tagIconSvg,
+        protected ValidSvgIcon $validSvgIcon,
     ) {
     }
 
     /** @return list<Schema\Attribute> */
     public function __invoke(): array
     {
-        $active = fn (): bool => TagIconSvg::enabled($this->settings);
-        $scalable = fn (): bool => TagIconSvg::enabled($this->settings) && TagIconSvg::scaleAvailable();
+        $active = fn (): bool => $this->tagIconSvg->enabled();
+        $scalable = fn (): bool => $this->tagIconSvg->enabled() && $this->tagIconSvg->scaleAvailable();
 
         return [
             Schema\Str::make('iconSvg')
@@ -41,7 +41,7 @@ class TagIconSvgFields
                 ->visible($active)
                 ->writable($active)
                 ->nullable()
-                ->rule(fn () => resolve(ValidSvgIcon::class))
+                ->rule(fn () => $this->validSvgIcon)
                 ->set(function (Tag $tag, ?string $value): void {
                     // setAttribute em vez de `$tag->icon_svg`: a coluna é do tema,
                     // não da classe Tag, e o phpstan (com razão) não a conhece.

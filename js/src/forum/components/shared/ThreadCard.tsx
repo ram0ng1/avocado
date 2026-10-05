@@ -29,9 +29,13 @@ import {
   bookmarkActionLabel,
 } from '../../utils/bookmarks';
 import { formatDateTime } from '../../utils/clock';
-import BookmarkModal from '../BookmarkModal';
+import { firstPostLikes } from '../../utils/likes';
 import UserHoverCard from './UserHoverCard';
 import CakedayBadge from './CakedayBadge';
+
+// O modal de lembrete só baixa no clique (chunk lazy, mesmo do index.tsx); o
+// ModalManager do core aceita a função async no lugar da classe.
+const BookmarkModal = () => import('../BookmarkModal');
 
 export interface ThreadCardAttrs extends ComponentAttrs {
   /** The discussion model to render */
@@ -196,8 +200,7 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
       ) : null;
 
     // ── like state (home variant) ─────────────────────────────────────────────
-    const likes = numberOr(discussion.firstPost?.()?.attribute?.('likesCount'), 0);
-    const isLiked = !!(app.session.user && ((discussion.firstPost?.()?.likes?.() || []) as any[]).some((u: any) => u === app.session.user));
+    const { count: likes, liked: isLiked } = firstPostLikes(discussion);
     const isLiking = likingIds.has(id);
 
     // ── reply card (home variant, only when there are replies) ────────────────
@@ -207,7 +210,9 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
             const lastPoster = discussion.lastPostedUser?.();
             const lastPost = discussion.lastPost?.();
             if (!lastPoster && !lastPost) return null;
-            const preview = truncate((lastPost?.contentPlain?.() || '') as string, 100);
+            // `avocadoLastPostExcerpt` vem na própria discussão (as listas não
+            // incluem mais o post); o post do store fica de reserva.
+            const preview = truncate((discussion.attribute?.('avocadoLastPostExcerpt') || lastPost?.contentPlain?.() || '') as string, 100);
             const otherCount = replies - 1;
             const lastPostHref = (() => {
               try {
