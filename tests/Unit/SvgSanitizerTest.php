@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Ramon\Avocado\Tests\Unit;
 
 use Flarum\Api\Controller\UploadImageController;
+use Flarum\Foundation\ValidationException;
 use Flarum\Locale\TranslatorInterface;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -47,14 +47,14 @@ final class SvgSanitizerTest extends TestCase
 
     public function test_doctype_declaration_is_rejected_before_parsing(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(ValidationException::class);
 
         $this->sanitize('<!DOCTYPE svg><svg ' . self::NS . '></svg>');
     }
 
     public function test_entity_declaration_is_rejected_before_parsing(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(ValidationException::class);
 
         $this->sanitize(
             '<!DOCTYPE svg [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>'
@@ -64,14 +64,14 @@ final class SvgSanitizerTest extends TestCase
 
     public function test_non_svg_root_is_rejected(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(ValidationException::class);
 
         $this->sanitize('<html><body>not an svg</body></html>');
     }
 
     public function test_malformed_xml_is_rejected(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(ValidationException::class);
 
         $this->sanitize('<svg ' . self::NS . '><rect></svg>');
     }
@@ -206,7 +206,7 @@ final class SvgSanitizerTest extends TestCase
 
     public function test_root_without_svg_namespace_is_rejected(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(ValidationException::class);
 
         $this->sanitize('<svg viewBox="0 0 10 10"><rect/></svg>');
     }
