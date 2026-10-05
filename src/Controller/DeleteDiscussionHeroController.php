@@ -40,7 +40,10 @@ class DeleteDiscussionHeroController implements RequestHandlerInterface
         }
 
         /** @var Discussion|null $discussion */
-        $discussion = Discussion::query()->find($discussionId);
+        // Só discussões que o ator vê: sem isso um moderador com "renomear" global
+        // trocava a imagem de uma discussão oculta para ele, e a diferença entre
+        // 404 e 403 revelava quais IDs ocultos existem.
+        $discussion = Discussion::whereVisibleTo($actor)->find($discussionId);
         if (! $discussion) {
             throw new ValidationException(['discussionId' => $this->translator->trans('ramon-avocado.api.discussion_not_found')]);
         }

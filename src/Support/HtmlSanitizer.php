@@ -15,9 +15,14 @@ use DOMXPath;
  *
  * Strips:
  *  - <script>, <style>, <iframe>, <object>, <embed>, <link>, <meta>, <base>, <form>
+ *  - SVG <foreignObject> and the SMIL animation elements (<animate>, <set>,
+ *    <animateMotion>, <animateTransform>): an <animate attributeName="href"
+ *    values="javascript:…"> rewrites a link at runtime, past any attribute check
  *  - all on*= event-handler attributes
  *  - href / src / action / formaction / xlink:href pointing at
- *    javascript: / vbscript: / data:text/html schemes
+ *    javascript: / vbscript: / data:text/html schemes — tested after removing
+ *    whitespace and control characters, because browsers strip them from URLs
+ *    (`java&#9;script:` runs as `javascript:`)
  *  - inline style attributes containing expression(), @import, or *script: schemes
  *
  * <style> is stripped because admin-pasted CSS reaches every guest via
@@ -34,7 +39,11 @@ final class HtmlSanitizer
     // are re-parsed by the browser in a way DOMDocument doesn't replicate, which
     // is a classic mutation-XSS (mXSS) vector. They have no legitimate use in an
     // admin "paste some markup" field, so drop them outright.
-    private const STRIP_ELEMENTS = ['script', 'style', 'iframe', 'object', 'embed', 'link', 'meta', 'base', 'form', 'noscript', 'template'];
+    private const STRIP_ELEMENTS = [
+        'script', 'style', 'iframe', 'object', 'embed', 'link', 'meta', 'base', 'form', 'noscript', 'template',
+        // loadHTML lowercases tag names, SVG ones included.
+        'foreignobject', 'animate', 'set', 'animatemotion', 'animatetransform',
+    ];
 
     private const URL_ATTRS = ['href', 'src', 'action', 'formaction', 'xlink:href', 'srcset', 'background', 'poster'];
 
@@ -150,7 +159,7 @@ final class HtmlSanitizer
                 continue;
             }
 
-            if (in_array($name, self::URL_ATTRS, true) && preg_match(self::DANGEROUS_SCHEME, $value)) {
+            if (in_array($name, self::URL_ATTRS, true) && self::isDangerousUrl($value)) {
                 $el->removeAttribute($attr->nodeName);
                 continue;
             }
@@ -159,5 +168,18 @@ final class HtmlSanitizer
                 $el->removeAttribute($attr->nodeName);
             }
         }
+    }
+
+    /**
+     * The browser's URL parser drops ASCII tab/newline anywhere in the value and
+     * trims leading C0 controls and spaces, so `java\tscript:` and
+     * `\x01javascript:` both run as `javascript:`. Test the scheme the browser
+     * will actually see, not the raw attribute.
+     */
+    public static function isDangerousUrl(string $value): bool
+    {
+        $normalized = (string) preg_replace('/[\x00-\x20\x7F]+/', '', $value);
+
+        return preg_match(self::DANGEROUS_SCHEME, $normalized) === 1;
     }
 }

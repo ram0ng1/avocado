@@ -7,7 +7,6 @@ namespace Ramon\Avocado\Api;
 use Flarum\Api\Context;
 use Flarum\Api\Schema;
 use Flarum\Discussion\Discussion;
-use Flarum\Settings\SettingsRepositoryInterface;
 use Ramon\Avocado\Support\BookmarksSetting;
 
 /**
@@ -28,14 +27,14 @@ use Ramon\Avocado\Support\BookmarksSetting;
 class BookmarkFields
 {
     public function __construct(
-        protected SettingsRepositoryInterface $settings
+        protected BookmarksSetting $bookmarks
     ) {
     }
 
     public function __invoke(): array
     {
         $notGuest = fn (Discussion $discussion, Context $context) => ! $context->getActor()->isGuest()
-            && BookmarksSetting::enabled($this->settings);
+            && $this->bookmarks->enabled();
 
         return [
             Schema\Boolean::make('avocadoBookmarked')

@@ -163,4 +163,51 @@ final class SvgSanitizerTest extends TestCase
         self::assertStringContainsString('<use', $out);
         self::assertStringContainsString('#a', $out);
     }
+
+    // ── Achados da auditoria de segurança ───────────────────────────────────
+
+    public function test_xhtml_namespaced_form_is_stripped(): void
+    {
+        // O front insere o SVG na página; um <h:form> XHTML vira formulário de
+        // verdade, e o botão enviaria para `javascript:`.
+        $out = $this->sanitize(
+            '<svg ' . self::NS . ' xmlns:h="http://www.w3.org/1999/xhtml">'
+            . '<h:form action="java&#9;script:alert(document.domain)"><h:button>Login</h:button></h:form>'
+            . '<rect/></svg>'
+        );
+
+        self::assertStringNotContainsString('form', $out);
+        self::assertStringNotContainsString('button', $out);
+        self::assertStringNotContainsString('alert(', $out);
+        self::assertStringContainsString('<rect', $out);
+    }
+
+    public function test_tab_obfuscated_javascript_attribute_is_stripped(): void
+    {
+        $out = $this->sanitize(
+            '<svg ' . self::NS . '><rect fill="red" filter="java&#9;script:alert(1)"/></svg>'
+        );
+
+        self::assertStringNotContainsString('alert(1)', $out);
+        self::assertStringContainsString('fill="red"', $out);
+    }
+
+    public function test_prefixed_xlink_href_data_uri_is_stripped(): void
+    {
+        // `removeAttribute('href')` não achava um `xlink:href`: a remoção é pelo nó.
+        $out = $this->sanitize(
+            '<svg ' . self::NS . ' xmlns:xlink="http://www.w3.org/1999/xlink">'
+            . '<image xlink:href="data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=" width="10" height="10"/></svg>'
+        );
+
+        self::assertStringNotContainsString('data:', $out);
+        self::assertStringContainsString('<image', $out);
+    }
+
+    public function test_root_without_svg_namespace_is_rejected(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $this->sanitize('<svg viewBox="0 0 10 10"><rect/></svg>');
+    }
 }

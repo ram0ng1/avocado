@@ -8,7 +8,6 @@ use Flarum\Search\Database\DatabaseSearchState;
 use Flarum\Search\Filter\FilterInterface;
 use Flarum\Search\SearchState;
 use Flarum\Search\ValidateFilterTrait;
-use Flarum\Settings\SettingsRepositoryInterface;
 use Flarum\User\User;
 use Illuminate\Database\Eloquent\Builder;
 use Ramon\Avocado\Support\BookmarksSetting;
@@ -31,7 +30,7 @@ class BookmarkFilter implements FilterInterface
     use ValidateFilterTrait;
 
     public function __construct(
-        protected SettingsRepositoryInterface $settings
+        protected BookmarksSetting $bookmarks
     ) {
     }
 
@@ -49,7 +48,7 @@ class BookmarkFilter implements FilterInterface
 
         // Sistema desligado: o filtro vira conjunto vazio em vez de no-op —
         // um no-op devolveria TODAS as discussões na página /bookmarks.
-        if (! BookmarksSetting::enabled($this->settings)) {
+        if (! $this->bookmarks->enabled()) {
             $state->getQuery()->whereRaw('1 = 0');
 
             return;

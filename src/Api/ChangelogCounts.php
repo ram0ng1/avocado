@@ -22,45 +22,53 @@ use Ramon\Avocado\Support\ChangelogProducts;
  *
  * Uma consulta agrupada por request (as versões são poucas e a subconsulta usa
  * o índice de `discussion_tag`) em vez de uma por usuário ou tag do documento.
+ * O resultado fica memorizado na instância — singleton no AvocadoServiceProvider,
+ * a mesma que o extend.php entrega aos dois campos.
  */
 final class ChangelogCounts
 {
     /** @var array<int, int>|null autor => versões */
-    private static ?array $byAuthor = null;
+    private ?array $byAuthor = null;
 
     /** @var array<int, int>|null tag => versões */
-    private static ?array $byTag = null;
+    private ?array $byTag = null;
 
-    public static function forUsers(Schema\Integer $field): Schema\Integer
+    public function __construct(
+        private readonly ConnectionInterface $db,
+        private readonly ChangelogProducts $products,
+    ) {
+    }
+
+    public function forUsers(Schema\Integer $field): Schema\Integer
     {
-        return $field->get(static fn (User $user): int => max(
+        return $field->get(fn (User $user): int => max(
             0,
-            (int) $user->discussion_count - (self::byAuthor()[(int) $user->id] ?? 0)
+            (int) $user->discussion_count - ($this->byAuthor()[(int) $user->id] ?? 0)
         ));
     }
 
-    public static function forTags(Schema\Integer $field): Schema\Integer
+    public function forTags(Schema\Integer $field): Schema\Integer
     {
-        return $field->get(static fn (Tag $tag): int => max(
+        return $field->get(fn (Tag $tag): int => max(
             0,
-            (int) $tag->discussion_count - (self::byTag()[(int) $tag->id] ?? 0)
+            (int) $tag->discussion_count - ($this->byTag()[(int) $tag->id] ?? 0)
         ));
     }
 
     /** Ponto de teste — zera os memos do request. */
-    public static function forget(): void
+    public function forget(): void
     {
-        self::$byAuthor = null;
-        self::$byTag = null;
+        $this->byAuthor = null;
+        $this->byTag = null;
     }
 
     /** @return array<int, int> */
-    private static function byAuthor(): array
+    private function byAuthor(): array
     {
-        return self::$byAuthor ??= self::releaseIds() === []
+        return $this->byAuthor ??= $this->releaseIds() === []
             ? []
             : Discussion::query()
-                ->whereIn('id', self::releaseDiscussions())
+                ->whereIn('id', $this->releaseDiscussions())
                 ->selectRaw('user_id, count(*) as releases')
                 ->groupBy('user_id')
                 ->pluck('releases', 'user_id')
@@ -69,13 +77,13 @@ final class ChangelogCounts
     }
 
     /** @return array<int, int> */
-    private static function byTag(): array
+    private function byTag(): array
     {
-        return self::$byTag ??= self::releaseIds() === []
+        return $this->byTag ??= $this->releaseIds() === []
             ? []
-            : resolve(ConnectionInterface::class)
+            : $this->db
                 ->table('discussion_tag')
-                ->whereIn('discussion_id', self::releaseDiscussions())
+                ->whereIn('discussion_id', $this->releaseDiscussions())
                 ->selectRaw('tag_id, count(*) as releases')
                 ->groupBy('tag_id')
                 ->pluck('releases', 'tag_id')
@@ -84,17 +92,15 @@ final class ChangelogCounts
     }
 
     /** @return list<int> */
-    private static function releaseIds(): array
+    private function releaseIds(): array
     {
-        $products = resolve(ChangelogProducts::class);
-
-        return $products->enabled() ? $products->ids() : [];
+        return $this->products->enabled() ? $this->products->ids() : [];
     }
 
     /** Subconsulta: os ids das discussões que estão numa tag de produto. */
-    private static function releaseDiscussions(): \Closure
+    private function releaseDiscussions(): \Closure
     {
-        $productIds = self::releaseIds();
+        $productIds = $this->releaseIds();
 
         return static function ($query) use ($productIds): void {
             $query->select('discussion_id')->from('discussion_tag')->whereIn('tag_id', $productIds);

@@ -16,8 +16,11 @@ use Flarum\Foundation\Paths;
 use Flarum\Frontend\Frontend;
 use Illuminate\Filesystem\Filesystem;
 use Psr\Log\LoggerInterface;
+use Ramon\Avocado\Api\ChangelogCounts;
 use Ramon\Avocado\Controller\ChangelogPageController;
 use Ramon\Avocado\Controller\TeamPageController;
+use Ramon\Avocado\Support\SchemaInspector;
+use Ramon\Avocado\Support\SupportEvents;
 use Throwable;
 
 class AvocadoServiceProvider extends AbstractServiceProvider
@@ -54,6 +57,14 @@ class AvocadoServiceProvider extends AbstractServiceProvider
 
     public function register(): void
     {
+        // Singletons por request: o veredito do schema e as contagens do changelog
+        // ficam memorizados na instância (uma consulta por request, no máximo), e
+        // o SupportEvents guarda o ator que o middleware RememberActor anota para
+        // o gancho do modelo ler.
+        $this->container->singleton(SchemaInspector::class);
+        $this->container->singleton(ChangelogCounts::class);
+        $this->container->singleton(SupportEvents::class);
+
         // Supply TeamPageController with the *forum* Frontend without forcing it
         // to inject the container and resolve the 'flarum.frontend.forum' string
         // itself. Resolving that binding also runs the content-callback wiring

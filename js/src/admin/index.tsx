@@ -229,7 +229,7 @@ const CARDS: CardDef[] = [
             'Floating — the field flies to the bottom of the screen (resizable, pull down into a bubble)'
           ),
         }}
-        default="floating"
+        default="inline"
       />
     ),
   },

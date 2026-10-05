@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace Ramon\Avocado\Support;
 
 use Flarum\Settings\SettingsRepositoryInterface;
-use Illuminate\Contracts\Cache\Repository as CacheRepository;
-use Illuminate\Database\ConnectionInterface;
-use Throwable;
 
 /**
  * O ícone SVG nas tags está ligado — e há colunas para guardá-lo?
@@ -20,7 +17,7 @@ use Throwable;
  * As colunas entram na conta pelo mesmo motivo do BookmarksSchema: o pacote é
  * entregue por `composer update` e a migration só corre no `php flarum migrate`
  * seguinte. Nessa janela, aceitar escrita em `icon_svg` derrubaria o PATCH de
- * qualquer tag com "Unknown column".
+ * qualquer tag com "Unknown column". Cache e memo: ver SchemaInspector.
  *
  * Limite conhecido: a migration só adiciona as colunas quando a tabela `tags` já
  * existe. Se o flarum/tags for instalado DEPOIS de o tema migrar, as colunas não
@@ -54,28 +51,27 @@ final class TagIconSvg
         self::SCALE_COLUMN => 'avocado.tag_icon_svg_scale_column_exists',
     ];
 
-    /**
-     * Memo do request por coluna; ausente = ainda não checada.
-     *
-     * @var array<string, bool>
-     */
-    private static array $columnExists = [];
+    public function __construct(
+        private readonly SettingsRepositoryInterface $settings,
+        private readonly SchemaInspector $schema,
+    ) {
+    }
 
     /** O settings guarda '0'/'1' como string: `(bool) '0'` é true, então todo consumidor coage aqui. */
-    public static function enabled(SettingsRepositoryInterface $settings): bool
+    public function enabled(): bool
     {
-        return self::toggledOn($settings->get(self::SETTING, false)) && self::columnsAvailable();
+        return $this->enabledFor($this->settings->get(self::SETTING, false));
     }
 
     /** Mesmo veredito a partir do valor cru do setting, para o `serializeToForum`. */
-    public static function enabledFor(mixed $rawSetting): bool
+    public function enabledFor(mixed $rawSetting): bool
     {
-        return self::toggledOn($rawSetting) && self::columnsAvailable();
+        return self::toggledOn($rawSetting) && $this->columnsAvailable();
     }
 
-    public static function columnsAvailable(): bool
+    public function columnsAvailable(): bool
     {
-        return self::hasColumn(self::COLUMN);
+        return $this->hasColumn(self::COLUMN);
     }
 
     /**
@@ -83,47 +79,14 @@ final class TagIconSvg
      * entre o `composer update` e o `migrate` o ícone segue funcionando — só o
      * campo do tamanho fica de fora do payload até a coluna nascer.
      */
-    public static function scaleAvailable(): bool
+    public function scaleAvailable(): bool
     {
-        return self::columnsAvailable() && self::hasColumn(self::SCALE_COLUMN);
+        return $this->columnsAvailable() && $this->hasColumn(self::SCALE_COLUMN);
     }
 
-    /** Ponto de teste — zera o memo do request. */
-    public static function forget(): void
+    private function hasColumn(string $column): bool
     {
-        self::$columnExists = [];
-    }
-
-    private static function hasColumn(string $column): bool
-    {
-        if (isset(self::$columnExists[$column])) {
-            return self::$columnExists[$column];
-        }
-
-        try {
-            $cache = resolve(CacheRepository::class);
-            $cacheKey = self::CACHE_KEYS[$column];
-
-            if ($cache->get($cacheKey)) {
-                return self::$columnExists[$column] = true;
-            }
-
-            $exists = resolve(ConnectionInterface::class)
-                ->getSchemaBuilder()
-                ->hasColumn(self::TABLE, $column);
-
-            // Só o "existe" é cacheado: coluna criada não some sozinha, e o
-            // "não existe" precisa ser reavaliado para o recurso ligar assim que
-            // o admin migrar.
-            if ($exists) {
-                $cache->forever($cacheKey, true);
-            }
-
-            return self::$columnExists[$column] = $exists;
-        } catch (Throwable) {
-            // Banco fora do ar ou install em andamento: o tema não é o lugar de estourar por isso.
-            return self::$columnExists[$column] = false;
-        }
+        return $this->schema->hasColumn(self::TABLE, $column, self::CACHE_KEYS[$column]);
     }
 
     private static function toggledOn(mixed $value): bool

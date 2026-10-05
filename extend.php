@@ -169,7 +169,7 @@ return [
         ->fields(\Ramon\Avocado\Api\ChangelogFields::class)
         ->endpoint(
             [Endpoint\Index::class, Endpoint\Show::class],
-            fn (Endpoint\Index|Endpoint\Show $endpoint) => ChangelogSchema::available()
+            fn (Endpoint\Index|Endpoint\Show $endpoint) => resolve(ChangelogSchema::class)->available()
                 ? $endpoint->eagerLoad('avocadoChangelog')
                 : $endpoint
         ),
@@ -191,7 +191,7 @@ return [
                     // eager-load sai do endpoint em vez de derrubar toda
                     // listagem de discussões com "Base table or view not found".
                     // Guests não têm bookmark nenhum — a query também não entra.
-                    fn (Endpoint\Index|Endpoint\Show $endpoint) => BookmarksSchema::available()
+                    fn (Endpoint\Index|Endpoint\Show $endpoint) => resolve(BookmarksSchema::class)->available()
                         ? $endpoint->eagerLoadWhere('avocadoBookmark', function ($query, \Flarum\Api\Context $context) {
                             $actor = $context->getActor();
                             $query->where('user_id', $actor->isGuest() ? 0 : (int) $actor->id);
@@ -220,7 +220,7 @@ return [
     // registrariam os mesmos campos no TagResource e sobrescreveriam `Icon` duas
     // vezes. Com ela ativa o tema cede (o attribute `avocadoTagIconSvg` nem sai
     // no forum e o front não instala nada). O switch em si é o
-    // `avocado.tag_icon_svg_enabled`, lido em TagIconSvg::enabled().
+    // `avocado.tag_icon_svg_enabled`, lido em TagIconSvg->enabled().
     (new Extend\Conditional())
         ->whenExtensionEnabled(TagIconSvg::TAGS_EXTENSION_ID, fn () => [
             (new Extend\Conditional())
@@ -233,7 +233,7 @@ return [
                         ->fields(\Ramon\Avocado\Api\TagIconSvgFields::class),
 
                     (new Extend\Settings())
-                        ->serializeToForum('avocadoTagIconSvg', TagIconSvg::SETTING, fn ($value) => TagIconSvg::enabledFor($value)),
+                        ->serializeToForum('avocadoTagIconSvg', TagIconSvg::SETTING, fn ($value) => resolve(TagIconSvg::class)->enabledFor($value)),
 
                     // O tamanho do ícone tem coluna própria (migration posterior): o modal
                     // de tag só oferece o controle quando o servidor aceita o campo. Num
@@ -241,19 +241,19 @@ return [
                     // chave do setting, e um segundo attribute na mesma instância apagaria
                     // o `avocadoTagIconSvg` de cima.
                     (new Extend\Settings())
-                        ->serializeToForum('avocadoTagIconSvgScale', TagIconSvg::SETTING, fn ($value) => TagIconSvg::enabledFor($value) && TagIconSvg::scaleAvailable()),
+                        ->serializeToForum('avocadoTagIconSvgScale', TagIconSvg::SETTING, fn ($value) => resolve(TagIconSvg::class)->enabledFor($value) && resolve(TagIconSvg::class)->scaleAvailable()),
                 ]),
         ]),
 
     // As versões do changelog não contam como discussão: nem no total do autor,
     // nem no da tag (Api\ChangelogCounts). Só o que sai no JSON muda.
     (new Extend\ApiResource(\Flarum\Api\Resource\UserResource::class))
-        ->field('discussionCount', \Ramon\Avocado\Api\ChangelogCounts::forUsers(...)),
+        ->field('discussionCount', fn ($field) => resolve(\Ramon\Avocado\Api\ChangelogCounts::class)->forUsers($field)),
 
     (new Extend\Conditional())
         ->whenExtensionEnabled(TagIconSvg::TAGS_EXTENSION_ID, fn () => [
             (new Extend\ApiResource(\Flarum\Tags\Api\Resource\TagResource::class))
-                ->field('discussionCount', \Ramon\Avocado\Api\ChangelogCounts::forTags(...)),
+                ->field('discussionCount', fn ($field) => resolve(\Ramon\Avocado\Api\ChangelogCounts::class)->forTags($field)),
         ]),
 
     (new Extend\Notification())
@@ -302,7 +302,7 @@ return [
         // (FloatingInlineComposer.tsx): 'default' = no lugar do campo, sem efeito
         // (o de antes); 'inline' = no lugar do campo, com a metamorfose;
         // 'floating' = cartão na base da tela, com alça e bolha.
-        ->default('avocado.new_discussion_composer', 'floating')
+        ->default('avocado.new_discussion_composer', 'inline')
         ->serializeToForum('avocadoNewDiscussionComposer', 'avocado.new_discussion_composer')
         // "↳ Em resposta a" no topo de um post que abre com menção a outro post
         // (js/src/forum/utils/replyTo.ts). Desligado, a menção fica no texto.
@@ -352,7 +352,7 @@ return [
         ->serializeToForum(
             'avocadoBookmarksEnabled',
             'avocado.bookmarks_enabled',
-            fn ($value) => (bool) filter_var($value ?? true, FILTER_VALIDATE_BOOL) && BookmarksSchema::available()
+            fn ($value) => (bool) filter_var($value ?? true, FILTER_VALIDATE_BOOL) && resolve(BookmarksSchema::class)->available()
         )
         // Relógio de 12h (2:30 PM) ou 24h (14:30) nos horários que o tema
         // desenha — hoje o seletor de lembrete e o horário no card salvo.
@@ -454,7 +454,7 @@ return [
                 ->fields(\Ramon\Avocado\Api\SupportEventFields::class)
                 ->endpoint(
                     [Endpoint\Index::class, Endpoint\Show::class],
-                    fn (Endpoint\Index|Endpoint\Show $endpoint) => SupportEvents::available()
+                    fn (Endpoint\Index|Endpoint\Show $endpoint) => resolve(SupportEvents::class)->available()
                         ? $endpoint->eagerLoad(['avocadoEvents', 'avocadoEvents.user'])
                         : $endpoint
                 ),
