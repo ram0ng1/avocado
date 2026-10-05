@@ -21,7 +21,8 @@ import UploadImageButton from 'flarum/common/components/UploadImageButton';
 import ExtensionPage from 'flarum/admin/components/ExtensionPage';
 import { override } from 'flarum/common/extend';
 
-import { trans, getBool, getStr, resolveAssetUrl } from './util';
+import { trans, getBool, getStr, resolveAssetUrl, saveSetting } from './util';
+import { LOGO_VIEWBOX_SETTING, fetchAndMeasure } from '../common/logoViewBox';
 import { AdminCard, SubDivider } from './components/AdminCard';
 import AdminToggle from './components/AdminToggle';
 import AdminSelect from './components/AdminSelect';
@@ -54,6 +55,47 @@ interface CardDef {
   /** Palavras extras para a busca — o que o usuário digitaria procurando o card. */
   keywords: string;
   body: () => any;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Recorte do logo SVG
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Caminho já medido (ou em medição) nesta visita — mede uma vez por arquivo. */
+let measuredLogoPath: string | null = null;
+
+/**
+ * Mede o viewBox recortado do logo e grava junto do caminho do arquivo
+ * (common/logoViewBox). Com a medida gravada o servidor embute o logo pronto e o
+ * header aparece no primeiro paint; sem ela o fórum mede sozinho em toda página.
+ *
+ * Roda quando o painel do tema monta ou redesenha (em qualquer aba): o upload
+ * recarrega a página do admin, então cobre o logo novo e também o que já
+ * existia antes desta versão. Falha é
+ * silenciosa — o fórum continua no fallback, que é o comportamento antigo.
+ */
+function ensureLogoViewBox(): void {
+  if (!getBool('avocado.logo_enabled')) return;
+  const path = getStr('avocado.logo_svg');
+  if (!path || measuredLogoPath === path) return;
+  measuredLogoPath = path;
+
+  try {
+    const stored = JSON.parse(getStr(LOGO_VIEWBOX_SETTING) || 'null');
+    if (stored && stored.path === path && stored.viewBox) return;
+  } catch (_) {}
+
+  const url = resolveAssetUrl(path);
+  if (!url) return;
+
+  fetchAndMeasure(url)
+    .then((viewBox) => {
+      if (!viewBox) return;
+      const value = JSON.stringify({ path, viewBox });
+      app.data.settings[LOGO_VIEWBOX_SETTING] = value;
+      return saveSetting({ [LOGO_VIEWBOX_SETTING]: value });
+    })
+    .catch(() => {});
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1000,6 +1042,8 @@ const setGroup = (key: GroupKey) => {
 const matchesQuery = (card: CardDef, q: string): boolean => `${card.title()} ${card.keywords}`.toLowerCase().includes(q);
 
 const AvocadoSettingsPanel: any = {
+  oncreate: ensureLogoViewBox,
+  onupdate: ensureLogoViewBox,
   view() {
     const q = query.trim().toLowerCase();
     // Buscando, os grupos saem da frente: o resultado vem de todos eles.

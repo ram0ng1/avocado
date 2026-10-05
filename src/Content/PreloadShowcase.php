@@ -32,8 +32,13 @@ class PreloadShowcase
      */
     private const ROUTES = ['default', 'index'];
 
-    /** Espelha o SHOWCASE_INCLUDE do HomeState. */
-    private const INCLUDES = 'user,firstPost,lastPostedUser,lastPost,tags';
+    /**
+     * Espelha o SHOWCASE_INCLUDE do HomeState. Sem firstPost/lastPost: o card
+     * lê resumo, capa, curtidas e a última resposta de atributos da discussão
+     * (Api\DiscussionFields / DiscussionLikeFields), e incluir os posts fazia o
+     * s9e renderizar dois posts inteiros por card a cada carga da home.
+     */
+    private const INCLUDES = 'user,lastPostedUser,tags';
 
     public function __construct(
         protected Client $api,

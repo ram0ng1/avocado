@@ -1,10 +1,16 @@
 import app from 'flarum/forum/app';
 import { numberOr } from '../utils';
+import { firstPostLikes } from '../utils/likes';
 
-const SHOWCASE_INCLUDE = 'user,firstPost,lastPostedUser,lastPost,tags';
+/**
+ * Sem firstPost/lastPost: resumo, capa, curtidas e a última resposta do card vêm
+ * em atributos da discussão (Api\DiscussionFields / DiscussionLikeFields).
+ * Incluir os posts fazia o servidor renderizar dois posts inteiros por card.
+ */
+const SHOWCASE_INCLUDE = 'user,lastPostedUser,tags';
 
-/** Teto de posts por request de hidratação (ver `hydrateFirstPosts`). */
-const HYDRATE_LIMIT = 50;
+/** Teto do request de complemento da lista (ver `fillFeed`). */
+const FILL_LIMIT = 50;
 
 /** Espelham o default e o teto de `avocado.home_feed_count` (extend.php / admin). */
 const DEFAULT_FEED_COUNT = 5;
@@ -32,9 +38,6 @@ export default class HomeState {
   private showcaseItems: any[] = [];
   private showcaseFetched = false;
   private showcaseCache: Record<string, any[]> = {};
-
-  /** Request de hidratação dos firstPosts em voo (dedup entre home e showcase). */
-  private firstPostsHydration: Promise<void> | null = null;
 
   /** Complemento da lista quando a página do boot não cobre a contagem (ver `fillFeed`). */
   private feedExtra: any[] = [];
@@ -75,7 +78,7 @@ export default class HomeState {
    */
   discussionScore(d: any): number {
     const replyCount = numberOr(d.replyCount?.(), 0);
-    const likeCount = numberOr(d.firstPost?.()?.attribute?.('likesCount'), 0);
+    const likeCount = firstPostLikes(d).count;
     const views = numberOr(d.attribute?.('viewCount'), 0);
     const lastPostedAt = d.lastPostedAt?.();
     const ageMs = lastPostedAt ? Date.now() - new Date(lastPostedAt).getTime() : Infinity;
@@ -199,7 +202,7 @@ export default class HomeState {
     const existing = app.store.all('discussions');
     if (existing.length > 0) {
       // O store já está quente — na home isso é o caso NORMAL, não a exceção: o
-      // apiDocument do boot da index traz 20 discussions com firstPost, tags e
+      // apiDocument do boot da index traz 20 discussions com tags e
       // lastPostedUser. Como loadHome() roda no oninit, antes do primeiro
       // view(), desligar a flag aqui é síncrono e o 1º paint já sai com os
       // cards. A versão anterior segurava o skeleton por 350ms com um
@@ -207,20 +210,16 @@ export default class HomeState {
       // skeleton visível e depois substituído, com o dado pronto o tempo todo.
       this.homeLoading = false;
 
-      // ...só que esse payload NÃO traz o firstPost: desde a série 2.0 RC o
-      // Index serializa apenas o *linkage* `firstPost` e deixa os posts fora do
-      // `included`. Descrição e capa não dependem mais disso (vêm em
-      // `avocadoExcerpt`/`avocadoFirstImageUrl`, no próprio payload da
-      // discussão), mas o botão de curtir ainda precisa do post em si: sem ele
-      // o contador fica em 0 e o clique não faz nada. Busca em segundo plano,
-      // fora do caminho do primeiro paint.
+      // Esse payload não traz o firstPost (desde a série 2.0 RC o Index manda
+      // só o *linkage*), e o card não precisa dele: descrição, capa, curtidas e
+      // a última resposta vêm em atributos da discussão. O clique de curtir usa
+      // o linkage (utils/likes). Nada a buscar depois do boot.
       this.feedFromBoot();
-      this.fillFeed();
-      return this.hydrateFirstPosts();
+      return this.fillFeed();
     }
     this.invalidate();
     return app.store
-      .find('discussions', { include: ['user', 'lastPostedUser', 'tags', 'firstPost'], 'page[limit]': 20 } as any)
+      .find('discussions', { include: ['user', 'lastPostedUser', 'tags'], 'page[limit]': 20 } as any)
       .then(() => {
         this.homeLoading = false;
         this.fillFeed();
@@ -285,7 +284,7 @@ export default class HomeState {
     const sort = this.feedSort() === 'latest' ? '-lastPostedAt' : '';
     const params: Record<string, unknown> = {
       include: SHOWCASE_INCLUDE,
-      'page[limit]': Math.min(HYDRATE_LIMIT, count + INDEX_PAGE_SIZE),
+      'page[limit]': Math.min(FILL_LIMIT, count + INDEX_PAGE_SIZE),
     };
     if (sort) params.sort = sort;
 
@@ -301,56 +300,6 @@ export default class HomeState {
       });
 
     return this.feedFill;
-  }
-
-  /**
-   * Traz para o store os `firstPost` das discussões que só têm o linkage.
-   *
-   * Um único GET /api/posts?filter[id]=… cobre a página inteira — mesmo dado
-   * que um `include=firstPost` traria, sem repetir as discussions nem as
-   * relações que já estão no store, e sem N+1 (um request, não um por card).
-   *
-   * O que depende disto é o estado de curtida do card (contador e clique);
-   * descrição e capa já vêm no payload da discussão, então nada do que está
-   * pintado muda quando a resposta chega — não é o flash que
-   * docs/preload-sem-flash.md descreve.
-   */
-  hydrateFirstPosts(): Promise<void> {
-    if (this.firstPostsHydration) return this.firstPostsHydration;
-
-    const ids: string[] = [];
-    const seen = new Set<string>();
-
-    for (const d of this.allDiscussions()) {
-      if (ids.length >= HYDRATE_LIMIT) break;
-      try {
-        // Já resolvido no store (veio de um fetch com include): nada a fazer.
-        if (d.firstPost?.()) continue;
-        const id = String(d.data?.relationships?.firstPost?.data?.id || '');
-        if (!id || seen.has(id)) continue;
-        seen.add(id);
-        ids.push(id);
-      } catch {
-        /* modelo malformado — ignora a linha, nunca derruba a home */
-      }
-    }
-
-    if (!ids.length) return Promise.resolve();
-
-    this.firstPostsHydration = app.store
-      .find('posts', ids, { 'page[limit]': ids.length } as any)
-      .then(() => {
-        // Os posts entram no store e o linkage que já existia passa a resolver;
-        // os memos de popular/latest guardam os mesmos modelos, mas invalidar
-        // mantém a ordenação por score coerente com os likes recém-chegados.
-        this.invalidate();
-        m.redraw();
-      })
-      .catch(() => {
-        /* sem excerpt é degradação aceitável — o card continua clicável */
-      });
-
-    return this.firstPostsHydration;
   }
 
   /**
@@ -412,7 +361,7 @@ export default class HomeState {
       this.showcaseItems = fromStore;
       this.showcaseLoading = false;
       this.showcaseFetched = true;
-      return this.hydrateFirstPosts();
+      return Promise.resolve();
     }
 
     // Store incompleto: ele só enxerga a primeira página do feed da home, e as

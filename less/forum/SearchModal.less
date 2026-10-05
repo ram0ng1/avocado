@@ -28,9 +28,10 @@
 // Flarum 2.x renders a single .Modal-backdrop element as a sibling of
 // .ModalManager nodes. We give it the spotlight-style blur + dim ONLY when
 // the active modal is a SearchModal (so other modals like LogIn/SignUp keep
-// their default chrome). Uses :has() — supported in all browsers Flarum 2 ships
-// to (Chrome 105+, Safari 15.4+, Firefox 121+).
-body:has(.ModalManager .SearchModal.Modal--flat) .Modal-backdrop {
+// their default chrome). A classe no <body> vem de js/src/forum/utils/modalBackdrop.ts
+// e substitui um body:has(.ModalManager .SearchModal.Modal--flat): o :has() com o
+// body como sujeito era reavaliado a cada mutação de DOM da página inteira.
+body.avocado-backdrop--search .Modal-backdrop {
   background: rgba(15, 15, 20, 0.42) !important;
   backdrop-filter: blur(4px);
   opacity: 1 !important;
@@ -641,7 +642,7 @@ button.Avocado-searchModal-kbd--close {
 
 // ── Dark mode adjustments ───────────────────────────────────────────────────
 [data-theme^=dark] {
-  body:has(.ModalManager .SearchModal.Modal--flat) .Modal-backdrop {
+  body.avocado-backdrop--search .Modal-backdrop {
     background: rgba(0, 0, 0, 0.55) !important;
   }
 

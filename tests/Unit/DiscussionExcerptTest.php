@@ -96,6 +96,26 @@ final class DiscussionExcerptTest extends TestCase
         self::assertSame(300, mb_strlen((string) $excerpt));
     }
 
+    /**
+     * Respostas costumam abrir com uma menção; a sintaxe crua guardada no XML
+     * (`@"Fulano"#p12`) não pode aparecer no resumo da última resposta.
+     */
+    public function test_mentions_show_the_name_not_the_raw_syntax(): void
+    {
+        $xml = '<r><p><POSTMENTION discussionid="7" displayname="Fulano" id="12" number="3">@"Fulano"#p12</POSTMENTION> '
+            . 'concordo com <USERMENTION displayname="Beltrano" id="5">@"Beltrano"#5</USERMENTION></p></r>';
+
+        self::assertSame('Fulano concordo com @Beltrano', self::excerpt($xml));
+    }
+
+    public function test_custom_length_is_respected(): void
+    {
+        $fields = (new ReflectionClass(DiscussionFields::class))->newInstanceWithoutConstructor();
+        $method = new \ReflectionMethod(DiscussionFields::class, 'plainExcerpt');
+
+        self::assertSame(200, mb_strlen((string) $method->invoke($fields, '<t>' . str_repeat('a', 500) . '</t>', 200)));
+    }
+
     public function test_post_with_only_a_quote_has_no_excerpt(): void
     {
         $xml = '<r><QUOTE><i>&gt; </i><p>só a citação</p></QUOTE></r>';

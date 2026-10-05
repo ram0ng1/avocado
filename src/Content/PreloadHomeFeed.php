@@ -27,8 +27,8 @@ class PreloadHomeFeed
     /** Mesmas rotas do PreloadShowcase: a home vive na raiz e em /all. */
     private const ROUTES = ['default', 'index'];
 
-    /** Espelha o SHOWCASE_INCLUDE do HomeState. */
-    private const INCLUDES = 'user,firstPost,lastPostedUser,lastPost,tags';
+    /** Espelha o SHOWCASE_INCLUDE do HomeState (sem posts — ver PreloadShowcase). */
+    private const INCLUDES = 'user,lastPostedUser,tags';
 
     /** Tamanho da página que a index já entrega no boot (padrão do Flarum). */
     private const INDEX_PAGE_SIZE = 20;
@@ -66,7 +66,7 @@ class PreloadHomeFeed
             return;
         }
 
-        $doc = $this->fetch($request, min(self::MAX_LIMIT, $needed));
+        $doc = $this->fetch($request, min(self::MAX_LIMIT, $needed), empty($query['sort']));
 
         if (! $doc || ! ($doc['data'] ?? [])) {
             return;
@@ -83,7 +83,7 @@ class PreloadHomeFeed
     /**
      * @return array{data?: list<array<string, mixed>>, included?: list<array<string, mixed>>}|null
      */
-    private function fetch(ServerRequestInterface $request, int $limit): ?array
+    private function fetch(ServerRequestInterface $request, int $limit, bool $defaultIndexOrder): ?array
     {
         $params = [
             'include' => self::INCLUDES,
@@ -94,6 +94,15 @@ class PreloadHomeFeed
         // front sobre a ordem padrão, a mesma da index.
         if ($this->settings->get('avocado.home_feed_sort') === 'latest') {
             $params['sort'] = '-lastPostedAt';
+        } elseif ($defaultIndexOrder) {
+            // Mesma ordem da index: as 20 primeiras já estão no apiDocument do
+            // boot, e o front junta as duas listas (HomeState › feedCandidates).
+            // Pedir só o que vem depois delas evita serializar de novo as 20
+            // linhas — o conjunto final é o mesmo.
+            $params['page'] = [
+                'offset' => self::INDEX_PAGE_SIZE,
+                'limit'  => $limit - self::INDEX_PAGE_SIZE,
+            ];
         }
 
         try {
