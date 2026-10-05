@@ -15,9 +15,20 @@ class UploadAuthImageController extends UploadImageController
     protected string $filenamePrefix = 'avocado-auth';
     protected string $fileExtension = 'webp';
 
+    private const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+
     #[\Override]
     protected function makeImage(UploadedFileInterface $file): EncodedImageInterface
     {
+        // Size guard: reject before Intervention decodes the bitmap into memory
+        // (OOM/DoS) — same limit as UploadDiscussionHeroController.
+        $size = $file->getSize();
+        if ($size === null || $size > self::MAX_UPLOAD_BYTES) {
+            throw new ValidationException([
+                $this->filenamePrefix => $this->translator->trans('ramon-avocado.api.file_too_large', ['max' => '8 MB']),
+            ]);
+        }
+
         // getMetadata('uri') is null for a non-file-backed stream; reading null
         // would TypeError. Fail with a clean validation error instead.
         $uri = $file->getStream()->getMetadata('uri');
