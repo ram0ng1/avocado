@@ -1,0 +1,92 @@
+// Bloco de código das páginas de leitura (posts da discussão e artigos do
+// linkrobins/wiki): cartão claro com uma barra no topo, onde o JS põe o botão
+// de copiar (.avocado-code-copy, initCodeBlocks em forum/index.tsx). Chamado
+// dentro do seletor do corpo do texto (ex.: .Post-body { .avocado-code-block(); }).
+.avocado-code-block() {
+  pre {
+    // ── Light-mode defaults (JS dark override via [data-theme="dark"]) ──────────
+    --pre-bg:          #f8f8fa;
+    --pre-text:        #24292e;
+    --pre-border:      rgba(0, 0, 0, 0.09);
+    --pre-header-bg:   rgba(0, 0, 0, 0.035);
+    --pre-header-border: rgba(0, 0, 0, 0.07);
+
+    position: relative;
+    background: var(--pre-bg);
+    color: var(--pre-text);
+    border: 1px solid var(--pre-border);
+    border-radius: 12px;
+    padding: 38px 18px 16px;  // top-padding makes room for the header bar
+    overflow-x: auto;
+    margin: 14px 0;
+    font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+    font-size: 13px;
+    line-height: 1.6;
+
+    // ── Top header bar (always visible) ────────────────────────────────────────
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 32px;
+      background: var(--pre-header-bg);
+      border-bottom: 1px solid var(--pre-header-border);
+      border-radius: 12px 12px 0 0;
+      pointer-events: none;
+    }
+
+    code {
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
+      color: inherit;
+    }
+}
+
+// ── Copy button — injected by JS as .avocado-code-copy inside <pre> ──────────
+pre .avocado-code-copy {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--pre-text);
+  opacity: 0.4;
+  font-size: 11px;
+  cursor: pointer;
+  transition: opacity var(--avocado-t-fast), background var(--avocado-t-fast);
+  z-index: 1;
+  padding: 0;
+
+  &:hover {
+    opacity: 0.85;
+    background: rgba(0, 0, 0, 0.07);
+  }
+
+  &--copied {
+    opacity: 1;
+    color: #2ea043;
+  }
+}
+}
+
+// Os mesmos tokens no tema escuro — chamado dentro do seletor do <pre>.
+.avocado-code-block-dark() {
+  --pre-bg:            #0d1117;
+  --pre-text:          #e6edf3;
+  --pre-border:        rgba(255, 255, 255, 0.08);
+  --pre-header-bg:     rgba(255, 255, 255, 0.04);
+  --pre-header-border: rgba(255, 255, 255, 0.07);
+
+  // Copy button: lighter tint on dark
+  .avocado-code-copy { color: var(--pre-text); }
+  .avocado-code-copy:hover { background: rgba(255, 255, 255, 0.08); }
+}

@@ -308,6 +308,13 @@ ramon-avocado:
   forum:
     loading: "Carregando…"
     back: "Voltar"
+    # Design de cada artigo do linkrobins/wiki (tela de criação/edição do wiki)
+    wiki:
+      style_label: Design
+      style_default: Padrão
+      style_default_help: Sumário à direita, o layout do próprio wiki.
+      style_manual: Manual
+      style_manual_help: Sumário à esquerda, título grande e linha-fina.
     profile:
       joined: "Entrou em {date}"
       member_since: "Membro desde {date}"
