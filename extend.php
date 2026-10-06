@@ -21,6 +21,8 @@ use Ramon\Avocado\Support\ChangelogSchema;
 use Ramon\Avocado\Support\SanitizedHtmlCache;
 use Ramon\Avocado\Support\SupportEvents;
 use Ramon\Avocado\Support\TagIconSvg;
+use Ramon\Avocado\Support\WikiStyleSchema;
+use s9e\TextFormatter\Configurator;
 
 // id da extensão => folha em less/forum/, na ordem da cascata (ver o uso abaixo).
 $extensionStylesheets = [
@@ -95,14 +97,14 @@ return [
     // tabela migrada os endpoints seguem sem ele e todo artigo fica no padrão.
     (new Extend\Conditional())
         ->whenExtensionEnabled('linkrobins-wiki', fn () => [
-            (new Extend\Model(\LinkRobins\Wiki\WikiArticle::class))
+            (new Extend\Model(WikiStyleSchema::ARTICLE_MODEL))
                 ->hasOne('avocadoStyle', \Ramon\Avocado\Model\WikiArticleStyle::class, 'article_id'),
 
-            (new Extend\ApiResource(\LinkRobins\Wiki\Api\Resource\WikiArticleResource::class))
+            (new Extend\ApiResource(WikiStyleSchema::ARTICLE_RESOURCE))
                 ->fields(\Ramon\Avocado\Api\WikiArticleFields::class)
                 ->endpoint(
                     [Endpoint\Index::class, Endpoint\Show::class],
-                    fn (Endpoint\Index|Endpoint\Show $endpoint) => resolve(\Ramon\Avocado\Support\WikiStyleSchema::class)->available()
+                    fn (Endpoint\Index|Endpoint\Show $endpoint) => resolve(WikiStyleSchema::class)->available()
                         ? $endpoint->eagerLoad('avocadoStyle')
                         : $endpoint
                 ),
@@ -113,7 +115,9 @@ return [
             (new Extend\Conditional())
                 ->whenExtensionEnabled('linkrobins-wiki', fn () => [
                     (new Extend\Formatter())
-                        ->configure(fn ($config) => $config->PipeTables),
+                        ->configure(function (Configurator $config): void {
+                            $config->plugins->load('PipeTables');
+                        }),
                 ]),
         ]),
 
