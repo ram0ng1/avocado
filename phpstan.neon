@@ -19,8 +19,9 @@ parameters:
     # version) or add targeted ignoreErrors entries here.
     treatPhpDocTypesAsCertain: false
     ignoreErrors:
-        # linkrobins/support é integração opcional: as classes dela entram nos
-        # extenders como string (ver Support\SupportEvents) e não existem no
+        # linkrobins/support e linkrobins/wiki são integrações opcionais: as
+        # classes delas entram nos extenders como string (ver
+        # Support\SupportEvents e Support\WikiStyleSchema) e não existem no
         # vendor do tema para a análise provar o class-string.
         -
             message: '#expects class-string<Flarum\\Database\\AbstractModel>, string given#'

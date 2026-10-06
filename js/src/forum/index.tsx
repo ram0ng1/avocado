@@ -124,6 +124,7 @@ import listItems from 'flarum/common/helpers/listItems';
 import classList from 'flarum/common/utils/classList';
 import humanTime from 'flarum/common/utils/humanTime';
 import { installSupportCompat, isSupportPage, isSupportTicketPage, supportToolbar } from './utils/support';
+import { installWikiCompat, isWikiIndexPage, isWikiPage, wikiToolbar } from './utils/wiki';
 import installComposerDock from './utils/composerDock';
 import installComposerPreview from './utils/composerPreview';
 import installComposerMorph from './utils/composerMorph';
@@ -580,6 +581,8 @@ app.initializers.add(
     // linkrobins/support: novo ticket pelo composer e esqueletos de carregamento
     // no lugar dos spinners da extensão. Inerte quando ela não está instalada.
     installSupportCompat();
+    // linkrobins/wiki: botão de copiar nos blocos de código dos artigos.
+    installWikiCompat(initCodeBlocks);
     // Compositor flutuante alinhado à coluna e pílula de resposta grudada (Composer.less).
     installComposerDock();
     // Prévia dentro do compositor (botão e tela dividida em tela cheia), no
@@ -1783,6 +1786,9 @@ app.initializers.add(
       // pelo nav do tema, como acontece com as demais extensões, deixava a
       // página sem nenhuma forma de abrir um ticket.
       if (isSupportPage(this.attrs.className)) return null;
+      // O índice do linkrobins/wiki, pelo mesmo motivo: o botão "Novo artigo" e
+      // as categorias moram na sidebar dele (ver utils/wiki.tsx).
+      if (isWikiIndexPage(this.attrs.className)) return null;
       return (
         <div className="AvocadoNav-helper">
           <IndexSidebar key={m.route.get()} />
@@ -1824,6 +1830,16 @@ app.initializers.add(
       const cls = this.attrs.className || '';
       if (!isExtensionPage(cls)) return original();
       // O título e o "voltar" de um ticket já estão no hero dele.
+      // As páginas do linkrobins/wiki trazem o próprio <h1> (no artigo ele é o
+      // hero), então ficam sem o cabeçalho do tema; o índice ganha a barra.
+      if (isWikiPage(cls)) {
+        return (
+          <div className="Page-content" id="main-content">
+            {wikiToolbar(this)}
+            {this.content}
+          </div>
+        );
+      }
       if (keepsOwnHero(cls)) {
         return (
           <div className="Page-content" id="main-content">

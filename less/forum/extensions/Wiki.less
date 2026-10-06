@@ -1,0 +1,736 @@
+// ── linkrobins/wiki — Avocado Design System ──────────────────────────────────
+// Extensão: linkrobins/wiki (https://github.com/linkrobins/flarum-wiki)
+//
+// Dois designs, escolhidos por artigo na tela de criação/edição do wiki
+// (atributo avocadoWikiStyle, ver js/src/forum/utils/wiki.tsx):
+// - Padrão (seções 0–7): o layout da extensão — sumário à direita, título e
+//   linha de autor dela — vestido com as peças do tema: barra do índice,
+//   cartões, busca em pílula, tabelas em cartão, citações como avisos e os
+//   blocos de código dos posts (mixin .avocado-code-block).
+// - Manual (seção 8): manual de referência, com sumário fixo à esquerda, hero
+//   com a sobrelinha em mono, título grande e linha-fina, e seções com régua.
+//   Fica atrás da classe .AvocadoWiki-manual, que o PageStructure do artigo
+//   ganha quando o autor escolhe esse design.
+// Cores e fontes são as do tema: os destaques seguem a cor primária do fórum.
+//
+// O JS (js/src/forum/utils/wiki.tsx) tira o cabeçalho de extensão do tema das
+// páginas do wiki — cada uma já traz o próprio <h1> — e devolve a sidebar do
+// índice como barra horizontal (.AvocadoWiki-toolbar, mesmo mixin do support).
+//
+// Os seletores levam .LinkRobinsWiki-page junto (duas classes) para ganhar da
+// folha da própria extensão, que usa uma classe só, sem depender da ordem em
+// que o forum.css é concatenado.
+
+@wiki-rail-width: 220px;
+@wiki-rail-gap:   48px;
+@wiki-read-width: 780px;
+
+// ─── 0. Tokens ───────────────────────────────────────────────────────────────
+
+.LinkRobinsWiki-page {
+  --wiki-line:      var(--avocado-border-subtle);
+  --wiki-surface:   var(--body-bg);
+  --wiki-head-bg:   var(--avocado-surface-2);
+  --wiki-code-bg:   var(--avocado-surface-1);
+  --wiki-accent:    var(--primary-color);
+  --wiki-warn:      #9a5b00;
+  --wiki-warn-soft: #fff4e0;
+}
+
+[data-theme^=dark],
+body.dark-mode {
+  .LinkRobinsWiki-page {
+    --wiki-surface:   rgba(255, 255, 255, 0.02);
+    --wiki-head-bg:   rgba(255, 255, 255, 0.04);
+    --wiki-warn:      #f0b45a;
+    --wiki-warn-soft: #2a2213;
+  }
+
+  .LinkRobinsWiki-page .LinkRobinsWiki-articleBody pre {
+    .avocado-code-block-dark();
+  }
+}
+
+// ─── 1. Barra do índice ("Novo artigo" + categorias) ─────────────────────────
+
+.AvocadoWiki-toolbar {
+  .avocado-extension-toolbar();
+
+  // No tablet+ a barra mostra só o wiki: a sidebar dele herda a navegação do
+  // fórum inteiro (Início, Todas as discussões, Tags…), que numa barra de
+  // filtros vira ruído — ela continua no menu do topo. No telefone o menu é o
+  // seletor do cabeçalho do aparelho e fica completo.
+  @media @tablet-up {
+    .IndexPage-nav.sideNav .Dropdown--select .Dropdown-menu > li:not(.item-wiki-index):not([class*="item-wiki-cat-"]) {
+      display: none;
+    }
+
+    // "Novo artigo" vem primeiro na sidebar (prioridade 110); na barra ele
+    // fecha a linha, depois das categorias — como o "Novo ticket" do support.
+    .IndexPage-nav.sideNav > ul > li.App-primaryControl {
+      order: 2;
+    }
+  }
+}
+
+// A barra entra antes do conteúdo da página (providedContent do tema), mas o
+// lugar dela é abaixo do título "Wiki" e da busca, como os filtros de qualquer
+// lista. O contêiner da extensão vira `display: contents` só para o cabeçalho
+// dele poder subir para antes da barra; a lista segue depois, na ordem normal.
+@media @tablet-up {
+  .LinkRobinsWiki-page .Page-content:has(> .AvocadoWiki-toolbar) {
+    display: flex;
+    flex-direction: column;
+
+    > .LinkRobinsWiki-container {
+      display: contents;
+    }
+
+    .LinkRobinsWiki-indexHeader {
+      order: -2;
+    }
+
+    > .AvocadoWiki-toolbar {
+      order: -1;
+    }
+  }
+}
+
+// ─── 2. Cabeçalho das páginas ────────────────────────────────────────────────
+
+.LinkRobinsWiki-page .LinkRobinsWiki-header {
+  align-items: center;
+  margin-bottom: 22px;
+}
+
+// O <h1> da página ("Wiki", a categoria, a busca, "Novo artigo") no tamanho do
+// cabeçalho de extensão do tema (.AvocadoExtensionPage-title), que ele substitui.
+.LinkRobinsWiki-page .LinkRobinsWiki-title {
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  color: var(--heading-color, #1a1b21);
+
+  i {
+    font-size: 0.7em;
+    color: var(--primary-color);
+  }
+
+  @media @phone {
+    font-size: 28px;
+  }
+}
+
+// Busca em pílula, como a do cabeçalho do fórum.
+.LinkRobinsWiki-page .LinkRobinsWiki-search-input {
+  height: 40px;
+  border-radius: 999px;
+  background: var(--avocado-surface-1);
+  border-color: transparent;
+}
+
+// ─── 3. Índice: grupos e cartões ─────────────────────────────────────────────
+
+.LinkRobinsWiki-page .LinkRobinsWiki-list {
+  gap: 14px;
+}
+
+.LinkRobinsWiki-page .LinkRobinsWiki-group-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-color);
+}
+
+.LinkRobinsWiki-page .LinkRobinsWiki-row,
+.LinkRobinsWiki-page .LinkRobinsWiki-categoryCard {
+  padding: 18px 20px;
+  border: 1px solid var(--wiki-line);
+  border-radius: 16px;
+  background: var(--wiki-surface);
+  transition: border-color var(--avocado-t-fast), box-shadow var(--avocado-t-fast), transform var(--avocado-t-fast);
+
+  &:hover,
+  &:focus-visible {
+    background: var(--wiki-surface);
+    border-color: color-mix(in srgb, var(--wiki-accent) 45%, var(--wiki-line));
+    box-shadow: var(--shadow-subtle);
+    transform: translateY(-1px);
+  }
+}
+
+.LinkRobinsWiki-page .LinkRobinsWiki-row-subject {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--heading-color, var(--text-color));
+}
+
+.LinkRobinsWiki-page .LinkRobinsWiki-row-excerpt {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.LinkRobinsWiki-page .LinkRobinsWiki-row-meta {
+  font-size: 12px;
+}
+
+.LinkRobinsWiki-page .LinkRobinsWiki-seeAll {
+  border-radius: 16px;
+}
+
+.LinkRobinsWiki-page .LinkRobinsWiki-empty {
+  border-radius: 16px;
+  background: var(--avocado-surface-2);
+}
+
+// ─── 4. Artigo: menu de ações e avisos ───────────────────────────────────────
+
+// O menu (…) no tamanho dos botões redondos do tema. O core esconde o ícone de
+// todo .Dropdown-toggle que não é Button--flat (a regra é pensada para os
+// seletores com rótulo), e o menu da extensão é só ícone — sem isto o botão
+// vira uma bolinha cinza vazia.
+.LinkRobinsWiki-page .LinkRobinsWiki-articleControls .Button--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 999px;
+
+  .Button-icon {
+    display: inline-block !important;
+    margin: 0;
+    font-size: 15px;
+  }
+
+  .Button-caret,
+  .Button-label {
+    display: none;
+  }
+}
+
+.LinkRobinsWiki-page .LinkRobinsWiki-deletedNotice,
+.LinkRobinsWiki-page .LinkRobinsWiki-draftNotice {
+  border-radius: 12px;
+}
+
+// ─── 5. Artigo: texto ────────────────────────────────────────────────────────
+
+.LinkRobinsWiki-page .LinkRobinsWiki-articleBody {
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--text-color);
+
+  p,
+  li {
+    max-width: 70ch;
+  }
+
+  p {
+    margin: 0 0 14px;
+  }
+
+  ul,
+  ol {
+    margin: 0 0 16px;
+    padding-left: 22px;
+
+    li {
+      margin-bottom: 6px;
+    }
+  }
+
+  a {
+    color: var(--wiki-accent);
+    text-underline-offset: 2px;
+  }
+
+  code {
+    font-family: @font-mono;
+    font-size: 0.86em;
+    padding: 1px 6px;
+    border-radius: 5px;
+    background: var(--wiki-code-bg);
+    color: var(--heading-color, var(--text-color));
+    overflow-wrap: anywhere;
+  }
+
+  // Blocos de código: os mesmos dos posts (barra no topo + copiar), com o nome
+  // da linguagem na barra.
+  .avocado-code-block();
+
+  pre {
+    margin: 14px 0 22px;
+    tab-size: 4;
+
+    code {
+      font-size: 13px;
+      overflow-wrap: normal;
+    }
+
+    &::before {
+      padding: 0 14px;
+      font-family: @font-mono;
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 32px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--wiki-accent);
+    }
+  }
+
+  pre:has(> code.language-php)::before        { content: "PHP"; }
+  pre:has(> code.language-ts)::before,
+  pre:has(> code.language-typescript)::before { content: "TS"; }
+  pre:has(> code.language-tsx)::before        { content: "TSX"; }
+  pre:has(> code.language-js)::before,
+  pre:has(> code.language-javascript)::before { content: "JS"; }
+  pre:has(> code.language-json)::before       { content: "JSON"; }
+  pre:has(> code.language-yaml)::before,
+  pre:has(> code.language-yml)::before        { content: "YAML"; }
+  pre:has(> code.language-bash)::before,
+  pre:has(> code.language-sh)::before,
+  pre:has(> code.language-shell)::before      { content: "Shell"; }
+  pre:has(> code.language-less)::before       { content: "LESS"; }
+  pre:has(> code.language-css)::before        { content: "CSS"; }
+  pre:has(> code.language-html)::before       { content: "HTML"; }
+  pre:has(> code.language-sql)::before        { content: "SQL"; }
+
+  // Tabelas: cartão com cabeçalho em versalete. A extensão já as deixa em
+  // bloco com rolagem própria; fit-content faz o cartão abraçar uma tabela
+  // estreita e max-width a deixa rolar quando não cabe.
+  table {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    overflow-x: auto;
+    margin: 14px 0 22px;
+    border: 1px solid var(--wiki-line);
+    border-radius: 12px;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--wiki-surface);
+    font-size: 14px;
+  }
+
+  th,
+  td {
+    padding: 10px 14px;
+    text-align: left;
+    vertical-align: top;
+    border: 0;
+    border-bottom: 1px solid var(--wiki-line);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  th {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--muted-color);
+    background: var(--wiki-head-bg);
+  }
+
+  // A primeira coluna é o nome (evento, permissão, classe): numa linha só.
+  td:first-child code {
+    white-space: nowrap;
+  }
+
+  // Destaque dentro de uma célula (ex.: "inside transaction") vira selo de aviso.
+  td > strong:only-child {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-family: @font-mono;
+    font-size: 11.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--wiki-warn);
+    background: var(--wiki-warn-soft);
+  }
+
+  // Citação = aviso: cartão com filete à esquerda; o negrito do começo é o
+  // título. Substitui as aspas grandes das citações dos posts.
+  blockquote {
+    margin: 16px 0 24px;
+    padding: 12px 16px;
+    border: 1px solid var(--wiki-line);
+    border-left: 3px solid var(--wiki-warn);
+    border-radius: 10px;
+    background: var(--wiki-surface);
+    color: var(--text-color);
+    font-size: 15px;
+    font-style: normal;
+
+    &::before {
+      display: none;
+    }
+
+    p {
+      max-width: none;
+      margin: 0 0 6px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    > p:first-child > strong:first-child {
+      display: block;
+      margin-bottom: 2px;
+    }
+  }
+
+}
+
+// ─── 6. Depois do texto: FAQ, relacionados, histórico, comentários ──────────
+
+.LinkRobinsWiki-page .LinkRobinsWiki-faq,
+.LinkRobinsWiki-page .LinkRobinsWiki-related,
+.LinkRobinsWiki-page .LinkRobinsWiki-history,
+.LinkRobinsWiki-page .LinkRobinsWiki-comments {
+  border-top-color: var(--wiki-line);
+}
+
+.LinkRobinsWiki-page .LinkRobinsWiki-faq-item {
+  border-color: var(--wiki-line);
+  border-radius: 12px;
+}
+
+.LinkRobinsWiki-page .LinkRobinsWiki-faq-heading,
+.LinkRobinsWiki-page .LinkRobinsWiki-related-heading,
+.LinkRobinsWiki-page .LinkRobinsWiki-comments-heading {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+// ─── 7. Editor (novo / editar) ───────────────────────────────────────────────
+
+.LinkRobinsWiki-page .LinkRobinsWiki-form {
+  max-width: @wiki-read-width;
+
+  .FormControl {
+    border-radius: 12px;
+  }
+}
+
+.LinkRobinsWiki-page .LinkRobinsWiki-faqEditor-entry {
+  border-color: var(--wiki-line);
+  border-radius: 12px;
+}
+
+// Campo "Design" (js/src/forum/utils/wiki.tsx): duas opções lado a lado, cada
+// uma com ícone, nome e uma linha do que ela faz; a escolhida leva a cor
+// primária, como os chips do compositor.
+.AvocadoWiki-styleOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.AvocadoWiki-styleOption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 240px;
+  max-width: 360px;
+  padding: 12px 16px;
+  border: 1.5px solid var(--wiki-line);
+  border-radius: 14px;
+  background: var(--wiki-surface);
+  color: var(--text-color);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--avocado-t-fast), background var(--avocado-t-fast);
+
+  > i {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    background: var(--avocado-surface-1);
+    color: var(--muted-color);
+    font-size: 14px;
+    line-height: 34px;
+    text-align: center;
+  }
+
+  &:hover,
+  &:focus-visible {
+    border-color: color-mix(in srgb, var(--primary-color) 45%, var(--wiki-line));
+  }
+
+  &.is-active {
+    border-color: var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 6%, var(--wiki-surface));
+
+    > i {
+      background: var(--primary-color);
+      color: #fff;
+    }
+  }
+
+  &[disabled] {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.AvocadoWiki-styleOption-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.AvocadoWiki-styleOption-label {
+  font-weight: 700;
+}
+
+.AvocadoWiki-styleOption-help {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted-color);
+}
+
+// ─── 8. Design "Manual" ──────────────────────────────────────────────────────
+// O segundo design do artigo, escolhido pelo autor no campo "Design" da tela de
+// criação/edição: manual de referência, com o sumário fixo à esquerda, um hero
+// com a sobrelinha em mono, título grande e o primeiro parágrafo como
+// linha-fina, e seções com régua. Tudo daqui fica atrás da classe que o JS põe
+// no PageStructure do artigo (.AvocadoWiki-manual, junto de .LinkRobinsWiki-page);
+// o artigo chega no payload da página, então ela já sai no primeiro render.
+
+.AvocadoWiki-manual {
+  // ─── 8a. Colunas ──────────────────────────────────────────────────────
+  // O sumário (.LinkRobinsWiki-tocRail) vem depois do texto no DOM; a ordem do
+  // flex o leva para a esquerda, como num manual. Abaixo do desktop a própria
+  // extensão troca a coluna pela barra de sumário fixa no topo.
+
+  &.LinkRobinsWiki-page--show .LinkRobinsWiki-articleLayout {
+    gap: @wiki-rail-gap;
+  }
+
+  &.LinkRobinsWiki-page--show .LinkRobinsWiki-articleMain {
+    max-width: @wiki-read-width;
+  }
+
+  &.LinkRobinsWiki-page--show .LinkRobinsWiki-tocRail {
+    order: -1;
+    flex: 0 0 @wiki-rail-width;
+    top: calc(var(--header-height, 52px) + 24px);
+    max-height: ~"calc(100vh - var(--header-height, 52px) - 48px)";
+    padding-top: 6px;
+    font-size: 14px;
+  }
+
+  // "Sumário": o rótulo pequeno em mono no topo da coluna.
+  &.LinkRobinsWiki-page .LinkRobinsWiki-toc-title {
+    font-family: @font-mono;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: none;
+    margin-bottom: 14px;
+  }
+
+  &.LinkRobinsWiki-page .LinkRobinsWiki-toc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-left: 0;
+  }
+
+  // A coluna lista só as seções (o nível mais raso de título); as subseções
+  // ficam no painel do telefone, onde não há texto ao lado competindo.
+  &.LinkRobinsWiki-page .LinkRobinsWiki-tocRail .LinkRobinsWiki-toc-item:not(.LinkRobinsWiki-toc-item--level-1) {
+    display: none;
+  }
+
+  &.LinkRobinsWiki-page .LinkRobinsWiki-toc-link,
+  &.LinkRobinsWiki-page .LinkRobinsWiki-toc-item--level-1 > .LinkRobinsWiki-toc-link {
+    margin-left: 0;
+    padding: 5px 12px;
+    border-left: 2px solid var(--wiki-line);
+    color: var(--muted-color);
+    font-size: 14px;
+    line-height: 1.4;
+    transition: color var(--avocado-t-fast), border-color var(--avocado-t-fast);
+
+    &:hover,
+    &:focus-visible {
+      color: var(--text-color);
+      border-left-color: var(--wiki-accent);
+    }
+  }
+
+  &.LinkRobinsWiki-page .LinkRobinsWiki-toc-item--level-2 > .LinkRobinsWiki-toc-link { padding-left: 24px; }
+  &.LinkRobinsWiki-page .LinkRobinsWiki-toc-item--level-3 > .LinkRobinsWiki-toc-link { padding-left: 36px; }
+
+  &.LinkRobinsWiki-page .LinkRobinsWiki-toc-item.is-active > .LinkRobinsWiki-toc-link {
+    color: var(--wiki-accent);
+    border-left-color: var(--wiki-accent);
+    font-weight: 600;
+  }
+
+  // Painel do telefone: cartão do tema.
+  &.LinkRobinsWiki-page .LinkRobinsWiki-mobileToc-inner {
+    border-color: var(--wiki-line);
+    border-radius: 14px;
+    box-shadow: var(--shadow-subtle);
+  }
+
+  // ─── 8b. Hero ─────────────────────────────────────────────────────────
+  // A linha de categoria · autor · edição sobe para cima do título e vira a
+  // "sobrelinha" em mono, na cor primária. O menu de ações (…) continua no canto.
+
+  &.LinkRobinsWiki-page .LinkRobinsWiki-articleHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 18px;
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  &.LinkRobinsWiki-page .LinkRobinsWiki-byline {
+    order: -1;
+    gap: 8px;
+    min-height: 34px;
+    padding-right: 48px; // fica livre do menu de ações, que é absoluto
+    font-family: @font-mono;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    color: var(--muted-color);
+
+    a {
+      font-weight: 500;
+    }
+  }
+
+  &.LinkRobinsWiki-page .LinkRobinsWiki-byline-cat {
+    color: var(--wiki-accent) !important; // a extensão pinta com a cor da categoria, inline
+  }
+
+  &.LinkRobinsWiki-page .LinkRobinsWiki-articleTitle {
+    margin: 0;
+    padding-right: 0;
+    font-size: clamp(34px, 4.2vw, 52px);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+    color: var(--heading-color, var(--text-color));
+  }
+
+  &.LinkRobinsWiki-page .LinkRobinsWiki-articleControls + .LinkRobinsWiki-articleTitle {
+    padding-right: 0;
+  }
+
+  // ─── 8c. Texto: linha-fina, ficha, seções e rodapé ─────────────────────────
+
+  &.LinkRobinsWiki-page .LinkRobinsWiki-articleBody {
+    // Linha-fina: o primeiro parágrafo do artigo fecha o hero.
+    > p:first-child {
+      max-width: 62ch;
+      margin-bottom: 20px;
+      font-size: 18px;
+      line-height: 1.6;
+      color: var(--muted-color);
+    }
+
+    // Ficha logo abaixo da linha-fina (uma tabela de uma linha só, como a de
+    // "Composer · Extension id · …"): rótulo em cima, valor em mono, sem cartão.
+    > p:first-child + table {
+      width: auto;
+      border: 0;
+      border-radius: 0;
+      background: none;
+
+      th,
+      td {
+        padding: 0 22px 4px 0;
+        border: 0;
+        background: none;
+      }
+
+      th {
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: 0;
+        text-transform: none;
+        color: var(--muted-color);
+      }
+
+      // Cada valor numa linha só: no telefone a ficha rola de lado, inteira,
+      // em vez de quebrar "ramon-chat" no hífen.
+      code {
+        padding: 0;
+        background: none;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+    }
+
+    // Seções: o primeiro <h2> abre o corpo com a régua que fecha o hero.
+    h2 {
+      margin: 48px 0 12px;
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      text-wrap: balance;
+      color: var(--heading-color, var(--text-color));
+    }
+
+    > h2:first-of-type {
+      margin-top: 28px;
+      padding-top: 40px;
+      border-top: 1px solid var(--wiki-line);
+    }
+
+    // Quem escreve um `---` antes da primeira seção já pôs a régua: a do
+    // título sai, senão ficam duas linhas seguidas.
+    > hr + h2:first-of-type {
+      margin-top: 0;
+      padding-top: 22px;
+      border-top: 0;
+    }
+
+    h3 {
+      margin: 30px 0 8px;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      text-wrap: balance;
+      color: var(--heading-color, var(--text-color));
+    }
+
+    h2,
+    h3 {
+      scroll-margin-top: calc(var(--header-height, 52px) + 24px);
+    }
+
+    // Rodapé do artigo: régua e nota em itálico.
+    hr {
+      margin: 48px 0 18px;
+      border: 0;
+      border-top: 1px solid var(--wiki-line);
+
+      + p {
+        font-size: 14px;
+        color: var(--muted-color);
+      }
+    }
+  }
+}
