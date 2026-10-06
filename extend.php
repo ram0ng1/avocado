@@ -32,6 +32,7 @@ $extensionStylesheets = [
     'flectar-fancybox' => 'extensions/Fancybox.less',
     'datlechin-mermaid' => 'extensions/Mermaid.less',
     'linkrobins-support' => 'extensions/Support.less',
+    'linkrobins-wiki' => 'extensions/Wiki.less',
 ];
 
 return [
@@ -81,6 +82,40 @@ return [
 
     (new Extend\Frontend('forum'))
         ->css(__DIR__.'/less/forum-tail.less'),
+
+    // Tabelas no Markdown (sintaxe de pipes do GFM). O Litedown do
+    // flarum/markdown não tem tabela e o BBCode do core também não — e as
+    // páginas do linkrobins/wiki (guias de referência) vivem de tabelas. O
+    // formatter é um só no fórum, então posts novos também passam a aceitar a
+    // sintaxe; os já salvos guardam o XML antigo e não mudam. O visual fica em
+    // forum/extensions/Wiki.less.
+    // Design de cada artigo do linkrobins/wiki, escolhido pelo autor na tela de
+    // criação/edição do wiki (js/src/forum/utils/wiki.tsx): tabela companheira
+    // 1:1, como a do changelog. O eager-load decide com o banco na mão — sem a
+    // tabela migrada os endpoints seguem sem ele e todo artigo fica no padrão.
+    (new Extend\Conditional())
+        ->whenExtensionEnabled('linkrobins-wiki', fn () => [
+            (new Extend\Model(\LinkRobins\Wiki\WikiArticle::class))
+                ->hasOne('avocadoStyle', \Ramon\Avocado\Model\WikiArticleStyle::class, 'article_id'),
+
+            (new Extend\ApiResource(\LinkRobins\Wiki\Api\Resource\WikiArticleResource::class))
+                ->fields(\Ramon\Avocado\Api\WikiArticleFields::class)
+                ->endpoint(
+                    [Endpoint\Index::class, Endpoint\Show::class],
+                    fn (Endpoint\Index|Endpoint\Show $endpoint) => resolve(\Ramon\Avocado\Support\WikiStyleSchema::class)->available()
+                        ? $endpoint->eagerLoad('avocadoStyle')
+                        : $endpoint
+                ),
+        ]),
+
+    (new Extend\Conditional())
+        ->whenExtensionEnabled('flarum-markdown', fn () => [
+            (new Extend\Conditional())
+                ->whenExtensionEnabled('linkrobins-wiki', fn () => [
+                    (new Extend\Formatter())
+                        ->configure(fn ($config) => $config->PipeTables),
+                ]),
+        ]),
 
     // A página "Salvos" só existe quando o fof/bookmarks não está ativo: duas
     // rotas GET no mesmo `/bookmarks` derrubam o boot do Flarum inteiro
