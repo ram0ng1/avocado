@@ -1757,7 +1757,8 @@
     // Spacer pushes Close + Post to right
     li.item-avocadoSpacer { flex: 1 !important; }
 
-    // Close + Post buttons in toolbar
+    // Close + Post buttons in toolbar (and fof/drafts' save button before them)
+    li.item-avocadoDraft,
     li.item-avocadoClose,
     li.item-avocadoPost {
       margin-left: 4px !important;
@@ -1794,6 +1795,7 @@
       > li { display: none !important; }
       > li.item-avocadoPreview { display: inline-flex !important; border-right: none !important; }
       > li.item-avocadoSpacer  { display: flex !important; }
+      > li.item-avocadoDraft   { display: inline-flex !important; }
       > li.item-avocadoClose   { display: inline-flex !important; }
       > li.item-avocadoPost    { display: inline-flex !important; }
     }

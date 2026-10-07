@@ -1,6 +1,13 @@
 import app from 'flarum/forum/app';
 import { trans, uploadDiscussionHeroImage, tagsAreChangelogProducts, changelogAttributes } from '../utils';
 
+/** Contador do menu de rascunhos do fof (`draftCount` do usuário): o delete não devolve o usuário, então desce aqui como no fof. */
+const adjustDraftCount = (delta: number): void => {
+  const attributes = (app.session.user as any)?.data?.attributes;
+  if (!attributes) return;
+  attributes.draftCount = Math.max(0, (Number(attributes.draftCount) || 0) + delta);
+};
+
 /**
  * State backing the inline new-discussion composer.
  *
@@ -37,6 +44,12 @@ export default class InlineComposerState {
   changelogVersion = '';
   /** Capa colorida, já codificada (utils/cover); 'color' = automática, null = sem capa colorida. */
   changelogCover: string | null = 'color';
+
+  // fof/drafts: o rascunho salvo a partir deste compositor. O fof só cuida do
+  // compositor do core (ComposerState.draft), então este guarda o seu aqui.
+  draft: any = null;
+  savingDraft = false;
+  draftJustSaved = false;
 
   /** Required by Flarum's TextEditor — proxies the live composer body. */
   composerProxy = {
@@ -110,6 +123,66 @@ export default class InlineComposerState {
     this.setHeroImageFile(null);
     this.changelogVersion = '';
     this.changelogCover = 'color';
+    this.draft = null;
+    this.savingDraft = false;
+    this.draftJustSaved = false;
+  }
+
+  // ── Drafts (fof/drafts) ────────────────────────────────────────────────
+
+  /** `canSaveDrafts` só existe com o fof/drafts ativo e quem tem a permissão. */
+  canSaveDraft(): boolean {
+    return !!app.forum.attribute('canSaveDrafts');
+  }
+
+  /**
+   * Salva (ou atualiza) o rascunho no mesmo formato que o compositor do core
+   * grava: título, conteúdo, tags em `relationships` e os campos do changelog
+   * em `extra` — assim abrir o rascunho pelo menu do fof ou publicá-lo agendado
+   * funciona igual. A imagem do hero fica de fora: só existe no navegador.
+   */
+  saveDraft(): Promise<void> {
+    if (this.savingDraft || !this.canSaveDraft() || !this.body.trim()) return Promise.resolve();
+
+    this.savingDraft = true;
+    m.redraw();
+
+    const payload: any = {
+      title: this.title,
+      content: this.body,
+      relationships: { tags: { data: this.tags.map((tag) => ({ type: 'tags', id: tag.id() })) } },
+      extra: tagsAreChangelogProducts(this.tags) ? changelogAttributes(this.changelogVersion, this.changelogCover, !!this.heroImageFile) : {},
+    };
+
+    const isNew = !this.draft;
+    const request = isNew ? app.store.createRecord('drafts').save(payload) : this.draft.save(payload);
+
+    return request
+      .then((draft: any) => {
+        // O contador sobe sozinho: a resposta do create já traz o usuário com o `draftCount` novo.
+        if (isNew) this.draft = draft;
+        this.draftJustSaved = true;
+        setTimeout(() => {
+          this.draftJustSaved = false;
+          m.redraw();
+        }, 300);
+      })
+      .catch((err: any) => console.error('Draft save failed:', err))
+      .finally(() => {
+        this.savingDraft = false;
+        m.redraw();
+      });
+  }
+
+  /** Publicada a discussão, o rascunho de onde ela veio sai da lista (como no core). */
+  private discardDraft(): void {
+    const draft = this.draft;
+    this.draft = null;
+    if (!draft?.exists) return;
+    draft.delete().then(() => {
+      adjustDraftCount(-1);
+      m.redraw();
+    });
   }
 
   /**
@@ -167,6 +240,7 @@ export default class InlineComposerState {
           }
         }
 
+        this.discardDraft();
         this.submitting = false;
         return discussion;
       })

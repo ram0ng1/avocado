@@ -120,6 +120,7 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
             }}
             onsubmit={() => this.submit()}
             previewControl={this.renderPreviewButton()}
+            draftControl={this.renderDraftButton()}
             closeControl={this.renderCloseButton()}
             submitControl={this.renderSubmitButton()}
           />
@@ -227,6 +228,35 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
         }}
       >
         <i aria-hidden="true" className={iconCls} />
+      </button>
+    );
+  }
+
+  /** O mesmo botão que o fof/drafts põe no compositor do core (ícone, título e estados). */
+  private renderDraftButton() {
+    const state = this.state;
+    if (!state.canSaveDraft()) return null;
+
+    const label = trans('fof-drafts.forum.composer.title', 'Save Draft');
+    const icon = state.draftJustSaved ? 'fas fa-check' : state.savingDraft ? 'fas fa-spinner fa-spin' : 'fas fa-floppy-disk';
+    const cls = `Button Button--icon Button--link AvocadoHome-composerDraftBtn${state.savingDraft ? ' saving' : ''}${
+      state.draftJustSaved ? ' justSaved' : ''
+    }`;
+
+    return (
+      <button
+        type="button"
+        className={cls}
+        title={label}
+        aria-label={label}
+        disabled={state.savingDraft || state.draftJustSaved || !state.body.trim()}
+        onclick={(e: Event) => {
+          e.preventDefault();
+          e.stopPropagation();
+          state.saveDraft();
+        }}
+      >
+        <i aria-hidden="true" className={`icon ${icon}`} />
       </button>
     );
   }
