@@ -1485,8 +1485,9 @@ app.initializers.add(
       extend(DiscussionComposer.prototype, 'oninit', function () {
         this._avocadoHeroFile = null;
         this._avocadoHeroPreview = null;
-        this._avocadoVersion = '';
-        this._avocadoCover = 'color';
+        // Um rascunho do fof/drafts aberto aqui traz versão e capa nos attrs (o `extra` do rascunho).
+        this._avocadoVersion = this.attrs.changelogVersion || '';
+        this._avocadoCover = this.attrs.changelogCover ?? 'color';
         // Rótulos que o core define em initAttrs: guardados para voltar a eles
         // quando a tag escolhida deixa de ser um produto do changelog.
         this._avocadoLabels = {

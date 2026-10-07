@@ -17,6 +17,8 @@ export interface IComposerTextEditorAttrs {
 
   /** Preview-toggle button rendered on the **left** of the toolbar. */
   previewControl?: Children;
+  /** Save-draft button (fof/drafts) rendered on the right, before close. */
+  draftControl?: Children;
   /** Cancel/close button rendered on the right (before submit). */
   closeControl?: Children;
   /** Primary submit button rendered on the **far right** of the toolbar. */
@@ -34,15 +36,15 @@ export interface IComposerTextEditorAttrs {
  *
  * Final layout (DOM order = visual order = tab order):
  *  ┌────────────────────────────────────────────────────────────────────────┐
- *  │ [preview] │ ⟨core toolbar: B/I/H/…⟩ │ ⟨core submit, hidden⟩ │ [spacer] [close] [post] │
- *  └────────────────────────────────────────────────────────────────────────┘
+ *  │ [preview] │ ⟨core toolbar: B/I/H/…⟩ │ ⟨core submit, hidden⟩ │ [spacer] [draft] [close] [post] │
+ *  └────────────────────────────────────────────────────────────────────────────────┘
  *
  * Items with positive priority render BEFORE the markdown toolbar; items with
  * non-positive priority render AFTER. Core's own `submit` item (priority 0)
  * lands after the toolbar — it's hidden via CSS (`li.App-primaryControl`).
  *
  * ItemList keys are kept in camelCase (`avocadoPreview`, `avocadoSpacer`,
- * `avocadoClose`, `avocadoPost`) so the rendered `<li class="item-…">` matches
+ * `avocadoDraft`, `avocadoClose`, `avocadoPost`) so the rendered `<li class="item-…">` matches
  * the existing selectors in `less/forum/HomePage.less`.
  */
 export default class ComposerTextEditor extends TextEditor {
@@ -95,12 +97,15 @@ export default class ComposerTextEditor extends TextEditor {
 
   controlItems(): ItemList<Children> {
     const items = super.controlItems();
-    const { previewControl, closeControl, submitControl } = this.attrs as IComposerTextEditorAttrs;
+    const { previewControl, draftControl, closeControl, submitControl } = this.attrs as IComposerTextEditorAttrs;
 
     if (previewControl) {
       items.add('avocadoPreview', previewControl, 1000);
     }
     items.add('avocadoSpacer', <span aria-hidden="true" />, -100);
+    if (draftControl) {
+      items.add('avocadoDraft', draftControl, -105);
+    }
     if (closeControl) {
       items.add('avocadoClose', closeControl, -110);
     }
