@@ -513,6 +513,8 @@ return [
         ->default('avocado.colored_border_style', 'none')
         ->default('avocado.threads_style', false)
         ->default('avocado.custom_loading_spinner', false)
+        ->default('avocado.font_family', \Ramon\Avocado\Content\ThemeFonts::DM_SANS)
+        ->default('avocado.font_custom_family', '')
         ->default('avocado.loading_spinner_style', 'avocado')
         ->default('avocado.loading_spinner_custom', '')
         ->default('avocado.bookmarks_enabled', true)

@@ -103,6 +103,8 @@ import {
   deleteDiscussionHeroImage,
   canEditDiscussionHero,
   sanitizeAdminHtml,
+  discussionViews,
+  formatViews,
 } from './utils';
 import {
   toggleBookmark,
@@ -195,12 +197,66 @@ const getPostPermalink = (post) => {
   return new URL(relative, window.location.origin).toString();
 };
 
-// ─── Code block copy button ───────────────────────────────────────────────────
+// ─── Code block: language label + copy button ─────────────────────────────────
+// Nome curto para os apelidos mais comuns; o resto sai como foi escrito (o CSS
+// põe em maiúsculas). `null` = não é linguagem, a barra fica sem rótulo.
+const CODE_LANG_LABELS: Record<string, string | null> = {
+  js: 'JS',
+  javascript: 'JS',
+  ts: 'TS',
+  typescript: 'TS',
+  yml: 'YAML',
+  sh: 'Shell',
+  bash: 'Shell',
+  shell: 'Shell',
+  zsh: 'Shell',
+  py: 'Python',
+  rb: 'Ruby',
+  cpp: 'C++',
+  cs: 'C#',
+  csharp: 'C#',
+  md: 'Markdown',
+  text: null,
+  txt: null,
+  plain: null,
+  plaintext: null,
+  nohighlight: null,
+};
+
+/**
+ * Linguagem DECLARADA no bloco (```python / [code=python]), ou null.
+ *
+ * O formatter só emite `language-x` quando o autor declarou; o hljs-loader, ao
+ * adivinhar a linguagem de um bloco sem declaração, acrescenta `hljs` e DEPOIS
+ * `language-<palpite>`. Por isso só vale a classe que vem antes de `hljs` —
+ * rotular o palpite mostraria "SCSS" num trecho de Python.
+ */
+const declaredCodeLanguage = (code: Element | null): string | null => {
+  if (!code) return null;
+
+  for (const cls of Array.from(code.classList)) {
+    if (cls === 'hljs') return null;
+
+    const match = /^lang(?:uage)?-(.+)$/.exec(cls);
+    if (!match) continue;
+
+    const lang = match[1].toLowerCase();
+    return lang in CODE_LANG_LABELS ? CODE_LANG_LABELS[lang] : lang;
+  }
+
+  return null;
+};
+
 const initCodeBlocks = (root: HTMLElement | null) => {
   if (!root) return;
   root.querySelectorAll<HTMLElement>('pre').forEach((pre) => {
     // Only inject once
     if (pre.querySelector('.avocado-code-copy')) return;
+
+    // Rótulo na barra do topo, via pre[data-code-lang]::before (mixin
+    // .avocado-code-block) — o JS não cria elemento, só informa o texto.
+    const lang = declaredCodeLanguage(pre.querySelector(':scope > code'));
+    if (lang) pre.dataset.codeLang = lang;
 
     const makeIcon = (cls: string) => {
       const i = document.createElement('i');
@@ -889,6 +945,7 @@ app.initializers.add(
       const title = discussion.title?.() || '';
       const replyCount = discussion.replyCount?.() || 0;
       const postCount = replyCount + 1;
+      const views = discussionViews(discussion);
 
       // Avatars: author + lastPostedUser — O(1), avoids iterating the full store.
       const participantMap = new Map();
@@ -1202,6 +1259,16 @@ app.initializers.add(
                     {participantCount === 1
                       ? trans('ramon-avocado.forum.discussion.participant_singular', 'participant')
                       : trans('ramon-avocado.forum.discussion.participant_plural', 'participants')}
+                  </span>
+                )}
+                {/* michaelbelgium/flarum-discussion-views */}
+                {views !== null && (
+                  <span className="DiscussionHero-metaItem">
+                    <i className="far fa-eye" aria-hidden="true" />
+                    {formatViews(views)}{' '}
+                    {views === 1
+                      ? trans('ramon-avocado.forum.discussion.view_singular', 'view')
+                      : trans('ramon-avocado.forum.discussion.view_plural', 'views')}
                   </span>
                 )}
                 <WhoIsReading discussion={discussion} />

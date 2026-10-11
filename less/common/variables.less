@@ -10,7 +10,11 @@
 @avocado-box-shadow:              rgba(0, 0, 0, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;
 
 // ── Typography scale ─────────────────────────────────────────────────────────
-@font-sans:    'DM Sans Variable', 'DM Sans', Inter, "Segoe UI", sans-serif;
+// A família do texto é escolhida no admin (Aparência → Fonte): o PHP
+// (Content\ThemeFonts) define --avocado-font-sans no CSS crítico inline. O
+// fallback do var() é a pilha padrão, para onde esse CSS não chega (admin).
+// Toda regra do tema usa @font-sans — não escrever a pilha por extenso.
+@font-sans:    var(--avocado-font-sans, 'DM Sans Variable', 'DM Sans', "Segoe UI", sans-serif);
 @font-serif:   Georgia, "Times New Roman", serif;
 @font-mono:    ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
 

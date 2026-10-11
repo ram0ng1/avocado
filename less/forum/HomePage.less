@@ -57,7 +57,7 @@
   min-height: 100vh;
   background: #fff;
   color: var(--home-title);
-  font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: @font-sans;
 }
 
 .AvocadoHome-topbar {
@@ -370,7 +370,7 @@
     border: none !important;
     background: var(--avocado-surface-1) !important;
     box-shadow: none !important;
-    font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif !important;
+    font-family: @font-sans !important;
     font-size: 13px !important;
     font-weight: 700 !important;
     color: var(--avocado-text-dark) !important;
@@ -982,6 +982,15 @@
   &--replies {
     .fas, .far {
       color: #6b7fc4;
+    }
+  }
+
+  // Contador de visualizações (discussion-views): informativo, não é botão.
+  &--views {
+    cursor: default;
+
+    &:hover {
+      background: none;
     }
   }
 

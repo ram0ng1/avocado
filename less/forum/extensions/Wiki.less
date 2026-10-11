@@ -272,34 +272,12 @@ body.dark-mode {
       overflow-wrap: normal;
     }
 
-    &::before {
-      padding: 0 14px;
-      font-family: @font-mono;
-      font-size: 11px;
-      font-weight: 500;
-      line-height: 32px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+    // O rótulo em si (texto e tipografia) é o do mixin; aqui só a cor do wiki,
+    // direto no ::before para valer também no tema escuro.
+    &[data-code-lang]::before {
       color: var(--wiki-accent);
     }
   }
-
-  pre:has(> code.language-php)::before        { content: "PHP"; }
-  pre:has(> code.language-ts)::before,
-  pre:has(> code.language-typescript)::before { content: "TS"; }
-  pre:has(> code.language-tsx)::before        { content: "TSX"; }
-  pre:has(> code.language-js)::before,
-  pre:has(> code.language-javascript)::before { content: "JS"; }
-  pre:has(> code.language-json)::before       { content: "JSON"; }
-  pre:has(> code.language-yaml)::before,
-  pre:has(> code.language-yml)::before        { content: "YAML"; }
-  pre:has(> code.language-bash)::before,
-  pre:has(> code.language-sh)::before,
-  pre:has(> code.language-shell)::before      { content: "Shell"; }
-  pre:has(> code.language-less)::before       { content: "LESS"; }
-  pre:has(> code.language-css)::before        { content: "CSS"; }
-  pre:has(> code.language-html)::before       { content: "HTML"; }
-  pre:has(> code.language-sql)::before        { content: "SQL"; }
 
   // Tabelas: cartão com cabeçalho em versalete. A extensão já as deixa em
   // bloco com rolagem própria; fit-content faz o cartão abraçar uma tabela
