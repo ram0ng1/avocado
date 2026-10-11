@@ -23,6 +23,15 @@ ramon-avocado:
       section_logo: Logotipo
       section_footer: Rodapé
       section_colored: Cores
+      section_font: Fonte
+      font_family_label: Fonte do fórum
+      font_family_help: "A tipografia usada em todo o fórum. A DM Sans só tem letras latinas: para vietnamita, cirílico ou grego escolha a Inter ou a fonte do sistema, e para chinês, japonês ou coreano a fonte do sistema."
+      font_family_dm_sans: "DM Sans — padrão do tema"
+      font_family_system: "Fonte do sistema — nada para baixar, cobre qualquer escrita"
+      font_family_inter: "Inter — embutida no tema"
+      font_family_custom: "Personalizada…"
+      font_custom_family_label: Família de fonte personalizada
+      font_custom_family_help: "Uma lista font-family de CSS, por exemplo: Noto Sans, sans-serif. O tema só aplica o nome — carregue o arquivo da fonte por conta própria (Cabeçalho personalizado ou CSS personalizado). Cada nome só pode ter letras, números, espaços, hífens e sublinhados; o resto é ignorado."
       section_team: Página Equipe
       section_hero_image_tags: Imagem do hero nas discussões
       section_discussion: Página de discussão
@@ -373,6 +382,8 @@ ramon-avocado:
       post_plural: posts
       participant_singular: participante
       participant_plural: participantes
+      view_singular: visualização
+      view_plural: visualizações
       hero_image_add: Adicionar imagem
       hero_image_replace: Trocar imagem
       hero_image_remove: Remover imagem
@@ -424,6 +435,8 @@ ramon-avocado:
       replies: respostas
       reply_count_plural: "{count} respostas"
       reply_count_singular: "1 resposta"
+      view_count_plural: "{count} visualizações"
+      view_count_singular: "1 visualização"
       reply_label: Responder
       reply_singular: "1 resposta"
       reply_plural: "{count} respostas"

@@ -29,12 +29,11 @@ class AddCriticalCss
 
     public function __invoke(Document $document, ServerRequestInterface $request): void
     {
-        // Única declaração das @font-face da DM Sans (o less/common/fonts.less saiu):
-        // mesma URL do preload do AddCriticalPreloads, ver ThemeFonts. São as mesmas
-        // 4 faces de antes — a itálica do apelido 'DM Sans' vinha só do LESS e agora
-        // mora aqui, para o itálico real continuar valendo onde 'DM Sans' vem primeiro.
-        $normalFont = htmlspecialchars($this->fonts->url(ThemeFonts::NORMAL), ENT_QUOTES, 'UTF-8');
-        $italicFont = htmlspecialchars($this->fonts->url(ThemeFonts::ITALIC), ENT_QUOTES, 'UTF-8');
+        // Única declaração das @font-face do tema (o less/common/fonts.less saiu):
+        // mesma URL do preload do AddCriticalPreloads, ver ThemeFonts. A família
+        // é a escolhida no admin; o LESS a lê de --avocado-font-sans (@font-sans).
+        $fontFaces = $this->fonts->fontFaces();
+        $fontStack = $this->fonts->stack();
 
         // ── Logo size reservation ─────────────────────────────────────────────
         // The theme's main CSS gates logo constraints behind
@@ -137,12 +136,10 @@ class AddCriticalCss
         // over by the overflowing content. `min-height` lets `.App` grow with content,
         // mirroring core's real `.App` rule in forum.css.
         $css = <<<CSS
-        @font-face{font-family:'DM Sans Variable';font-weight:100 900;font-style:normal;font-display:swap;src:url('{$normalFont}') format('woff2-variations')}
-        @font-face{font-family:'DM Sans Variable';font-weight:100 900;font-style:italic;font-display:swap;src:url('{$italicFont}') format('woff2-variations')}
-        @font-face{font-family:'DM Sans';font-weight:100 900;font-style:normal;font-display:swap;src:url('{$normalFont}') format('woff2-variations')}
-        @font-face{font-family:'DM Sans';font-weight:100 900;font-style:italic;font-display:swap;src:url('{$italicFont}') format('woff2-variations')}
+        {$fontFaces}
+        :root{--avocado-font-sans:{$fontStack}}
         html,body{margin:0;padding:0}
-        body{font-family:'DM Sans Variable','DM Sans','Segoe UI',sans-serif;overflow-x:hidden}
+        body{font-family:{$fontStack};overflow-x:hidden}
         *,*::before,*::after{box-sizing:border-box}
         .App{display:flex;flex-direction:column;min-height:100vh}
         .App-content{flex:1 1 auto;min-width:0}

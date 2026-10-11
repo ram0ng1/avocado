@@ -427,7 +427,9 @@ function renderStatusEvent(event: any): Mithril.Children {
   const badge = status?.statusBadge ? status.statusBadge(event.toStatus) : event.toStatus;
   const name = event.displayName || event.username || '';
   const when = event.createdAt ? humanTime(new Date(event.createdAt)) : null;
-  const href = event.username ? app.route('user', { username: event.username }) : null;
+  // `slug` segue o slug driver de usuários configurado (Api\SupportEventFields).
+  const slug = event.slug || event.username;
+  const href = slug ? app.route('user', { username: slug }) : null;
 
   return (
     <div className="AvocadoSupport-event" key={`event-${event.id}`}>

@@ -4,7 +4,7 @@ import Avatar from 'flarum/common/components/Avatar';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import humanTime from 'flarum/common/helpers/humanTime';
 import trustedHtml from '../../common/trustedHtml';
-import { trans, navigate, displayName, safeCssColor } from '../utils';
+import { trans, navigate, displayName, safeCssColor, userRoute } from '../utils';
 
 export default class TeamPage extends Page {
   loading = true;
@@ -121,13 +121,7 @@ export default class TeamPage extends Page {
   }
 
   renderCard(user: any) {
-    const href = (() => {
-      try {
-        return app.route('user', { username: user.username() });
-      } catch {
-        return `/u/${user.username()}`;
-      }
-    })();
+    const href = userRoute(user);
 
     const name = displayName(user);
     const isOnline = user.isOnline?.();

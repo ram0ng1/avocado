@@ -11,6 +11,7 @@ import PostListState from 'flarum/forum/states/PostListState';
 import {
   tagRoute,
   safeRoute,
+  userRoute,
   displayName,
   truncate,
   highlight,
@@ -487,13 +488,7 @@ export default class AvocadoSearchPage extends Page {
   private renderUserCard(user: any) {
     const username = (user.username?.() || '') as string;
     const dname = displayName(user);
-    const href = (() => {
-      try {
-        return app.route('user', { username });
-      } catch {
-        return '#';
-      }
-    })();
+    const href = userRoute(user);
     const bio = (user.bio?.() || '') as string;
     const q = (app.search as any).state.params().q || '';
     const postCount = numberOr(user.commentCount?.(), 0);

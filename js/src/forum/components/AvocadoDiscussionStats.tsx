@@ -1,6 +1,8 @@
 import Component from 'flarum/common/Component';
 import type { ComponentAttrs } from 'flarum/common/Component';
 
+import { discussionViews, formatViews } from '../utils';
+
 interface StatRow {
   key: string;
   icon: string;
@@ -16,7 +18,8 @@ export interface AvocadoDiscussionStatsAttrs extends ComponentAttrs {
  * AvocadoDiscussionStats — compact stats card injected between the Reply
  * button (@100) and the Scrubber/Timeline (@-100) in the DiscussionPage sidebar.
  *
- * Shows: views (flarum/views), replies, and first-post likes (flarum/likes).
+ * Shows: views (michaelbelgium/flarum-discussion-views), replies, and
+ * first-post likes (flarum/likes).
  */
 export default class AvocadoDiscussionStats extends Component<AvocadoDiscussionStatsAttrs> {
   view() {
@@ -24,12 +27,12 @@ export default class AvocadoDiscussionStats extends Component<AvocadoDiscussionS
     if (!discussion) return <div className="AvocadoSidebar-stats" />;
 
     const replyCount = Number(discussion.replyCount?.()) || 0;
-    const viewCount = Number(discussion.attribute?.('viewCount') ?? discussion.viewCount?.() ?? 0);
+    const viewCount = discussionViews(discussion) ?? 0;
     const firstPost = discussion.firstPost?.();
     const likeCount = Number(firstPost?.attribute?.('likesCount') ?? firstPost?.likesCount?.() ?? 0);
 
     const rows: StatRow[] = [
-      viewCount > 0 && { key: 'views', icon: 'far fa-eye', label: 'Views', value: viewCount.toLocaleString() },
+      viewCount > 0 && { key: 'views', icon: 'far fa-eye', label: 'Views', value: formatViews(viewCount) },
       true && { key: 'replies', icon: 'far fa-comment', label: 'Replies', value: String(replyCount) },
       likeCount > 0 && { key: 'likes', icon: 'far fa-thumbs-up', label: 'Likes', value: String(likeCount) },
     ].filter(Boolean) as StatRow[];

@@ -1,7 +1,7 @@
 import app from 'flarum/forum/app';
 import Component from 'flarum/common/Component';
 import type { ComponentAttrs } from 'flarum/common/Component';
-import { displayName, navigate, safeRoute } from '../../utils';
+import { displayName, navigate, safeRoute, userSlug } from '../../utils';
 
 export interface IOnlineUsersAttrs extends ComponentAttrs {
   /** Optional className appended to the outer wrapper. */
@@ -71,10 +71,12 @@ export default class OnlineUsers<CustomAttrs extends IOnlineUsersAttrs = IOnline
   private renderAvatar(user: any, index: number, isPlain: boolean) {
     const key = isPlain ? user.id : user.id?.();
     const userModel = isPlain ? (key ? app.store.getById('users', String(key)) : null) : user;
-    const username = userModel?.username?.() || (isPlain ? user.username : '');
+    // `slug` vem do slug driver configurado (Content\InjectOnlineUsers); o
+    // username só é fallback para um payload antigo ainda no cache de 30s.
+    const slug = userSlug(userModel) || (isPlain ? user.slug || user.username : '');
     const name = userModel?.displayName?.() || userModel?.username?.() || (isPlain ? user.displayName || user.username : displayName(user));
     const avatarUrl = userModel?.avatarUrl?.() || (isPlain ? user.avatarUrl || null : null);
-    const profileHref = safeRoute('user', { username });
+    const profileHref = safeRoute('user', { username: slug });
     const fallbackBg = FALLBACK_GRADIENTS[index % FALLBACK_GRADIENTS.length];
 
     return (

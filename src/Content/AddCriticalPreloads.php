@@ -12,7 +12,8 @@ use Psr\Http\Message\ServerRequestInterface;
 /**
  * Injects critical resource hints into <head>:
  *
- *  1. <link rel="preload">  — DM Sans variable font (same-origin, every page)
+ *  1. <link rel="preload">  — the theme font chosen in the admin, when it is one
+ *     the theme ships (DM Sans or Inter; same-origin, every page)
  *  2. <link rel="preconnect"> — derived dynamically from whichever external
  *     origins are configured via the admin panel (hero image, auth image, etc.).
  *     This way no CDN or third-party domain is hard-coded into the theme.
@@ -33,12 +34,15 @@ class AddCriticalPreloads
         // ── 1. Font preload ───────────────────────────────────────────────────
         // Mesma URL da @font-face do AddCriticalCss (ThemeFonts), para o preload
         // ser reaproveitado em vez de virar um segundo download.
-        $fontUrl = $this->fonts->url(ThemeFonts::NORMAL);
+        // Fonte do sistema ou personalizada não tem arquivo do tema: sem preload.
+        $fontUrl = $this->fonts->preloadUrl();
 
-        $document->head[] = sprintf(
-            '<link rel="preload" as="font" type="font/woff2" href="%s" crossorigin="anonymous">',
-            htmlspecialchars($fontUrl, ENT_QUOTES, 'UTF-8')
-        );
+        if ($fontUrl !== null) {
+            $document->head[] = sprintf(
+                '<link rel="preload" as="font" type="font/woff2" href="%s" crossorigin="anonymous">',
+                htmlspecialchars($fontUrl, ENT_QUOTES, 'UTF-8')
+            );
+        }
 
         // ── 2. Preconnect to external image origins ───────────────────────────
         // Collect URLs from every setting that might reference an external image.

@@ -10,7 +10,7 @@
   --disc-muted:   #8f9097;
   --disc-avatar:  48px;
   --disc-gap:     24px;
-  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  font-family: @font-sans;
   background: var(--disc-bg);
 
   // Core sets .Page-content { margin-top: 10px } on tablet+, which leaves a
@@ -269,7 +269,7 @@
   color: var(--disc-hero-text, #fff);
   font-size: clamp(22px, 3.5vw, 36px);
   font-weight: 900;
-  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  font-family: @font-sans;
   letter-spacing: -0.5px;
   line-height: 1.12;
   margin: 0 0 10px;
@@ -285,7 +285,7 @@
   color: var(--disc-hero-text-muted, rgba(255,255,255,0.78));
   font-size: 13px;
   font-weight: 600;
-  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  font-family: @font-sans;
   margin-top: 12px;
 }
 
@@ -970,7 +970,7 @@ html:not(.lrBadgeLabels--phone) {
 .Page.DiscussionPage .PostUser-name .username {
   font-weight: 700;
   font-size: 14px;
-  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  font-family: @font-sans;
   color: var(--disc-title);
   text-decoration: none;
 }
@@ -1014,7 +1014,7 @@ html:not(.lrBadgeLabels--phone) {
   margin-left: auto;  // pushes date to right on desktop; overridden on phone below
   font-size: 12px;
   font-weight: 600;
-  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  font-family: @font-sans;
   color: var(--disc-muted);
   list-style: none;
   padding: 0;
@@ -1046,7 +1046,7 @@ html:not(.lrBadgeLabels--phone) {
   border: none;
   padding-bottom: 15px;;
   line-height: 1.72;
-  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  font-family: @font-sans;
   color: var(--disc-text);
   word-break: break-word;
   overflow-wrap: anywhere;
@@ -1057,7 +1057,7 @@ html:not(.lrBadgeLabels--phone) {
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    font-family: @font-sans;
     font-weight: 800;
     letter-spacing: -0.02em;
     color: var(--disc-title);
@@ -1270,7 +1270,7 @@ html:not(.lrBadgeLabels--phone) {
   padding: 5px 10px;
   font-size: 12px;
   font-weight: 800;
-  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  font-family: @font-sans;
   color: var(--disc-muted);
   display: inline-flex;
   align-items: center;
@@ -1292,7 +1292,7 @@ html:not(.lrBadgeLabels--phone) {
   .Button-icon, i { font-size: 13px; line-height: 1; }
 
   .Button-label, .avocado-action-label {
-    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    font-family: @font-sans;
     font-weight: 800;
   }
 }
@@ -1406,10 +1406,10 @@ html:not(.lrBadgeLabels--phone) {
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
 .Page.DiscussionPage .Page-sidebar {
-  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  font-family: @font-sans;
 
   p, span, a, button, label {
-    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    font-family: @font-sans;
   }
 }
 
@@ -1481,21 +1481,21 @@ html:not(.lrBadgeLabels--phone) {
 
 .Page.DiscussionPage .Page-sidebar .Scrubber {
   .Scrubber-index {
-    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    font-family: @font-sans;
     font-weight: 800;
     font-size: 22px;
     color: var(--disc-title);
   }
 
   .Scrubber-description {
-    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    font-family: @font-sans;
     font-weight: 600;
     font-size: 13px;
     color: var(--disc-muted);
   }
 
   .Scrubber-first, .Scrubber-last {
-    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    font-family: @font-sans;
     font-size: 11px;
     font-weight: 600;
     opacity: 0.6;
@@ -1538,7 +1538,7 @@ html:not(.lrBadgeLabels--phone) {
   color: #8f9097;
   font-size: 9px;
   font-weight: 900;
-  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  font-family: @font-sans;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 3px 7px;
@@ -1577,7 +1577,7 @@ html:not(.lrBadgeLabels--phone) {
     background: color-mix(in srgb, var(--primary-color) 8%, var(--body-bg, #fff));
     border: 1px solid color-mix(in srgb, var(--primary-color) 18%, transparent);
     color: color-mix(in srgb, var(--primary-color) 80%, var(--text-color, #111));
-    font-family: "DM Sans Variable", "DM Sans", sans-serif;
+    font-family: @font-sans;
     font-size: 12px;
     font-weight: 600;
     line-height: 1.2;
@@ -1688,7 +1688,7 @@ html:not(.lrBadgeLabels--phone) {
 .AvocadoPostCta-text {
   font-size: 14px;
   font-weight: 600;
-  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  font-family: @font-sans;
   color: var(--disc-title);
 }
 
@@ -1709,7 +1709,7 @@ html:not(.lrBadgeLabels--phone) {
   border-radius: 999px;
   font-size: 13px;
   font-weight: 700;
-  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  font-family: @font-sans;
   border: none;
   cursor: pointer;
   display: inline-flex;
@@ -1772,7 +1772,7 @@ html:not(.lrBadgeLabels--phone) {
 }
 
 .AvocadoGuestLink-label {
-  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  font-family: @font-sans;
 }
 
 // ── Sidebar stats card — hidden (kept in JS for data access, not shown in UI)
@@ -1828,7 +1828,7 @@ html:not(.lrBadgeLabels--phone) {
     backdrop-filter: none;
     color: var(--disc-title, #202126) !important;
     gap: 7px;
-    font: 800 12px/1 "DM Sans Variable", "DM Sans", sans-serif;
+    font: 800 12px/1 @font-sans;
 
     &:hover {
       opacity: 1 !important;
@@ -1838,7 +1838,7 @@ html:not(.lrBadgeLabels--phone) {
   }
 
   .DiscussionHero-back-label {
-    font: 800 12px/1 "DM Sans Variable", "DM Sans", sans-serif;
+    font: 800 12px/1 @font-sans;
   }
 
   // ─── OP Post: card matching .Avocado-threadView ─────────────────────────────
@@ -1892,7 +1892,7 @@ html:not(.lrBadgeLabels--phone) {
   // .Avocado-threadView-title: font:900 32px/1.15; letter-spacing:-0.5px; margin:0 0 10px
   .AvocadoThreads-title {
     display: block;
-    font: 900 32px/1.15 "DM Sans Variable", "DM Sans", sans-serif;
+    font: 900 32px/1.15 @font-sans;
     letter-spacing: -0.5px;
     color: var(--disc-title, #202126);
     margin: 0 0 10px;
@@ -2192,7 +2192,7 @@ html:not(.lrBadgeLabels--phone) {
 
     // ── Title ────────────────────────────────────────────────────────────────
     .DiscussionListItem-title {
-      font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+      font-family: @font-sans;
       font-size: 13.5px;
       font-weight: 700;
       color: var(--heading-color, var(--home-title)) !important;

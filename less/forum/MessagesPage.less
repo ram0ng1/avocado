@@ -50,7 +50,7 @@
 
 // ── Strip Flarum page chrome ───────────────────────────────────────────────────
 .MessagesPage {
-  font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: @font-sans;
   background: transparent !important;
   padding-bottom: 0 !important;
 
@@ -89,7 +89,7 @@
 
 // ── Outer wrapper ──────────────────────────────────────────────────────────────
 .AvocadoMessages {
-  font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: @font-sans;
   display: flex !important;
   flex-direction: column !important;
   height: calc(100vh - var(--header-height, 52px)) !important;
@@ -258,7 +258,7 @@
       font-size: 13px !important;
       font-weight: 700 !important;
       color: var(--avmsg-text) !important;
-      font-family: 'DM Sans', Inter, "Segoe UI", sans-serif !important;
+      font-family: @font-sans !important;
       text-transform: none !important;
       letter-spacing: 0 !important;
       transition: border-color var(--avocado-t-fast), box-shadow var(--avocado-t-fast) !important;
@@ -361,7 +361,7 @@
     border: none !important;
     font-size: 13px !important;
     font-weight: 700 !important;
-    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif !important;
+    font-family: @font-sans !important;
     box-shadow: 0 6px 20px color-mix(in srgb, var(--primary-color) 30%, transparent) !important;
     transition: opacity var(--avocado-t-fast), transform 0.12s ease !important;
 
@@ -1212,7 +1212,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font: 600 13px/1.4 'DM Sans', Inter, "Segoe UI", sans-serif;
+  font: 600 13px/1.4 @font-sans;
   color: var(--avmsg-muted);
 
   i { font-size: 11px; opacity: 0.7; }
@@ -1406,7 +1406,7 @@
       max-height: 50vh !important;
       height: auto !important;
       overflow-y: auto !important;
-      font: 500 14px/1.5 'DM Sans', Inter, "Segoe UI", sans-serif !important;
+      font: 500 14px/1.5 @font-sans !important;
       color: var(--avmsg-text) !important;
       box-sizing: border-box !important;
 
