@@ -2,7 +2,7 @@ import app from 'flarum/forum/app';
 import UserPage from 'flarum/forum/components/UserPage';
 import UserControls from 'flarum/forum/utils/UserControls';
 
-import { renderThreadSkeleton, renderLoadMore, renderEmpty, trans } from '../utils';
+import { renderThreadSkeleton, renderLoadMore, renderEmpty, trans, userSlug } from '../utils';
 import { toggleDiscussionLike } from '../utils/likes';
 
 import ThreadCard from './shared/ThreadCard';
@@ -11,11 +11,11 @@ import { buildHero, buildSidebar, buildUserPhoneNav } from './UserProfileBuilder
 
 const PAGE_SIZE = 20;
 
+// Só pelo slug, como o UserPage do core: com o driver por id, casar também pelo
+// username abriria o perfil de quem se chama "48" ao visitar /u/48.
 const findBySlug = (slug: string): any => {
   const lowered = slug.toLowerCase();
-  return (
-    app.store.all('users').find((u: any) => (u.slug?.() || '').toLowerCase() === lowered || (u.username?.() || '').toLowerCase() === lowered) || null
-  );
+  return app.store.all('users').find((u: any) => (u.slug?.() || '').toLowerCase() === lowered) || null;
 };
 
 // ─── Base page ────────────────────────────────────────────────────────────────
@@ -121,7 +121,10 @@ export class AvocadoUserPostsPage extends AvocadoUserBase {
 
     app.store
       .find('posts', {
-        filter: { author: user.username(), type: 'comment' },
+        // O filtro `author` resolve pelo slug driver de usuários, não pelo
+        // username: com o driver por id, mandar o username não acha ninguém
+        // (e no PostgreSQL vira erro de tipo no `where id = ...`).
+        filter: { author: userSlug(user), type: 'comment' },
         sort: '-createdAt',
         page: { offset: this.offset, limit: PAGE_SIZE },
         include: 'user,discussion,discussion.tags',
@@ -192,7 +195,7 @@ export class AvocadoUserDiscussionsPage extends AvocadoUserBase {
 
     app.store
       .find('discussions', {
-        filter: { author: user.username() },
+        filter: { author: userSlug(user) },
         sort: '-createdAt',
         page: { offset: this.offset, limit: PAGE_SIZE },
         // Sem firstPost/lastPost: o ThreadCard lê tudo de atributos da discussão.

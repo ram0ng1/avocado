@@ -4,6 +4,7 @@
 import app from 'flarum/forum/app';
 import { truncate as coreTruncate } from 'flarum/common/utils/string';
 import coreHighlight from 'flarum/common/helpers/highlight';
+import abbreviateNumber from 'flarum/common/utils/abbreviateNumber';
 
 // ─── Translation helper ────────────────────────────────────────────────────────
 
@@ -26,6 +27,26 @@ export const numberOr = (value: unknown, fallback = 0): number => {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
 };
+
+// ─── View count (michaelbelgium/flarum-discussion-views) ─────────────────────
+
+/**
+ * Visualizações da discussão, ou null quando não há o que mostrar: a extensão
+ * não está instalada (o atributo `viewCount` não vem) ou o ator não tem a
+ * permissão de ver o número (`canViewNumber` false — a mesma condição que a
+ * extensão usa para o contador dela na lista do core).
+ */
+export const discussionViews = (discussion: any): number | null => {
+  const raw = discussion?.attribute?.('viewCount');
+  if (raw === undefined || raw === null || discussion.attribute('canViewNumber') === false) return null;
+
+  const count = Number(raw);
+  return Number.isFinite(count) ? count : null;
+};
+
+/** Segue a opção "abreviar números" da extensão (1.2K em vez de 1.234). */
+export const formatViews = (count: number): string =>
+  Number(app.forum?.attribute('abbrNumber')) === 1 ? String(abbreviateNumber(count)) : count.toLocaleString();
 
 // ─── Color helpers ────────────────────────────────────────────────────────────
 
@@ -158,7 +179,13 @@ export const tagRoute = (tag: any): string => {
   }
 };
 
-export const userRoute = (user: any): string => safeRoute('user', { username: user?.username?.() || '' });
+// O parâmetro da rota se chama `username`, mas o valor é o slug do driver
+// escolhido no admin (username por padrão, id no IdSlugDriver) — o mesmo que o
+// core usa em app.route.user(). Montar o link com o username quebra o perfil
+// quando o driver não é o padrão.
+export const userSlug = (user: any): string => user?.slug?.() || user?.username?.() || '';
+
+export const userRoute = (user: any): string => safeRoute('user', { username: userSlug(user) });
 
 // ─── Path normalization (prevent traversal) ───────────────────────────────────
 

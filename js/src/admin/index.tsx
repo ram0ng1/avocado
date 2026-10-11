@@ -180,6 +180,46 @@ const CARDS: CardDef[] = [
     ),
   },
   {
+    // A família vale no fórum inteiro: o PHP (Content\ThemeFonts) a põe em
+    // --avocado-font-sans, que é o que todo o LESS do tema lê.
+    group: 'appearance',
+    icon: 'fas fa-font',
+    title: () => trans('ramon-avocado.admin.settings.section_font', 'Font'),
+    keywords: 'fonte font tipografia typography família family inter dm sans sistema system vietnamita cirílico grego cjk',
+    body: () => (
+      <>
+        <AdminSelect
+          settingKey="avocado.font_family"
+          label={trans('ramon-avocado.admin.settings.font_family_label', 'Forum font')}
+          help={trans(
+            'ramon-avocado.admin.settings.font_family_help',
+            'The typeface used across the forum. DM Sans only has Latin letters: for Vietnamese, Cyrillic or Greek pick Inter or the system font, and for Chinese, Japanese or Korean the system font.'
+          )}
+          options={{
+            'dm-sans': trans('ramon-avocado.admin.settings.font_family_dm_sans', 'DM Sans — theme default'),
+            system: trans('ramon-avocado.admin.settings.font_family_system', 'System font — nothing to download, covers every script'),
+            inter: trans('ramon-avocado.admin.settings.font_family_inter', 'Inter — bundled with the theme'),
+            custom: trans('ramon-avocado.admin.settings.font_family_custom', 'Custom…'),
+          }}
+          default="dm-sans"
+        />
+        {getStr('avocado.font_family', 'dm-sans') === 'custom' && (
+          <div className="AvocadoAdmin-subGroup">
+            <AdminText
+              settingKey="avocado.font_custom_family"
+              label={trans('ramon-avocado.admin.settings.font_custom_family_label', 'Custom font family')}
+              help={trans(
+                'ramon-avocado.admin.settings.font_custom_family_help',
+                'A CSS font-family list, for example: Noto Sans, sans-serif. The theme only applies the name — load the font file yourself (Custom header or Custom CSS). Each name may only have letters, numbers, spaces, hyphens and underscores; anything else is ignored.'
+              )}
+              placeholder="Noto Sans, sans-serif"
+            />
+          </div>
+        )}
+      </>
+    ),
+  },
+  {
     group: 'appearance',
     icon: 'fas fa-palette',
     title: () => trans('ramon-avocado.admin.settings.section_colored', 'Colored'),

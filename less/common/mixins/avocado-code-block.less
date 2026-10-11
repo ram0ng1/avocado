@@ -10,6 +10,7 @@
     --pre-border:      rgba(0, 0, 0, 0.09);
     --pre-header-bg:   rgba(0, 0, 0, 0.035);
     --pre-header-border: rgba(0, 0, 0, 0.07);
+    --pre-label:       rgba(36, 41, 46, 0.62);
 
     position: relative;
     background: var(--pre-bg);
@@ -35,6 +36,23 @@
       border-bottom: 1px solid var(--pre-header-border);
       border-radius: 12px 12px 0 0;
       pointer-events: none;
+    }
+
+    // ── Language label, in the header bar ──────────────────────────────────────
+    // O texto vem do JS (data-code-lang, só para linguagem declarada pelo autor).
+    &[data-code-lang]::before {
+      content: attr(data-code-lang);
+      padding: 0 44px 0 14px;  // right: room for the copy button
+      font-family: @font-mono;
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 32px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--pre-label);
     }
 
     code {
@@ -85,6 +103,7 @@ pre .avocado-code-copy {
   --pre-border:        rgba(255, 255, 255, 0.08);
   --pre-header-bg:     rgba(255, 255, 255, 0.04);
   --pre-header-border: rgba(255, 255, 255, 0.07);
+  --pre-label:         rgba(230, 237, 243, 0.62);
 
   // Copy button: lighter tint on dark
   .avocado-code-copy { color: var(--pre-text); }

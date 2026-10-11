@@ -18,6 +18,8 @@ import {
   navigate,
   userRoute,
   highlight,
+  discussionViews,
+  formatViews,
 } from '../../utils';
 import {
   toggleBookmark,
@@ -201,6 +203,13 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
 
     // ── like state (home variant) ─────────────────────────────────────────────
     const { count: likes, liked: isLiked } = firstPostLikes(discussion);
+    const views = discussionViews(discussion);
+    const viewsLabel =
+      views === null
+        ? ''
+        : views === 1
+          ? trans('ramon-avocado.forum.home.view_count_singular', '1 view')
+          : trans('ramon-avocado.forum.home.view_count_plural', '{count} views', { count: formatViews(views) });
     const isLiking = likingIds.has(id);
 
     // ── reply card (home variant, only when there are replies) ────────────────
@@ -465,6 +474,13 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
                   : trans('ramon-avocado.forum.home.reply_count_plural', '{count} respostas', { count: replies })}
               </span>
             </button>
+            {/* michaelbelgium/flarum-discussion-views: só o número, como a própria extensão mostra */}
+            {views !== null && (
+              <span className="AvocadoHome-statBtn AvocadoHome-statBtn--views" title={viewsLabel} aria-label={viewsLabel}>
+                <i className="far fa-eye" aria-hidden="true" />
+                <span>{formatViews(views)}</span>
+              </span>
+            )}
           </div>
         )}
       </article>

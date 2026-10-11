@@ -7,6 +7,7 @@ namespace Ramon\Avocado\Content;
 use Carbon\Carbon;
 use Flarum\Frontend\Document;
 use Flarum\Http\RequestUtil;
+use Flarum\Http\SlugManager;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Flarum\User\User;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
@@ -33,6 +34,7 @@ class InjectOnlineUsers
     public function __construct(
         protected SettingsRepositoryInterface $settings,
         protected CacheRepository $cache,
+        protected SlugManager $slugManager,
     ) {
     }
 
@@ -69,9 +71,17 @@ class InjectOnlineUsers
         $document->head[] = "<script>window.__avocadoOnlineUsers={$json};</script>";
     }
 
-    /** @return array<int, array{id: int, username: string, displayName: string, avatarUrl: ?string}> */
+    /**
+     * `slug` é o que vai na URL do perfil: sai do slug driver de usuários
+     * configurado no admin (username por padrão, id no IdSlugDriver), e não do
+     * username direto — o front monta /u/{slug} com ele.
+     *
+     * @return array<int, array{id: int, username: string, slug: string, displayName: string, avatarUrl: ?string}>
+     */
     private function fetchOnlineUsers(): array
     {
+        $driver = $this->slugManager->forResource(User::class);
+
         return User::select(['id', 'username', 'avatar_url', 'preferences'])
             ->where('last_seen_at', '>=', Carbon::now()->subMinutes(5))
             ->limit(50)
@@ -80,6 +90,7 @@ class InjectOnlineUsers
             ->map(fn (User $u) => [
                 'id'          => $u->id,
                 'username'    => $u->username,
+                'slug'        => $driver->toSlug($u),
                 'displayName' => $u->display_name,
                 'avatarUrl'   => $u->avatar_url,
             ])

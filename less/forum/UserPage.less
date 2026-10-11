@@ -5,7 +5,7 @@
 .AvocadoUserPage {
   min-height: 100vh;
   background: var(--body-bg);
-  font-family: 'DM Sans', Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: @font-sans;
   color: var(--home-title, #202126);
 }
 
@@ -557,7 +557,7 @@
 
   // Inputs — .AvocadoUserPage .FormControl has 0,2,0 specificity vs Flarum's 0,1,0
   .FormControl {
-    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+    font-family: @font-sans;
     border-radius: 10px;
     border: 1.5px solid var(--home-border, #eaeaf0);
     background: #f4f4f7;
@@ -584,7 +584,7 @@
     align-items: center;
     gap: 10px;
     cursor: pointer;
-    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+    font-family: @font-sans;
     font-size: 14px;
     font-weight: 500;
     color: #43454e;
@@ -647,7 +647,7 @@
   .NotificationGrid {
     width: 100%;
     border-collapse: collapse;
-    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+    font-family: @font-sans;
 
     thead th {
       padding: 6px 12px 12px;
@@ -751,7 +751,7 @@
     padding: 0 0 10px;
     border: none;
     border-bottom: 1px solid var(--home-border, #eaeaf0);
-    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+    font-family: @font-sans;
     font-size: 15px;
     font-weight: 800;
     letter-spacing: -0.1px;
@@ -772,7 +772,7 @@
 
   // Buttons — pill style
   .Button {
-    font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+    font-family: @font-sans;
     border-radius: 999px;
     font-weight: 700;
     font-size: 13px;
@@ -850,7 +850,7 @@
 
     &-legend {
       padding: 8px 0 2px;
-      font-family: 'DM Sans', Inter, "Segoe UI", sans-serif;
+      font-family: @font-sans;
       font-size: 12px;
       font-weight: 600;
       color: var(--muted-color);
@@ -1032,7 +1032,7 @@
         border: 1px solid var(--home-border, #eaeaf0) !important;
         border-radius: 8px !important;
         font-size: 13px !important;
-        font-family: 'DM Sans', Inter, "Segoe UI", sans-serif !important;
+        font-family: @font-sans !important;
         resize: none !important;
         min-height: 0 !important;
         height: 72px !important;
