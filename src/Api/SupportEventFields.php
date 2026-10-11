@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Ramon\Avocado\Api;
 
 use Flarum\Api\Schema;
+use Flarum\Http\SlugManager;
+use Flarum\User\User;
 use Illuminate\Database\Eloquent\Model;
 use Ramon\Avocado\Model\SupportEvent;
 use Ramon\Avocado\Support\SupportEvents;
@@ -23,7 +25,8 @@ use Ramon\Avocado\Support\SupportEvents;
 class SupportEventFields
 {
     public function __construct(
-        protected SupportEvents $events
+        protected SupportEvents $events,
+        protected SlugManager $slugManager
     ) {
     }
 
@@ -37,6 +40,10 @@ class SupportEventFields
                         $ticket->load('avocadoEvents.user');
                     }
 
+                    // O link do perfil usa o slug do driver configurado (id no
+                    // IdSlugDriver), não o username.
+                    $driver = $this->slugManager->forResource(User::class);
+
                     return $ticket->getRelation('avocadoEvents')
                         ->map(fn (SupportEvent $event) => [
                             'id'          => $event->id,
@@ -46,6 +53,7 @@ class SupportEventFields
                             'createdAt'   => $event->created_at?->toIso8601String(),
                             'userId'      => $event->user_id,
                             'username'    => $event->user?->username,
+                            'slug'        => $event->user ? $driver->toSlug($event->user) : null,
                             'displayName' => $event->user?->display_name,
                             'avatarUrl'   => $event->user?->avatar_url,
                         ])

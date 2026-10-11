@@ -158,7 +158,13 @@ export const tagRoute = (tag: any): string => {
   }
 };
 
-export const userRoute = (user: any): string => safeRoute('user', { username: user?.username?.() || '' });
+// O parâmetro da rota se chama `username`, mas o valor é o slug do driver
+// escolhido no admin (username por padrão, id no IdSlugDriver) — o mesmo que o
+// core usa em app.route.user(). Montar o link com o username quebra o perfil
+// quando o driver não é o padrão.
+export const userSlug = (user: any): string => user?.slug?.() || user?.username?.() || '';
+
+export const userRoute = (user: any): string => safeRoute('user', { username: userSlug(user) });
 
 // ─── Path normalization (prevent traversal) ───────────────────────────────────
 
