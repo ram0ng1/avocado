@@ -65,11 +65,15 @@
   display: none !important;
 }
 
+// O recuo (--avocado-typing-indent) vem do JS: é a distância até a coluna de
+// texto do último post, para a pílula nascer onde a resposta vai aparecer e a
+// linha do tempo passar livre à esquerda dela.
 .AvocadoTyping {
   min-height: 36px;
   display: flex;
   align-items: center;
   margin: 6px 0 2px;
+  padding-left: var(--avocado-typing-indent, 0px);
 }
 
 .AvocadoTyping-pill {

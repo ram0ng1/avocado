@@ -28,6 +28,18 @@ body.colored--active {
   --button-primary-color:       var(--colored-contrast);
 }
 
+// ── Cabeçalho comum: os destaques dele também trocam ─────────────────────────
+// Sem o "cabeçalho colorido" do Flarum, o core pinta os destaques do cabeçalho
+// com --header-color, que nesse modo É a cor primária — só que gravada no :root
+// já resolvida (um literal), então trocar --primary-color aqui em cima não
+// chegava nela. Ficavam na cor do fórum, com o resto da página já na cor da
+// tag: o título do topo no celular ("1 de 5 posts", o seletor de página), a
+// bolinha de não lidos da gaveta e dos menus do cabeçalho, a busca em foco.
+// (Com o cabeçalho colorido ligado quem cuida disso é o bloco mais abaixo.)
+html:not([data-colored-header="true"]) body.colored--active {
+  --header-color: var(--colored-color);
+}
+
 // ── Discussion card borders ───────────────────────────────────────────────────
 // --item-tag-color is injected inline per-card by ThreadCard (avocado cards)
 // and DiscussionListItem extend (native Flarum list).

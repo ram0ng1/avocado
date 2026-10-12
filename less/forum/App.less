@@ -730,6 +730,44 @@ html[data-avocado-logo-custom="true"] {
   overflow: visible;
 }
 
+// ─── Composer: seletor de tags ────────────────────────────────────────────────
+// O botão do flarum/tags é um .Button "resetado" que o core ainda pinta no
+// hover/foco. Lá isso nunca aparece: as etiquetas ficam coladas umas nas outras
+// e o botão tem exatamente o tamanho delas. Aqui elas são pílulas separadas
+// (5px de margem, inclusive depois da última) e todo .Button tem 1px de borda —
+// o fundo cinza sobrava em volta e à direita da etiqueta.
+// O botão volta a abraçar as pílulas (que agora quebram de linha quando não
+// cabem) e, com tags escolhidas, não pinta fundo: ele apareceria no vão entre
+// elas. Sem tags, o hover do core preenche a pílula pontilhada, como sempre.
+.ComposerBody-header .DiscussionComposer-changeTags {
+  max-width: 100%;
+  border: 0;
+  white-space: normal;
+
+  .Button-label,
+  .Button-labelText {
+    min-width: 0;
+  }
+
+  .TagsLabel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 5px;
+
+    .TagLabel { margin: 0; }
+  }
+
+  &:has(.TagsLabel) {
+    &,
+    &:hover,
+    &:focus-visible,
+    &:active {
+      background: transparent;
+      box-shadow: none;
+    }
+  }
+}
+
 // ─── Settings & Security pages: match avocado design system ──────────────────
 // These pages are wrapped in .AvocadoUserPage via the UserPage override.
 // Override Flarum's native .SettingsPage and .UserSecurityPage layout to

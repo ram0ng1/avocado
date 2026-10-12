@@ -513,6 +513,7 @@ export const canEditDiscussionHero = (discussion: any): boolean => {
 export {
   renderThreadSkeleton,
   renderDiscSkeleton,
+  renderProfileCardSkeleton,
   renderPostSkeleton,
   renderShowcaseSkeleton,
   renderDiscussionNavSkeleton,

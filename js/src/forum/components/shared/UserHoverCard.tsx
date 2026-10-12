@@ -16,6 +16,10 @@ const OPEN_DELAY = 350;
 const CLOSE_DELAY = 150;
 const CARD_WIDTH = 330;
 const CARD_EST_HEIGHT = 330;
+/** O mais perto da borda que a seta chega: o raio do canto do card + meia seta. */
+const ARROW_INSET = 26;
+/** Num gatilho largo (o nome) a seta mira o começo dele, não o meio. */
+const ARROW_REACH = 28;
 
 /**
  * Estado do card em nível de MÓDULO, renderizado num portal próprio no <body>
@@ -34,7 +38,7 @@ let openTimer: number | null = null;
 let closeTimer: number | null = null;
 let pendingUser: any = null;
 let pendingEl: HTMLElement | null = null;
-let pos = { top: 0, left: 0, above: false };
+let pos = { top: 0, left: 0, above: false, arrow: ARROW_INSET };
 
 /** Perfis já hidratados nesta sessão (dedup do fetch; libera no erro p/ retry). */
 const hydratedIds = new Set<string>();
@@ -147,8 +151,13 @@ function openCard(user: any, el: HTMLElement | null): void {
     left: Math.max(pad, Math.min(rect.left, window.innerWidth - CARD_WIDTH - pad)),
     above: rect.bottom + CARD_EST_HEIGHT > window.innerHeight && rect.top > CARD_EST_HEIGHT,
     top: 0,
+    arrow: 0,
   };
   pos.top = pos.above ? rect.top : rect.bottom;
+  // A seta aponta para o gatilho (avatar ou nome), mesmo quando o card foi
+  // empurrado para caber na tela — só não entra na curva do canto.
+  const target = rect.left + Math.min(rect.width / 2, ARROW_REACH);
+  pos.arrow = Math.max(ARROW_INSET, Math.min(target - pos.left, CARD_WIDTH - ARROW_INSET));
 
   currentUser = user;
   triggerEl = el;
@@ -212,7 +221,10 @@ function cardVnode(user: any) {
   };
 
   return (
-    <div className={`AvocadoUserCard-wrap${pos.above ? ' AvocadoUserCard-wrap--above' : ''}`} style={{ top: `${pos.top}px`, left: `${pos.left}px` }}>
+    <div
+      className={`AvocadoUserCard-wrap${pos.above ? ' AvocadoUserCard-wrap--above' : ''}`}
+      style={{ top: `${pos.top}px`, left: `${pos.left}px`, '--avocado-usercard-arrow': `${Math.round(pos.arrow)}px` }}
+    >
       <div
         className="AvocadoUserCard"
         oncreate={(v: any) => (cardEl = v.dom as HTMLElement)}
