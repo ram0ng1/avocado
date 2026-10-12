@@ -39,6 +39,8 @@ class HideLogoFlash
         }
 
         if ($hasSvgLogo) {
+            $this->svgLogoOptions($document);
+
             // SVG logo: hide until JS fetches, crops via getBBox, injects, then reveals.
             $document->head[] = '<style id="avocado-logo-hide">#home-link{visibility:hidden!important}</style>';
 
@@ -52,6 +54,46 @@ class HideLogoFlash
             // Without this the image appears at its natural (oversized) dimensions
             // for the duration of the first network fetch, then jumps to the CSS size.
             $document->head[] = '<style id="avocado-logo-hide">#home-link{visibility:hidden!important}</style>';
+        }
+    }
+
+    /**
+     * Opções do logo SVG (admin › Aparência › Logo): a cor do fórum e o ajuste
+     * vertical. Vão no <head> — atributo, variável e a regra em si — para valerem
+     * desde o primeiro quadro: o CSS do tema (App.less, mesmas regras) chega
+     * depois, e sem isto o logo piscaria na cor do arquivo.
+     *
+     * A cor é a do cabeçalho (--header-color): a primária no cabeçalho comum,
+     * a de contraste no "cabeçalho colorido" do Flarum — onde um logo na cor
+     * primária sumiria sobre o fundo de mesma cor. Ela acompanha os destaques
+     * coloridos por tag. O valor de reserva cobre o instante antes de o CSS do
+     * core definir a variável.
+     */
+    private function svgLogoOptions(Document $document): void
+    {
+        $script = '';
+        $style  = '';
+
+        if ((bool) $this->settings->get('avocado.logo_colored', false)) {
+            $coloredHeader = (bool) $this->settings->get('theme_colored_header', false);
+            $primary       = trim((string) ($this->settings->get('theme_primary_color') ?? ''));
+            $fallback      = $coloredHeader || !preg_match('/^#[0-9a-f]{3,8}$/i', $primary) ? 'currentColor' : $primary;
+
+            $script .= 'document.documentElement.dataset.avocadoLogoColored="true";';
+            $style  .= 'html[data-avocado-logo-colored="true"] #home-link svg.Header-logo *{fill:var(--header-color,'.$fallback.')!important}'
+                .'html[data-avocado-logo-colored="true"] #home-link svg.Header-logo [fill="none"]{fill:none!important}';
+        }
+
+        $offset = max(-30, min(30, (int) $this->settings->get('avocado.logo_offset_y', 0)));
+
+        if ($offset !== 0) {
+            $script .= 'document.documentElement.style.setProperty("--avocado-logo-offset-y","'.$offset.'px");';
+            $style  .= '#home-link svg.Header-logo{transform:translateY(var(--avocado-logo-offset-y,0px))}';
+        }
+
+        if ($script !== '') {
+            $document->head[] = '<script>'.$script.'</script>';
+            $document->head[] = '<style>'.$style.'</style>';
         }
     }
 

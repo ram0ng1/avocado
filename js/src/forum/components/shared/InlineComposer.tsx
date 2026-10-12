@@ -18,6 +18,42 @@ export interface IInlineComposerAttrs extends ComponentAttrs {
   onClose: () => void;
   /** Called after a successful submission with the saved Discussion. */
   onSubmitted?: (discussion: any) => void;
+  /**
+   * O botão de salvar rascunho fica com quem embrulha o compositor
+   * (FloatingInlineComposer o põe nos controles do canto, como no compositor do
+   * core) — a barra do editor não o repete.
+   */
+  draftInControls?: boolean;
+}
+
+/**
+ * O botão de salvar rascunho, igual ao que o fof/drafts põe no compositor do
+ * core (ícone, título e estados). `className` são as classes de botão do lugar
+ * onde ele entra: a barra do editor ou os controles do canto.
+ */
+export function renderDraftButton(state: InlineComposerState, className = 'Button Button--icon Button--link') {
+  if (!state.canSaveDraft()) return null;
+
+  const label = trans('fof-drafts.forum.composer.title', 'Save Draft');
+  const icon = state.draftJustSaved ? 'fas fa-check' : state.savingDraft ? 'fas fa-spinner fa-spin' : 'fas fa-floppy-disk';
+  const cls = `${className} AvocadoHome-composerDraftBtn${state.savingDraft ? ' saving' : ''}${state.draftJustSaved ? ' justSaved' : ''}`;
+
+  return (
+    <button
+      type="button"
+      className={cls}
+      title={label}
+      aria-label={label}
+      disabled={state.savingDraft || state.draftJustSaved || !state.body.trim()}
+      onclick={(e: Event) => {
+        e.preventDefault();
+        e.stopPropagation();
+        state.saveDraft();
+      }}
+    >
+      <i aria-hidden="true" className={`icon Button-icon ${icon}`} />
+    </button>
+  );
 }
 
 /**
@@ -120,7 +156,7 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
             }}
             onsubmit={() => this.submit()}
             previewControl={this.renderPreviewButton()}
-            draftControl={this.renderDraftButton()}
+            draftControl={this.attrs.draftInControls ? null : renderDraftButton(this.state)}
             closeControl={this.renderCloseButton()}
             submitControl={this.renderSubmitButton()}
           />
@@ -228,35 +264,6 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
         }}
       >
         <i aria-hidden="true" className={iconCls} />
-      </button>
-    );
-  }
-
-  /** O mesmo botão que o fof/drafts põe no compositor do core (ícone, título e estados). */
-  private renderDraftButton() {
-    const state = this.state;
-    if (!state.canSaveDraft()) return null;
-
-    const label = trans('fof-drafts.forum.composer.title', 'Save Draft');
-    const icon = state.draftJustSaved ? 'fas fa-check' : state.savingDraft ? 'fas fa-spinner fa-spin' : 'fas fa-floppy-disk';
-    const cls = `Button Button--icon Button--link AvocadoHome-composerDraftBtn${state.savingDraft ? ' saving' : ''}${
-      state.draftJustSaved ? ' justSaved' : ''
-    }`;
-
-    return (
-      <button
-        type="button"
-        className={cls}
-        title={label}
-        aria-label={label}
-        disabled={state.savingDraft || state.draftJustSaved || !state.body.trim()}
-        onclick={(e: Event) => {
-          e.preventDefault();
-          e.stopPropagation();
-          state.saveDraft();
-        }}
-      >
-        <i aria-hidden="true" className={`icon ${icon}`} />
       </button>
     );
   }

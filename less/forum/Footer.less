@@ -1,0 +1,124 @@
+// ─── Rodapé do tema ──────────────────────────────────────────────────────────
+// JS: js/src/forum/components/AvocadoFooter.tsx (admin › Rodapé).
+//
+// Simples de propósito: um bloco estreito e centralizado no fim da página, com
+// uma linha fina em cima e texto discreto. Cada grupo (texto, navegação,
+// contatos, redes, copyright) é uma linha; nada de painel, cor de fundo ou
+// efeito. A largura é a proporção áurea da página (61,8%), que dá ao texto uma
+// medida confortável de leitura sem precisar de um teto em pixels.
+
+.AvocadoFooter {
+  width: 61.8%;
+  margin: 5em auto 3em;
+  padding-top: 3em;
+  border-top: 1px solid var(--avocado-border-subtle);
+  color: var(--muted-color);
+  font-family: @font-sans;
+  font-size: 13.5px;
+  line-height: 1.7;
+  text-align: center;
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  // Um tom acima do texto ao redor; a cor do fórum só no hover e no foco.
+  a {
+    color: var(--text-color);
+    font-weight: 600;
+    text-decoration: none;
+    transition: color var(--avocado-t-fast);
+
+    &:hover,
+    &:focus {
+      color: var(--primary-color);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+  }
+
+  // Os grupos se separam só pelo respiro. (:not(:first-child) e não `* + *`:
+  // precisa ganhar do `ul { margin: 0 }` logo acima.)
+  > :not(:first-child) {
+    margin-top: 0.9em;
+  }
+}
+
+.AvocadoFooter-text p + p {
+  margin-top: 0.25em;
+}
+
+// Itens em linha, centralizados, que quebram sozinhos quando não cabem.
+.AvocadoFooter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2em 1.6em;
+}
+
+.AvocadoFooter-socials {
+  gap: 0.2em 0.4em;
+}
+
+.AvocadoFooter a.AvocadoFooter-social {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  color: var(--muted-color);
+  font-size: 16px;
+  transition: background var(--avocado-t-fast), color var(--avocado-t-fast);
+
+  &:hover,
+  &:focus {
+    background: var(--avocado-surface-1);
+    color: var(--primary-color);
+    text-decoration: none;
+  }
+}
+
+// O copyright e os links legais: a linha mais discreta.
+.AvocadoFooter-fine {
+  font-size: 12.5px;
+
+  a {
+    color: inherit;
+    font-weight: 500;
+  }
+}
+
+// ── Páginas sem rodapé ───────────────────────────────────────────────────────
+// As mensagens privadas ocupam a tela inteira, como um aplicativo.
+.App:has(.MessagesPage) .AvocadoFooter {
+  display: none;
+}
+
+// ── Celular ──────────────────────────────────────────────────────────────────
+// Em tela estreita 61,8% espreme o texto: o bloco usa a largura toda, com a
+// margem lateral das páginas do tema.
+@media @phone {
+  .AvocadoFooter {
+    width: auto;
+    margin: 3em 20px 2em;
+    padding-top: 2em;
+  }
+
+  .AvocadoFooter-row {
+    gap: 0.3em 1.2em;
+  }
+}
