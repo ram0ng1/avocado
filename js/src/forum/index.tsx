@@ -2134,6 +2134,19 @@ app.initializers.add(
       items.add('avocadoCakeday', <CakedayBadge user={user} />, 95);
     });
 
+    // O avatar da coluna lateral abre o mesmo card, como no core (que escuta o
+    // hover em `.Post-avatar` além do nome). Com autor, o avatar vem dentro do
+    // Link para o perfil: os handlers vão nele, e o clique continua navegando.
+    // Registrado antes do §18b, que embrulha este item junto com os badges — o
+    // card fica ancorado na foto, não no bloco todo.
+    extend(CommentPost.prototype, 'sideItems', function (items: any) {
+      const user = this.attrs.post.user?.();
+      if (!user || !items.has('avatar')) return;
+
+      const avatar = items.get('avatar');
+      if (avatar && avatar.attrs) Object.assign(avatar.attrs, hoverCardAttrs(user));
+    });
+
     // O core tem seu próprio popover (CommentPost.showCard → UserCard--popover)
     // no mesmo hover — com o nosso card ativo, os dois abririam empilhados.
     // Anular showCard mantém cardVisible=false e o popover nativo nunca monta.
@@ -2178,9 +2191,30 @@ app.initializers.add(
         }
       };
 
+      // A pílula nasce na coluna do TEXTO dos posts — onde a resposta que está
+      // sendo escrita vai aparecer —, não na borda da lista, em cima da linha do
+      // tempo. O recuo é medido no último post em vez de copiado do CSS: a
+      // coluna muda com o layout (editorial, badges ao lado, celular…).
+      const alignToPosts = (vnode: any) => {
+        const el = vnode.dom as HTMLElement;
+        const stream = el.parentElement;
+        if (!stream || count === 0) return;
+
+        const mains = stream.querySelectorAll<HTMLElement>('.PostStream-item .CommentPost .Post-main');
+        const main = mains[mains.length - 1];
+        const indent = main ? Math.max(0, Math.round(main.getBoundingClientRect().left - stream.getBoundingClientRect().left)) : 0;
+        el.style.setProperty('--avocado-typing-indent', `${indent}px`);
+      };
+
       items.add(
         'avocadoTyping',
-        <div className={`AvocadoTyping${count > 0 ? ' is-active' : ''}`} key="avocadoTyping" aria-live="polite">
+        <div
+          className={`AvocadoTyping${count > 0 ? ' is-active' : ''}`}
+          key="avocadoTyping"
+          aria-live="polite"
+          oncreate={alignToPosts}
+          onupdate={alignToPosts}
+        >
           {count > 0 && (
             <div className="AvocadoTyping-pill">
               <span className="AvocadoTyping-avatars" aria-hidden="true">

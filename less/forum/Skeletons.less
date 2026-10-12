@@ -10,6 +10,9 @@
 //   5. Discussion page skeleton (DiscussionPage--skeleton)
 //      5a. Hero + stream
 //      5b. Sidebar nav         (renderDiscussionNavSkeleton)
+//   6. Ossos — marcação real  (bone / BONE_FILL)
+//      6a. Cartões do perfil   (renderProfileCardSkeleton)
+//      6b. Hero e abas do perfil
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── 1. Shared keyframes ───────────────────────────────────────────────────────
@@ -616,4 +619,88 @@
     // Decoration icon skeleton hidden on phone (mirrors real hero behavior)
     .AvocadoSkeleton-decoContainer { display: none !important; }
   }
+}
+
+// ── 6. Ossos — esqueletos com a marcação real ─────────────────────────────────
+// JS: `bone()` e `BONE_FILL` em Skeletons.tsx. O esqueleto usa as MESMAS classes
+// do que vai substituí-lo (cartão, hero, abas), então caixa, recuo e espaçamento
+// vêm do CSS de verdade, em qualquer largura. Aqui só se pinta.
+
+.AvocadoBone {
+  // DarkMode.less troca as duas cores.
+  --avocado-bone: #f0f0f4;
+  --avocado-bone-shine: #e6e6eb;
+  pointer-events: none;
+  user-select: none;
+}
+
+.avocado-bone-paint() {
+  background: linear-gradient(90deg, var(--avocado-bone) 25%, var(--avocado-bone-shine) 50%, var(--avocado-bone) 75%);
+  background-size: 800px 100%;
+  animation: avocado-shimmer 1.4s infinite;
+}
+
+// Linha de texto. A caixa tem a altura de linha do elemento real (o espaço
+// dentro dela a segura), e é isso que mantém o espaçamento; a barra visível é
+// mais baixa e centrada, do tamanho do corpo das letras.
+.AvocadoBone--text {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  color: transparent;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 0.8em;
+    transform: translateY(-50%);
+    border-radius: 0.3em;
+    .avocado-bone-paint();
+  }
+}
+
+// Elemento real pintado inteiro (avatar, botão, pílula): o conteúdo fica só para
+// dar a largura. Duas classes no seletor para ganhar do fundo do próprio elemento.
+.AvocadoBone.AvocadoBone--fill {
+  .avocado-bone-paint();
+  border-color: transparent;
+  box-shadow: none;
+  color: transparent;
+
+  > * { visibility: hidden; }
+}
+
+// ── 6a. Cartões das abas do perfil (renderProfileCardSkeleton) ───────────────
+
+.AvocadoHome-threadCard--skeleton {
+  pointer-events: none;
+
+  // Os dois ossos do resumo, um por linha.
+  .AvocadoHome-threadExcerpt > .AvocadoBone--text { display: block; }
+}
+
+// ── 6b. Perfil: hero e abas (buildHero / buildSidebar sem usuário) ───────────
+
+.AvocadoUserPage-hero--skeleton {
+  pointer-events: none;
+
+  // A capa real é um degradê da cor do usuário, que ainda não se sabe.
+  .AvocadoUserPage-cover {
+    background: color-mix(in srgb, var(--muted-color) 28%, var(--body-bg));
+
+    &::after { display: none; }
+  }
+
+  // O botão de controles define o próprio fundo e borda com !important.
+  .AvocadoUserPage-controlsBtn.AvocadoBone--fill {
+    .avocado-bone-paint() !important;
+    border-color: transparent !important;
+  }
+}
+
+.AvocadoUserPage-nav--skeleton {
+  pointer-events: none;
 }

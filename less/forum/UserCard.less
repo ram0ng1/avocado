@@ -32,6 +32,7 @@
 // hidden eles saíam cortados nas bordas. O arredondamento do topo é feito no
 // próprio banner.
 .AvocadoUserCard {
+  position: relative; // âncora da seta de baixo
   width: 330px;
   border-radius: 16px;
   background: var(--body-bg);
@@ -53,12 +54,58 @@
 }
 
 .AvocadoUserCard-banner {
+  position: relative; // âncora da seta de cima
   height: 76px;
   border-radius: 15px 15px 0 0;
   background-color: var(--primary-color);
   background-image: linear-gradient(120deg, var(--primary-color), color-mix(in srgb, var(--primary-color) 55%, #1c1c28));
   background-size: cover;
   background-position: center;
+}
+
+// ── Seta ─────────────────────────────────────────────────────────────────────
+// Aponta para o avatar ou o nome de onde o card saiu; a posição horizontal vem
+// do JS (--avocado-usercard-arrow, medida a partir da borda esquerda do card).
+// Ocupa o vão transparente do wrap (10px), então não muda onde o card abre.
+//
+// Card embaixo do gatilho: a seta sai do banner. É uma cópia do próprio banner
+// (mesmo tamanho e mesmo fundo — o degradê da cor primária, ou a capa do
+// usuário), deslocada 9px para cima e recortada num triângulo: o que aparece é
+// a faixa do banner logo abaixo da seta, então a emenda não tem degrau de cor.
+// Ela cobre a borda de 1px do card, que senão riscaria a base.
+.AvocadoUserCard-banner::before {
+  // O banner começa depois da borda do card.
+  --arrow-x: calc(var(--avocado-usercard-arrow, 26px) - 1px);
+
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  transform: translateY(-9px);
+  clip-path: polygon(calc(var(--arrow-x) - 9px) 9px, var(--arrow-x) 0, calc(var(--arrow-x) + 9px) 9px);
+  pointer-events: none;
+}
+
+// Card em cima do gatilho: a seta sai da base, que é o fundo do card com a
+// borda dele — um quadrado girado, metade para fora.
+.AvocadoUserCard-wrap--above {
+  .AvocadoUserCard-banner::before {
+    display: none;
+  }
+
+  .AvocadoUserCard::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: var(--avocado-usercard-arrow, 26px);
+    width: 12px;
+    height: 12px;
+    margin-left: -6px;
+    background: var(--body-bg);
+    border: solid var(--home-border, #eaeaf0);
+    border-width: 0 1px 1px 0;
+    transform: rotate(45deg);
+  }
 }
 
 .AvocadoUserCard-body {
@@ -102,15 +149,24 @@
   margin-top: 8px;
 }
 
+// Linha do nome, como no X: os selos (verificado, aniversário, grupos) têm a
+// altura do texto do nome e vêm colados nele, com o mesmo vão curto entre si.
+// A fonte fica na LINHA, não só no link: é dela que o selo de verificado tira
+// o tamanho (ele é dimensionado em `em`), e aqui o contexto era o texto de
+// 13px do card — o selo saía menor que o nome ao lado.
 .AvocadoUserCard-nameRow {
+  --avocado-usercard-seal: 20px; // ≈ 1.2em do nome
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 4px;
   min-width: 0;
+  font-size: 16.5px;
 }
 
+// Só o nome encolhe (com reticências); os selos nunca são cortados.
 .AvocadoUserCard-displayName {
-  font-size: 16.5px;
+  min-width: 0;
+  font-size: inherit;
   font-weight: 800;
   color: var(--heading-color);
   white-space: nowrap;
@@ -123,16 +179,21 @@
   }
 }
 
-// O VerifiedBadge traz margem própria (pensada para post headers); dentro da
-// linha do nome quem espaça é o gap do flex — zera a margem para o selo colar
-// na mesma linha, rente ao nome.
+// O selo de verificado traz margem própria (pensada para post headers) — e a
+// âncora do popover que o embrulha, outra. Aqui quem espaça é o gap da linha.
 .AvocadoUserCard-verified,
-.AvocadoUserCard-nameRow .VerifiedBadge {
+.AvocadoUserCard-nameRow .VerifiedBadge,
+.AvocadoUserCard-nameRow .VerifiedPopover-anchor {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
   margin: 0 !important;
   vertical-align: middle;
+}
+
+.AvocadoUserCard-nameRow .AvocadoCakeday {
+  flex-shrink: 0;
+  margin: 0;
 }
 
 .AvocadoUserCard-username {
@@ -163,35 +224,30 @@
   }
 }
 
-// Badges de grupo na linha do nome — reduzidos para caberem ao lado do texto
-// sem desalinhar (o tamanho padrão do core é 22px, pensado para post headers).
-// Sem `badges--packed` (que SOBREPÕE os badges de propósito): aqui cada badge
-// tem o próprio espaço, separado por gap.
+// Badges de grupo na linha do nome: do tamanho do selo de verificado, no mesmo
+// vão. Sem `badges--packed` (que SOBREPÕE os badges de propósito). O <li> vira
+// flex para o badge não herdar a folga de linha de um inline — era 1px de
+// desalinhamento em relação ao selo ao lado.
 .AvocadoUserCard-badges {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   margin: 0;
   padding: 0;
   flex-shrink: 0;
   list-style: none;
 
   > li {
+    display: flex;
     margin: 0;
   }
 
+  // Largura, altura, raio e ícone do badge do core saem todos de --size. O
+  // círculo é cheio até a borda e o selo de verificado tem respiro no próprio
+  // desenho: 2px a menos e os dois ficam do mesmo tamanho a olho.
   .Badge {
-    width: 18px;
-    height: 18px;
-    line-height: 18px;
-    font-size: 9px;
+    --size: calc(var(--avocado-usercard-seal) - 2px);
     box-shadow: none;
-
-    .Badge-icon,
-    .icon {
-      font-size: 9px;
-      line-height: 18px;
-    }
   }
 }
 

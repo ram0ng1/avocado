@@ -2,7 +2,8 @@ import app from 'flarum/forum/app';
 import UserPage from 'flarum/forum/components/UserPage';
 import UserControls from 'flarum/forum/utils/UserControls';
 
-import { renderThreadSkeleton, renderLoadMore, renderEmpty, trans, userSlug } from '../utils';
+import { renderProfileCardSkeleton, renderLoadMore, renderEmpty, trans, userSlug } from '../utils';
+import { bookmarksEnabled } from '../utils/bookmarks';
 import { toggleDiscussionLike } from '../utils/likes';
 
 import ThreadCard from './shared/ThreadCard';
@@ -63,6 +64,11 @@ class AvocadoUserBase extends UserPage {
     return null;
   }
 
+  /** Esqueleto dos cartões da aba: PostCard (posts, curtidas, menções); a de discussões troca pelo ThreadCard. */
+  cardSkeleton(): any[] {
+    return renderProfileCardSkeleton('post');
+  }
+
   view() {
     const user = (this as any).user;
     const isEditable = user && (user.canEdit?.() || user === app.session.user);
@@ -75,7 +81,7 @@ class AvocadoUserBase extends UserPage {
         {buildSidebar(this)}
         <div className="AvocadoUserPage-body">
           <div className="AvocadoUserPage-bodyInner">
-            {this.userLoading ? <div className="AvocadoHome-threadStack">{renderThreadSkeleton()}</div> : this.content()}
+            {this.userLoading ? <div className="AvocadoHome-threadStack">{this.cardSkeleton()}</div> : this.content()}
           </div>
         </div>
       </div>
@@ -147,7 +153,7 @@ export class AvocadoUserPostsPage extends AvocadoUserBase {
     return (
       <div className="AvocadoHome-threadStack">
         {this.posts.map((p: any) => <PostCard key={p.id?.()} post={p} context={this} />).filter(Boolean)}
-        {this.loading && renderThreadSkeleton()}
+        {this.loading && this.cardSkeleton()}
         {!this.loading && this.posts.length === 0 && renderEmpty(trans('ramon-avocado.forum.user.posts_empty', 'No posts yet.'))}
         {this.hasMore && !this.loading && renderLoadMore(trans('ramon-avocado.forum.user.load_more', 'Load more'), () => this.loadPosts(false))}
       </div>
@@ -175,6 +181,9 @@ export class AvocadoUserDiscussionsPage extends AvocadoUserBase {
 
   activeKey() {
     return 'discussions';
+  }
+  cardSkeleton() {
+    return renderProfileCardSkeleton('thread', 3, bookmarksEnabled());
   }
   onUserLoaded(user: any) {
     this._user = user;
@@ -227,7 +236,7 @@ export class AvocadoUserDiscussionsPage extends AvocadoUserBase {
             onToggleLike={(disc: any) => toggleDiscussionLike(disc, this.likingIds)}
           />
         ))}
-        {this.loading && renderThreadSkeleton()}
+        {this.loading && this.cardSkeleton()}
         {!this.loading && this.discussions.length === 0 && renderEmpty(trans('ramon-avocado.forum.user.discussions_empty', 'No discussions yet.'))}
         {this.hasMore && !this.loading && renderLoadMore(trans('ramon-avocado.forum.user.load_more', 'Load more'), () => this.loadDiscussions(false))}
       </div>
@@ -296,7 +305,7 @@ export class AvocadoUserLikesPage extends AvocadoUserBase {
     return (
       <div className="AvocadoHome-threadStack">
         {this.posts.map((p: any) => <PostCard key={p.id?.()} post={p} context={this} />).filter(Boolean)}
-        {this.loading && renderThreadSkeleton()}
+        {this.loading && this.cardSkeleton()}
         {!this.loading && this.posts.length === 0 && renderEmpty(trans('ramon-avocado.forum.user.likes_empty', 'No liked posts yet.'))}
         {this.hasMore && !this.loading && renderLoadMore(trans('ramon-avocado.forum.user.load_more', 'Load more'), () => this.loadPosts(false))}
       </div>
@@ -365,7 +374,7 @@ export class AvocadoUserMentionsPage extends AvocadoUserBase {
     return (
       <div className="AvocadoHome-threadStack">
         {this.posts.map((p: any) => <PostCard key={p.id?.()} post={p} context={this} />).filter(Boolean)}
-        {this.loading && renderThreadSkeleton()}
+        {this.loading && this.cardSkeleton()}
         {!this.loading && this.posts.length === 0 && renderEmpty(trans('ramon-avocado.forum.user.mentions_empty', 'No mentions yet.'))}
         {this.hasMore && !this.loading && renderLoadMore(trans('ramon-avocado.forum.user.load_more', 'Load more'), () => this.loadPosts(false))}
       </div>

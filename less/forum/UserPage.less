@@ -42,11 +42,6 @@
   background-repeat: no-repeat;
 }
 
-.AvocadoUserPage-hero--skeleton .AvocadoUserPage-cover {
-  background: #c4c4cc;
-  &::after { display: none; }
-}
-
 .AvocadoUserPage-hero-inner {
   position: relative;
   max-width: var(--home-max-width, 1320px);
@@ -183,12 +178,16 @@
   padding-bottom: 8px;
 }
 
-// Linha do nome: display name + badges (verificado/admin) centralizados juntos.
+// Linha do nome, como no X: os selos (verificado, grupos) têm a altura das
+// maiúsculas do nome e vêm colados nele, com o mesmo vão curto entre si.
+// Tamanho e vão em variável porque o celular os reduz junto com o nome.
 .AvocadoUserPage-hero-nameRow {
+  --avocado-hero-seal: 24px; // ≈ 0.9em do nome
+  --avocado-hero-seal-gap: 5px;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 7px;
+  gap: var(--avocado-hero-seal-gap);
 }
 
 .AvocadoUserPage-hero-name {
@@ -205,7 +204,7 @@
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--avocado-hero-seal-gap);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -216,6 +215,38 @@
     list-style: none;
     margin: 0;
     padding: 0;
+  }
+
+  // Chapado, como o selo de verificado ao lado (a sombra do core pesava o
+  // badge e o fazia parecer mais baixo).
+  .Badge {
+    box-shadow: none;
+  }
+}
+
+// Largura, altura, raio e ícone do badge do core saem todos de --size. O
+// círculo é cheio até a borda e o selo de verificado tem respiro no próprio
+// desenho: 2px a menos e os dois ficam do mesmo tamanho a olho.
+// Com o linkrobins/badge-labels os badges viram pílulas com texto, e o tamanho é dele.
+html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
+  --size: calc(var(--avocado-hero-seal) - 2px);
+}
+
+// O selo de verificado (ramon/verified) mora DENTRO do <h1>, para acompanhar a
+// última linha de um nome que quebra. A extensão o põe a 10px do nome, em
+// 0.8em e alinhado pela altura-x — menor e mais baixo que os badges ao lado,
+// que se centram na linha. Aqui ele entra na mesma medida e no mesmo eixo:
+// -0.1em assenta a caixa de 0.9em centrada nas maiúsculas do nome.
+.AvocadoUserPage-hero-nameRow .AvocadoUserPage-hero-name {
+  > .VerifiedBadge,
+  > .VerifiedPopover-anchor {
+    margin-left: var(--avocado-hero-seal-gap);
+    vertical-align: -0.1em;
+  }
+
+  .VerifiedBadge {
+    width: var(--avocado-hero-seal) !important;
+    height: var(--avocado-hero-seal) !important;
   }
 }
 
@@ -271,31 +302,6 @@
   box-shadow: none !important;
 
   &:hover { background: color-mix(in srgb, var(--primary-color) 10%, var(--avocado-surface-1)) !important; }
-}
-
-// ── Skeleton shimmer ──────────────────────────────────────────────────────────
-
-@keyframes AvocadoUserShimmer {
-  0%   { background-position: -400px 0; }
-  100% { background-position:  400px 0; }
-}
-
-.AvocadoUserPage-shimmer {
-  background: linear-gradient(90deg, #f0f0f4 25%, #e7e7ed 50%, #f0f0f4 75%);
-  background-size: 800px 100%;
-  animation: AvocadoUserShimmer 1.4s infinite;
-  border-radius: 8px;
-
-  &--avatar  { width: 128px; height: 128px; margin-top: -50px; border-radius: 50%; flex-shrink: 0; border: 5px solid var(--body-bg); }
-  &--name    { height: 27px; width: 200px; margin: 0 0 10px; display: block; }
-  &--meta    { height: 14px; width: 240px; display: block; }
-  &--navItem { height: 16px; width: 80px; border-radius: 8px; }
-}
-
-// Nav tab skeleton uses lighter shimmer (white bg)
-.AvocadoUserPage-nav .AvocadoUserPage-shimmer--navItem {
-  background: linear-gradient(90deg, #f0f0f4 25%, #e7e7ed 50%, #f0f0f4 75%);
-  background-size: 800px 100%;
 }
 
 // ── Sticky horizontal nav tabs ─────────────────────────────────────────────────
@@ -981,11 +987,11 @@
   .AvocadoUserPage-hero-avatarWrap--online { box-shadow: 0 0 0 3px var(--avocado-online), 0 6px 18px rgba(0, 0, 0, 0.12); }
   .AvocadoUserPage-hero-identity { padding-bottom: 0; width: 100%; }
   .AvocadoUserPage-hero-name     { font-size: 22px; }
+  .AvocadoUserPage-hero-nameRow  { --avocado-hero-seal: 20px; --avocado-hero-seal-gap: 4px; }
   .AvocadoUserPage-hero-username { font-size: 14px; }
   .AvocadoUserPage-hero-meta     { gap: 8px 14px; margin-top: 8px; }
   .AvocadoUserPage-metaItem      { font-size: 12.5px; }
   .AvocadoUserPage-hero-actions  { margin-left: 0; align-self: flex-start; padding-bottom: 0; }
-  .AvocadoUserPage-shimmer--avatar { width: 92px; height: 92px; }
 
   // Nav tabs: compact
   .AvocadoUserPage-navItem,

@@ -1,5 +1,5 @@
 import app from 'flarum/forum/app';
-import { extend } from 'flarum/common/extend';
+import { extend, override } from 'flarum/common/extend';
 import Avatar from 'flarum/common/components/Avatar';
 import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
 
@@ -163,6 +163,18 @@ export default function installComposerDock(): void {
   });
 
   window.addEventListener('resize', scheduleSync, { passive: true });
+
+  // Responder abre o compositor onde a pessoa está. A ação do core, com
+  // `goToLast`, carrega o fim da discussão e rola até lá — para mostrar a prévia
+  // ao vivo que ele desenha depois do último post. Com o cartão flutuando por
+  // cima da página, ou com a prévia morando no compositor, isso só faz perder o
+  // ponto da leitura. Vale para todo mundo que chama a ação: a pílula fixa, a
+  // do fim da lista e o botão "Responder" da lateral — como o "Responder" de um
+  // post (flarum/mentions), que já não rolava.
+  override(DiscussionControls, 'replyAction', function (original, goToLast, forceRefresh) {
+    const inPlace = dockEnabled() || !!app.forum?.attribute('avocadoComposerPreview');
+    return original(inPlace ? false : goToLast, forceRefresh);
+  });
 
   // A página de discussão monta a pílula (uma vez) e reposiciona a cada
   // redraw. O Composer é um chunk que o Flarum só carrega na primeira vez que
