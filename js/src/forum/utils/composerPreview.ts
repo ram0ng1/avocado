@@ -158,9 +158,29 @@ export default function installComposerPreview(): void {
   // A prévia no fim da discussão sai. Enquanto se responde a esta discussão a
   // caixa do fim some (um "Escreva uma resposta…" em cima do compositor já
   // aberto seria redundante); fechado o compositor, ela volta.
+  //
+  // Some só da vista: o botão continua lá, invisível, ocupando o mesmo espaço.
+  // Tirá-lo do fluxo encolhia a página no clique — e, com a rolagem no fim, o
+  // navegador a reajustava e o conteúdo descia de uma vez.
   override('flarum/forum/components/ReplyPlaceholder', 'view', function (this: any, original: () => any) {
-    if (!enabled()) return original();
-    if ((app.composer as any).composingReplyTo?.(this.attrs.discussion)) return m('div.ReplyPlaceholder-composing', { hidden: true });
-    return original();
+    if (!enabled() || !(app.composer as any).composingReplyTo?.(this.attrs.discussion)) return original();
+
+    // `composingReply` é como o core decide entre o botão e a prévia ao vivo.
+    const attrs = this.attrs;
+    const composingReply = attrs.composingReply;
+    attrs.composingReply = () => false;
+    let vnode: any;
+    try {
+      vnode = original();
+    } finally {
+      attrs.composingReply = composingReply;
+    }
+
+    if (vnode?.attrs) {
+      vnode.attrs.className = `${vnode.attrs.className || ''} ReplyPlaceholder--composing`;
+      vnode.attrs['aria-hidden'] = 'true';
+      vnode.attrs.tabindex = -1;
+    }
+    return vnode;
   });
 }

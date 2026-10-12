@@ -19,6 +19,7 @@ import listItems from 'flarum/common/helpers/listItems';
 import SelectDropdown from 'flarum/common/components/SelectDropdown';
 import humanTime from 'flarum/common/helpers/humanTime';
 import { coverPosition, safeCssUrl, trans } from '../utils';
+import { bone, BONE_FILL } from './Skeletons';
 
 // ─── Scrollable nav ───────────────────────────────────────────────────────────
 
@@ -131,19 +132,64 @@ class ScrollableNav {
 
 // ─── Shared: hero ─────────────────────────────────────────────────────────────
 
+/** O componente de bio do fof/user-bio, se a extensão estiver ativa. */
+const userBioComponent = (): any => {
+  try {
+    return (flarum as any).reg.get('fof-user-bio', 'forum/components/UserBio') || null;
+  } catch {
+    return null;
+  }
+};
+
 export function buildHero(user: any, isEditable: boolean, controls: any[] = []) {
   if (!user) {
+    // A mesma marcação do hero de verdade (abaixo), com ossos no lugar do
+    // texto: avatar, nome, @handle, meta e o botão de controles ficam onde vão
+    // estar, em qualquer largura. Bio e selos não entram — não dá para saber se
+    // o usuário tem antes de ele carregar.
     return (
-      <div className="AvocadoUserPage-hero AvocadoUserPage-hero--skeleton">
+      <div className="AvocadoUserPage-hero AvocadoUserPage-hero--skeleton" aria-hidden="true">
         <div className="AvocadoUserPage-cover" />
         <div className="AvocadoUserPage-hero-inner">
           <div className="AvocadoUserPage-hero-bar">
-            <div className="AvocadoUserPage-shimmer AvocadoUserPage-shimmer--avatar" />
-            <div className="AvocadoUserPage-hero-identity">
-              <div className="AvocadoUserPage-shimmer AvocadoUserPage-shimmer--name" />
-              <div className="AvocadoUserPage-shimmer AvocadoUserPage-shimmer--meta" />
+            <div className="AvocadoUserPage-hero-avatarWrap">
+              <span className={`Avatar ${BONE_FILL}`} />
             </div>
+
+            <div className="AvocadoUserPage-hero-identity">
+              <div className="AvocadoUserPage-hero-nameRow">
+                <div className="AvocadoUserPage-hero-name">{bone('210px')}</div>
+              </div>
+              <span className="AvocadoUserPage-hero-username">{bone('112px')}</span>
+              <div className="AvocadoUserPage-hero-meta">
+                <span className="AvocadoUserPage-metaItem">{bone('188px')}</span>
+                <span className="AvocadoUserPage-metaItem">{bone('64px')}</span>
+              </div>
+            </div>
+
+            {/* Só quem está logado tem controles (mensagem, editar…) num perfil. */}
+            {app.session.user && (
+              <div className="AvocadoUserPage-hero-actions">
+                <div className="ButtonGroup Dropdown">
+                  <span className={`Button AvocadoUserPage-controlsBtn ${BONE_FILL}`}>
+                    <span className="Button-label">{app.translator.trans('core.forum.user_controls.button')}</span>
+                    <i className="icon fas fa-caret-down Button-caret" />
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* Admin edita qualquer perfil, então a caixa de bio aparece sempre (nem que seja o convite a escrever). */}
+          {app.session.user?.isAdmin?.() && userBioComponent() && (
+            <div className="AvocadoUserPage-hero-bio">
+              <div className="UserBio editable">
+                <div className="UserBio-content">
+                  <p className="UserBio-placeholder">{bone('196px')}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -179,19 +225,13 @@ export function buildHero(user: any, isEditable: boolean, controls: any[] = []) 
 
   const onlineLabel = trans('ramon-avocado.forum.user.online', 'Online');
 
-  const bioNode = (() => {
-    try {
-      const UserBio = (flarum as any).reg.get('fof-user-bio', 'forum/components/UserBio');
-      if (UserBio && user.attribute('canViewBio')) {
-        return (
-          <div className="AvocadoUserPage-hero-bio">
-            <UserBio user={user} editable={isEditable} />
-          </div>
-        );
-      }
-    } catch {}
-    return null;
-  })();
+  const UserBio = userBioComponent();
+  const bioNode =
+    UserBio && user.attribute('canViewBio') ? (
+      <div className="AvocadoUserPage-hero-bio">
+        <UserBio user={user} editable={isEditable} />
+      </div>
+    ) : null;
 
   // Layout estilo Facebook: capa larga, avatar grande sobreposto à esquerda,
   // identidade (nome + @handle + stats) à direita, ações na extrema direita —
@@ -255,16 +295,22 @@ export function buildHero(user: any, isEditable: boolean, controls: any[] = []) 
 
 // ─── Shared nav builders ──────────────────────────────────────────────────────
 
+/** Larguras dos rótulos das abas no esqueleto (posts, discussões, curtidas, menções…). */
+const NAV_BONES = ['96px', '124px', '78px', '88px', '92px'];
+
 export function buildSidebar(page: any) {
   const user = page?.user;
   if (!user) {
+    // A lista e os botões de aba de verdade, com um osso no lugar de ícone + rótulo.
     return (
-      <div className="AvocadoUserPage-nav">
-        <div className="AvocadoUserPage-navInner">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="AvocadoUserPage-shimmer AvocadoUserPage-shimmer--navItem" />
+      <div className="AvocadoUserPage-nav AvocadoUserPage-nav--skeleton" aria-hidden="true">
+        <ul className="AvocadoUserPage-navInner">
+          {NAV_BONES.map((width) => (
+            <li key={width}>
+              <span className="LinkButton">{bone(width)}</span>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     );
   }

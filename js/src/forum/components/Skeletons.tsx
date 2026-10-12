@@ -37,6 +37,83 @@ export const renderThreadSkeleton = (count = 3): any[] =>
 
 export const renderDiscSkeleton = renderThreadSkeleton;
 
+// ── Ossos ─────────────────────────────────────────────────────────────────────
+// Um esqueleto montado com a marcação REAL do que vai substituí-lo (as mesmas
+// classes do cartão, do hero, das abas) herda caixa, recuo e espaçamento do CSS
+// de verdade — em qualquer largura de tela, sem números copiados à mão. Só o
+// texto vira osso: uma linha que ocupa a altura de linha do elemento em que
+// está, com a largura inventada.
+
+/** Uma linha de texto em osso, dentro de um elemento real. */
+export const bone = (width: string): any => m('span', { className: 'AvocadoBone AvocadoBone--text', style: { width } }, ' ');
+
+/** Classes de um elemento real pintado inteiro como osso (avatar, botão, pílula): o conteúdo só dá a largura. */
+export const BONE_FILL = 'AvocadoBone AvocadoBone--fill';
+
+// ── Profile card skeletons ────────────────────────────────────────────────────
+// Os cartões das abas do perfil: PostCard (posts, curtidas, menções) e
+// ThreadCard (discussões). Larguras variam por cartão para não parecer carimbo.
+const PROFILE_TITLES = ['34%', '22%', '46%'];
+const PROFILE_EXCERPTS = [['72%'], ['100%', '38%'], ['88%']];
+
+export const renderProfileCardSkeleton = (kind: 'post' | 'thread' = 'post', count = 3, bookmark = false): any[] =>
+  Array.from({ length: count }, (_, i) => {
+    const post = kind === 'post';
+    // Para quem está logado o cartão real reserva o lugar dos controles (⋮) e,
+    // no ThreadCard com os salvos ligados (`bookmark`), o do botão de salvar —
+    // os dois só aparecem no hover, mas ocupam largura.
+    const controls = !!app.session.user;
+
+    return m('div', { key: i, className: 'AvocadoHome-threadCard AvocadoHome-threadCard--skeleton', 'aria-hidden': 'true' }, [
+      m('div', { className: 'AvocadoHome-threadHead' }, [
+        m('div', { className: `AvocadoHome-avatarWrap ${BONE_FILL}` }),
+        m('div', { className: 'AvocadoHome-threadMain' }, [
+          m('div', { className: 'AvocadoHome-threadMeta' }, [
+            m('span', { className: 'AvocadoHome-threadAuthor' }, bone('86px')),
+            m('span', { className: 'AvocadoHome-threadTime' }, bone('48px')),
+            // Só o PostCard mostra as tags da discussão na linha do autor.
+            post && m('span', { className: `AvocadoHome-tagPill ${BONE_FILL}` }, bone('84px')),
+            post && m('span', { className: `AvocadoHome-tagPill ${BONE_FILL}` }, bone('62px')),
+          ]),
+          m('span', { className: 'AvocadoHome-threadTitle' }, bone(PROFILE_TITLES[i % PROFILE_TITLES.length])),
+          m(
+            'p',
+            { className: `AvocadoHome-threadExcerpt${post ? ' AvocadoUserPage-postExcerpt' : ''}` },
+            PROFILE_EXCERPTS[i % PROFILE_EXCERPTS.length].map((width) => bone(width))
+          ),
+        ]),
+        m('div', { className: 'AvocadoHome-threadActions' }, [
+          !post && controls && bookmark && m('span', { className: 'AvocadoThreadCard-bookmarkBtn AvocadoBone' }),
+          controls && m('span', { className: 'AvocadoHome-threadControls-toggle AvocadoBone' }),
+          // O botão de verdade, com ícone e rótulo traduzido escondidos: a largura é a dele.
+          m('span', { className: `AvocadoHome-replyBtn ${BONE_FILL}` }, [
+            m('i', { className: post ? 'fas fa-arrow-right' : 'fas fa-reply' }),
+            // Num <span>: texto solto não é filho que o osso consiga esconder.
+            m('span', {}, app.translator.trans(post ? 'ramon-avocado.forum.home.view' : 'ramon-avocado.forum.home.reply_label')),
+          ]),
+        ]),
+      ]),
+      // Última resposta: só o ThreadCard a mostra.
+      !post &&
+        m(
+          'div',
+          { className: 'AvocadoHome-threadReplyGroup' },
+          m('div', { className: 'AvocadoHome-replyCard' }, [
+            m('span', { className: 'AvocadoHome-replyCard-line' }, [
+              m('div', { className: `AvocadoHome-replyCard-avatar ${BONE_FILL}` }),
+              m('span', { className: 'AvocadoHome-replyCard-name' }, bone('96px')),
+              m('span', { className: 'AvocadoHome-replyCard-text' }, bone('70%')),
+            ]),
+            m('span', { className: 'AvocadoHome-replyCard-seeMore' }, bone('148px')),
+          ])
+        ),
+      m('div', { className: 'AvocadoHome-threadStats' }, [
+        !post && m('span', { className: 'AvocadoHome-statBtn' }, bone('70px')),
+        m('span', { className: 'AvocadoHome-statBtn' }, bone('84px')),
+      ]),
+    ]);
+  });
+
 // ── Post search skeleton ──────────────────────────────────────────────────────
 // Mirrors AvocadoSearch-postCard layout:
 //   head  → avatar(36) + meta (author + time)

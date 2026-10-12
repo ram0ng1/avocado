@@ -65,6 +65,12 @@
   max-width: 1600px;
 }
 
+// A caixa "Escreva uma resposta…" do fim da discussão, enquanto se responde:
+// fora da vista (e do foco e do clique), mas ainda ocupando o lugar dela.
+.ReplyPlaceholder.ReplyPlaceholder--composing {
+  visibility: hidden;
+}
+
 .AvocadoHome-composerPreviewBtn.is-active {
   color: var(--primary-color);
 }
