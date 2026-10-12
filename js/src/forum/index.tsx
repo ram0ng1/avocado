@@ -116,6 +116,7 @@ import {
   BOOKMARKS_PATH,
 } from './utils/bookmarks';
 import { hoverCardAttrs } from './components/shared/UserHoverCard';
+import AvocadoFooter from './components/AvocadoFooter';
 import { changelogChips } from './components/shared/ChangelogFields';
 import { renderReleaseHero } from './components/shared/ReleaseHero';
 import { changelogTagTarget } from './utils/changelog';
@@ -2758,9 +2759,11 @@ app.initializers.add(
     // flarum.reg.onLoad() applies the patch when the module finally loads.
     // This is the official pattern used by flarum/realtime (see TypingIndicator.tsx).
     {
-      const getCtaPosition = () => {
+      // 1–5 = depois do post de mesmo número; 'end' = no fim da discussão.
+      const getCtaPosition = (): number | 'end' => {
         try {
-          const pos = app.forum?.attribute('avocadoPostCtaPosition') ?? '1';
+          const pos = String(app.forum?.attribute('avocadoPostCtaPosition') ?? '1');
+          if (pos === 'end') return 'end';
           const parsed = parseInt(pos, 10);
           return parsed >= 1 && parsed <= 5 ? parsed : 1;
         } catch (e) {
@@ -2768,11 +2771,17 @@ app.initializers.add(
         }
       };
 
-      const renderCta = () => (
-        <div className="PostStream-item PostStream-avocadoCta">
+      // O texto do admin vence; vazio, vale a frase da tradução.
+      const ctaText = () =>
+        String(app.forum?.attribute('avocadoPostCtaText') ?? '').trim() || app.translator.trans('ramon-avocado.forum.post_cta.text');
+
+      // `key` só para o fim da discussão: os endItems do core são uma lista
+      // com chave, e um item sem chave no meio dela quebra o render.
+      const renderCta = (key?: string) => (
+        <div className="PostStream-item PostStream-avocadoCta" key={key}>
           <div className="AvocadoPostCta-wrapper">
             <div className="AvocadoPostCta">
-              <span className="AvocadoPostCta-text">{app.translator.trans('ramon-avocado.forum.post_cta.text')}</span>
+              <span className="AvocadoPostCta-text">{ctaText()}</span>
               <span className="AvocadoPostCta-buttons">
                 <Button
                   className="Button Button--primary AvocadoPostCta-btn AvocadoPostCta-btn--login"
@@ -2812,7 +2821,7 @@ app.initializers.add(
         if (!ctaEnabled() || app.session.user) return;
 
         const pos = getCtaPosition();
-        if (pos === 1) return; // handled by afterFirstPostItems above
+        if (pos === 1 || pos === 'end') return; // afterFirstPostItems acima, endItems abaixo
 
         const children = rootVnode?.children;
         if (!Array.isArray(children)) return;
@@ -2831,6 +2840,13 @@ app.initializers.add(
             }
           }
         }
+      });
+
+      // No fim da discussão: endItems é o gancho do core para o que vem depois
+      // do último post (só existe com o fim carregado), antes da caixa de resposta.
+      extend('flarum/forum/components/PostStream', 'endItems', function (items) {
+        if (!ctaEnabled() || app.session.user) return;
+        if (getCtaPosition() === 'end') items.add('avocado-post-cta', renderCta('avocado-post-cta'), 80);
       });
     }
 
@@ -3084,6 +3100,10 @@ app.initializers.add(
     //      <footer><footer>…</footer></footer> nesting and duplicate ids.
     let _avFooterContent: string | null = null;
     override(Footer.prototype, 'view', function () {
+      // O rodapé do tema (admin › Aparência › Rodapé) ocupa o lugar do HTML
+      // colado em "Editar rodapé personalizado": os dois juntos seriam dois rodapés.
+      if (settingEnabled('avocadoFooterEnabled', false)) return m(AvocadoFooter);
+
       if (_avFooterContent === null) {
         // Sanitize the admin-pasted HTML before parsing so on*= handlers and
         // dangerous schemes are stripped before any inner walk runs. <style>

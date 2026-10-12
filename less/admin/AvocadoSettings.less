@@ -140,6 +140,20 @@
   // header look is preserved by giving the header itself top-rounded corners.
 }
 
+// Card de um recurso desligado: à vista, para se saber o que existe, mas
+// apagado. A interação já sai pelo `inert` no miolo (AdminCard.tsx).
+.AvocadoAdmin-card.is-disabled {
+  .AvocadoAdmin-card-header,
+  .AvocadoAdmin-card-body {
+    opacity: 0.45;
+  }
+
+  .AvocadoAdmin-card-body {
+    cursor: not-allowed;
+    user-select: none;
+  }
+}
+
 .AvocadoAdmin-card-header {
   display: flex;
   align-items: center;
@@ -584,4 +598,109 @@
   25%     { transform: translate(60%, 0); }
   50%     { transform: translate(60%, -60%); }
   75%     { transform: translate(0, -60%); }
+}
+
+// ─── Listas editáveis (links e redes do rodapé — AdminFooterLists.tsx) ─────────
+// Uma linha por item: os campos crescem, os botões de mover/remover ficam no
+// fim, e o "adicionar" vem embaixo, alinhado à esquerda.
+// `align-self: stretch`: o .Form-group do painel alinha os filhos à esquerda sem
+// esticá-los, e a lista encolhia até a largura mínima dos campos.
+.AvocadoAdmin-list {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 8px;
+}
+
+// Mais larga que um campo comum do painel: um endereço precisa de espaço.
+.AvocadoAdmin-listRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 720px;
+
+  .FormControl {
+    width: auto;
+    min-width: 0;
+    max-width: none;
+  }
+}
+
+.AvocadoAdmin-listLabel {
+  flex: 0 1 32%;
+}
+
+.AvocadoAdmin-listUrl {
+  flex: 1 1 0;
+}
+
+// O seletor de rede: largura fixa para os links ficarem alinhados em coluna.
+.AvocadoAdmin-listNetwork {
+  flex: 0 0 172px;
+
+  > .Dropdown-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    width: 100%;
+
+    .Button-icon {
+      width: 16px;
+      margin: 0;
+      text-align: center;
+    }
+
+    .Button-label {
+      flex: 1;
+      text-align: left;
+    }
+  }
+
+  .Dropdown-menu {
+    max-height: 320px;
+    overflow-y: auto;
+  }
+}
+
+.AvocadoAdmin-listActions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 2px;
+}
+
+.AvocadoAdmin-listBtn {
+  color: var(--muted-color);
+
+  &:hover:not([disabled]) {
+    color: var(--text-color);
+  }
+
+  &[disabled] {
+    opacity: 0.35;
+    cursor: default;
+  }
+}
+
+.AvocadoAdmin-listAdd {
+  align-self: flex-start;
+}
+
+@media @phone {
+  .AvocadoAdmin-listRow {
+    flex-wrap: wrap;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--control-bg);
+  }
+
+  .AvocadoAdmin-listLabel,
+  .AvocadoAdmin-listUrl,
+  .AvocadoAdmin-listNetwork {
+    flex: 1 1 100%;
+  }
+
+  .AvocadoAdmin-listActions {
+    margin-left: auto;
+  }
 }

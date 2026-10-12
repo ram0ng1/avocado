@@ -428,12 +428,25 @@ return [
         ->serializeToForum('avocadoHeroDecoDividerIcon', 'avocado.hero_deco_divider_icon')
         ->serializeToForum('avocadoFeaturedTags', 'avocado.featured_tags')
         ->serializeToForum('avocadoHeroImageTags', 'avocado.hero_image_tags')
+        // Rodapé do tema (js/src/forum/components/AvocadoFooter.tsx). Desligado
+        // por padrão: quem já usa o "rodapé personalizado" do Flarum segue com ele.
+        ->serializeToForum('avocadoFooterEnabled', 'avocado.footer_enabled', 'boolval')
+        ->serializeToForum('avocadoFooterText', 'avocado.footer_text')
+        ->serializeToForum('avocadoFooterEmail', 'avocado.footer_email')
+        ->serializeToForum('avocadoFooterPhone', 'avocado.footer_phone')
+        ->serializeToForum('avocadoFooterAddress', 'avocado.footer_address')
+        ->serializeToForum('avocadoFooterLinks', 'avocado.footer_links')
+        ->serializeToForum('avocadoFooterLegalLinks', 'avocado.footer_legal_links')
+        ->serializeToForum('avocadoFooterSocial', 'avocado.footer_social')
+        ->serializeToForum('avocadoFooterCopyright', 'avocado.footer_copyright')
         ->serializeToForum('avocadoLogoSvg', 'avocado.logo_svg')
         ->serializeToForum('avocadoLogoEnabled', 'avocado.logo_enabled', 'boolval')
         ->serializeToForum('avocadoCustomDefaultAvatar', 'avocado.custom_default_avatar', 'boolval')
         ->serializeToForum('avocadoShowGuestCta', 'avocado.show_guest_cta', 'boolval')
         ->serializeToForum('avocadoShowPostCta', 'avocado.show_post_cta', 'boolval')
         ->serializeToForum('avocadoPostCtaPosition', 'avocado.post_cta_position')
+        // Texto do aviso; vazio = a frase padrão da tradução.
+        ->serializeToForum('avocadoPostCtaText', 'avocado.post_cta_text')
         ->serializeToForum('avocadoHideLinksForGuests', 'avocado.hide_links_for_guests', 'boolval')
         ->serializeToForum('avocadoShowcaseEnabled', 'avocado.showcase_enabled', 'boolval')
         ->serializeToForum('avocadoShowcaseTag', 'avocado.showcase_tag')
@@ -493,10 +506,22 @@ return [
         ->default('avocado.featured_tags', '[]')
         ->default('avocado.hero_image_tags', '[]')
         ->default('avocado.logo_enabled', false)
+        // Logo SVG na cor do fórum e ajuste vertical no cabeçalho: lidos só no
+        // servidor (Content\HideLogoFlash), que os aplica antes do primeiro paint.
+        ->default('avocado.logo_colored', false)
+        ->default('avocado.logo_offset_y', '0')
+        ->default('avocado.footer_enabled', false)
+        // Texto, copyright e as listas do rodapé NÃO têm default aqui de propósito:
+        // nunca gravados, valem o padrão do tema (js/src/common/footerContent.ts);
+        // gravados vazios, somem. Um default '' apagaria essa diferença.
+        ->default('avocado.footer_email', '')
+        ->default('avocado.footer_phone', '')
+        ->default('avocado.footer_address', '')
         ->default('avocado.custom_default_avatar', true)
         ->default('avocado.show_guest_cta', true)
         ->default('avocado.show_post_cta', false)
         ->default('avocado.post_cta_position', '1')
+        ->default('avocado.post_cta_text', '')
         ->default('avocado.hide_links_for_guests', false)
         ->default('avocado.showcase_tag', '')
         ->default('avocado.showcase_heading', '')

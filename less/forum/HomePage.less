@@ -316,7 +316,7 @@
   gap: 6px;
   height: 36px;
   padding: 0 16px;
-  border-radius: var(--border-radius); // o mesmo do "Responder" da discussão (.Button)
+  border-radius: 999px; // pílula, como os demais botões do tema (e o "Responder" da discussão)
   border: none;
   background: var(--primary-color);
   color: #fff;
@@ -2832,6 +2832,11 @@
   // O título não passa por baixo dos botões.
   .AvocadoHome-composer-header {
     padding-right: 128px;
+  }
+
+  // Com o botão de salvar rascunho (fof/drafts) há um botão a mais no canto.
+  &.has-draft .AvocadoHome-composer-header {
+    padding-right: 168px;
   }
 }
 
