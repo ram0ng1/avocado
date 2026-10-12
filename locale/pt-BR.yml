@@ -22,6 +22,35 @@ ramon-avocado:
       section_posts: Posts
       section_logo: Logotipo
       section_footer: Rodapé
+      section_footer_contacts: Contatos e redes
+      section_footer_links: Links
+      section_footer_text: Texto
+      footer_enabled_label: "Ativar o rodapé do tema"
+      footer_enabled_help: "Um rodapé simples e centralizado no fim de toda página, com o que está nos campos abaixo. Eles começam com textos padrão; esvazie um campo e a linha dele some. Ele substitui o HTML de “Editar rodapé personalizado” do Flarum."
+      footer_text_label: "Texto do rodapé"
+      footer_text_help: "Cada linha é um parágrafo. Escreva links como [rótulo](endereço). Esvazie o campo para escondê-lo."
+      footer_email_label: "E-mail"
+      footer_phone_label: "Telefone"
+      footer_address_label: "Endereço"
+      footer_contact_help: "Deixe um campo vazio para escondê-lo."
+      footer_social_label: "Redes sociais"
+      footer_social_help: "Escolha a rede e cole o link — o rodapé mostra o ícone da rede. Ao colar um link, a rede é reconhecida pelo endereço."
+      footer_links_label: "Links de navegação"
+      footer_links_help: "O endereço é um caminho do fórum (/tags) ou uma URL completa."
+      footer_legal_label: "Links legais"
+      footer_legal_help: "Aparecem ao lado do copyright, como termos e privacidade."
+      footer_copyright_label: "Copyright"
+      footer_copyright_help: "{year} vira o ano atual e {title} o título do fórum. Esvazie o campo para escondê-lo."
+      footer_list_label_placeholder: "Rótulo"
+      footer_list_url_placeholder: "/tags ou https://…"
+      footer_list_add: "Adicionar link"
+      footer_list_up: "Mover para cima"
+      footer_list_down: "Mover para baixo"
+      footer_list_remove: "Remover"
+      footer_social_add: "Adicionar rede"
+      footer_social_other: "Outro site"
+      footer_social_network: "Rede"
+      footer_social_url: "Link"
       section_colored: Colorido
       section_font: Fonte
       font_family_label: Fonte do fórum
@@ -48,6 +77,7 @@ ramon-avocado:
       group_discussions: Discussões
       group_community: Comunidade
       group_access: Acesso
+      group_footer: Rodapé
       groups_aria: Grupos de configuração
       search_placeholder: "Buscar configuração…"
       search_clear: Limpar busca
@@ -143,8 +173,8 @@ ramon-avocado:
       banner_image_help: Envie a imagem do banner hero exibida no topo do fórum.
       show_auth_buttons_label: Mostrar botões Entrar / Cadastrar-se no cabeçalho para convidados
       show_auth_buttons_help: Exibe os botões Entrar e Cadastrar-se no menu secundário do cabeçalho para convidados.
-      show_guest_cta_label: Mostrar call-to-action para convidados
-      show_guest_cta_help: Exibe uma mensagem de call-to-action para convidados.
+      show_guest_cta_label: "Mostrar botões Entrar / Cadastrar-se no banner da página inicial"
+      show_guest_cta_help: "Exibe os botões de chamada dentro do banner da página inicial, para convidados."
       hero_image_position_label: Posição da Imagem do Hero
       hero_image_position_help: "Valor CSS background-position, ex.: 'center top' ou '50% 20%'."
 
@@ -219,19 +249,26 @@ ramon-avocado:
       colored_border_style_full: Borda completa
 
       # Post CTA
-      show_post_cta_label: Mostrar CTA de cadastro após o primeiro post para convidados
-      show_post_cta_help: "Exibe um card Entrar / Cadastrar-se após o primeiro post de uma discussão, visível apenas para convidados."
-      post_cta_position_label: Posição do CTA (após qual número de post)
-      post_cta_position_help: Insere o banner de CTA entre este número de post e o próximo.
+      show_post_cta_label: "Mostrar aviso de cadastro dentro das discussões para convidados"
+      show_post_cta_help: "Exibe um cartão Entrar / Cadastrar-se entre os posts de uma discussão, visível apenas para convidados."
+      post_cta_position_label: "Posição do aviso"
+      post_cta_position_help: "Depois de qual post o cartão aparece, ou no fim da discussão."
       post_cta_position_1: "Após o post #1"
       post_cta_position_2: "Após o post #2"
       post_cta_position_3: "Após o post #3"
       post_cta_position_4: "Após o post #4"
       post_cta_position_5: "Após o post #5"
+      post_cta_position_end: "No fim da discussão"
+      post_cta_text_label: "Texto do aviso"
+      post_cta_text_help: "A frase exibida ao lado dos botões Entrar / Cadastrar-se. Vazio: a frase padrão."
 
       # Logo
       logo_svg_label: Logotipo SVG
       logo_svg_help: Envie um logotipo SVG personalizado para seu fórum.
+      logo_colored_label: "Pintar o logo com a cor do fórum"
+      logo_colored_help: "O SVG assume a cor primária no lugar das cores do arquivo, e acompanha os destaques coloridos de cada tag. Só a forma do SVG é usada."
+      logo_offset_y_label: "Ajuste vertical (px)"
+      logo_offset_y_help: "Sobe (negativo) ou desce (positivo) o logo no cabeçalho, de -30 a 30. Para logos cujo desenho não fica centrado no arquivo."
       logo_enabled_label: Ativar Logotipo Personalizado
       logo_enabled_help: Exibe o logotipo personalizado no cabeçalho.
       link_icon_svg_label: Ícone de link interno (SVG)
@@ -314,6 +351,12 @@ ramon-avocado:
       footer_social: Links Sociais
       footer_show_social: Mostrar Links de Mídias Sociais
       footer_social_help_json: "Configure links de mídias sociais em formato JSON. Use as chaves: facebook, twitter, linkedin, instagram, youtube."
+  lib:
+    footer:
+      default_text: "Feito com [Flarum](https://flarum.org)."
+      nav_home: "Início"
+      nav_discussions: "Todas as discussões"
+      nav_tags: "Tags"
   forum:
     loading: "Carregando…"
     back: "Voltar"
@@ -535,6 +578,10 @@ ramon-avocado:
       empty: "Nenhuma discussão nesta categoria ainda."
       not_found: "Tag não encontrada."
       load_more: "Carregar mais"
+    footer:
+      contacts: "Contatos"
+      socials: "Redes"
+      navigation: "Navegação"
     team:
       title: Nossa Equipe
       disabled: Esta página não está disponível.

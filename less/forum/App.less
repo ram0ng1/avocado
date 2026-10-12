@@ -517,6 +517,33 @@ html[data-avocado-logo-custom="true"] {
   }
 }
 
+// ─── Opções do logo SVG (admin › Aparência › Logo) ───────────────────────────
+// As mesmas regras saem inline do Content\HideLogoFlash, para valerem antes de
+// este CSS chegar; aqui ficam como a fonte de verdade.
+//
+// Logo colorido: o desenho assume a cor do cabeçalho — a primária no cabeçalho
+// comum (e a da tag, com os destaques coloridos), a de contraste no "cabeçalho
+// colorido" do Flarum. Só dentro do #home-link: a cópia do logo no rodapé tem a
+// cor dela.
+html[data-avocado-logo-colored="true"] #home-link svg.Header-logo {
+  * {
+    fill: var(--header-color) !important;
+  }
+
+  [stroke]:not([stroke='none']) {
+    stroke: var(--header-color) !important;
+  }
+
+  [fill='none'] {
+    fill: none !important;
+  }
+}
+
+// Ajuste vertical: sobe (negativo) ou desce o logo sem mexer na altura do cabeçalho.
+html[data-avocado-logo-custom="true"] #home-link svg.Header-logo {
+  transform: translateY(var(--avocado-logo-offset-y, 0px));
+}
+
 // Custom logo only: flex-align header title and constrain height.
 // Without this scope, the 52px height and flex layout override Flarum's default
 // logo/title behaviour (text name or admin-uploaded PNG) unnecessarily.

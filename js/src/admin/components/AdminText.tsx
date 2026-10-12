@@ -9,8 +9,11 @@ export default class AdminText extends AdminComponent {
   }
 
   view() {
-    const { settingKey, label, help, placeholder } = this.attrs;
-    const value = getStr(settingKey);
+    const { settingKey, label, help, placeholder, fallback } = this.attrs;
+    // `fallback`: o valor mostrado enquanto a opção nunca foi gravada (o padrão
+    // do tema). Gravada — mesmo vazia — vale o que está gravado.
+    const stored = app.data.settings[settingKey];
+    const value = fallback !== undefined && (stored === undefined || stored === null) ? fallback : getStr(settingKey);
     return (
       <div className="Form-group">
         <label className="AvocadoAdmin-label">{label}</label>

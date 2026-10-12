@@ -302,8 +302,11 @@
   background: var(--avocado-surface-1, rgba(0, 0, 0, 0.035));
 }
 
+// Cada coluna parte da largura do próprio conteúdo e divide a sobra por igual:
+// em terços fixos a data ("out. de 2015") não cabia e quebrava em duas linhas,
+// desalinhando o rótulo dela dos outros dois.
 .AvocadoUserCard-stat {
-  flex: 1;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -314,6 +317,8 @@
   font-weight: 600;
   color: var(--home-muted, #8f9097);
   text-align: center;
+
+  white-space: nowrap;
 
   strong {
     font-size: 14.5px;

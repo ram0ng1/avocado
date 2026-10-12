@@ -28,6 +28,8 @@ import AdminToggle from './components/AdminToggle';
 import AdminSelect from './components/AdminSelect';
 import AdminText from './components/AdminText';
 import AdminTextarea from './components/AdminTextarea';
+import { AdminLinkList, AdminSocialList } from './components/AdminFooterLists';
+import { DEFAULT_FOOTER_COPYRIGHT, defaultFooterLinks, defaultFooterText } from '../common/footerContent';
 import SpinnerPicker from './components/SpinnerPicker';
 import AdminTagPicker from './components/AdminTagPicker';
 import AdminGroupPicker from './components/AdminGroupPicker';
@@ -38,7 +40,7 @@ import { installTagIconSvg } from '../common/tagIconSvg';
 // Grupos
 // ─────────────────────────────────────────────────────────────────────────────
 
-type GroupKey = 'appearance' | 'home' | 'discussions' | 'community' | 'access';
+type GroupKey = 'appearance' | 'home' | 'discussions' | 'community' | 'access' | 'footer';
 
 const GROUPS: { key: GroupKey; icon: string; label: () => string }[] = [
   { key: 'appearance', icon: 'fas fa-palette', label: () => trans('ramon-avocado.admin.settings.group_appearance', 'Appearance') },
@@ -46,6 +48,7 @@ const GROUPS: { key: GroupKey; icon: string; label: () => string }[] = [
   { key: 'discussions', icon: 'far fa-comments', label: () => trans('ramon-avocado.admin.settings.group_discussions', 'Discussions') },
   { key: 'community', icon: 'fas fa-users', label: () => trans('ramon-avocado.admin.settings.group_community', 'Community') },
   { key: 'access', icon: 'fas fa-key', label: () => trans('ramon-avocado.admin.settings.group_access', 'Access') },
+  { key: 'footer', icon: 'fas fa-shoe-prints', label: () => trans('ramon-avocado.admin.settings.group_footer', 'Footer') },
 ];
 
 interface CardDef {
@@ -55,6 +58,8 @@ interface CardDef {
   /** Palavras extras para a busca — o que o usuário digitaria procurando o card. */
   keywords: string;
   body: () => any;
+  /** Card apagado e sem interação (ex.: as opções de um recurso desligado). */
+  disabled?: () => boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -102,6 +107,9 @@ function ensureLogoViewBox(): void {
 // Cards
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** O rodapé do tema está desligado? Os cards de conteúdo dele dependem disso. */
+const footerOff = (): boolean => !getBool('avocado.footer_enabled');
+
 const CARDS: CardDef[] = [
   // ── Aparência ──────────────────────────────────────────────────────────────
   {
@@ -131,6 +139,23 @@ const CARDS: CardDef[] = [
                 {trans('ramon-avocado.admin.settings.logo_svg_help', 'Upload an SVG file to replace the forum logo in the header.')}
               </p>
             </div>
+            <AdminToggle
+              settingKey="avocado.logo_colored"
+              label={trans('ramon-avocado.admin.settings.logo_colored_label', "Paint the logo in the forum's colour")}
+              help={trans(
+                'ramon-avocado.admin.settings.logo_colored_help',
+                'The SVG takes the primary colour instead of the colours in the file, and follows the colored accents of each tag. Only the shape of the SVG is used.'
+              )}
+            />
+            <AdminText
+              settingKey="avocado.logo_offset_y"
+              label={trans('ramon-avocado.admin.settings.logo_offset_y_label', 'Vertical adjustment (px)')}
+              placeholder="0"
+              help={trans(
+                'ramon-avocado.admin.settings.logo_offset_y_help',
+                'Nudges the logo up (negative) or down (positive) in the header, from -30 to 30. For logos whose drawing does not sit centred in the file.'
+              )}
+            />
           </>
         )}
 
@@ -1008,26 +1033,39 @@ const CARDS: CardDef[] = [
         {/* Guest post CTA */}
         <AdminToggle
           settingKey="avocado.show_post_cta"
-          label={trans('ramon-avocado.admin.settings.show_post_cta_label', 'Show Join CTA after first post for guests')}
+          label={trans('ramon-avocado.admin.settings.show_post_cta_label', 'Show a Join CTA inside discussions for guests')}
           help={trans(
             'ramon-avocado.admin.settings.show_post_cta_help',
-            'Display a Log In / Sign Up card after the first post, visible only to guests.'
+            'Display a Log In / Sign Up card between the posts of a discussion, visible only to guests.'
           )}
         />
         {getBool('avocado.show_post_cta') && (
           <div className="AvocadoAdmin-subGroup">
             <AdminSelect
               settingKey="avocado.post_cta_position"
-              label={trans('ramon-avocado.admin.settings.post_cta_position_label', 'CTA position (after which post number)')}
-              help={trans('ramon-avocado.admin.settings.post_cta_position_help', 'Insert the CTA banner between this post number and the next one.')}
+              label={trans('ramon-avocado.admin.settings.post_cta_position_label', 'CTA position')}
+              help={trans(
+                'ramon-avocado.admin.settings.post_cta_position_help',
+                'After which post the card appears, or at the end of the discussion.'
+              )}
               options={{
                 '1': trans('ramon-avocado.admin.settings.post_cta_position_1', 'After post #1'),
                 '2': trans('ramon-avocado.admin.settings.post_cta_position_2', 'After post #2'),
                 '3': trans('ramon-avocado.admin.settings.post_cta_position_3', 'After post #3'),
                 '4': trans('ramon-avocado.admin.settings.post_cta_position_4', 'After post #4'),
                 '5': trans('ramon-avocado.admin.settings.post_cta_position_5', 'After post #5'),
+                end: trans('ramon-avocado.admin.settings.post_cta_position_end', 'At the end of the discussion'),
               }}
               default="1"
+            />
+            <AdminText
+              settingKey="avocado.post_cta_text"
+              label={trans('ramon-avocado.admin.settings.post_cta_text_label', 'CTA text')}
+              placeholder={trans('ramon-avocado.forum.post_cta.text', 'Like what you see? Join the discussion!')}
+              help={trans(
+                'ramon-avocado.admin.settings.post_cta_text_help',
+                'The sentence shown next to the Log In / Sign Up buttons. Empty: the default sentence.'
+              )}
             />
           </div>
         )}
@@ -1045,6 +1083,122 @@ const CARDS: CardDef[] = [
         label={trans('ramon-avocado.admin.settings.search_v1_label', 'Enable V1 search bar style')}
         help={trans('ramon-avocado.admin.settings.search_v1_help', 'Show the inline search dropdown instead of the V2 modal.')}
       />
+    ),
+  },
+
+  // ── Rodapé ─────────────────────────────────────────────────────────────────
+  // (footerOff, mais abaixo: com o rodapé desligado os cards de conteúdo ficam
+  // apagados — não há o que configurar num rodapé que não aparece.)
+  // Uma aba só dele: o rodapé tem conteúdo próprio (texto, links, contatos), e
+  // dentro de Aparência virava um cartão do tamanho de uma página.
+  {
+    group: 'footer',
+    icon: 'fas fa-shoe-prints',
+    title: () => trans('ramon-avocado.admin.settings.section_footer', 'Footer'),
+    keywords: 'rodapé footer ativar enable desativar disable',
+    body: () => (
+      <AdminToggle
+        settingKey="avocado.footer_enabled"
+        label={trans('ramon-avocado.admin.settings.footer_enabled_label', 'Enable the theme footer')}
+        help={trans(
+          'ramon-avocado.admin.settings.footer_enabled_help',
+          "A simple centred footer at the end of every page, with what is in the fields below. They start with default texts; clear a field and its line is gone. It replaces the HTML from Flarum's “Edit custom footer”."
+        )}
+      />
+    ),
+  },
+  {
+    group: 'footer',
+    icon: 'fas fa-align-center',
+    disabled: footerOff,
+    title: () => trans('ramon-avocado.admin.settings.section_footer_text', 'Text'),
+    keywords: 'rodapé footer texto text frase descrição description copyright direitos',
+    body: () => (
+      <>
+        <AdminTextarea
+          settingKey="avocado.footer_text"
+          rows={3}
+          fallback={defaultFooterText(trans)}
+          label={trans('ramon-avocado.admin.settings.footer_text_label', 'Footer text')}
+          help={trans(
+            'ramon-avocado.admin.settings.footer_text_help',
+            'Each line is a paragraph. Write links as [label](address). Clear the field to hide it.'
+          )}
+        />
+        <AdminText
+          settingKey="avocado.footer_copyright"
+          fallback={DEFAULT_FOOTER_COPYRIGHT}
+          label={trans('ramon-avocado.admin.settings.footer_copyright_label', 'Copyright')}
+          help={trans(
+            'ramon-avocado.admin.settings.footer_copyright_help',
+            '{year} becomes the current year and {title} the forum title. Clear the field to hide it.',
+            { year: '{year}', title: '{title}' }
+          )}
+        />
+      </>
+    ),
+  },
+  {
+    group: 'footer',
+    icon: 'fas fa-link',
+    disabled: footerOff,
+    title: () => trans('ramon-avocado.admin.settings.section_footer_links', 'Links'),
+    keywords: 'rodapé footer links navegação navigation menu termos terms privacidade privacy legal adicionar add',
+    body: () => (
+      <>
+        <AdminLinkList
+          settingKey="avocado.footer_links"
+          defaults={defaultFooterLinks(trans)}
+          label={trans('ramon-avocado.admin.settings.footer_links_label', 'Navigation links')}
+          help={trans('ramon-avocado.admin.settings.footer_links_help', 'The address is a forum path (/tags) or a full URL.')}
+        />
+
+        <SubDivider />
+
+        <AdminLinkList
+          settingKey="avocado.footer_legal_links"
+          label={trans('ramon-avocado.admin.settings.footer_legal_label', 'Legal links')}
+          help={trans('ramon-avocado.admin.settings.footer_legal_help', 'Shown next to the copyright, such as terms and privacy.')}
+        />
+      </>
+    ),
+  },
+  {
+    group: 'footer',
+    icon: 'far fa-address-book',
+    disabled: footerOff,
+    title: () => trans('ramon-avocado.admin.settings.section_footer_contacts', 'Contacts & socials'),
+    keywords:
+      'rodapé footer contato contact email e-mail telefone phone endereço address redes sociais social instagram facebook youtube adicionar add',
+    body: () => (
+      <>
+        <AdminSocialList
+          settingKey="avocado.footer_social"
+          label={trans('ramon-avocado.admin.settings.footer_social_label', 'Social networks')}
+          help={trans(
+            'ramon-avocado.admin.settings.footer_social_help',
+            'Choose the network and paste the link — the footer shows the icon of the network. Pasting a link picks the network by its address.'
+          )}
+        />
+
+        <SubDivider />
+
+        <AdminText
+          settingKey="avocado.footer_email"
+          label={trans('ramon-avocado.admin.settings.footer_email_label', 'Email')}
+          placeholder="hello@example.com"
+        />
+        <AdminText
+          settingKey="avocado.footer_phone"
+          label={trans('ramon-avocado.admin.settings.footer_phone_label', 'Phone')}
+          placeholder="+55 11 91234-5678"
+        />
+        <AdminText
+          settingKey="avocado.footer_address"
+          label={trans('ramon-avocado.admin.settings.footer_address_label', 'Address')}
+          help={trans('ramon-avocado.admin.settings.footer_contact_help', 'Leave a field empty to hide it.')}
+        />
+      </>
     ),
   },
 ];
@@ -1143,7 +1297,7 @@ const AvocadoSettingsPanel: any = {
           <p className="AvocadoAdmin-empty">{trans('ramon-avocado.admin.settings.search_empty', 'No settings found.')}</p>
         ) : (
           visible.map((card) => (
-            <AdminCard key={card.title()} title={card.title()} icon={card.icon}>
+            <AdminCard key={card.title()} title={card.title()} icon={card.icon} disabled={card.disabled?.()}>
               {card.body()}
             </AdminCard>
           ))

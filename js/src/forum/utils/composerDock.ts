@@ -201,8 +201,11 @@ export default function installComposerDock(): void {
 
       this.avocadoEndObserver = new IntersectionObserver(
         ([entry]) => {
-          if (endPlaceholderVisible === entry.isIntersecting) return;
-          endPlaceholderVisible = entry.isIntersecting;
+          // "À vista" inclui já ter passado por ela: abaixo do fim da discussão
+          // vem o rodapé, e a pílula fixa não deve voltar para flutuar em cima dele.
+          const reached = entry.isIntersecting || entry.boundingClientRect.bottom < 0;
+          if (endPlaceholderVisible === reached) return;
+          endPlaceholderVisible = reached;
           m.redraw();
         },
         // Só conta como "à vista" depois de passar da linha da pílula fixa: a

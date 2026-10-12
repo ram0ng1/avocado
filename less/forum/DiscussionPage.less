@@ -1449,6 +1449,36 @@ html:not(.lrBadgeLabels--phone) {
   }
 }
 
+// ── Botões da lateral em pílula ──────────────────────────────────────────────
+// "Responder ▾" e "Seguir ▾" eram os únicos botões do tema com o canto de 14px
+// do core. No Flarum 2 o grupo é `.ButtonGroup.Dropdown--split` (a classe
+// `.SplitDropdown` do bloco acima é da 1.x e não casa com nada): o botão fecha a
+// pílula pela esquerda e a seta do menu pela direita. Mesma especificidade das
+// regras do core que zeram os cantos de dentro; aqui ganha por vir depois.
+// No celular o grupo de "Responder" mora no cabeçalho, onde a regra de lá o
+// mantém reto (border-radius: 0 !important); o de "Seguir" fica na página e
+// entra na pílula como no desktop.
+.Page.DiscussionPage .Page-sidebar .Dropdown--split {
+  > .SplitDropdown-button {
+    border-radius: 999px 0 0 999px;
+    padding-left: 18px;
+  }
+
+  // O respiro a mais compensa a curva, senão a seta encosta na borda.
+  > .Dropdown-toggle {
+    border-radius: 0 999px 999px 0;
+    padding-right: 6px;
+  }
+
+  // Com uma ação só (visitante: "Entrar para responder") a seta some e o botão
+  // é a pílula inteira. O !important responde ao do core, que nesse caso força
+  // o canto padrão: `.Dropdown--split.itemCount1 .Button`.
+  &.itemCount1 > .SplitDropdown-button {
+    border-radius: 999px !important;
+    padding-right: 18px;
+  }
+}
+
 // On phone: Flarum's .App-primaryControl > .Button { background: transparent !important;
 // color: var(--header-control-color) !important } makes the toggle invisible when the
 // DiscussionPage-nav has a white background (it does — no header-bg override here).
@@ -2314,11 +2344,22 @@ html:not(.lrBadgeLabels--phone) {
       .DiscussionListItem-stats-item-icon { font-size: 12px; }
     }
 
-    // ── Controls (ellipsis "...") — absolute top-right corner ────────────────
+    // ── Controls (ellipsis "...") — coluna da direita, abaixo do contador ─────
+    // O contador de respostas ocupa o canto de cima (12–30px); o ⋮ fica
+    // centrado no que sobra da linha abaixo dele (top/bottom + margem
+    // automática), então nunca cai sobre o contador nem sai da linha, da mais
+    // baixa (63px: só título e a linha de resposta) à mais alta.
+    // `transform: none` desfaz o translateY(-50%) da lista principal
+    // (DiscussionList.less), que lá centra o botão a partir de `top: 50%`; aqui,
+    // somado a um `top` em px, ele subia o botão para cima do contador.
     .DiscussionListItem-controls {
       position: absolute;
-      top: 8px;
+      top: 30px;
+      bottom: 0;
       right: 8px;
+      height: 30px;
+      margin-block: auto;
+      transform: none;
       z-index: 2;
 
       .Dropdown-toggle {

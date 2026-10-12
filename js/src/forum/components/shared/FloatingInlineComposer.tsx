@@ -1,7 +1,7 @@
 import app from 'flarum/forum/app';
 import Component from 'flarum/common/Component';
 import Avatar from 'flarum/common/components/Avatar';
-import InlineComposer from './InlineComposer';
+import InlineComposer, { renderDraftButton } from './InlineComposer';
 import type { IInlineComposerAttrs } from './InlineComposer';
 import InlineComposerState from '../../states/InlineComposerState';
 import { trans } from '../../utils';
@@ -544,7 +544,12 @@ export default class FloatingInlineComposer extends Component<IFloatingInlineCom
         )
       );
 
+    // Salvar rascunho (fof/drafts) vem primeiro, na ordem do compositor do core:
+    // salvar, minimizar, tela cheia, fechar.
+    const draft = renderDraftButton(this.composerState, 'Button Button--icon Button--link hasIcon');
+
     return m('ul.AvocadoComposerDock-controls', [
+      draft && m('li.item-draft', draft),
       this.floating && button('minimize', 'fas fa-minus', t('core.forum.composer.minimize_tooltip', 'Minimize'), () => this.minimizeFromControl()),
       button(
         'fullScreen',
@@ -586,7 +591,7 @@ export default class FloatingInlineComposer extends Component<IFloatingInlineCom
       <div
         className={`AvocadoComposerDock AvocadoComposerDock--${this.attrs.placement}${this.minimized ? ' is-minimized' : ''}${
           this.fullScreen ? ' is-fullscreen' : ''
-        }`}
+        }${this.composerState.canSaveDraft() ? ' has-draft' : ''}`}
       >
         {!this.minimized && this.controls()}
         {this.floating && !this.fullScreen && (
@@ -598,7 +603,7 @@ export default class FloatingInlineComposer extends Component<IFloatingInlineCom
             onpointerdown={this.onHandleDown}
           />
         )}
-        <InlineComposer {...composerAttrs} state={this.composerState} />
+        <InlineComposer {...composerAttrs} state={this.composerState} draftInControls />
         {this.minimized && (
           <button type="button" className="AvocadoReplyDock AvocadoComposerDock-bubble" onclick={() => this.restore()}>
             {user && <Avatar user={user} className="AvocadoReplyDock-avatar" />}
