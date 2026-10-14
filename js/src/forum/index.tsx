@@ -2159,15 +2159,16 @@ app.initializers.add(
     // ── 12e. Typing indicator restyle (flarum/realtime) ────────────────────────
     // O container padrão (.TypingUsersContainer) fica oculto via LESS e este
     // item o substitui: pill com avatares dos digitadores + três pontos
-    // animados. Reusa o estado (getTypingUsers, definido pelo oninit do
-    // realtime — existe independentemente da ordem de boot) e as strings de
+    // animados. Reusa o estado de digitação da discussão e as strings de
     // tradução do próprio realtime. Sem ninguém digitando, o wrapper fica
     // vazio mas presente (min-height no LESS) para não deslocar o layout.
     extend('flarum/forum/components/PostStream', 'endItems', function (items: any) {
-      if (typeof this.getTypingUsers !== 'function') return;
       if (!this.discussion?.attribute('canViewWhoTypes')) return;
 
-      const names = Object.keys(this.getTypingUsers());
+      const typingState = this.discussion.typingState;
+      if (!typingState) return;
+
+      const names = Object.keys(typingState.active());
       const count = names.length;
       const max = 3;
       const showUsers = app.session.user?.preferences()?.['flarum-realtime.typing-indicator-full'] ?? true;
