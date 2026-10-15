@@ -3,6 +3,7 @@
  * e os tipos de uma entrada. Uma entrada é uma discussão numa tag de produto.
  */
 import app from 'flarum/forum/app';
+import { formatDate } from '../utils';
 
 /** O número da versão como foi digitado no campo do compositor ("v2.4.0", "2.0.0-beta.1"), ou null. */
 export const entryVersion = (discussion: any): string | null => {
@@ -85,23 +86,9 @@ export const changelogTagTarget = (slug: unknown): { name: string; params: Recor
 
 // ─── Datas ────────────────────────────────────────────────────────────────────
 
-const locale = (): string | undefined => {
-  const value = (app as any).data?.locale;
-  return typeof value === 'string' && value ? value.replace('_', '-') : undefined;
-};
+export const monthLabel = (date: Date): string => formatDate(date, { month: 'long', year: 'numeric' });
 
-const format = (date: Date, options: Intl.DateTimeFormatOptions): string => {
-  try {
-    return new Intl.DateTimeFormat(locale(), options).format(date);
-  } catch {
-    // Locale que o Intl não conhece: melhor a formatação padrão do navegador do que nenhuma.
-    return new Intl.DateTimeFormat(undefined, options).format(date);
-  }
-};
-
-export const monthLabel = (date: Date): string => format(date, { month: 'long', year: 'numeric' });
-
-export const dayLabel = (date: Date): string => format(date, { day: '2-digit', month: 'short' });
+export const dayLabel = (date: Date): string => formatDate(date, { day: '2-digit', month: 'short' });
 
 export const monthKey = (date: Date): string => `${date.getFullYear()}-${date.getMonth()}`;
 
