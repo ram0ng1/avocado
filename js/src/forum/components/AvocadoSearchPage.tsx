@@ -24,6 +24,7 @@ import {
   getFeaturedTagIds,
   resolveAssetUrl,
   categoryCardStyle,
+  formatDate,
 } from '../utils';
 import { toggleDiscussionLike } from '../utils/likes';
 import { DISCUSSION_SEARCH_SORT, POST_SEARCH_SORT, getSortLabel } from '../utils/sortOptions';
@@ -494,7 +495,7 @@ export default class AvocadoSearchPage extends Page {
     const postCount = numberOr(user.commentCount?.(), 0);
     const discussionCount = numberOr(user.discussionCount?.(), 0);
     const joinTime = user.joinTime?.();
-    const joinLabel = joinTime ? new Date(joinTime as string).toLocaleDateString(undefined, { year: 'numeric', month: 'short' }) : null;
+    const joinLabel = joinTime ? formatDate(new Date(joinTime as string), { year: 'numeric', month: 'short' }) : null;
     const badges = user.badges?.()?.toArray?.() ?? [];
 
     return (

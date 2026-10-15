@@ -1,4 +1,5 @@
 import app from 'flarum/forum/app';
+import { formatDate } from '../utils';
 
 /**
  * Formato de relógio do tema — 12h (2:30 PM) ou 24h (14:30).
@@ -39,7 +40,7 @@ export function buildIntlHourOptions(): Intl.DateTimeFormatOptions {
 
 /** `07 ago, 14:30` / `07 Aug, 2:30 PM` — usado no meta do card salvo. */
 export function formatDateTime(date: Date): string {
-  return date.toLocaleString(undefined, {
+  return formatDate(date, {
     day: '2-digit',
     month: 'short',
     hour: '2-digit',

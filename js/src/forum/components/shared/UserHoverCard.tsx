@@ -3,7 +3,7 @@ import Component from 'flarum/common/Component';
 import Avatar from 'flarum/common/components/Avatar';
 import listItems from 'flarum/common/helpers/listItems';
 
-import { trans, truncate, displayName, userRoute, navigate, formatTimeLabel, coverPosition } from '../../utils';
+import { trans, truncate, displayName, userRoute, navigate, formatTimeLabel, formatDate, coverPosition } from '../../utils';
 import CakedayBadge from './CakedayBadge';
 import trustedHtml from '../../../common/trustedHtml';
 
@@ -283,7 +283,7 @@ function cardVnode(user: any) {
             </span>
             {joined && (
               <span className="AvocadoUserCard-stat">
-                <strong>{new Date(joined).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</strong>
+                <strong>{formatDate(new Date(joined), { month: 'short', year: 'numeric' })}</strong>
                 {trans('ramon-avocado.forum.user_card.joined_label', 'joined')}
               </span>
             )}
