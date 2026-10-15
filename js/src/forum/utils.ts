@@ -5,6 +5,7 @@ import app from 'flarum/forum/app';
 import { truncate as coreTruncate } from 'flarum/common/utils/string';
 import coreHighlight from 'flarum/common/helpers/highlight';
 import abbreviateNumber from 'flarum/common/utils/abbreviateNumber';
+import formatNumber from 'flarum/common/utils/formatNumber';
 
 // ─── Translation helper ────────────────────────────────────────────────────────
 
@@ -46,7 +47,7 @@ export const discussionViews = (discussion: any): number | null => {
 
 /** Segue a opção "abreviar números" da extensão (1.2K em vez de 1.234). */
 export const formatViews = (count: number): string =>
-  Number(app.forum?.attribute('abbrNumber')) === 1 ? String(abbreviateNumber(count)) : count.toLocaleString();
+  Number(app.forum?.attribute('abbrNumber')) === 1 ? String(abbreviateNumber(count)) : formatNumber(count);
 
 // ─── Color helpers ────────────────────────────────────────────────────────────
 
@@ -120,6 +121,22 @@ export const formatTimeLabel = (dateValue: Date | string | null | undefined): st
   const date = dateValue instanceof Date ? dateValue : new Date(dateValue as string);
   if (isNaN(date.getTime())) return '';
   return humanTime(date);
+};
+
+/** Idioma ativo do fórum ("pt-BR"), não o do navegador — senão a data não troca junto com o idioma. */
+const forumLocale = (): string | undefined => {
+  const value = (app as any).data?.locale;
+  return typeof value === 'string' && value ? value.replace('_', '-') : undefined;
+};
+
+/** Data no idioma ativo do fórum (`Intl.DateTimeFormat`). */
+export const formatDate = (date: Date, options: Intl.DateTimeFormatOptions): string => {
+  try {
+    return new Intl.DateTimeFormat(forumLocale(), options).format(date);
+  } catch {
+    // Locale que o Intl não conhece: melhor a formatação padrão do navegador do que nenhuma.
+    return new Intl.DateTimeFormat(undefined, options).format(date);
+  }
 };
 
 // ─── Text truncation ──────────────────────────────────────────────────────────

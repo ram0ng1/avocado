@@ -247,6 +247,12 @@ html.avocado-reply-dock {
       border-radius: @composer-radius;
     }
 
+    // A barra de formatação encosta na base do cartão; no modo escuro ela tem
+    // fundo próprio, e os cantos retos dela escapavam da borda arredondada.
+    .App .App-composer .Composer:not(.fullScreen) .TextEditor-controls {
+      border-radius: 0 0 @composer-radius @composer-radius;
+    }
+
     // Alça de arrastar visível (o core já faz o arraste; só ganha o puxador).
     .Composer-handle {
       cursor: ns-resize;
