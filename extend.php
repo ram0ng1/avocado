@@ -37,6 +37,28 @@ $extensionStylesheets = [
     'linkrobins-wiki' => 'extensions/Wiki.less',
 ];
 
+// Com o ernestdefoe/wardrobe (vários temas na mesma instalação), o Wardrobe
+// separa o JS/CSS de cada tema, mas os ->content() de todas as extensões rodam
+// em toda página. Sem este portão o <style id="avocado-logo-hide"> (e as
+// fontes, o spinner, o kit do Font Awesome…) entram nas páginas do outro tema
+// e escondem o logo dele. Sem o Wardrobe, o portão não faz nada.
+$onlyForAvocado = static fn (string $class): \Closure => static function (\Flarum\Frontend\Document $document, \Psr\Http\Message\ServerRequestInterface $request) use ($class): void {
+    if (class_exists(\Ernestdefoe\Wardrobe\ThemeRegistry::class)
+        && resolve(\Flarum\Extension\ExtensionManager::class)->isEnabled('ernestdefoe-wardrobe')) {
+        $cookie = $request->getCookieParams()['wardrobe_theme'] ?? null;
+        $active = resolve(\Ernestdefoe\Wardrobe\ThemeRegistry::class)->resolve(
+            \Flarum\Http\RequestUtil::getActor($request),
+            is_string($cookie) ? $cookie : null
+        );
+
+        if ($active !== null && $active !== 'ramon-avocado') {
+            return;
+        }
+    }
+
+    resolve($class)($document, $request);
+};
+
 return [
     (new Extend\ServiceProvider())
         ->register(AvocadoServiceProvider::class),
@@ -45,26 +67,32 @@ return [
         ->js(__DIR__.'/js/dist/forum.js')
         ->jsDirectory(__DIR__.'/js/dist/forum')
         ->css(__DIR__.'/less/forum.less')
-        ->content(\Ramon\Avocado\Content\AddCriticalCss::class)
-        ->content(\Ramon\Avocado\Content\AddCriticalPreloads::class)
-        ->content(\Ramon\Avocado\Content\AddHeroBannerPreload::class)
-        ->content(\Ramon\Avocado\Content\CustomLoadingSpinner::class)
-        ->content(\Ramon\Avocado\Content\HideLogoFlash::class)
-        ->content(\Ramon\Avocado\Content\LinkIconStyle::class)
-        ->content(\Ramon\Avocado\Content\DiscussionStyle::class)
-        ->content(\Ramon\Avocado\Content\SearchStyle::class)
+        ->content($onlyForAvocado(\Ramon\Avocado\Content\AddCriticalCss::class))
+        ->content($onlyForAvocado(\Ramon\Avocado\Content\AddCriticalPreloads::class))
+        ->content($onlyForAvocado(\Ramon\Avocado\Content\AddHeroBannerPreload::class))
+        ->content($onlyForAvocado(\Ramon\Avocado\Content\CustomLoadingSpinner::class))
+        ->content($onlyForAvocado(\Ramon\Avocado\Content\HideLogoFlash::class))
+        ->content($onlyForAvocado(\Ramon\Avocado\Content\LinkIconStyle::class))
+        ->content($onlyForAvocado(\Ramon\Avocado\Content\DiscussionStyle::class))
+        ->content($onlyForAvocado(\Ramon\Avocado\Content\SearchStyle::class))
         // No CSS-deferral injector here: Flarum core already emits async CSS
         // natively (warm-visit cache + <link rel="preload" onload>); a custom
         // deferral only duplicated <noscript>/<link> tags.
-        ->content(\Ramon\Avocado\Content\LoadFontAwesomeKit::class)
-        ->content(\Ramon\Avocado\Content\InjectOnlineUsers::class)
+        ->content($onlyForAvocado(\Ramon\Avocado\Content\LoadFontAwesomeKit::class))
+        ->content($onlyForAvocado(\Ramon\Avocado\Content\InjectOnlineUsers::class))
         // Preloads de dado — cada um sai cedo se não estiver na sua rota.
-        ->content(\Ramon\Avocado\Content\PreloadTeamMembers::class)
-        ->content(\Ramon\Avocado\Content\PreloadShowcase::class)
-        ->content(\Ramon\Avocado\Content\PreloadHomeFeed::class)
-        ->content(\Ramon\Avocado\Content\PreloadChangelog::class)
-        ->route('/discussions', 'avocado-discussions')
-        ->route('/search', 'avocado-search'),
+        ->content($onlyForAvocado(\Ramon\Avocado\Content\PreloadTeamMembers::class))
+        ->content($onlyForAvocado(\Ramon\Avocado\Content\PreloadShowcase::class))
+        ->content($onlyForAvocado(\Ramon\Avocado\Content\PreloadHomeFeed::class))
+        ->content($onlyForAvocado(\Ramon\Avocado\Content\PreloadChangelog::class))
+        ->route('/discussions', 'avocado-discussions'),
+
+    // O ramon/canela também registra GET /search; com os dois ligados (Wardrobe)
+    // duas rotas iguais derrubariam o boot (FastRoute\BadRouteException).
+    (new Extend\Conditional())
+        ->whenExtensionDisabled('ramon-canela', fn () => [
+            (new Extend\Frontend('forum'))->route('/search', 'avocado-search'),
+        ]),
 
     // CSS por extensão: cada folha só entra no forum.css com a extensão ativa
     // (o MessagesPage.less sozinho tem ~1,8 mil linhas, e o flarum/messages
