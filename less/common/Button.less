@@ -9,11 +9,18 @@
 }
 
 // Dropdown toggle: hide ellipsis icon only on non-flat toggles (flat = header icons like bell, flag)
-// Button--flat toggles (flags, notifications) keep their icons
-.Dropdown-toggle:not(.Button--flat) {
+// Button--flat toggles (flags, notifications) keep their icons.
+// Icon-only toggles (Button--icon) also keep theirs: there the icon IS the
+// button — e.g. the theme switcher of ernestdefoe/wardrobe (.WardrobeSwitcher),
+// which otherwise rendered as an empty grey pill.
+.Dropdown-toggle:not(.Button--flat):not(.Button--icon) {
   .Button-icon {
     display: none !important;
   }
+}
+
+.WardrobeSwitcher .Dropdown-toggle .Button-icon {
+  display: inline-block !important;
 }
 
 // Icon-only toggle: center the caret
