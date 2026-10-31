@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Ramon\Avocado\Api;
 
+use Flarum\Api\Context;
 use Flarum\Api\Schema;
 use Flarum\Database\AbstractModel;
 use Illuminate\Database\Eloquent\Model;
@@ -41,7 +42,10 @@ class WikiArticleFields
         return [
             Schema\Str::make('avocadoWikiStyle')
                 ->visible($visible)
-                ->writable(fn (): bool => $this->schema->available())
+                // A mesma regra dos campos do próprio wiki: quem cria o artigo, ou
+                // quem pode editá-lo (os endpoints já exigem isso; aqui fica explícito).
+                ->writable(fn (Model $article, Context $context): bool => $this->schema->available()
+                    && ($context->creating() || $context->getActor()->can('update', $article)))
                 ->regex('/^(?:'.implode('|', WikiArticleStyle::STYLES).')$/')
                 ->get(static function (Model $article): string {
                     $entry = $article->relationLoaded('avocadoStyle') ? $article->getRelation('avocadoStyle') : null;
