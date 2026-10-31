@@ -58,7 +58,7 @@ final class SvgIconSanitizer
     private const TEXT_ONLY_ELEMENTS = ['title', 'desc'];
 
     /** CSS that can pull in outside resources or run code. */
-    private const DANGEROUS_CSS = '/@import|expression\s*\(|javascript:|behavior\s*:|-moz-binding|url\s*\(\s*["\']?\s*[^#"\'\s)]/i';
+    private const DANGEROUS_CSS = '/@import|expression\s*\(|javascript:|behavior\s*:|-moz-binding|(?:url|image-set)\s*\(\s*["\']?\s*[^#"\'\s)]/i';
 
     /**
      * Returns the cleaned SVG markup, or null when the input is not a usable SVG.
@@ -165,7 +165,7 @@ final class SvgIconSanitizer
      */
     private static function isDangerousCss(string $css): bool
     {
-        return str_contains($css, '<') || (bool) preg_match(self::DANGEROUS_CSS, $css);
+        return str_contains($css, '<') || (bool) preg_match(self::DANGEROUS_CSS, CssEscapes::decode($css));
     }
 
     private static function isAllowedElement(DOMElement $element): bool
@@ -187,7 +187,7 @@ final class SvgIconSanitizer
             $remove = str_starts_with($name, 'on')
                 || ($ns !== null && ! in_array($ns, [self::SVG_NS, self::XLINK_NS, self::XML_NS], true))
                 || ($attr->localName === 'href' && ! self::isSafeHref($value))
-                || ($name === 'style' && preg_match(self::DANGEROUS_CSS, $value))
+                || ($name === 'style' && preg_match(self::DANGEROUS_CSS, CssEscapes::decode($value)))
                 || ($name !== 'style' && preg_match('/javascript:|data:text\/html|vbscript:/i', (string) preg_replace('/\s+/', '', $value)));
 
             if ($remove) {

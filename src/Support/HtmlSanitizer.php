@@ -161,7 +161,7 @@ final class HtmlSanitizer
                 continue;
             }
 
-            if ($name === 'style' && preg_match(self::DANGEROUS_STYLE, $value)) {
+            if ($name === 'style' && preg_match(self::DANGEROUS_STYLE, CssEscapes::decode($value))) {
                 $el->removeAttribute($attr->nodeName);
             }
         }

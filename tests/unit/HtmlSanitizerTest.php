@@ -133,6 +133,10 @@ final class HtmlSanitizerTest extends TestCase
             'expression' => ['width:expression(alert(1))'],
             'import'     => ['@import url(https://evil.example/x.css)'],
             'javascript' => ['background:url(javascript:alert(1))'],
+            // O CSS resolve os escapes antes de reconhecer as palavras.
+            'escaped expression' => ['width:expr\\65ssion(alert(1))'],
+            'escaped import'     => ['@\\69mport url(https://evil.example/x.css)'],
+            'escaped javascript' => ['background:url(java\\73 cript:alert(1))'],
         ];
     }
 

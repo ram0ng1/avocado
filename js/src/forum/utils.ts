@@ -5,6 +5,7 @@ import app from 'flarum/forum/app';
 import { truncate as coreTruncate } from 'flarum/common/utils/string';
 import coreHighlight from 'flarum/common/helpers/highlight';
 import escapeRegExp from 'flarum/common/utils/escapeRegExp';
+import decodeCssEscapes from '../common/cssEscapes';
 import abbreviateNumber from 'flarum/common/utils/abbreviateNumber';
 import formatNumber from 'flarum/common/utils/formatNumber';
 
@@ -339,7 +340,7 @@ const sanitizeAdminHtmlOnce = (raw: string): string => {
   // Keep clean stylesheets, drop ones carrying a CSS sink.
   root.querySelectorAll('style').forEach((el) => {
     const css = (el.textContent || '').replace(/\/\*[\s\S]*?\*\//g, '');
-    if (SANITIZE_DANGER_CSS.test(css)) el.remove();
+    if (SANITIZE_DANGER_CSS.test(decodeCssEscapes(css))) el.remove();
   });
 
   root.querySelectorAll('*').forEach((el) => {
@@ -355,7 +356,7 @@ const sanitizeAdminHtmlOnce = (raw: string): string => {
         el.removeAttribute(attr.name);
         return;
       }
-      if (name === 'style' && SANITIZE_DANGER_STYLE.test(attr.value)) {
+      if (name === 'style' && SANITIZE_DANGER_STYLE.test(decodeCssEscapes(attr.value))) {
         el.removeAttribute(attr.name);
       }
     });

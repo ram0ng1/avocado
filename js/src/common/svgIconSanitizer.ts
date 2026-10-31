@@ -1,3 +1,5 @@
+import decodeCssEscapes from './cssEscapes';
+
 /**
  * Espelho, no navegador, de `Support\SvgIconSanitizer` (PHP) — as MESMAS
  * allowlists, mantidas em par. O servidor é quem sanitiza o que vai ao banco;
@@ -82,11 +84,11 @@ const ALLOWED_ELEMENTS = new Set([
 // escaparia. Ficam só com o texto.
 const TEXT_ONLY_ELEMENTS = new Set(['title', 'desc']);
 
-const DANGEROUS_CSS = /@import|expression\s*\(|javascript:|behavior\s*:|-moz-binding|url\s*\(\s*["']?\s*[^#"'\s)]/i;
+const DANGEROUS_CSS = /@import|expression\s*\(|javascript:|behavior\s*:|-moz-binding|(?:url|image-set)\s*\(\s*["']?\s*[^#"'\s)]/i;
 const DANGEROUS_VALUE = /javascript:|data:text\/html|vbscript:/i;
 const SAFE_DATA_IMAGE = /^data:image\/(png|jpe?g|gif|webp);base64,[a-z0-9+/=\s]+$/i;
 
-const isDangerousCss = (css: string): boolean => css.includes('<') || DANGEROUS_CSS.test(css);
+const isDangerousCss = (css: string): boolean => css.includes('<') || DANGEROUS_CSS.test(decodeCssEscapes(css));
 
 const isSafeHref = (value: string): boolean => value === '' || value.startsWith('#') || SAFE_DATA_IMAGE.test(value);
 
@@ -118,7 +120,7 @@ function cleanAttributes(element: Element): void {
       name.startsWith('on') ||
       !ALLOWED_ATTRIBUTE_NS.includes(attr.namespaceURI) ||
       (attr.localName === 'href' && !isSafeHref(value)) ||
-      (name === 'style' && DANGEROUS_CSS.test(value)) ||
+      (name === 'style' && DANGEROUS_CSS.test(decodeCssEscapes(value))) ||
       (name !== 'style' && DANGEROUS_VALUE.test(value.replace(/\s+/g, '')));
 
     if (remove) element.removeAttributeNode(attr);
