@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Content;
@@ -16,7 +25,7 @@ class HideLogoFlash
     /** Cache do SVG cru do logo, junto do caminho que o gerou. */
     private const SVG_CACHE_KEY = 'avocado.logo_svg_inline.v1';
 
-    /** Teto do SVG embutido no HTML: acima disso fica no fetch do front, como antes. */
+    /** Teto do SVG embutido no HTML; acima disso o front busca o arquivo. */
     private const MAX_INLINE_BYTES = 65536;
 
     public function __construct(
@@ -33,15 +42,14 @@ class HideLogoFlash
         $flarumLogoPath = trim((string) ($this->settings->get('logo_path') ?? ''));
 
         if ($avocadoEnabled) {
-            // Set the data-attribute so html[data-avocado-logo-custom="true"] CSS rules
-            // activate from the very first frame — before async CSS finishes loading.
+            // O atributo liga as regras do logo já no primeiro quadro.
             $document->head[] = '<script>document.documentElement.dataset.avocadoLogoCustom="true"</script>';
         }
 
         if ($hasSvgLogo) {
             $this->svgLogoOptions($document);
 
-            // SVG logo: hide until JS fetches, crops via getBBox, injects, then reveals.
+            // Escondido até o JS buscar, recortar e injetar o SVG.
             $document->head[] = '<style id="avocado-logo-hide">#home-link{visibility:hidden!important}</style>';
 
             $inline = $this->inlineScript($logoPath);
@@ -50,24 +58,15 @@ class HideLogoFlash
                 $document->head[] = $inline;
             }
         } elseif (!$avocadoEnabled && $flarumLogoPath !== '') {
-            // Flarum default logo image: hide until the <img> fires its load event.
-            // Without this the image appears at its natural (oversized) dimensions
-            // for the duration of the first network fetch, then jumps to the CSS size.
+            // Escondido até o load do <img>: antes disso ele aparece no tamanho natural.
             $document->head[] = '<style id="avocado-logo-hide">#home-link{visibility:hidden!important}</style>';
         }
     }
 
     /**
-     * Opções do logo SVG (admin › Aparência › Logo): a cor do fórum e o ajuste
-     * vertical. Vão no <head> — atributo, variável e a regra em si — para valerem
-     * desde o primeiro quadro: o CSS do tema (App.less, mesmas regras) chega
-     * depois, e sem isto o logo piscaria na cor do arquivo.
-     *
-     * A cor é a do cabeçalho (--header-color): a primária no cabeçalho comum,
-     * a de contraste no "cabeçalho colorido" do Flarum — onde um logo na cor
-     * primária sumiria sobre o fundo de mesma cor. Ela acompanha os destaques
-     * coloridos por tag. O valor de reserva cobre o instante antes de o CSS do
-     * core definir a variável.
+     * Cor e ajuste vertical do logo SVG no <head>, senão o logo piscaria na cor do
+     * arquivo até o CSS chegar. Usa --header-color: no "cabeçalho colorido" a cor
+     * primária sumiria sobre o fundo.
      */
     private function svgLogoOptions(Document $document): void
     {
@@ -98,25 +97,10 @@ class HideLogoFlash
     }
 
     /**
-     * Logo já no primeiro paint, sem esperar o JS.
-     *
-     * O caminho antigo (que segue como fallback no forum/index.tsx) só mostrava
-     * o header depois de o bundle subir, buscar o SVG e medir cada elemento com
-     * getBBox para recortar o viewBox — tudo isso a cada página. O viewBox
-     * recortado agora é medido uma vez no admin (Support\LogoViewBox) e o SVG
-     * vem embutido aqui: o script abaixo troca o conteúdo do #home-link assim
-     * que o parser passa pelo header, antes da primeira pintura.
-     *
-     * A troca repete passo a passo o que o front fazia — DOMParser em modo
-     * `image/svg+xml`, clone, os mesmos atributos e estilos inline —, então o
-     * resultado é o mesmo nó; e o parse em XML (não HTML) mantém a semântica de
-     * segurança de antes: `<script>` vindo do DOMParser não executa e nada do
-     * SVG passa pelo parser de HTML, onde uma tag de "breakout" (`<p>`, `<img>`)
-     * sairia do contexto SVG.
-     *
-     * Sem viewBox gravado para ESTE arquivo (logo novo, admin ainda não abriu a
-     * página), ou com o arquivo ilegível, não emite nada e o front segue o
-     * caminho antigo.
+     * Logo embutido já no primeiro paint, com o viewBox medido no admin
+     * (Support\LogoViewBox). O parse é em XML (`image/svg+xml`): `<script>` não
+     * executa e nada do SVG passa pelo parser de HTML, onde poderia sair do contexto SVG.
+     * Sem viewBox para este arquivo, não emite nada e o front mede sozinho.
      */
     private function inlineScript(string $logoPath): ?string
     {
@@ -132,9 +116,8 @@ class HideLogoFlash
             return null;
         }
 
-        // Dentro de <script> o que importa é `<` (fecharia a tag ou abriria um
-        // `<!--`): JSON_HEX_TAG resolve. Aspas não precisam de " — o JSON já
-        // as escapa —, e o SVG tem muitas: escapar as duas quase dobrava o peso.
+        // Dentro de <script> o perigo é `<`, que JSON_HEX_TAG resolve. Aspas o JSON já
+        // escapa, e escapá-las de novo quase dobraria o peso do SVG.
         $flags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE;
         $data = json_encode([
             's' => $svg,
@@ -147,8 +130,7 @@ class HideLogoFlash
             return null;
         }
 
-        // JSON_HEX_TAG troca `<`/`>` por </>: nenhum `</script>` fecha
-        // a tag antes da hora, venha o que vier do arquivo ou do título.
+        // JSON_HEX_TAG: nenhum `</script>` do arquivo ou do título fecha a tag.
         return '<script id="avocado-logo-inline">(function(){var d='.$data.';'
             .'function go(){var a=document.getElementById("home-link");if(!a||a.querySelector("svg.AvocadoLogoSvg"))return;'
             .'var e=new DOMParser().parseFromString(d.s,"image/svg+xml").documentElement;if(e.nodeName!=="svg")return;'

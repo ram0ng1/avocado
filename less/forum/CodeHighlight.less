@@ -1,16 +1,10 @@
-// ── highlight.js ─────────────────────────────────────────────────────────────
-// O BBCode CODE (s9e, usado também pelos blocos ``` do Markdown) carrega o
-// hljs-loader, que injeta o tema "github" no <head> DEPOIS do forum.css. Esse
-// tema tem cores fixas para fundo claro: no escuro, string e número (#032f62)
-// somem sobre o <pre> #0d1117. Aqui as classes hljs-* passam a ler os tokens
-// --avocado-code-* (common/variables.less), que trocam com o tema do fórum.
-//
-// Especificidade: o tema injetado usa .hljs-x (0,1,0) e chega por último, então
-// todo seletor daqui leva o `pre` na frente para ganhar sem depender da ordem.
+// O hljs-loader injeta o tema "github" no <head> depois do forum.css, com
+// cores fixas para fundo claro. As classes hljs-* passam a ler os tokens
+// --avocado-code-*, que acompanham o tema do fórum. O `pre` na frente de cada
+// seletor ganha do tema injetado sem depender da ordem.
 
-// O tema injetado pinta .hljs de branco com texto #24292e — fora da página da
-// discussão (perfil, busca, mensagens) isso vira um bloco branco no escuro.
-// O fundo e a cor de base continuam sendo os do <pre> do tema.
+// O tema injetado pinta .hljs de branco fora da discussão; fundo e cor de
+// base ficam com os do <pre>.
 html pre code.hljs {
   background: transparent;
   color: inherit;
@@ -70,7 +64,6 @@ pre {
     color: var(--avocado-code-tag);
   }
 
-  // Interpolação (${…}) volta para a cor do texto do bloco.
   .hljs-subst {
     color: inherit;
   }

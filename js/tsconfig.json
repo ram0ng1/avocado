@@ -16,6 +16,7 @@
     // This will output typings to `dist-typings`
     "rootDir": "./src",
     "declarationDir": "./dist-typings",
+    "moduleResolution": "bundler",
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {

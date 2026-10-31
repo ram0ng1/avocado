@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Model;
@@ -10,11 +19,8 @@ use Flarum\User\User;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Um bookmark: o par (usuário, discussão) que marca uma discussão como salva.
- * Tabela companheira de `discussions`/`users` (CLAUDE.md §45). O par é único
- * via índice na migração; a escrita acontece por insertOrIgnore/delete no
- * controller, então o `id` auto-incremento existe só para manter o Eloquent
- * confortável — nunca o usamos para lookup.
+ * Par único (usuário, discussão) de uma discussão salva. O `id` existe só para o
+ * Eloquent; a escrita é por insertOrIgnore/delete no par.
  *
  * @property int $id
  * @property int $user_id

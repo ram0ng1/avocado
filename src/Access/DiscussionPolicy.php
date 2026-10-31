@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Access;
@@ -9,23 +18,16 @@ use Flarum\User\Access\AbstractPolicy;
 use Flarum\User\User;
 
 /**
- * Gates Avocado-specific discussion abilities so the controllers don't have to
- * hijack semantically-unrelated core abilities (e.g. `rename`).
- *
- * For now the only ability is `uploadHeroImage`, which defers to whoever can
- * already rename the discussion. Re-routing through a dedicated ability means
- * an admin can later relax/tighten it via a permission grant or override this
- * policy method without touching the upload controller.
+ * Habilidades próprias do tema, para os controllers não pegarem carona em
+ * habilidades do core como `rename`; outra policy pode sobrescrever a regra.
  */
 class DiscussionPolicy extends AbstractPolicy
 {
     /**
-     * Sem declaração de retorno de propósito: métodos de policy devolvem uma
-     * das constantes string do AbstractPolicy (via os helpers allow()/deny()
-     * e as variantes de precedência) ou null para se abster. Constranger a
-     * ?bool gera TypeError, pois allow() devolve a string 'allow'.
+     * Quem pode renomear a discussão pode trocar a imagem do hero; null deixa
+     * outras policies decidirem.
      */
-    public function uploadHeroImage(User $actor, Discussion $discussion)
+    public function uploadHeroImage(User $actor, Discussion $discussion): ?string
     {
         return $actor->can('rename', $discussion) ? $this->allow() : null;
     }

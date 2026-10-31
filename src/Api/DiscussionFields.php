@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Api;
@@ -13,7 +22,7 @@ use Flarum\Api\Schema;
 use Flarum\Discussion\Discussion;
 use Flarum\Post\CommentPost;
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
-use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Contracts\Filesystem\Cloud;
 use Ramon\Avocado\Model\DiscussionHero;
 
 class DiscussionFields
@@ -27,11 +36,10 @@ class DiscussionFields
     /** O cartão de resposta do card corta em 100; a folga cobre a truncagem por palavra. */
     private const LAST_POST_EXCERPT_LENGTH = 200;
 
-    protected Filesystem $disk;
+    protected Cloud $disk;
 
     /**
-     * Discussões do documento atual esperando o hero, indexadas por objeto.
-     * Esvaziada no primeiro getter adiado que precisar do dado.
+     * Discussões do documento esperando o hero; esvaziada pelo primeiro getter adiado.
      *
      * @var array<int, Discussion>
      */
@@ -39,17 +47,13 @@ class DiscussionFields
 
     public function __construct(FilesystemFactory $filesystem)
     {
-        // Resolve o disco uma vez por request em vez de por leitura de atributo
-        // — o getter abaixo executa para cada discussão num payload de Index,
-        // então chamar resolve() dentro do closure repetia trabalho de container
-        // para cada linha.
+        // Resolvido uma vez: o getter roda para cada discussão do Index.
         $this->disk = $filesystem->disk('flarum-assets');
     }
 
     public function __invoke(): array
     {
         return [
-            // Caminho bruto guardado em flarum-assets, ex. "avocado-disc-hero-12-abcdef.webp".
             Schema\Str::make('heroImagePath')
                 ->nullable()
                 ->get(function (Discussion $discussion) {
@@ -58,7 +62,6 @@ class DiscussionFields
                     return fn (): ?string => $this->resolvePath($discussion);
                 }),
 
-            // URL pública resolvida — null quando a discussão não tem imagem.
             Schema\Str::make('heroImageUrl')
                 ->nullable()
                 ->get(function (Discussion $discussion) {
@@ -72,17 +75,8 @@ class DiscussionFields
                 }),
 
             // ── Resumo e capa do primeiro post ────────────────────────────────
-            // Os cards do tema (showcase e ThreadCard) mostram a descrição da
-            // discussão e uma imagem de capa. Os dois saíam de
-            // `discussion.firstPost().contentPlain()` no front — e desde a série
-            // 2.0 RC o Index não manda mais o post no `included`, só o linkage:
-            // resultado, card sem descrição e sem capa (issue #199).
-            //
-            // Buscar o post depois no cliente resolveria com flash; incluir o
-            // post no boot custa o render do s9e para a página inteira. Estes
-            // dois campos leem o XML já armazenado — sem render, sem callback de
-            // extensão, sem policy por post — e viajam no mesmo apiDocument do
-            // boot, então o primeiro paint já sai completo.
+            // O Index do Flarum 2 não inclui mais o primeiro post. Ler o XML guardado
+            // evita o render do s9e e chega no mesmo payload do boot, sem flash.
             Schema\Str::make('avocadoExcerpt')
                 ->nullable()
                 ->get(function (Discussion $discussion, Context $context) {
@@ -100,15 +94,8 @@ class DiscussionFields
                 }),
 
             // ── Resumo da última resposta ─────────────────────────────────────
-            // O cartão "última resposta" do ThreadCard mostrava
-            // `discussion.lastPost().contentPlain()`, o que obrigava as listas a
-            // pedir `include=lastPost` — o s9e renderizando um post inteiro por
-            // card (mais menções, likers e permissões) para 100 caracteres de
-            // texto. Mesmo esquema do avocadoExcerpt: lê o XML guardado.
-            //
-            // Sem resposta o card não mostra o cartão, então nem carrega o post.
-            // Listagem e Show (o refetch do tempo real é um Show); incluída em
-            // outro recurso a discussão não vira card.
+            // Lê o XML guardado para as listas não precisarem de `include=lastPost`,
+            // que renderiza um post inteiro por card. Só no Index e no Show (refetch do realtime).
             Schema\Str::make('avocadoLastPostExcerpt')
                 ->nullable()
                 ->visible(fn (Discussion $discussion, Context $context) => $context->listing(DiscussionResource::class) || $context->showing(DiscussionResource::class))
@@ -131,10 +118,8 @@ class DiscussionFields
     }
 
     /**
-     * O primeiro post da discussão, resolvido pelo buffer de relações: uma
-     * consulta para a página inteira em vez de uma por linha (sem N+1). O
-     * `add()` acontece na fase síncrona do getter e o `load()` aqui, já na fase
-     * adiada, quando todas as discussões do documento estão enfileiradas.
+     * Pelo buffer de relações: uma consulta para o documento inteiro, já que o
+     * `load()` só roda na fase adiada, com todas as discussões enfileiradas.
      */
     private function firstPost(Discussion $discussion, Context $context): ?CommentPost
     {
@@ -148,10 +133,8 @@ class DiscussionFields
     private function bufferedPost(Discussion $discussion, string $relation, Context $context): ?CommentPost
     {
         if (! $discussion->relationLoaded($relation)) {
-            // A relação é procurada na resource de discussões, não em
-            // `$context->collection`: quando a discussão é serializada como
-            // recurso *incluído* (de um /posts, por exemplo) a collection do
-            // request é outra e o buffer cairia no caminho agregado.
+            // Da resource de discussões, não de `$context->collection`: num recurso
+            // incluído (de um /posts) a collection é outra e o buffer cairia no caminho agregado.
             $resource = $context->api->getResource('discussions');
 
             /** @var Schema\Relationship\ToOne|null $relationship */
@@ -170,9 +153,7 @@ class DiscussionFields
     }
 
     /**
-     * Texto puro do primeiro post, na mesma forma que o front produzia com
-     * `getPlainContent(contentHtml)`: sem citações e sem as URLs cruas das
-     * imagens (que viriam como texto no lugar da imagem).
+     * Texto puro, como o `getPlainContent()` do front: sem citações nem URLs de imagem.
      */
     private function excerpt(?CommentPost $post): ?string
     {
@@ -184,16 +165,8 @@ class DiscussionFields
     }
 
     /**
-     * Reduz a representação intermediária do s9e a texto corrido.
-     *
-     * O corte é feito no DOM, não por regex: um `<QUOTE>` aninhado fazia o
-     * `.*?</QUOTE>` casar até o fechamento *interno*, deixando o externo órfão.
-     * O XML resultante não carregava, `Utils::removeFormatting()` devolvia null
-     * e o `preg_replace` seguinte derrubava o request inteiro com TypeError —
-     * uma discussão com citação de citação quebrava a lista toda.
-     *
-     * Uma única passada de parse cobre o que era feito em quatro (dois
-     * `preg_replace` mais o load do `removeFormatting`).
+     * Reduz o XML do s9e a texto corrido. No DOM e não por regex: com `<QUOTE>`
+     * aninhado a regex deixaria um fechamento órfão e o XML não carregaria mais.
      */
     private function plainExcerpt(string $xml, int $length = self::EXCERPT_LENGTH): ?string
     {
@@ -203,9 +176,7 @@ class DiscussionFields
 
         $dom = new DOMDocument();
 
-        // XML de post é gerado pelo s9e e deveria sempre carregar; se um
-        // registro antigo ou corrompido não carregar, o card fica sem descrição
-        // em vez de estourar 500 — e o warning do libxml não vaza no output.
+        // XML corrompido deixa o card sem descrição em vez de estourar 500.
         $internal = libxml_use_internal_errors(true);
         $loaded = $dom->loadXML($xml, LIBXML_COMPACT | LIBXML_PARSEHUGE);
         libxml_clear_errors();
@@ -223,10 +194,8 @@ class DiscussionFields
             $node->parentNode?->replaceChild($dom->createTextNode(' '), $node);
         }
 
-        // Menções guardam a sintaxe crua como texto (`@"Fulano"#p12`); o post
-        // renderizado mostra só o nome (templates do flarum/mentions). Respostas
-        // costumam abrir com uma, então o resumo da última resposta saía com o
-        // código no lugar do nome.
+        // Menções guardam a sintaxe crua (`@"Fulano"#p12`); o resumo mostra só o nome,
+        // como o post renderizado.
         $mentions = [
             'POSTMENTION'  => ['', 'displayname'],
             'USERMENTION'  => ['@', 'displayname'],
@@ -277,16 +246,9 @@ class DiscussionFields
     }
 
     /**
-     * Enfileira a discussão para o carregamento em lote do hero.
-     *
-     * Roda na fase síncrona do getter, quando o serializador ainda está
-     * percorrendo as linhas do documento; o `resolvePath` adiado só corre
-     * depois que todas passaram por aqui, então a fila já está completa.
-     *
-     * O `EloquentBuffer` do core não serve: ele exige o objeto Relationship do
-     * schema JSON:API para montar o escopo, e `avocadoHero` é uma relação
-     * interna (vira atributo, não relacionamento exposto) — sem ele o buffer
-     * desvia para o caminho de agregação e estoura.
+     * Fase síncrona do getter: o `resolvePath` adiado só corre depois de todas as
+     * linhas, então a fila já está completa. O `EloquentBuffer` do core não serve:
+     * exige uma relação exposta no schema, e `avocadoHero` é interna.
      */
     private function bufferHero(Discussion $discussion): void
     {
@@ -296,13 +258,8 @@ class DiscussionFields
     }
 
     /**
-     * Caminho do hero da discussão, em uma consulta para o documento inteiro.
-     *
-     * No Index/Show o endpoint já faz `eagerLoad('avocadoHero')` (extend.php) e
-     * aqui só se lê memória. A fila cobre o outro caso: discussão serializada
-     * como recurso INCLUÍDO — /api/posts, notificações — onde não há eager-load
-     * do endpoint e ler a relação direto disparava um SELECT em
-     * `avocado_discussion_heroes` por discussão do payload (N+1).
+     * No Index/Show a relação já vem eager-carregada. A fila cobre a discussão
+     * incluída em outro recurso (/api/posts, notificações), que sem ela faria N+1.
      */
     private function resolvePath(Discussion $discussion): ?string
     {

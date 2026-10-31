@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Controller;
@@ -20,8 +29,7 @@ class UploadBannerController extends UploadImageController
     #[\Override]
     protected function makeImage(UploadedFileInterface $file): EncodedImageInterface
     {
-        // Size guard: reject before Intervention decodes the bitmap into memory
-        // (OOM/DoS) — same limit as UploadDiscussionHeroController.
+        // Recusa antes de o Intervention decodificar o bitmap (OOM/DoS).
         $size = $file->getSize();
         if ($size === null || $size > self::MAX_UPLOAD_BYTES) {
             throw new ValidationException([
@@ -29,8 +37,7 @@ class UploadBannerController extends UploadImageController
             ]);
         }
 
-        // getMetadata('uri') is null for a non-file-backed stream; reading null
-        // would TypeError. Fail with a clean validation error instead.
+        // getMetadata('uri') é null num stream sem arquivo: erro de validação em vez de TypeError.
         $uri = $file->getStream()->getMetadata('uri');
         if (! is_string($uri) || ! is_readable($uri)) {
             throw new ValidationException(['avatar' => $this->translator->trans('ramon-avocado.api.file_not_readable')]);

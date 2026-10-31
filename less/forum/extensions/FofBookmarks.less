@@ -1,19 +1,12 @@
-// ── fof/bookmarks ────────────────────────────────────────────────────────────
-// Com a extensão ativa o tema cede o sistema próprio de bookmarks e ela vira a
-// fonte de verdade (ver js/src/forum/utils/bookmarks.ts). A página /bookmarks é
-// assumida pelo BookmarksPage do tema (index.tsx troca o componente da rota), o
-// que resolve a listagem; o que sobra aqui é vestir os controles dela.
+// Com fof/bookmarks ativa, ela vira a fonte de verdade e a página /bookmarks
+// usa o BookmarksPage do tema; aqui só se vestem os controles dela.
 
 :root {
-  // A extensão fixa #2756c6 num `:root` próprio. Como a ordem de concatenação do
-  // CSS entre extensões não é garantida, a variável é redefinida aqui E os
-  // pontos que a usam levam seletor mais específico logo abaixo — assim o azul
-  // solto nunca aparece no meio da paleta do fórum.
+  // A extensão fixa #2756c6 no próprio `:root` e a ordem do CSS entre extensões
+  // não é garantida, por isso a redefinição e os seletores mais específicos abaixo.
   --fof-bookmarks-color: var(--primary-color);
 }
 
-// ── Botão independente na sidebar da discussão ───────────────────────────────
-// Marcado, ele é o estado "ligado" e segue o botão primário do tema.
 .Page.DiscussionPage .DiscussionPage-nav .Button--bookmark {
   border-radius: 12px;
 
@@ -23,11 +16,8 @@
   }
 }
 
-// ── Controle no post ─────────────────────────────────────────────────────────
-// O bookmark do post vive no menu ⋯, como no Flarum 2: o header do post no tema
-// já carrega nome, badges e data. Quando o admin deixa a extensão em
-// 'header'/'actions', o botão dela é escondido aqui e o item equivalente é
-// posto no dropdown pelo forum bundle (ver index.tsx, seção 12b-bis).
+// O bookmark do post vive no menu ⋯, como no Flarum 2. Nas posições
+// 'header'/'actions' o botão da extensão some e o JS põe o item no dropdown.
 .Post-header .Button--bookmark-post,
 .Post-actions .Button--bookmark-post {
   display: none;
@@ -49,8 +39,6 @@
   background: var(--primary-color);
 }
 
-// ── Abas Discussões / Posts da página "Salvos" ───────────────────────────────
-// Markup do BookmarksPage do tema; a página original do fof não é mais montada.
 .AvocadoBookmarks-tabs {
   display: flex;
   align-items: center;
@@ -93,5 +81,4 @@
   }
 }
 
-// A aba "Posts" reusa o card do /posts do tema (shared/PostCard), então o
-// estilo dela já vem de SearchPage.less — nada a acrescentar aqui.
+// A aba "Posts" usa o card de SearchPage.less.

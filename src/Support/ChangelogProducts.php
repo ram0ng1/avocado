@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Support;
@@ -49,9 +58,7 @@ class ChangelogProducts
     /**
      * Slugs dos produtos, na ordem em que o admin os cadastrou no fórum.
      *
-     * O filtro `tag` da API resolve por slug através do slug driver ativo; gerar
-     * o slug pelo SlugManager mantém o Utf8SlugDriver e o id_with_slug corretos
-     * sem hardcode de formato.
+     * Gerados pelo SlugManager, para valerem com qualquer slug driver.
      *
      * @return list<string>
      */

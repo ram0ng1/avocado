@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Support;
@@ -15,18 +24,11 @@ use Throwable;
  * "Esta tabela (ou coluna) existe neste banco?" — a checagem que vários
  * recursos opcionais do tema fazem antes de tocar no próprio schema.
  *
- * O tema é distribuído como pacote: um `composer update` entrega o código novo
- * e as tabelas só nascem no `php flarum migrate` seguinte. Nessa janela, um
- * eager-load ou uma escrita na tabela que ainda não existe derrubaria páginas
- * inteiras ("Base table or view not found"). Com a checagem, a ausência só
- * desliga o recurso; rodar as migrations religa.
+ * Entre o `composer update` e o `migrate` a tabela ainda não existe; a checagem
+ * faz o recurso só desligar em vez de derrubar páginas.
  *
- * Só o "existe" vai para o cache do Flarum (uma tabela criada não some
- * sozinha); o "não existe" é reavaliado a cada request, para o recurso ligar
- * assim que o admin migrar. Um `php flarum cache:clear` reavalia tudo. Dentro do
- * request o veredito fica memorizado na instância — registrada como singleton
- * no AvocadoServiceProvider, então é uma consulta por tabela por request, no
- * máximo, e nada que sobreviva ao processo além do cache.
+ * Só o "existe" vai para o cache; o "não existe" é reavaliado a cada request,
+ * para o recurso ligar assim que o admin migrar.
  */
 final class SchemaInspector
 {
@@ -56,9 +58,8 @@ final class SchemaInspector
     }
 
     /**
-     * O schema builder vem da Connection concreta, não da interface. A conexão
-     * do Flarum é sempre uma Connection; se não for, a checagem falha no
-     * try/catch de `check()` e o recurso só fica desligado.
+     * O schema builder vem da Connection concreta; outra coisa cai no catch de
+     * `check()` e o recurso só fica desligado.
      */
     private function schemaBuilder(): SchemaBuilder
     {

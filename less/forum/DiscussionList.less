@@ -7,9 +7,8 @@
     .avocado-border-radius(~'.Avatar');
   }
 
-  // Hide flarum/realtime's "N discussions have updated activity, click to release"
-  // banner. Auto-release still runs in the background (config: 10s default), so
-  // the list refreshes silently without the intrusive button.
+  // O banner do flarum/realtime fica oculto; o auto-release continua rodando e
+  // a lista atualiza sem o botão.
   &-update {
     display: none !important;
   }
@@ -174,7 +173,6 @@
       flex-direction: row;
     }
 
-    // Flarum 2.0: each stat item has -icon + -label sub-elements
     .DiscussionListItem-stats-item {
       display: flex;
       align-items: center;
@@ -189,7 +187,7 @@
       padding: 0;
       float: none;
 
-      // Unread state: primary tint + hide the redundant checkmark icon
+      // Não lido: tom primário, sem o ícone de check redundante.
       &.Button--ua-reset {
         color: var(--primary-color);
         cursor: pointer;
@@ -220,7 +218,6 @@
     }
   }
 
-  // ─── Controls: centralizado verticalmente, dropdown com borda avocado ──────
   .App .DiscussionListItem-controls {
     right: 10px;
     top: 50%;
@@ -234,7 +231,7 @@
   }
 }
 
-// ─── WebSocket "new discussions" pill ─────────────────────────────────────────
+// Pílula de "novas discussões" via WebSocket.
 .AvocadoWsUpdate {
   display: flex;
   justify-content: center;

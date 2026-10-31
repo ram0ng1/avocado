@@ -1,14 +1,11 @@
 import app from 'flarum/forum/app';
 
 /**
- * Curtidas do primeiro post de uma discussão, como o card as mostra.
- *
- * As listas não pedem mais `include=firstPost` (o servidor renderizava o post
- * inteiro por card), então o caminho normal é o par de atributos que a
- * discussão traz da listagem (Api\DiscussionLikeFields). O post do store
- * continua tendo a palavra final quando está lá com o dado: ele é o que se
- * atualiza ao curtir (resposta do PATCH), na página da discussão e no refetch
- * do tempo real.
+ * Curtidas do primeiro post de uma discussão, como o card mostra. As listas não
+ * pedem `include=firstPost` (o servidor renderizaria o post inteiro por card),
+ * então o normal são os atributos da discussão (Api\DiscussionLikeFields). O
+ * post do store tem a palavra final quando está lá: é ele que se atualiza ao
+ * curtir, na página da discussão e no refetch do realtime.
  */
 export function firstPostLikes(discussion: any): { count: number; liked: boolean } {
   const post = discussion?.firstPost?.();
@@ -27,13 +24,9 @@ export function firstPostLikes(discussion: any): { count: number; liked: boolean
 }
 
 /**
- * Toggle the "liked" state of a discussion's first post with optimistic UI.
- *
- * Centralizes the like/unlike flow shared by HomePage, AllDiscussionsPage,
- * AvocadoSearchPage, AvocadoDiscussionsSearchPage, TagPage and UserProfilePage.
- * Each page holds its own `likingIds` set to gate concurrent clicks per card,
- * and an optional `selfActionIds` set lets the realtime handler skip the pop
- * animation for likes the user just performed (avoids self-echo).
+ * Alterna o like do primeiro post com UI otimista. Cada página tem seu
+ * `likingIds` para travar cliques simultâneos por card; `selfActionIds` deixa o
+ * realtime pular a animação do like que o próprio usuário fez.
  */
 export function toggleDiscussionLike(discussion: any, likingIds: Set<string>, selfActionIds?: Set<string>): void {
   const id = discussion.id?.();
@@ -42,9 +35,8 @@ export function toggleDiscussionLike(discussion: any, likingIds: Set<string>, se
   let firstPost = discussion.firstPost?.();
   let stub = false;
   if (!firstPost) {
-    // Lista sem o post no store (o caso normal agora): o linkage basta. Um
-    // modelo vazio com o id recebe o PATCH, e a resposta dele (que traz
-    // likesCount e likes) o completa — em vez de buscar o post antes do clique.
+    // Lista sem o post no store (o caso normal): o linkage basta. Um model vazio
+    // com o id recebe o PATCH, e a resposta (com likesCount e likes) o completa.
     const postId = discussion.data?.relationships?.firstPost?.data?.id;
     if (!postId) return;
     firstPost = app.store.pushObject({ type: 'posts', id: String(postId), attributes: {} } as any);

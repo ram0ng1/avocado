@@ -10,8 +10,8 @@ import { trans } from '../../utils';
 export type ComposerPlacement = 'floating' | 'inline';
 
 /**
- * Modo do admin (`avocado.new_discussion_composer`): 'default' é o de antes
- * (InlineComposer aberto no lugar do campo, sem este componente).
+ * Modo do admin (`avocado.new_discussion_composer`). 'default' abre o
+ * InlineComposer no lugar do campo, sem este componente.
  */
 export const composerPlacement = (): 'default' | ComposerPlacement => {
   const mode = app.forum?.attribute<string>('avocadoNewDiscussionComposer');
@@ -88,28 +88,16 @@ const closedBox: Keyframe = {
 
 /**
  * O InlineComposer da home e de /discussions como cartão flutuante na base da
- * tela, como o compositor de resposta na discussão (Composer.less), mas com o
- * compositor próprio do tema (título, tags, imagem do hero, campos do changelog).
+ * tela, com o compositor próprio do tema.
  *
- * A entrada é uma metamorfose (FLIP): o campo "Tell everyone…" se desprende da
- * página, voa até a base e vira o cartão — tamanho, cantos e cor de fundo
- * interpolados de um para o outro — enquanto o espaço que ele ocupava se fecha
- * com um desfoque. O miolo do compositor aparece no pouso. Fechar faz o
- * caminho inverso: o cartão volta e vira o campo de novo.
+ * A entrada é uma metamorfose (FLIP): o campo "Tell everyone…" voa até a base e
+ * vira o cartão; fechar faz o caminho inverso. A alça muda a altura do editor e,
+ * puxada abaixo do mínimo, transforma o cartão numa bolha. O estado do
+ * compositor fica aqui para nada se perder enquanto ele é bolha.
  *
- * A alça no topo muda a altura do editor, como a do compositor do core. Puxada
- * para baixo além do mínimo, o cartão estica e, ao soltar, vira uma bolha na
- * base (a mesma da "Escreva uma resposta…" da discussão) com o título já
- * digitado; clicar nela traz o cartão de volta. O estado do compositor fica
- * aqui, não no InlineComposer, para nada se perder enquanto ele é bolha.
- *
- * Tudo com a Web Animations API, sem estado de animação no Mithril: o estado
- * final fica em CSS (`.AvocadoHome-postInput.is-away`, o cartão, a bolha), e
- * as animações só cobrem o trajeto entre um e outro.
- *
- * Com `placement: 'inline'` o cartão nasce no lugar do campo, no topo da
- * página: a mesma metamorfose, só que sem sair de cima — e sem alça nem bolha,
- * que só fazem sentido no cartão da base.
+ * Animações pela Web Animations API, sem estado no Mithril: o estado final fica
+ * em CSS e as animações só cobrem o trajeto. Com `placement: 'inline'` o cartão
+ * nasce no lugar do campo, sem alça nem bolha.
  */
 export default class FloatingInlineComposer extends Component<IFloatingInlineComposerAttrs> {
   private composerState!: InlineComposerState;

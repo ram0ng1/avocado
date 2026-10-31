@@ -35,12 +35,9 @@ export default class ChangelogState {
   private generation = 0;
 
   /**
-   * Primeira página vinda do payload do boot (Content\PreloadChangelog).
-   *
-   * Roda no oninit, antes do 1º view(): pushPayload insere os models no store
-   * de forma síncrona, então a página pinta direto com os cards. O payload vale
-   * para uma rota só (`product`) e é consumido uma vez — voltar à página depois
-   * de navegar busca dados frescos em vez de reexibir os do boot.
+   * Primeira página vinda do boot (Content\PreloadChangelog), no oninit: o
+   * pushPayload é síncrono e a página pinta direto com os cards. Vale para uma
+   * rota só e é consumido uma vez; voltar depois busca dados frescos.
    */
   hydrateFromBoot(product: string | null): boolean {
     const boot = (app as any).data?.avocadoChangelog;

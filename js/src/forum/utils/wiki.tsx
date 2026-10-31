@@ -1,22 +1,11 @@
 /**
- * Compatibilidade com a extensão linkrobins/wiki.
+ * Compatibilidade com o linkrobins/wiki.
  *
- * As quatro páginas dela (índice, artigo, novo e editar) montam o
- * PageStructure com a classe LinkRobinsWiki-page e trazem o próprio <h1> — no
- * índice ele muda com a categoria e a busca ("Wiki", o nome da categoria,
- * "Resultados para…"). Por isso o cabeçalho de extensão do tema
- * (.AvocadoExtensionPage-header, que repete app.title) não entra nelas: o
- * título seria dito duas vezes, e no artigo o título dele vira o hero da
- * página (ver forum/extensions/Wiki.less).
- *
- * No índice, a sidebar da extensão carrega o botão "Novo artigo" e a lista de
- * categorias. O tema troca a sidebar de toda página de extensão pelo
- * AvocadoNav-helper (invisível no tablet+), então os dois sumiam; aqui ela
- * volta como barra horizontal logo abaixo do cabeçalho — a mesma saída do
- * linkrobins/support (utils/support.tsx), com o mesmo mixin de estilo.
- *
- * No artigo e no editor fica o comportamento padrão do tema: a navegação de
- * volta é a categoria no topo do artigo, e o sumário ocupa a coluna lateral.
+ * As quatro páginas dela trazem o próprio <h1>, por isso o cabeçalho de
+ * extensão do tema (que repete app.title) fica de fora; no artigo o título vira
+ * o hero (forum/extensions/Wiki.less). No índice, a sidebar com "Novo artigo" e
+ * as categorias volta como barra horizontal, como no linkrobins/support. No
+ * artigo e no editor fica o comportamento padrão do tema.
  */
 import type Mithril from 'mithril';
 import { extend, override } from 'flarum/common/extend';
@@ -64,11 +53,9 @@ export function wikiToolbar(page: any): Mithril.Children {
 }
 
 // ── Design do artigo ─────────────────────────────────────────────────────────
-// Cada artigo escolhe o próprio design na tela de criação/edição do wiki:
-// "Padrão" (o layout da extensão vestido pelo tema) ou "Manual" (manual de
-// referência: sumário à esquerda, sobrelinha em mono, título grande e
-// linha-fina — ver forum/extensions/Wiki.less, seção 8). O valor viaja como o
-// atributo `avocadoWikiStyle` do artigo (Api\WikiArticleFields no PHP).
+// Cada artigo escolhe o design: "Padrão" ou "Manual" (sumário à esquerda,
+// título grande, ver forum/extensions/Wiki.less). O valor viaja no atributo
+// `avocadoWikiStyle` do artigo (Api\WikiArticleFields).
 
 /** Atributo do artigo na API. */
 const STYLE_ATTRIBUTE = 'avocadoWikiStyle';
@@ -153,17 +140,13 @@ function onWikiModule(path: string, apply: (component: any) => void): void {
 }
 
 /**
- * Remendos que precisam dos componentes da extensão.
+ * Remendos que precisam dos componentes da extensão. Cada um é guardado por uma
+ * checagem do ponto interno que envolve (`_renderContent`, `_submit`): se uma
+ * versão futura o renomear, o tema volta ao comportamento original.
  *
- * Cada um é guardado por uma checagem do ponto interno que ele envolve
- * (`_renderContent`, `_submit`) — se uma versão futura renomear algum, o tema
- * volta ao comportamento original em vez de quebrar a página.
- *
- * `decorateBody` é o initCodeBlocks do tema (index.tsx): põe o botão de copiar
- * em cada <pre> do artigo, como já acontece nos posts. O corpo do artigo é HTML
- * confiado (m.trust) que a própria página injeta, então o lugar de passar por
- * ele é depois de cada render da página — a função ignora o <pre> que já tem
- * botão, e um artigo novo chega com <pre> novos.
+ * `decorateBody` (initCodeBlocks do index.tsx) põe o botão de copiar em cada
+ * <pre> do artigo depois de cada render da página, já que o corpo é HTML que a
+ * própria página injeta; o <pre> que já tem botão é ignorado.
  */
 export function installWikiCompat(decorateBody: (root: HTMLElement | null) => void): void {
   if (!wikiEnabled()) return;

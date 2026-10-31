@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
-namespace Ramon\Avocado\Tests\Unit;
+namespace Ramon\Avocado\Tests\unit;
 
 use Flarum\Discussion\Discussion;
 use Flarum\User\Access\AbstractPolicy;
@@ -13,13 +22,8 @@ use PHPUnit\Framework\Attributes\Group;
 use Ramon\Avocado\Access\DiscussionPolicy;
 
 /**
- * DiscussionPolicy::uploadHeroImage() gates the hero-image upload by delegating
- * to the core `rename` ability. These tests pin that delegation:
- *  - actor who can rename  -> ALLOW
- *  - actor who cannot      -> null (abstain, NOT deny — so other policies still run)
- *
- * Returning deny() instead of null here would veto every other policy in the
- * chain (§3); the abstain contract is the part worth locking down.
+ * uploadHeroImage() delega para `rename`: quem pode renomear é ALLOW; quem não
+ * pode é null (abstém, NÃO nega), senão vetaria as outras policies da cadeia.
  */
 #[Group('security')]
 final class DiscussionPolicyTest extends MockeryTestCase

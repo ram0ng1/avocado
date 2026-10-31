@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Controller;
@@ -16,9 +25,7 @@ class TeamPageController implements RequestHandlerInterface
 {
     public function __construct(
         private SettingsRepositoryInterface $settings,
-        // The forum Frontend is supplied via a contextual binding registered in
-        // AvocadoServiceProvider::register() — keeps the magic 'flarum.frontend.forum'
-        // string out of the controller and avoids injecting the whole container.
+        // Frontend do fórum entregue por binding contextual (AvocadoServiceProvider).
         private Frontend $frontend
     ) {}
 

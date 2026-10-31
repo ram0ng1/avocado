@@ -1,15 +1,22 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\Builder;
 
 /**
- * Nota e lembrete por bookmark (estilo Discourse). `remind_at` é o instante
- * escolhido pelo usuário; `reminder_sent_at` marca o envio e impede reenvio —
- * o scheduler busca `remind_at <= now AND reminder_sent_at IS NULL`, coberto
- * pelo índice em `remind_at` (o filtro por NULL é resolvido na própria linha).
+ * Nota e lembrete por bookmark. `reminder_sent_at` impede reenvio; o scheduler
+ * filtra por `remind_at`, que tem índice.
  */
 return [
     'up' => function (Builder $schema) {

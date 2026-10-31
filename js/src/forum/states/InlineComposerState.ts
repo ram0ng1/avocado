@@ -9,15 +9,8 @@ const adjustDraftCount = (delta: number): void => {
 };
 
 /**
- * State backing the inline new-discussion composer.
- *
- * Owns the form fields, tag selection (with bypass-requirements toggle for
- * privileged users), preview/submit flags, and the submission flow itself.
- *
- * Pages should:
- *  1. Instantiate one state per composer.
- *  2. Bind it to a `<InlineComposer state={...} onSubmitted={...} />`.
- *  3. Call `state.reset()` after closing.
+ * Estado do compositor de nova discussão do tema: campos, tags (com o "ignorar
+ * requisitos" para quem pode), flags de prévia/envio e o envio em si.
  */
 export default class InlineComposerState {
   title = '';
@@ -31,11 +24,9 @@ export default class InlineComposerState {
   tagPickerOpen = false;
   tagFilter = '';
 
-  // Optional hero image attached to the new discussion when one of the
-  // selected tags is in `app.forum.attribute('avocadoHeroImageTags')`.
-  // Lives only on the client until submit() succeeds — at that point the
-  // file is POSTed to /api/avocado/discussion-hero and the discussion model
-  // is patched in the local store so the next page load already shows it.
+  // Imagem do hero opcional, quando uma das tags está em `avocadoHeroImageTags`.
+  // Fica só no cliente até o submit(); aí vai para /api/avocado/discussion-hero e
+  // o model local é atualizado, para a discussão já abrir com ela.
   heroImageFile: File | null = null;
   heroImagePreview: string | null = null;
 
@@ -51,13 +42,11 @@ export default class InlineComposerState {
   savingDraft = false;
   draftJustSaved = false;
 
-  /** Required by Flarum's TextEditor — proxies the live composer body. */
+  /** Exigido pelo TextEditor do Flarum: repassa o corpo do compositor. */
   composerProxy = {
     isVisible: () => true,
     fields: { content: () => this.body },
   };
-
-  // ── Validation ─────────────────────────────────────────────────────────
 
   isValid(): boolean {
     if (!this.title.trim() || !this.body.trim()) return false;
@@ -65,10 +54,7 @@ export default class InlineComposerState {
     return this.tagsMeetMinimums();
   }
 
-  /**
-   * True when the current tag selection satisfies `minPrimaryTags` /
-   * `minSecondaryTags`. Always true when no tags exist on the forum.
-   */
+  /** A seleção atende `minPrimaryTags`/`minSecondaryTags`; sempre true sem tags no fórum. */
   tagsMeetMinimums(): boolean {
     const minP = parseInt(app.forum.attribute('minPrimaryTags') as string) || 0;
     const minS = parseInt(app.forum.attribute('minSecondaryTags') as string) || 0;
@@ -78,8 +64,6 @@ export default class InlineComposerState {
     if (selectableCount === 0) return true;
     return primary >= minP && secondary >= minS;
   }
-
-  // ── Tag mutations ──────────────────────────────────────────────────────
 
   addTag(tag: any): void {
     if (this.tags.includes(tag)) return;
@@ -95,8 +79,6 @@ export default class InlineComposerState {
     this.tags = this.tags.filter((t) => t !== tag && t.parent?.()?.id?.() !== tag.id?.());
   }
 
-  // ── Hero image attachment ──────────────────────────────────────────────
-
   setHeroImageFile(file: File | null): void {
     if (this.heroImagePreview) {
       try {
@@ -108,8 +90,6 @@ export default class InlineComposerState {
     this.heroImageFile = file;
     this.heroImagePreview = file ? URL.createObjectURL(file) : null;
   }
-
-  // ── Lifecycle ──────────────────────────────────────────────────────────
 
   reset(): void {
     this.title = '';
@@ -127,8 +107,6 @@ export default class InlineComposerState {
     this.savingDraft = false;
     this.draftJustSaved = false;
   }
-
-  // ── Drafts (fof/drafts) ────────────────────────────────────────────────
 
   /** `canSaveDrafts` só existe com o fof/drafts ativo e quem tem a permissão. */
   canSaveDraft(): boolean {
@@ -186,8 +164,8 @@ export default class InlineComposerState {
   }
 
   /**
-   * Submit the discussion. Returns the saved Discussion on success.
-   * Rejects without changing state if validation fails.
+   * Envia a discussão e devolve a salva. Rejeita sem mexer no estado se a
+   * validação falhar.
    */
   submit(): Promise<any> {
     if (this.submitting) return Promise.reject(new Error('already submitting'));
@@ -211,15 +189,12 @@ export default class InlineComposerState {
       .createRecord('discussions')
       .save(data)
       .then(async (discussion: any) => {
-        // If the user picked a hero image, upload it now that we have an ID.
-        // Failures here don't roll the discussion back — we just keep it
-        // imageless and surface an alert so the user can retry from the
-        // discussion page later.
+        // Falha no upload da imagem não desfaz a discussão: ela fica sem imagem e um
+        // alerta deixa o usuário tentar de novo na página da discussão.
         if (this.heroImageFile) {
           try {
             const result = await uploadDiscussionHeroImage(discussion.id(), this.heroImageFile);
-            // Patch the local store so the next render of the discussion
-            // already shows the hero image without a refresh.
+            // Atualiza o store local para a discussão já abrir com a imagem.
             const data = (discussion as any).data;
             if (data?.attributes) {
               data.attributes.heroImagePath = result.heroImagePath;
@@ -235,7 +210,7 @@ export default class InlineComposerState {
                 )
               );
             } catch {
-              /* alerts may be unavailable in some contexts */
+              /* alertas podem não existir */
             }
           }
         }

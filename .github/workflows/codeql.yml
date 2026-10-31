@@ -1,7 +1,7 @@
 name: CodeQL
 
-# §35.13 I2 — CodeQL (JS/TS). PHP não é suportado pelo CodeQL; cobertura
-# PHP é feita por PHPStan (§35.13 R3) no ci.yml e Semgrep (security.yml).
+# CodeQL para JS/TS. O CodeQL não suporta PHP; lá a cobertura vem do PHPStan
+# (ci.yml) e do Semgrep (security.yml).
 on:
   push:
     branches:
@@ -12,7 +12,7 @@ on:
   schedule:
     - cron: '0 6 * * 1'  # toda segunda, 06:00 UTC
 
-# §35.13 C1 — default-deny.
+# Nega tudo ao GITHUB_TOKEN por padrão; cada job declara o que precisa.
 permissions: {}
 
 concurrency:
@@ -33,7 +33,7 @@ jobs:
         language: ['javascript-typescript']
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25  # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2  # v2.22.2
         with:
           egress-policy: audit
 

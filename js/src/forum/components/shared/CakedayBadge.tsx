@@ -46,8 +46,8 @@ export interface CakedayBadgeAttrs extends ComponentAttrs {
 }
 
 /**
- * 🎂 ao lado do nome no dia do aniversário de conta. Renderiza nada nos outros
- * 364 dias ou com o recurso desligado — custo zero de layout.
+ * Selo ao lado do nome no dia do aniversário de conta. Nos outros dias, ou com
+ * o recurso desligado, não renderiza nada.
  */
 export default class CakedayBadge extends Component<CakedayBadgeAttrs> {
   view() {

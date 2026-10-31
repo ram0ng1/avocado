@@ -122,8 +122,6 @@ export default class ChangelogPage extends Page {
     return true;
   }
 
-  // ── Dados ───────────────────────────────────────────────────────────────────
-
   private pageTitle(): string {
     return app.forum.attribute<string>('avocadoChangelogTitle') || trans('ramon-avocado.forum.changelog.title', 'Changelog');
   }
@@ -191,8 +189,6 @@ export default class ChangelogPage extends Page {
       m.redraw();
     }
   }
-
-  // ── View ────────────────────────────────────────────────────────────────────
 
   view() {
     if (this.disabled) return <div className="AvocadoChangelog" />;

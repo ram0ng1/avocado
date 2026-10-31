@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Support;
@@ -14,18 +23,10 @@ use DOMProcessingInstruction;
 use DOMXPath;
 
 /**
- * Turns an admin-supplied SVG into markup that is safe to inline on every page.
- *
- * - Only a fixed set of SVG elements survives; everything else (script,
- *   foreignObject, editor metadata, ...) is dropped along with its children.
- * - Event handlers, external references and executable URLs are removed.
- * - Ids and class names get a per-icon suffix, so several icons that all
- *   ship an `id="a"` gradient or a `.st0` class do not clash on one page.
- * - fill/stroke set through `<style>` rules or `style=""` are moved onto
- *   presentation attributes, which lets the stylesheet override them with
- *   the current text colour when the tag asks for a monochrome icon.
- * - The root loses its fixed width/height (a viewBox is derived when
- *   missing), so CSS can size the icon like a font glyph.
+ * SVG do admin pronto para embutir em toda página: allowlist de elementos, sem
+ * handlers, referências externas nem URLs executáveis. Ids e classes ganham
+ * sufixo por ícone para não colidirem; fill/stroke viram atributos para o CSS
+ * poder trocá-los pela cor do texto.
  */
 final class SvgIconSanitizer
 {
@@ -49,20 +50,15 @@ final class SvgIconSanitizer
     ];
 
     /**
-     * HTML integration points: once the SVG is inlined in a page, whatever sits
-     * inside these is read by the HTML parser, not the SVG one. A nested <style>
-     * becomes RAWTEXT there, so a `</style><img onerror=…>` kept literal by our
-     * own CDATA wrapper would break out. They keep their text and nothing else.
-     * (Mirrored in js/src/common/svgIconSanitizer.ts.)
+     * HTML integration points: o conteúdo deles é lido pelo parser de HTML, onde um
+     * <style> com `</style><img onerror>` escaparia. Só o texto fica. Espelhado em
+     * js/src/common/svgIconSanitizer.ts.
      */
     private const TEXT_ONLY_ELEMENTS = ['title', 'desc'];
 
-    /** CSS that can pull in outside resources or run code. */
-    private const DANGEROUS_CSS = '/@import|expression\s*\(|javascript:|behavior\s*:|-moz-binding|url\s*\(\s*["\']?\s*[^#"\'\s)]/i';
+    /** CSS que busca recurso de fora ou executa código. */
+    private const DANGEROUS_CSS = '/@import|expression\s*\(|javascript:|behavior\s*:|-moz-binding|(?:url|image-set)\s*\(\s*["\']?\s*[^#"\'\s)]/i';
 
-    /**
-     * Returns the cleaned SVG markup, or null when the input is not a usable SVG.
-     */
     public static function sanitize(string $svg): ?string
     {
         $svg = trim((string) preg_replace('/^\xEF\xBB\xBF/', '', $svg));
@@ -71,7 +67,7 @@ final class SvgIconSanitizer
             return null;
         }
 
-        // No prolog, no DOCTYPE: nothing may declare entities.
+        // Sem prólogo nem DOCTYPE: nada pode declarar entidades.
         $svg = (string) preg_replace('/<\?xml[^>]*\?>/i', '', $svg);
         $svg = (string) preg_replace('/<!DOCTYPE[^\[>]*(\[.*?\])?\s*>/is', '', $svg);
 
@@ -82,8 +78,7 @@ final class SvgIconSanitizer
         $svg = trim($svg);
         $dom = self::load($svg);
 
-        // A snippet pasted without its namespace declarations is common; add
-        // them and try once more.
+        // Trecho colado sem os namespaces é comum: acrescenta e tenta de novo.
         if (! $dom && ! preg_match('/<svg[^>]*\sxmlns=/i', $svg)) {
             $dom = self::load((string) preg_replace(
                 '/<svg\b/i',
@@ -160,12 +155,12 @@ final class SvgIconSanitizer
     }
 
     /**
-     * No stylesheet of an icon needs a `<`; one that has it is trying to close
-     * the element from the inside once the markup is re-read as HTML.
+     * Ícone nenhum precisa de `<` no CSS: quem tem tenta fechar o elemento quando
+     * o markup for relido como HTML.
      */
     private static function isDangerousCss(string $css): bool
     {
-        return str_contains($css, '<') || (bool) preg_match(self::DANGEROUS_CSS, $css);
+        return str_contains($css, '<') || (bool) preg_match(self::DANGEROUS_CSS, CssEscapes::decode($css));
     }
 
     private static function isAllowedElement(DOMElement $element): bool
@@ -187,7 +182,7 @@ final class SvgIconSanitizer
             $remove = str_starts_with($name, 'on')
                 || ($ns !== null && ! in_array($ns, [self::SVG_NS, self::XLINK_NS, self::XML_NS], true))
                 || ($attr->localName === 'href' && ! self::isSafeHref($value))
-                || ($name === 'style' && preg_match(self::DANGEROUS_CSS, $value))
+                || ($name === 'style' && preg_match(self::DANGEROUS_CSS, CssEscapes::decode($value)))
                 || ($name !== 'style' && preg_match('/javascript:|data:text\/html|vbscript:/i', (string) preg_replace('/\s+/', '', $value)));
 
             if ($remove) {
@@ -204,9 +199,7 @@ final class SvgIconSanitizer
     }
 
     /**
-     * Moves `fill`/`stroke` out of `style=""` onto attributes. Inline style
-     * outranks any class rule, so this runs after hoistStyleRules and simply
-     * overwrites what that pass set.
+     * Roda depois de hoistStyleRules: o estilo inline vence qualquer regra de classe.
      */
     private static function hoistInlineStyles(DOMDocument $dom): void
     {
@@ -243,9 +236,7 @@ final class SvgIconSanitizer
     }
 
     /**
-     * Applies `fill`/`stroke` from simple `.class { ... }` rules in <style>
-     * elements (the shape Illustrator and friends export) as presentation
-     * attributes, and strips those declarations from the rule.
+     * `fill`/`stroke` de regras `.classe { … }` (o formato do Illustrator) viram atributos.
      */
     private static function hoistStyleRules(DOMDocument $dom, DOMElement $root): void
     {
@@ -301,7 +292,7 @@ final class SvgIconSanitizer
             $styleElement->removeChild($styleElement->firstChild);
         }
 
-        // CDATA keeps `>` and `&` literal once the markup is inlined in HTML.
+        // CDATA mantém `>` e `&` literais quando o markup é embutido no HTML.
         $styleElement->appendChild(new DOMCdataSection(str_replace(']]>', ']]]]><![CDATA[>', $css)));
     }
 
@@ -322,7 +313,7 @@ final class SvgIconSanitizer
     }
 
     /**
-     * Converts an absolute SVG length to user units (px); null for anything relative.
+     * Comprimento absoluto em px; null para qualquer unidade relativa.
      */
     private static function pixels(string $value): ?string
     {
@@ -338,8 +329,7 @@ final class SvgIconSanitizer
     }
 
     /**
-     * Gives every id and class a suffix unique to this icon and rewrites the
-     * references (`href="#id"`, `url(#id)`, `class=""`, selectors) to match.
+     * Sufixo por ícone em ids e classes, reescrevendo as referências junto.
      */
     private static function scopeIdentifiers(DOMDocument $dom, string $seed): void
     {

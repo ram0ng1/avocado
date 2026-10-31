@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Controller;
@@ -40,17 +49,14 @@ class DeleteDiscussionHeroController implements RequestHandlerInterface
         }
 
         /** @var Discussion|null $discussion */
-        // Só discussões que o ator vê: sem isso um moderador com "renomear" global
-        // trocava a imagem de uma discussão oculta para ele, e a diferença entre
-        // 404 e 403 revelava quais IDs ocultos existem.
+        // Só discussões visíveis ao ator: senão a diferença entre 404 e 403 revelaria
+        // quais IDs ocultos existem.
         $discussion = Discussion::whereVisibleTo($actor)->find($discussionId);
         if (! $discussion) {
             throw new ValidationException(['discussionId' => $this->translator->trans('ramon-avocado.api.discussion_not_found')]);
         }
 
-        // Usa a ability dedicada (mesma do upload) em vez de pegar carona em
-        // `rename`. A política delega para `rename` por enquanto; trocar a
-        // semântica via permissão fica numa única decisão do admin.
+        // Ability própria (a mesma do upload) em vez de `rename`; ver DiscussionPolicy.
         $actor->assertCan('uploadHeroImage', $discussion);
 
         /** @var DiscussionHero|null $hero */

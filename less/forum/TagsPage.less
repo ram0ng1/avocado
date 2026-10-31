@@ -1,5 +1,3 @@
-// ─── /tags — Categories page ─────────────────────────────────────────────────
-
 .AvocadoTagsPage {
   max-width: var(--home-max-width, 1320px);
   margin: 0 auto;
@@ -7,8 +5,6 @@
   font-family: @font-sans;
   color: var(--home-title, #202126);
 }
-
-// ── Header ────────────────────────────────────────────────────────────────────
 
 .AvocadoTagsPage-header {
   display: flex;
@@ -49,8 +45,6 @@
   &:hover { text-decoration: underline; }
 }
 
-// ── Primary tags grid ─────────────────────────────────────────────────────────
-
 .AvocadoTagsPage-grid {
   list-style: none;
   margin: 0;
@@ -59,8 +53,6 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
-
-// ── Tag card ──────────────────────────────────────────────────────────────────
 
 .AvocadoTagsPage-tagCard {
   border: 1px solid var(--home-border, #eaeaf0);
@@ -77,8 +69,6 @@
     transform: translateY(-2px);
   }
 }
-
-// ── Featured tag card ─────────────────────────────────────────────────────────
 
 .AvocadoTagsPage-tagCard--featured { outline: 2px solid transparent; }
 
@@ -97,9 +87,6 @@
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-
-// Main link area
 .AvocadoTagsPage-tagCard-main {
   display: block;
   padding: 18px 18px 14px;
@@ -110,7 +97,6 @@
   &:hover { text-decoration: none; color: inherit; }
 }
 
-// Top row: icon + name + count
 .AvocadoTagsPage-tagCard-top {
   display: flex;
   align-items: center;
@@ -132,7 +118,7 @@
   background: var(--icon-bg, #f0f0f4);
   color: var(--icon-color, #8f9097);
   box-sizing: border-box;
-  // SEM overflow:hidden — cresce com o ícone
+  // Sem overflow: hidden, para crescer com o ícone.
 
   i {
     font-size: 1.1em;
@@ -145,7 +131,7 @@
     flex-shrink: 0;
   }
 
-  // Reset global .fa-kit padding so custom SVG logos scale correctly inside the box
+  // Zera o padding global do .fa-kit para o SVG escalar dentro da caixa.
   .fa-kit {
     padding: 0 !important;
     display: block !important;
@@ -198,7 +184,6 @@
   margin-top: 3px;
 }
 
-// Description
 .AvocadoTagsPage-tagCard-desc {
   margin: 10px 0 0;
   font-size: 14px;
@@ -211,7 +196,6 @@
   overflow: hidden;
 }
 
-// Child tag pills
 .AvocadoTagsPage-tagCard-children {
   display: flex;
   flex-wrap: wrap;
@@ -240,7 +224,6 @@
   &:hover { opacity: 0.75; text-decoration: none; }
 }
 
-// Last posted discussion footer
 .AvocadoTagsPage-tagCard-last {
   display: flex;
   align-items: center;
@@ -284,7 +267,6 @@
   white-space: nowrap;
 }
 
-// Skeleton cards
 .AvocadoTagsPage-tagCard--skeleton {
   pointer-events: none;
 
@@ -307,8 +289,6 @@
   &--count { height: 12px; width: 35%; }
   &--desc  { height: 12px; width: 80%; margin-top: 12px; border-radius: 6px; }
 }
-
-// ── Cloud / secondary tags ────────────────────────────────────────────────────
 
 .AvocadoTagsPage-cloud {
   margin-top: 32px;
@@ -354,46 +334,32 @@
   opacity: 0.75;
 }
 
-// ── Responsive: tablet ────────────────────────────────────────────────────────
-
 @media @tablet {
   .AvocadoTagsPage        { padding: 18px 14px 40px; }
   .AvocadoTagsPage-grid   { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .AvocadoTagsPage-title  { font-size: 30px; }
 }
 
-// ── Responsive: phone ─────────────────────────────────────────────────────────
-
 @media @phone {
   .AvocadoTagsPage        { padding: 14px 10px 32px; }
-  // minmax(0, 1fr) instead of bare 1fr so the column has a definite minimum
-  // width of 0. Without this, 1fr = minmax(auto, 1fr) and a tag card with a
-  // very long last-discussion title (white-space:nowrap) can grow the column
-  // past the viewport width, causing horizontal overflow.
+  // minmax(0, 1fr): com 1fr puro (minmax(auto, 1fr)) um título longo em nowrap
+  // alarga a coluna além da viewport.
   .AvocadoTagsPage-grid   { grid-template-columns: minmax(0, 1fr); }
   .AvocadoTagsPage-title  { font-size: 38px; }
   .AvocadoTagsPage-headerActions { gap: 8px; }
 }
 
 
-// ─── /t/{slug} — Individual tag page ─────────────────────────────────────────
-
-// The AvocadoTagPage is a standalone Page component (not injected into IndexPage).
-// It still lives inside Flarum's App shell, so we reset Page chrome inherited
-// from the Page base class.
+// Page avulsa dentro do App shell: zera o chrome herdado de Page.
 .AvocadoTagPage {
-  // Reset any Page padding/margins that might come from App--index body class
   margin-top: 0;
 }
-
-// ── Tag hero ──────────────────────────────────────────────────────────────────
 
 .AvocadoTagPage-hero {
   position: relative;
   background: var(--tag-color);
   overflow: hidden;
 
-  // Depth overlay
   &::before {
     content: '';
     position: absolute;
@@ -410,7 +376,6 @@
   padding: 20px 12px 24px;
 }
 
-// Single row: back + icon + name/count + subtags + button
 .AvocadoTagPage-hero-row {
   display: flex;
   align-items: center;
@@ -437,7 +402,7 @@
 }
 
 .AvocadoTagPage-hero-icon {
-  // Height is fixed; width grows to fit the icon (wide logos like Ole Miss expand naturally)
+  // Altura fixa; a largura cresce com logos largos.
   height: 44px;
   width: fit-content;
   min-width: 44px;
@@ -458,7 +423,7 @@
     line-height: 1;
   }
 
-  // Reset global .fa-kit padding; scale SVG to fill the fixed height proportionally
+  // Zera o padding global do .fa-kit para o SVG preencher a altura.
   .fa-kit {
     padding: 0 !important;
     display: block !important;
@@ -510,7 +475,6 @@
   flex-shrink: 0;
 }
 
-// Tag description below the row
 .AvocadoTagPage-hero-desc {
   margin: 10px 0 0;
   font-size: 14px;
@@ -565,8 +529,6 @@
   &:hover { background: rgba(255,255,255,0.26); }
 }
 
-// ── Body (discussions) ────────────────────────────────────────────────────────
-
 .AvocadoTagPage-body {
   max-width: var(--home-max-width, 1320px);
   margin: 0 auto;
@@ -596,14 +558,10 @@
   &:hover { text-decoration: underline; }
 }
 
-// ── Responsive: tablet ────────────────────────────────────────────────────────
-
 @media @tablet {
   .AvocadoTagPage-hero-inner { padding: 16px 14px 20px; }
   .AvocadoTagPage-body       { padding: 18px 14px 48px; }
 }
-
-// ── Responsive: phone ─────────────────────────────────────────────────────────
 
 @media @phone {
   .AvocadoTagPage-hero-inner { padding: 12px 10px 16px; }

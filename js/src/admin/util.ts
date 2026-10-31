@@ -1,36 +1,28 @@
 /*
- * Shared helpers for the admin settings UI. Kept deliberately small and
- * loosely typed: most admin components accept one-off `attrs` shapes that would
- * just duplicate the schema already declared in extend.php. New code should
- * still declare proper `attrs` interfaces where it can.
+ * Helpers do admin. Tipagem frouxa de propósito: interfaces de attrs só
+ * repetiriam o schema já declarado no extend.php.
  */
 import app from 'flarum/admin/app';
 import Component, { ComponentAttrs } from 'flarum/common/Component';
 
 /**
- * Most admin components accept arbitrary attrs (settingKey, label, help, …).
- * Extending ComponentAttrs with an index signature keeps individual
- * `this.attrs.settingKey` reads typed as `any` rather than triggering
- * "Property does not exist on ComponentAttrs".
+ * Index signature para `this.attrs.x` sair `any` em vez de erro de
+ * propriedade inexistente em ComponentAttrs.
  */
 export type LooseAttrs = ComponentAttrs & Record<string, any>;
 
 /** Base class for the admin controls so the type-loosening lives in one place. */
 export abstract class AdminComponent<A extends LooseAttrs = LooseAttrs> extends Component<A> {}
 
-/** Settings are stored as untyped strings in Flarum core; cast once instead of per-call. */
+/** O core guarda as settings como strings sem tipo: o cast fica num lugar só. */
 export const settings = (): Record<string, any> => (app.data as any).settings;
 
-// ─── Translation helper ───────────────────────────────────────────────────────
 export const trans = (key: string, fallback: string, params: Record<string, any> = {}): string => {
-  // `extract: true` força a Translator.trans devolver string em vez de
-  // NestedStringArray (Mithril children); sem isso o typeof string é sempre
-  // falso e caímos no fallback inglês, quebrando a troca de locale.
+  // `extract: true` faz o trans devolver string em vez de NestedStringArray; sem
+  // isso o teste de string falha e tudo cai no fallback inglês.
   //
-  // O try/catch é obrigatório: o formatter ICU do Flarum lança SyntaxError
-  // quando uma tradução da comunidade contém tags desbalanceadas (ex.: um
-  // `<style>` sem fechamento). Sem o guard, uma unica string quebrada em um
-  // idioma derruba a página inteira de configurações da extensão.
+  // O try/catch é obrigatório: o formatter ICU do Flarum lança SyntaxError com
+  // tradução de tags desbalanceadas, e uma string quebrada derrubaria a página.
   try {
     const out = app.translator?.trans(key, params, true);
     if (typeof out === 'string' && out !== key) return out;
@@ -40,7 +32,6 @@ export const trans = (key: string, fallback: string, params: Record<string, any>
   return Object.entries(params).reduce<string>((s, [k, v]) => s.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v)), fallback);
 };
 
-// ─── URL helpers ──────────────────────────────────────────────────────────────
 export const normalizePath = (path: string): string =>
   String(path)
     .replace(/\\/g, '/')
@@ -62,7 +53,6 @@ export const resolveAssetUrl = (assetPath: string | null | undefined): string | 
   return base.replace(/\/+$/, '') + '/' + normalized;
 };
 
-// ─── Settings helpers ─────────────────────────────────────────────────────────
 export const getBool = (key: string): boolean => {
   const v = settings()[key];
   return v === true || v === 'true' || v === '1' || v === 1;
@@ -70,7 +60,7 @@ export const getBool = (key: string): boolean => {
 
 export const getStr = (key: string, def = ''): string => String(settings()[key] ?? def);
 
-// Direct-save to API (used by all custom controls)
+// Os controles gravam direto na API, sem o botão Salvar.
 export const saveSetting = (payload: Record<string, any>) => {
   const apiUrl = ((app.forum.attribute<string>('apiUrl') as string) || '/api').replace(/\/+$/, '');
   return app.request({ method: 'POST', url: `${apiUrl}/settings`, body: payload });

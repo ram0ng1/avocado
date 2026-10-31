@@ -9,11 +9,9 @@ export interface WhoIsReadingAttrs extends ComponentAttrs {
 }
 
 /**
- * "{count} lendo agora" no meta do hero da discussão. Entra no presence
- * channel ao montar e sai ao desmontar; navegação discussão→discussão reusa a
- * instância, então onupdate re-entra quando o id muda. Renderiza nada com
- * menos de 2 leitores visíveis (só você não é notícia) ou com o recurso
- * desligado — o custo de um no-op é zero.
+ * "{count} lendo agora" na meta do hero. Entra no presence channel ao montar e
+ * sai ao desmontar; a navegação entre discussões reusa a instância, então o
+ * onupdate reentra quando o id muda. Com menos de 2 leitores não desenha nada.
  */
 export default class WhoIsReading extends Component<WhoIsReadingAttrs> {
   // Não usar `state`: é reservado pelo Component do Mithril (2º generic).

@@ -1,16 +1,13 @@
-// Avocado realtime adapter for flarum/realtime.
+// Adaptador do flarum/realtime: embrulha app.websocket_channels.{public,user}
+// para os componentes assinarem eventos sem saber se a extensão existe. Sem ela
+// todo helper é no-op.
 //
-// Wraps app.websocket_channels.{public,user} so theme components can subscribe
-// to broadcasts without caring whether the extension is installed/enabled.
-// When flarum/realtime is missing, every helper is a no-op — the theme keeps
-// working with no console warnings.
-//
-// Event-name reference (must match what the PHP side broadcasts):
-//   Flarum\Discussion\Event\Started → first post of a new discussion
-//   Flarum\Post\Event\Posted        → replies (post.number > 1)
-//   likesMutation                   → likes/unlikes (configured in extend.php)
-//   discussionPinned                → sticky/unsticky (configured in extend.php)
-//   postRemoved                     → post deleted/hidden/restored (configured in extend.php)
+// Nomes dos eventos (precisam bater com o que o PHP transmite):
+//   Flarum\Discussion\Event\Started → primeiro post de uma discussão nova
+//   Flarum\Post\Event\Posted        → respostas (post.number > 1)
+//   likesMutation                   → like/unlike (extend.php)
+//   discussionPinned                → fixar/desafixar (extend.php)
+//   postRemoved                     → post apagado/oculto/restaurado (extend.php)
 
 import app from 'flarum/forum/app';
 
@@ -23,32 +20,30 @@ export const REMOVED_EVENT = 'postRemoved';
 export type RealtimeHandler = (data: any) => void;
 
 export interface RealtimeBindings {
-  /** Fired when a new post or new discussion is broadcast. */
+  /** Novo post ou nova discussão. */
   onPost?: RealtimeHandler;
-  /** Fired when a like is added or removed. */
+  /** Like adicionado ou removido. */
   onLike?: RealtimeHandler;
-  /** Fired when a discussion is pinned or unpinned. */
+  /** Discussão fixada ou desafixada. */
   onPinned?: RealtimeHandler;
-  /** Fired when a post is deleted, hidden or restored (covers all visibility flips). */
+  /** Post apagado, oculto ou restaurado. */
   onPostRemoved?: RealtimeHandler;
-  /** Bind any other event name on both channels. */
+  /** Qualquer outro evento, nos dois canais. */
   custom?: Record<string, RealtimeHandler>;
 }
 
-/** True only when flarum/realtime is enabled and its websocket is reachable. */
+/** Só true com o flarum/realtime ativo e o websocket acessível. */
 export function realtimeAvailable(): boolean {
-  // `flarum.extensions` lists every enabled extension by id. Cheaper than
-  // probing app.websocket and avoids touching uninitialised properties.
+  // `flarum.extensions` lista as extensões ativas: mais barato que sondar
+  // app.websocket, e não toca propriedades ainda não inicializadas.
   return 'flarum-realtime' in (flarum as any).extensions;
 }
 
 /**
- * Push a JSON:API payload through the store and return the resulting model.
- * Use inside handlers to extract the discussion that an event refers to.
- *
- * The realtime payload for Started/Posted/likesMutation/discussionPinned is a
- * Discussion document (PostResource resolves to its parent discussion in
- * Generator::__invoke()). Returns null on malformed data.
+ * Passa um payload JSON:API pelo store e devolve o model. O payload de
+ * Started/Posted/likesMutation/discussionPinned é um documento de Discussion (o
+ * PostResource resolve para a discussão no Generator::__invoke()). Null com dado
+ * malformado.
  */
 export function pushPayloadDiscussion(data: any): any {
   try {
@@ -60,13 +55,10 @@ export function pushPayloadDiscussion(data: any): any {
 }
 
 /**
- * Bind handlers to the realtime channels. Returns an unbind function that is
- * safe to call from onremove regardless of whether subscription succeeded.
- *
- * Every event is bound on both the public and the user channel because
- * SendTriggerJob dispatches twice — once globally (public) and once per
- * connected logged-in user (private-user=…). Binding both ensures the handler
- * fires exactly once for guests and once for logged-in users.
+ * Liga os handlers nos canais e devolve um unbind seguro no onremove, mesmo se a
+ * assinatura falhou. Todo evento vai nos dois canais porque o SendTriggerJob
+ * dispara duas vezes (público e private-user): o handler roda uma vez para guests
+ * e uma vez para quem está logado.
  */
 export function bindRealtime(bindings: RealtimeBindings): () => void {
   if (!realtimeAvailable()) return () => {};
@@ -95,7 +87,7 @@ export function bindRealtime(bindings: RealtimeBindings): () => void {
       try {
         ch.bind(name, handler);
       } catch {
-        /* channel torn down — ignore */
+        /* canal já desfeito */
       }
     }
   }

@@ -17,16 +17,10 @@ import PostCard from './shared/PostCard';
 type BookmarksTab = 'discussions' | 'posts';
 
 /**
- * Página "Salvos" — a do tema (`/bookmarks`) e, quando o fof/bookmarks está
- * ativo, a dele: index.tsx troca só o componente da rota `fof-bookmarks`, para
- * que a listagem apareça em ThreadCard como no resto do tema em vez do
- * DiscussionListItem do core.
- *
- * As discussões saem da busca com o filtro do provedor no comando
- * (`avocadoBookmarked` ou o `bookmarked` do fof), então paginação, ordenação e
- * card vêm de graça. A aba "Posts" só existe cedendo ao fof — marcar posts é
- * recurso dele. Guests recebem um convite de login: o item de menu só aparece
- * logado, mas a URL é alcançável direto.
+ * Página "Salvos": a do tema (`/bookmarks`) e, com o fof/bookmarks ativo, a dele
+ * (index.tsx troca só o componente da rota `fof-bookmarks`), para listar em
+ * ThreadCard como o resto do tema. A aba "Posts" só existe com o fof, que é quem
+ * marca posts. Guests recebem convite de login: a URL é alcançável direto.
  */
 export default class BookmarksPage extends Page {
   private feedState!: DiscussionFeedState;
@@ -45,8 +39,8 @@ export default class BookmarksPage extends Page {
       return;
     }
 
-    // Define o título no oninit (antes do primeiro render), como o TeamPage —
-    // setar no oncreate deixava a aba com o título da página anterior.
+    // Título no oninit, antes do primeiro render: no oncreate a aba ficaria com o
+    // título da página anterior.
     app.setTitle(bookmarksPageTitle());
     app.setTitleCount(0);
 
@@ -166,9 +160,8 @@ export default class BookmarksPage extends Page {
   }
 
   /**
-   * Reusa o PostCard compartilhado (o mesmo do perfil e da busca), na mesma
-   * pilha da aba de discussões. A PostList do core desenhava o post inteiro —
-   * imagem em tamanho original inclusive — e destoava de tudo à volta.
+   * PostCard compartilhado em vez da PostList do core, que desenha o post inteiro
+   * (imagens em tamanho original) e destoaria do resto.
    */
   private renderPosts() {
     const state = this.postsState;

@@ -1,22 +1,8 @@
-// ─── Avocado V2 — Dark Mode ───────────────────────────────────────────────────
-//
-// Overrides every hardcoded light-mode colour in the Avocado custom components.
-// Flarum's own CSS variables (--body-bg, --text-color, --control-bg, etc.) switch
-// automatically via its [data-theme^=dark] hook in core.  We only need to fix the
-// values that are hardcoded in our LESS files.
-//
-// Activation:  html[data-theme^=dark]  (set by Flarum's Application.tsx)
-// User choice:  Settings → Appearance → Dark / Auto / Light
-// ─────────────────────────────────────────────────────────────────────────────
+// Só os valores fixos dos componentes do tema; as variáveis do core
+// (--body-bg, --text-color, --control-bg…) já trocam em [data-theme^=dark].
 
 [data-theme^=dark],
 body.dark-mode {
-
-  // ── ROOT VARIABLES ──────────────────────────────────────────────────────────
-  // Variables redefined by Flarum Core in [data-theme^=dark] scope:
-  // --body-bg, --control-bg, --shadow-color, --heading-color, --muted-color, etc.
-  // DiscussionListPane inherits automatically.
-  // Tokens declared in :root never need !important — there is no cascade to defeat.
 
   --avmsg-bg:               color-mix(in srgb, var(--body-bg) 95%, #000);
   --avmsg-sidebar-bg:       var(--body-bg);
@@ -40,30 +26,19 @@ body.dark-mode {
   --avmsg-sk-base:          color-mix(in srgb, var(--body-bg) 60%, #fff);
   --avmsg-sk-shine:         color-mix(in srgb, var(--body-bg) 40%, #fff);
 
-  // ── 1. Global Avocado CSS variables ──────────────────────────────────────────
-
   --home-border:  rgba(255, 255, 255, 0.08);
   --home-muted:   var(--muted-color);
   --home-title:   var(--heading-color, #e8e9f2);
   --home-shadow:  0 10px 24px rgba(0, 0, 0, 0.35);
 
-  // ── 2. IndexPage (home) background ───────────────────────────────────────────
-
   .IndexPage--avocadoHome {
     background: var(--body-bg);
   }
-
-  // ── 3. AvocadoHome root ──────────────────────────────────────────────────────
 
   .AvocadoHome {
     background: var(--body-bg);
     color: var(--text-color);
   }
-
-  // ── 4. Topbar ─────────────────────────────────────────────────────────────────
-  // Note: --avocado-brand-dark, --avocado-muted-icon, --avocado-surface-1/2,
-  // --avocado-border-*, --avocado-muted-*, --avocado-online-ring are already
-  // overridden in [data-theme^=dark] inside variables.less — no element rules needed.
 
   .AvocadoHome-topbar {
     background: color-mix(in srgb, var(--body-bg) 93%, transparent);
@@ -75,14 +50,10 @@ body.dark-mode {
     border-color: rgba(255, 255, 255, 0.1);
   }
 
-  // ── 5. Section headings ──────────────────────────────────────────────────────
-
   .AvocadoHome-section > h2,
   .AvocadoHome-sectionHead h2 {
     color: var(--heading-color, #e8e9f2);
   }
-
-  // ── 6. Category cards ────────────────────────────────────────────────────────
 
   .AvocadoHome-categoryCard {
     &:hover,
@@ -96,12 +67,8 @@ body.dark-mode {
     color: var(--heading-color, #e4e5f0);
   }
 
-  // ── 7. Thread cards ──────────────────────────────────────────────────────────
-  // threadCard bg, threadExcerpt, threadTime, threadReplyGroup, replyCard-*,
-  // seeReplies, yesterday-label: now use CSS vars that adapt automatically.
-
-  // threadUser/Author/Title need explicit override: --home-title → heading-color
-  // but display color should be text-color (less contrast than heading on dark bg)
+  // --home-title resolve para heading-color, mas aqui o texto pede menos
+  // contraste que um título.
   .AvocadoHome-threadUser,
   .AvocadoHome-threadAuthor {
     color: var(--text-color);
@@ -117,8 +84,7 @@ body.dark-mode {
     color: var(--heading-color, #f0f1fa);
   }
 
-  // ── 8. Reply button ──────────────────────────────────────────────────────────
-  // Uses semi-transparent overlay (not --avocado-surface-1) for dark mode
+  // Overlay translúcido em vez de --avocado-surface-1.
 
   .AvocadoHome-replyBtn {
     background: rgba(255, 255, 255, 0.07);
@@ -135,32 +101,22 @@ body.dark-mode {
     }
   }
 
-  // ── 9. Thread stats bar ──────────────────────────────────────────────────────
-
   .AvocadoHome-statBtn {
     &:hover { background: rgba(255, 255, 255, 0.07); }
   }
-
-  // ── 10. Reply group ──────────────────────────────────────────────────────────
 
   .AvocadoHome-replyCard-line:hover {
     background: rgba(255, 255, 255, 0.04);
   }
 
-  // ── 11. See replies hover ────────────────────────────────────────────────────
-
   .AvocadoHome-seeReplies {
     &:hover { color: var(--text-color); }
   }
-
-  // ── 12. Empty state ──────────────────────────────────────────────────────────
 
   .AvocadoHome-emptyState {
     border-color: rgba(255, 255, 255, 0.1);
     color: var(--muted-color);
   }
-
-  // ── 13. Skeleton loading ─────────────────────────────────────────────────────
 
   .AvocadoHome-skeletonCard {
     background: var(--control-bg);
@@ -177,13 +133,10 @@ body.dark-mode {
     background-size: 800px 100%;
   }
 
-  // Ossos (esqueletos com a marcação real — Skeletons.less §6)
   .AvocadoBone {
     --avocado-bone: rgba(255, 255, 255, 0.06);
     --avocado-bone-shine: rgba(255, 255, 255, 0.11);
   }
-
-  // ── 14. Inline composer ──────────────────────────────────────────────────────
 
   .AvocadoHome-composer {
     background: var(--control-bg);
@@ -207,8 +160,6 @@ body.dark-mode {
     border-top-color: rgba(255, 255, 255, 0.07) !important;
     background: color-mix(in srgb, var(--control-bg) 90%, #000) !important;
   }
-
-  // ── 15. Tag picker ───────────────────────────────────────────────────────────
 
   .AvocadoHome-tagPickerTrigger {
     background: var(--control-bg);
@@ -251,8 +202,6 @@ body.dark-mode {
     color: var(--muted-color);
   }
 
-  // ── 16. Home nav bar ─────────────────────────────────────────────────────────
-
   .AvocadoHomeNav {
     > .Button,
     > .LinkButton,
@@ -293,14 +242,11 @@ body.dark-mode {
   }
 
 
-  // ── 17. All Discussions page ─────────────────────────────────────────────────
-
   .AvocadoDiscussions-title,
   .AvocadoExtensionPage-title {
     color: var(--heading-color, #e8e9f2);
   }
 
-  // Sort trigger button
   .AvocadoDiscussions-sortTrigger {
     background: var(--control-bg);
     color: var(--text-color);
@@ -314,7 +260,6 @@ body.dark-mode {
     }
   }
 
-  // Sort dropdown
   .AvocadoDiscussions-sortDropdown {
     background: var(--body-bg);
     border-color: rgba(255, 255, 255, 0.1);
@@ -327,13 +272,11 @@ body.dark-mode {
     &.is-active { color: var(--heading-color, #e8e9f2); }
   }
 
-  // Controls dropdown toggle — hover adaptado para dark mode
   .DiscussionListItem-controls .Dropdown-toggle:hover,
   .AvocadoHome-threadControls-toggle:hover {
     background: rgba(255, 255, 255, 0.1) !important;
   }
 
-  // Load-more button
   .AvocadoDiscussions-loadMoreBtn {
     background: var(--control-bg);
     color: var(--text-color);
@@ -344,8 +287,6 @@ body.dark-mode {
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
   }
-
-  // ── 18. Search pages (/search, AvocadoSearch) ────────────────────────────────
 
   .App--avocadoSearch .App-content,
   .App--search .App-content {
@@ -362,7 +303,6 @@ body.dark-mode {
     color: var(--heading-color, #e8e9f2);
   }
 
-  // Thread cards
   .AvocadoSearch-threadCard {
     background: var(--control-bg);
 
@@ -380,7 +320,6 @@ body.dark-mode {
   .AvocadoSearch-threadTitle  { color: var(--text-color); }
   .AvocadoSearch-threadExcerpt { color: var(--muted-color); }
 
-  // Post cards
   .AvocadoSearch-postCard {
     background: var(--control-bg);
 
@@ -397,7 +336,6 @@ body.dark-mode {
     border-top-color: rgba(255, 255, 255, 0.07);
   }
 
-  // Skeletons
   .AvocadoSearch-postSkeleton,
   .AvocadoSearch-userSkeleton {
     background: var(--control-bg);
@@ -423,7 +361,6 @@ body.dark-mode {
     background-size: 800px 100%;
   }
 
-  // Search bar
   .AvocadoSearch-bar {
     background: var(--control-bg);
     border-color: rgba(255, 255, 255, 0.1);
@@ -451,7 +388,6 @@ body.dark-mode {
     color: var(--muted-color);
   }
 
-  // Tabs
   .AvocadoSearch-tab {
     background: var(--control-bg);
     color: var(--text-color);
@@ -461,7 +397,6 @@ body.dark-mode {
     &.is-active:hover { opacity: 0.88; color: #fff; }
   }
 
-  // User cards — body-bg (transparent-feel) in dark mode, hover lifts
   .AvocadoSearch-userCard {
     &:hover {
       border-color: rgba(255, 255, 255, 0.14);
@@ -476,8 +411,6 @@ body.dark-mode {
     border-top-color: rgba(255, 255, 255, 0.07);
   }
 
-  // ── 19. Tags page (/tags) ────────────────────────────────────────────────────
-
   .AvocadoTagsPage-title {
     color: var(--heading-color, #e8e9f2);
   }
@@ -491,8 +424,7 @@ body.dark-mode {
     }
   }
 
-  // .AvocadoTagsPage-tagCard-icon background intentionally omitted —
-  // JS sets --icon-bg via iconColors() which already handles dark mode.
+  // Sem fundo do ícone: o --icon-bg do JS (iconColors) já trata o escuro.
 
 .AvocadoTagsPage-tagCard-name { color: var(--heading-color, #e4e5f0); }
   .AvocadoTagsPage-tagCard-desc { color: var(--muted-color); }
@@ -523,13 +455,10 @@ body.dark-mode {
 
   .AvocadoTagsPage-cloud-label { color: var(--muted-color); }
 
-  // ── 20. User profile page (/u/…) ─────────────────────────────────────────────
-
   .AvocadoUserPage {
     background: var(--body-bg);
   }
 
-  // Avatar editor dropdown (escapes the hero banner)
   .AvocadoUserPage-hero-avatarWrap > .AvatarEditor .Dropdown-menu {
     background: var(--control-bg);
     border-color: rgba(255, 255, 255, 0.1);
@@ -540,7 +469,6 @@ body.dark-mode {
     }
   }
 
-  // Sticky nav bar
   .AvocadoUserPage-nav {
     background: var(--body-bg);
     border-bottom-color: rgba(255, 255, 255, 0.07);
@@ -567,7 +495,6 @@ body.dark-mode {
     background: rgba(255, 255, 255, 0.08);
   }
 
-  // Body / content area
   .AvocadoUserPage-body {
     background: var(--body-bg);
   }
@@ -577,7 +504,6 @@ body.dark-mode {
     border-left-color: rgba(255, 255, 255, 0.1);
   }
 
-  // Buttons inside user pages
   .AvocadoUserPage .Button {
     &--default {
       background: var(--control-bg) !important;
@@ -591,7 +517,6 @@ body.dark-mode {
     }
   }
 
-  // Form controls
   .AvocadoUserPage .FormControl {
     background: var(--control-bg);
     border-color: rgba(255, 255, 255, 0.1);
@@ -605,14 +530,12 @@ body.dark-mode {
     &::placeholder { color: var(--muted-color); }
   }
 
-  // Switch toggle
   .AvocadoUserPage .Switch {
     color: var(--text-color);
 
     &-slider { background: rgba(255, 255, 255, 0.15); }
   }
 
-  // Notification grid
   .AvocadoUserPage .NotificationGrid {
     tbody td {
       color: var(--text-color);
@@ -626,7 +549,6 @@ body.dark-mode {
     }
   }
 
-  // Access tokens
   .AvocadoUserPage .AccessToken {
     border-bottom-color: rgba(255, 255, 255, 0.06);
 
@@ -636,7 +558,6 @@ body.dark-mode {
     }
   }
 
-  // FieldSet — flat, no card in dark mode
   .AvocadoUserPage .FieldSet {
     background: transparent !important;
     border: none !important;
@@ -678,8 +599,6 @@ body.dark-mode {
     }
   }
 
-  // ── 21. Discussion page (/d/…) ───────────────────────────────────────────────
-
   .Page.DiscussionPage {
     --disc-bg:     var(--body-bg);
     --disc-border: rgba(255, 255, 255, 0.07);
@@ -688,12 +607,10 @@ body.dark-mode {
     --disc-muted:  var(--muted-color);
   }
 
-  // ── 22. Code blocks: dark theme ──────────────────────────────────────────────
   .Page.DiscussionPage .Post-body pre {
     .avocado-code-block-dark();
   }
 
-  // Auth modal close button: darken slightly on dark bg instead of light shadow
   .Modal-content:has(.AvocadoAuth-panel) .Modal-close {
     background: rgba(255, 255, 255, 0.06);
     border-color: rgba(255, 255, 255, 0.12);
@@ -701,16 +618,12 @@ body.dark-mode {
     &:hover { background: rgba(255, 255, 255, 0.12); }
   }
 
-  // ── 23. Discussion page avatar border ────────────────────────────────────────
-
   .Page.DiscussionPage .CommentPost .Post-side .Avatar,
   .Page.DiscussionPage .CommentPost .Post-side a .Avatar {
     border-color: var(--body-bg);
   }
 
 
-
-  // ── 24. Discussion page skeleton (preloader) ─────────────────────────────────
 
   .DiscussionPage--skeleton {
     background: var(--body-bg);
@@ -746,8 +659,7 @@ body.dark-mode {
     }
 
     .AvocadoSkeleton-postAvatar {
-      // Também em variável: a variante editorial pinta esta cor sobre um fundo
-      // opaco para o nó esconder a linha (Skeletons.less).
+      // A variante editorial pinta esta cor sobre fundo opaco para o nó esconder a linha.
       --avocado-skel-avatar: rgba(255, 255, 255, 0.10);
       background: rgba(255, 255, 255, 0.10);
     }
@@ -757,11 +669,7 @@ body.dark-mode {
     }
   }
 
-  // ── 25. MessagesPage ─────────────────────────────────────────────────────────
-  // Dark tokens for the "Signal" chat design.
-  // Most --avmsg-* tokens are already declared in the :root block above; only the
-  // Messages-specific extras (item-active, bubble-in-border, input-border) are
-  // scoped here so they don't leak globally.
+  // Só os extras das mensagens ficam aqui, para não vazarem globalmente.
 
   .AvocadoMessages,
   .AvocadoMessages-card,
@@ -773,21 +681,18 @@ body.dark-mode {
 
   .AvocadoMessages-title { color: var(--heading-color, #e8e9f2); }
 
-  // ─── DiscussionListPane Dark Mode ─────────────────────────────────────────
-  // Explicit dark mode styles for sidebar
   
   aside.DiscussionListPane {
     background: var(--body-bg) !important;
     border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
     box-shadow: 2px 0 24px rgba(0, 0, 0, 0.50) !important;
 
-    // DiscussionList container: reset hardcoded #f4f4f7 from DiscussionPage.less
+    // O DiscussionPage.less fixa #f4f4f7 neste contêiner.
     .DiscussionList {
       background: transparent !important;
       padding: 0 !important;
     }
 
-    // Each row: transparent bg, subtle bottom divider for separation
     .DiscussionListItem {
       background: transparent !important;
       border-radius: 0 !important;
@@ -799,7 +704,6 @@ body.dark-mode {
       }
     }
 
-    // Active item: stronger primary tint + left accent bar
     .DiscussionListItem.active {
       background: color-mix(in srgb, var(--primary-color) 16%, transparent) !important;
       border-bottom-color: transparent !important;
@@ -807,53 +711,46 @@ body.dark-mode {
       box-shadow: none !important;
     }
 
-    // Non-active items: no left accent offset
     .DiscussionListItem:not(.active) {
       border-left: 3px solid transparent !important;
     }
 
-    // Avatar
     .DiscussionListItem-author .Avatar {
       background-color: rgba(255, 255, 255, 0.08) !important;
       box-shadow: none !important;
     }
 
-    // Online ring
     .DiscussionListItem-author.is-online .Avatar {
       box-shadow: 0 0 0 2px var(--body-bg),
                   0 0 0 4px var(--avocado-online) !important;
     }
 
-    // Title: high contrast — specificity must beat DiscussionPage.less (0,4,0 !important)
-    // Adding .DiscussionListItem gives us 0,4,1 which wins.
+    // Precisa ganhar do DiscussionPage.less (0,4,0 !important); com .DiscussionListItem fica 0,4,1.
     .DiscussionListItem .DiscussionListItem-title,
     .DiscussionListItem .DiscussionListItem-title a {
       color: #e8e9f2 !important;
       font-weight: 500 !important;
     }
 
-    // Unread title: brighter
     .DiscussionListItem--unread .DiscussionListItem-title,
     .DiscussionListItem--unread .DiscussionListItem-title a {
       color: #ffffff !important;
       font-weight: 600 !important;
     }
 
-    // Meta / secondary text — WCAG AA contrast on dark sidebar bg
+    // Contraste WCAG AA sobre o fundo da sidebar.
     .DiscussionListItem-info,
     .DiscussionListItem-info .item-user a,
     .item-excerpt {
       color: rgba(200, 202, 220, 0.82) !important;
     }
 
-    // Stats / reply count — needs to remain readable
     .DiscussionListItem-stats,
     .DiscussionListItem-stats-item,
     .item-count {
       color: rgba(200, 202, 220, 0.70) !important;
     }
 
-    // Scrollbar
     &::-webkit-scrollbar { width: 4px; }
     &::-webkit-scrollbar-track { background: transparent; }
     &::-webkit-scrollbar-thumb {
@@ -863,7 +760,6 @@ body.dark-mode {
     }
   }
 
-  // Compose button: keep visible against dark sidebar
   .AvocadoMessages-composeBtn {
     background: rgba(255,255,255,0.08) !important;
     border-color: rgba(255,255,255,0.12) !important;
@@ -884,21 +780,17 @@ body.dark-mode {
     background: rgba(255, 255, 255, 0.07);
   }
 
-  // Received bubble: slightly lighter than bg
   .MessageStream-item .Post .Post-body,
   .MessageStream-item .Message .Post-body {
     box-shadow: none !important;
   }
 
-  // Sent bubble keeps primary color in dark mode
   .MessageStream-item .Post.Post--byCurrentUser .Post-body,
   .MessageStream-item .Message.Post--byCurrentUser .Post-body {
     background: var(--primary-color) !important;
     border-color: transparent !important;
     color: #fff !important;
   }
-
-  // ── 26. Showcase grid (home feed cards) ──────────────────────────────────────
 
   .AvocadoHome-showcaseCard-link {
     background: var(--body-bg);
@@ -942,7 +834,6 @@ body.dark-mode {
     }
   }
 
-  // Full image variant — dark mode: only need to adjust the link fallback bg
   .AvocadoHome-showcaseCard--full {
     .AvocadoHome-showcaseCard-link {
       background: #111;
@@ -964,13 +855,11 @@ body.dark-mode {
     }
   }
 
-  // Reply placeholder input area
   .MessagesPage .MessageStream .ReplyPlaceholder .Post-header,
   .AvocadoMessages .MessageStream .ReplyPlaceholder .Post-header {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
   }
 
-  // Inline reply textarea — force text/placeholder visible on dark backgrounds
   .AvocadoMessages-inlineReply-input {
     color: var(--avmsg-text) !important;
     -webkit-text-fill-color: var(--avmsg-text) !important;
@@ -978,7 +867,6 @@ body.dark-mode {
     &::placeholder { color: var(--avmsg-muted) !important; opacity: 1 !important; }
   }
 
-  // Composer
   .AvocadoMessages-chatCol .Composer,
   .MessagesPage .Composer {
     background: var(--body-bg) !important;
@@ -992,9 +880,6 @@ body.dark-mode {
     .TextEditor-editor { color: var(--text-color) !important; }
   }
 
-  // ── 27. Discussion Hero — Page Header ────────────────────────────────────────
-
-  // Page container tokens for discussion
   .Page.DiscussionPage {
     --disc-bg:      var(--body-bg);
     --disc-border:  rgba(255, 255, 255, 0.08);
@@ -1003,12 +888,10 @@ body.dark-mode {
     --disc-muted:   var(--muted-color);
   }
 
-  // LeaderboardHero — dark mode (scoped to .LeaderboardPage for specificity)
   .LeaderboardPage .LeaderboardHero::before {
     background: linear-gradient(135deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 60%);
   }
 
-  // Leaderboard cards — dark surface
   .LeaderboardPage .LeaderboardPodium-place,
   .LeaderboardPage .LeaderboardContenders-card,
   .LeaderboardPage .LeaderboardItem {
@@ -1020,7 +903,6 @@ body.dark-mode {
     }
   }
 
-  // Leaderboard pills + refresh
   .LeaderboardPage .LeaderboardPage-filterBtn {
     border-color: var(--avocado-border-chip);
 
@@ -1038,12 +920,10 @@ body.dark-mode {
     }
   }
 
-  // DiscussionHero overlay — adjust for dark backgrounds
   .DiscussionHero::before {
     background: linear-gradient(135deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 60%);
   }
 
-  // Back button — semi-transparent dark surface in dark mode
   .DiscussionHero-back {
     background: var(--disc-hero-surface, rgba(0,0,0,0.25));
     color: var(--disc-hero-text, var(--text-on-dark));
@@ -1053,29 +933,26 @@ body.dark-mode {
     }
   }
 
-  // Discussion title — adaptive: JS sets --disc-hero-text per-tag, fallback to light text
+  // O JS define --disc-hero-text por tag; o fallback é texto claro.
   .DiscussionHero-title {
     color: var(--disc-hero-text, var(--text-on-dark));
   }
 
-  // Meta row (participants + post count)
   .DiscussionHero-meta {
     color: var(--disc-hero-text-muted, var(--text-on-dark-muted));
   }
 
-  // Meta items icons and text — ensure visibility
   .DiscussionHero-metaItem {
     color: var(--disc-hero-text-muted, var(--text-on-dark-muted));
 
     i { color: inherit; }
   }
 
-  // Decoration icon on hero
   .DiscussionHero-decorationIcon {
     opacity: calc(var(--decoration-opacity, 0.15) * 0.5);
   }
 
-  // Badges inside hero — text always white for contrast on saturated badge bg
+  // Branco para contraste sobre o fundo saturado do badge.
   .DiscussionHero .AvocadoHome-badge {
     &--sticky    { background: rgba(251, 146, 60, 0.90); color: var(--text-on-dark); }
     &--locked    { background: rgba(239, 68, 68, 0.90); color: var(--text-on-dark); }
@@ -1084,7 +961,6 @@ body.dark-mode {
     &--ignoring  { background: rgba(107, 114, 128, 0.70); color: var(--text-on-dark); }
   }
 
-  // Tag pills inside hero — dark mode variant
   .DiscussionHero .AvocadoHome-tagPill {
     background: color-mix(in srgb, var(--tag-color) 8%, var(--body-bg));
     color: var(--tag-color);
@@ -1094,7 +970,6 @@ body.dark-mode {
     }
   }
 
-  // Participant avatar borders — dark mode contrast
   .DiscussionHero-participantAvatar {
     border-color: rgba(255, 255, 255, 0.2);
 
@@ -1103,14 +978,12 @@ body.dark-mode {
     }
   }
 
-  // +X participants badge — dark mode variant
   .DiscussionHero-participantsMore {
     background: var(--disc-hero-surface, rgba(255,255,255,0.12));
     border-color: rgba(255, 255, 255, 0.15);
     color: var(--disc-hero-text, var(--text-on-dark));
   }
 
-  // Decoration icon divider — dark mode: black instead of white
   .DiscussionHero-decoSeparator {
     --deco-sep-color: rgba(0, 0, 0, 0.45);
   }

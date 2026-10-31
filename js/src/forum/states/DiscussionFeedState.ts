@@ -10,20 +10,11 @@ import { apiInclude } from '../utils';
 const FEED_INCLUDE = (): string => apiInclude('user', 'lastPostedUser', 'tags');
 
 /**
- * `DiscussionFeedState` is `DiscussionListState` with the extras Avocado's
- * realtime feeds need:
- *
- *  - `pendingDiscs`     — discussions that arrived over the WebSocket and are
- *                         waiting for the user to flush them via the banner.
- *  - `newDiscIds`       — IDs that should briefly highlight as "new" after a flush.
- *  - `selfActionIds`    — IDs whose like the current user just toggled, used to
- *                         silence the realtime self-echo animation.
- *  - `updatedLikeIds`   — IDs that should pop briefly after a remote like.
- *  - `wsFetchFailures`  — counter that the banner falls back to when a refetch
- *                         failed but we still want to indicate "something happened".
- *
- * Replaces the manual `discussions[] / loading / hasMore / offset / sort`
- * fields previously duplicated in AllDiscussionsPage and TagPage.
+ * `DiscussionListState` com o que os feeds em tempo real do tema precisam:
+ * discussões que chegaram pelo WebSocket esperando o banner (`pendingDiscs`),
+ * ids destacados como novos (`newDiscIds`), likes do próprio usuário para calar
+ * o eco do realtime (`selfActionIds`), likes remotos (`updatedLikeIds`) e falhas
+ * de refetch que o banner ainda conta (`wsFetchFailures`).
  */
 export default class DiscussionFeedState<P extends DiscussionListParams = DiscussionListParams> extends DiscussionListState<P> {
   pendingDiscs = new Map<string, Discussion>();
@@ -32,18 +23,15 @@ export default class DiscussionFeedState<P extends DiscussionListParams = Discus
   updatedLikeIds = new Set<string>();
   wsFetchFailures = 0;
 
-  /**
-   * Override request params to ensure ThreadCard's required relationships are
-   * always included regardless of which feed instantiates this state.
-   */
+  /** Garante as relações que o ThreadCard exige, seja qual for o feed. */
   requestParams(): PaginatedListRequestParams {
     const params = super.requestParams();
     return { ...params, include: FEED_INCLUDE() };
   }
 
   /**
-   * Flat array of discussions across all loaded pages, sticky-sorted to the top.
-   * The view should iterate this rather than `getPages()` directly.
+   * Discussões de todas as páginas carregadas, fixadas no topo. A view itera isto,
+   * não `getPages()`.
    */
   flatItems(): Discussion[] {
     const flat: Discussion[] = [];
@@ -56,9 +44,8 @@ export default class DiscussionFeedState<P extends DiscussionListParams = Discus
   }
 
   /**
-   * Flush all pending realtime arrivals into the live feed: each is added to
-   * the top via `addDiscussion` (which dedups), then marked as "newly arrived"
-   * for ~4s so the card can render a highlight.
+   * Passa as chegadas pendentes para o feed: cada uma entra no topo por
+   * `addDiscussion` (que deduplica) e fica marcada como nova por ~4s.
    */
   flushPending(): void {
     const pending = Array.from(this.pendingDiscs.values());
@@ -78,12 +65,11 @@ export default class DiscussionFeedState<P extends DiscussionListParams = Discus
     }, 4000);
   }
 
-  /** Total number to display in the WS update banner. */
+  /** Número mostrado no banner do WS. */
   pendingCount(): number {
     return this.pendingDiscs.size + this.wsFetchFailures;
   }
 
-  /** True when the feed is empty after the initial fetch finished. */
   isEmptyResult(): boolean {
     return !this.isInitialLoading() && !this.hasItems();
   }

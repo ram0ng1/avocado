@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Middleware;
@@ -18,23 +27,10 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Ramon\Avocado\Support\ChangelogProducts;
 
 /**
- * `/t/produto` e `/t/subtag` não têm página própria: o changelog já lista as
- * mesmas discussões, com a linha do tempo e o filtro de tipo. Quem entra por
- * uma dessas URLs (link antigo, favorito, buscador, alguém que colou o
- * endereço) recebe um 302 para `/changelog/produto[?type=subtag]` antes de
- * qualquer conteúdo ser montado — o redirecionamento é da aplicação, não do
- * navegador.
- *
- * O caminho dentro do app não passa por aqui (o Mithril troca a rota sem pedir
- * a página ao servidor); lá, os links de tag já são gerados apontando para o
- * changelog (ver forum/utils/changelog `changelogTagTarget`).
- *
- * Roda depois de ResolveRoute e da autenticação — precisa do nome da rota e do
- * visitante, para uma tag restrita não ser revelada a quem não a enxerga — e
- * antes de ExecuteRoute, que é o que monta a página da tag.
- *
- * 302 e não 301: a lista de produtos é uma configuração, e um redirecionamento
- * permanente ficaria no cache do navegador depois de o admin desfazê-la.
+ * `/t/produto` e `/t/subtag` redirecionam para `/changelog/produto[?type=subtag]`.
+ * Roda depois da autenticação, para uma tag restrita não ser revelada, e antes
+ * de ExecuteRoute. 302 e não 301: a lista de produtos é configuração e um 301
+ * ficaria no cache do navegador.
  */
 final class RedirectChangelogTags implements MiddlewareInterface
 {

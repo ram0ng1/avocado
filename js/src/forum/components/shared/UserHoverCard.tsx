@@ -22,13 +22,10 @@ const ARROW_INSET = 26;
 const ARROW_REACH = 28;
 
 /**
- * Estado do card em nível de MÓDULO, renderizado num portal próprio no <body>
- * via m.render — nunca dentro da árvore do componente trigger. Motivo: o
- * PostStream recria instâncias do componente mantendo o mesmo nó DOM, e os
- * event handlers antigos ("zumbis") continuam ligados ao elemento; se o estado
- * morasse na instância, o open rodava numa instância descartada cujo view
- * nunca mais renderiza. Com o estado e o render fora do vdom, qualquer
- * instância (viva ou zumbi) dispara o mesmo singleton e o card sempre monta.
+ * Estado do card no nível do módulo, desenhado num portal próprio no <body> via
+ * m.render. O PostStream recria instâncias mantendo o mesmo nó DOM e os handlers
+ * antigos continuam ligados: com o estado na instância, o open rodaria numa
+ * instância descartada. Fora do vdom, qualquer instância aciona o mesmo singleton.
  */
 let portal: HTMLElement | null = null;
 let currentUser: any = null;
@@ -192,9 +189,8 @@ function hydrate(user: any): void {
 function cardVnode(user: any) {
   const profileHref = userRoute(user);
   const cover = (user.attribute?.('cover_thumbnail') || user.attribute?.('cover')) as string | null;
-  // fof/user-bio renderiza a bio no servidor (s9e) e expõe o HTML em `bioHtml`;
-  // renderamos isso — senão o BBCode/markdown apareceria cru ([b], [url], …).
-  // `bio` (texto puro) é o fallback quando a formatação/extensão está ausente.
+  // O fof/user-bio renderiza a bio no servidor (s9e) em `bioHtml`; sem isso o
+  // BBCode/markdown apareceria cru. `bio` em texto puro é o fallback.
   const bioHtml = user.bioHtml?.() as string | undefined;
   const bio = (user.bio?.() || user.attribute?.('bio') || '') as string;
   const joined = user.joinTime?.();
@@ -310,12 +306,10 @@ function cardVnode(user: any) {
 function openMessageComposer(user: any): void {
   closeCard();
 
-  // NÃO carregamos o MessageComposer pelo registry cross-bundle: nesta stack,
-  // reg.asyncModuleImport('ext:flarum/messages/forum/components/MessageComposer')
-  // resolve para o ComposerBody (abstrato, sem onsubmit) e o compositor nunca
-  // abre / quebra no render. Em vez disso, reaproveitamos a ação nativa "Enviar
-  // mensagem" que o flarum/messages registra em UserControls — o onclick dela usa
-  // o import INTERNO do próprio bundle do messages e resolve a classe correta.
+  // O MessageComposer não vem pelo registry: o asyncModuleImport resolve para o
+  // ComposerBody abstrato e o compositor quebra no render. Reaproveita a ação
+  // "Enviar mensagem" que o flarum/messages registra em UserControls, que usa o
+  // import interno do próprio bundle dele.
   try {
     const UserControls = (flarum as any).reg?.get?.('core', 'forum/utils/UserControls');
     const items = UserControls?.userControls?.(user);
@@ -332,12 +326,10 @@ function openMessageComposer(user: any): void {
 }
 
 /**
- * Handlers de hover para acoplar o card a um elemento que JÁ existe, sem inserir
- * um wrapper. Use quando envolver o alvo mudaria a árvore que outras peças
- * esperam — ex.: o <h3 className="PostUser-name">, que precisa continuar sendo
- * filho direto de .PostUser (e ter o <a> como filho direto) para o CSS do tema e
- * para extensões que localizam o nó por vnode.children.find(match('PostUser-name')).
- * Retorna {} quando o card está desativado, então Object.assign vira no-op.
+ * Handlers de hover para acoplar o card a um elemento que já existe, sem
+ * wrapper: ex. o <h3 className="PostUser-name">, que precisa continuar filho
+ * direto de .PostUser para o CSS e para extensões que o acham por vnode.
+ * Devolve {} com o card desativado, e o Object.assign vira no-op.
  */
 export function hoverCardAttrs(user: any): Record<string, any> {
   if (!user || !userCardEnabled()) return {};
@@ -358,20 +350,17 @@ export function hoverCardAttrs(user: any): Record<string, any> {
 }
 
 export interface UserHoverCardAttrs {
-  /** The user model (from a discussion/post relation or the store). */
   user: any;
   [key: string]: any;
 }
 
 /**
- * Trigger do card Discourse-style. Envolva qualquer avatar/nome:
+ * Gatilho do card, em volta de qualquer avatar/nome:
  *
  *   <UserHoverCard user={user}><Avatar user={user} /></UserHoverCard>
  *
- * O componente é só o gatilho — todo estado/render do card vive no singleton
- * acima. O mousemove rearma a abertura para sobreviver à recriação de
- * instância do PostStream. Hover-only por design: no touch o elemento
- * embrulhado mantém o tap normal (navegar ao perfil).
+ * O estado fica no singleton acima; o mousemove rearma a abertura para
+ * sobreviver à recriação do PostStream. Só hover: no toque o tap abre o perfil.
  */
 export default class UserHoverCard extends Component<UserHoverCardAttrs> {
   view(vnode: any) {

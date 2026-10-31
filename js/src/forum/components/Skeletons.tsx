@@ -1,11 +1,8 @@
-// ─── Avocado skeleton render functions ───────────────────────────────────────
-// Single source of truth for all preloader skeletons across the theme.
-// Import from utils.ts (which re-exports everything here) for backward compat.
+// Esqueletos do tema; utils.ts reexporta tudo daqui.
 
 import app from 'flarum/forum/app';
 
-// ── Thread card skeleton ──────────────────────────────────────────────────────
-// Mirrors ThreadCard: head (avatar + main + actions) + stats row.
+// Espelha o ThreadCard: cabeça (avatar, texto, ações) e linha de números.
 export const renderThreadSkeleton = (count = 3): any[] =>
   Array.from({ length: count }, (_, i) =>
     m('div', { key: i, className: 'AvocadoHome-skeletonCard' }, [
@@ -20,8 +17,8 @@ export const renderThreadSkeleton = (count = 3): any[] =>
         m(
           'div',
           { className: 'AvocadoHome-skeletonActions' },
-          // Hidden content drives natural width — the shimmer bg on the wrapper shows,
-          // children are invisible via CSS (> * { visibility: hidden }).
+          // O conteúdo escondido dá a largura natural; o CSS esconde os filhos e deixa só
+          // o brilho do wrapper.
           m('div', { className: 'AvocadoHome-skeletonActions-reply', 'aria-hidden': 'true' }, [
             m('i', { className: 'fas fa-reply', 'aria-hidden': 'true' }),
             m('span', {}, app.translator.trans('ramon-avocado.forum.home.reply_label')),
@@ -37,12 +34,9 @@ export const renderThreadSkeleton = (count = 3): any[] =>
 
 export const renderDiscSkeleton = renderThreadSkeleton;
 
-// ── Ossos ─────────────────────────────────────────────────────────────────────
-// Um esqueleto montado com a marcação REAL do que vai substituí-lo (as mesmas
-// classes do cartão, do hero, das abas) herda caixa, recuo e espaçamento do CSS
-// de verdade — em qualquer largura de tela, sem números copiados à mão. Só o
-// texto vira osso: uma linha que ocupa a altura de linha do elemento em que
-// está, com a largura inventada.
+// Um esqueleto montado com a marcação real do que vai substituí-lo herda caixa,
+// recuo e espaçamento do CSS de verdade, em qualquer largura, sem números
+// copiados à mão. Só o texto vira osso.
 
 /** Uma linha de texto em osso, dentro de um elemento real. */
 export const bone = (width: string): any => m('span', { className: 'AvocadoBone AvocadoBone--text', style: { width } }, ' ');
@@ -50,9 +44,8 @@ export const bone = (width: string): any => m('span', { className: 'AvocadoBone 
 /** Classes de um elemento real pintado inteiro como osso (avatar, botão, pílula): o conteúdo só dá a largura. */
 export const BONE_FILL = 'AvocadoBone AvocadoBone--fill';
 
-// ── Profile card skeletons ────────────────────────────────────────────────────
-// Os cartões das abas do perfil: PostCard (posts, curtidas, menções) e
-// ThreadCard (discussões). Larguras variam por cartão para não parecer carimbo.
+// Cartões das abas do perfil: PostCard e ThreadCard. As larguras variam por
+// cartão para não parecer carimbo.
 const PROFILE_TITLES = ['34%', '22%', '46%'];
 const PROFILE_EXCERPTS = [['72%'], ['100%', '38%'], ['88%']];
 
@@ -114,15 +107,10 @@ export const renderProfileCardSkeleton = (kind: 'post' | 'thread' = 'post', coun
     ]);
   });
 
-// ── Post search skeleton ──────────────────────────────────────────────────────
-// Mirrors AvocadoSearch-postCard layout:
-//   head  → avatar(36) + meta (author + time)
-//   pill  → discussion link
-//   excerpt → 2 lines of text
+// Espelha o AvocadoSearch-postCard.
 export const renderPostSkeleton = (count = 3): any[] =>
   Array.from({ length: count }, (_, i) =>
     m('div', { key: i, className: 'AvocadoSearch-postSkeleton' }, [
-      // Head: avatar + meta
       m('div', { className: 'AvocadoSearch-postSkeleton-head' }, [
         m('div', { className: 'AvocadoSearch-postSkeleton-avatar' }),
         m('div', { className: 'AvocadoSearch-postSkeleton-meta' }, [
@@ -130,9 +118,7 @@ export const renderPostSkeleton = (count = 3): any[] =>
           m('div', { className: 'AvocadoHome-skeletonLine', style: 'height:10px;width:70px' }),
         ]),
       ]),
-      // Discussion link pill
       m('div', { className: 'AvocadoSearch-postSkeleton-pill' }),
-      // Excerpt lines
       m('div', { className: 'AvocadoSearch-postSkeleton-excerpt' }, [
         m('div', { className: 'AvocadoHome-skeletonLine AvocadoHome-skeletonLine--md' }),
         m('div', { className: 'AvocadoHome-skeletonLine AvocadoHome-skeletonLine--sm' }),
@@ -140,14 +126,10 @@ export const renderPostSkeleton = (count = 3): any[] =>
     ])
   );
 
-// ── Showcase card skeleton ────────────────────────────────────────────────────
-// Used by renderShowcaseSlider() in HomePage.
 export const renderShowcaseSkeleton = (count: number): any[] =>
   Array.from({ length: count }, (_, i) => m('div', { key: i, className: 'AvocadoHome-showcaseSkeleton' }));
 
-// ── Discussion page nav skeleton ──────────────────────────────────────────────
-// Mirrors Page-sidebar > DiscussionPage-nav.
-// isLoggedIn=false → guest view: no Reply or Subscription dropdowns.
+// Espelha Page-sidebar > DiscussionPage-nav; guests não têm Responder nem Seguir.
 export const renderDiscussionNavSkeleton = (isLoggedIn = true): any =>
   m(
     'div',
@@ -156,7 +138,6 @@ export const renderDiscussionNavSkeleton = (isLoggedIn = true): any =>
       'nav',
       { className: 'DiscussionPage-nav' },
       m('ul', {}, [
-        // Reply / controls + Subscription — logged-in users only
         ...(isLoggedIn
           ? [
               m('li', { className: 'item-controls' }, m('div', { className: 'AvocadoSkeleton-navSplitMain AvocadoSkeleton-navSplitMain--primary' })),
@@ -167,16 +148,13 @@ export const renderDiscussionNavSkeleton = (isLoggedIn = true): any =>
               ),
             ]
           : []),
-        // Scrubber — always shown
         m('li', { className: 'item-scrubber' }, m('div', { className: 'AvocadoSkeleton-navScrubber' })),
-      ]) // ul
-    ) // nav
-  ); // Page-sidebar
+      ])
+    )
+  );
 
-// ── Support skeletons (linkrobins/support) ────────────────────────────────────
-// Reaproveitam as classes da própria extensão (.LinkRobinsSupport-list, -row,
-// -reply, -categoryCard) para que o esqueleto tenha a moldura, o recuo e as
-// divisórias do conteúdo que vai substituí-lo, e não uma caixa parecida.
+// Esqueletos do linkrobins/support: usam as classes da própria extensão para
+// herdar moldura, recuo e divisórias do conteúdo real.
 
 export const renderSupportListSkeleton = (count = 5): any =>
   m(

@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Filter;
@@ -13,15 +22,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Ramon\Avocado\Support\BookmarksSetting;
 
 /**
- * Filtro `avocadoBookmarked` para a busca de discussões — restringe o resultado
- * às discussões salvas pelo ator. Alimenta a página "Salvos". Espelha a forma do
- * SubscriptionFilter do core (whereIn por subconsulta no índice da companion
- * table). Guests nunca têm bookmarks, então caem num conjunto vazio.
- *
- * A chave é prefixada porque o fof/bookmarks registra um filtro `bookmarked` na
- * mesma DiscussionSearcher: com a chave repetida os dois filtros entram na
- * mesma query (AND) e a página do tema devolveria a interseção dos dois
- * sistemas — quase sempre vazia.
+ * Discussões salvas pelo ator (página "Salvos"), como o SubscriptionFilter do
+ * core. O prefixo evita somar (AND) com o filtro `bookmarked` do fof/bookmarks
+ * na mesma busca.
  *
  * @implements FilterInterface<DatabaseSearchState>
  */
@@ -46,8 +49,7 @@ class BookmarkFilter implements FilterInterface
             return;
         }
 
-        // Sistema desligado: o filtro vira conjunto vazio em vez de no-op —
-        // um no-op devolveria TODAS as discussões na página /bookmarks.
+        // Desligado vira conjunto vazio: um no-op listaria TODAS as discussões em /bookmarks.
         if (! $this->bookmarks->enabled()) {
             $state->getQuery()->whereRaw('1 = 0');
 

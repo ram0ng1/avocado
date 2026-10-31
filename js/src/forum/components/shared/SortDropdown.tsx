@@ -13,10 +13,6 @@ export interface SortDropdownAttrs extends ComponentAttrs {
   onChange: (key: string) => void;
 }
 
-/**
- * SortDropdown — reusable sort picker used by AllDiscussionsPage, TagPage,
- * AvocadoDiscussionsSearchPage, and AvocadoPostsSearchPage.
- */
 export default class SortDropdown extends Component<SortDropdownAttrs> {
   private open: boolean = false;
 

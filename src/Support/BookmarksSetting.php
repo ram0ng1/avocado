@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Support;
@@ -7,14 +16,8 @@ namespace Ramon\Avocado\Support;
 use Flarum\Settings\SettingsRepositoryInterface;
 
 /**
- * Leitura canônica do switch do sistema de bookmarks. Centraliza o cast — o
- * settings guarda '0'/'1' como string e `(bool) '0'` é true em PHP, então todo
- * consumidor passa por aqui em vez de coagir por conta própria.
- *
- * A tabela entra na conta junto com o switch: sem `avocado_bookmarks` migrada
- * não existe sistema de bookmarks para ligar, e todo consumidor (controllers,
- * filtro, campos da API, comando de lembretes) já passa por aqui — um único
- * ponto cobre todos. Ver BookmarksSchema.
+ * Leitura única do switch dos bookmarks: o settings guarda '0'/'1' como string,
+ * e `(bool) '0'` é true. Sem a tabela migrada o switch conta como desligado.
  */
 final class BookmarksSetting
 {

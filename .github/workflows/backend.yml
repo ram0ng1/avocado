@@ -1,0 +1,28 @@
+name: Backend (Flarum)
+
+# O mesmo workflow que o core e a FoF usam (flarum/framework
+# REUSABLE_backend.yml): `composer test:setup` + `composer test` (unitários e
+# integração com flarum/testing) em MySQL, MariaDB, PostgreSQL e SQLite, com e
+# sem prefixo de tabela, e `composer analyse:phpstan`. O ci.yml continua com o
+# que é só do tema (matriz contra o core dev, auditoria, JS, traduções).
+#
+# Como na FoF: o workflow reutilizável roda no `push` (inclusive dos branches
+# dos PRs deste repositório) e só usa o `pull_request` para PRs de fork.
+on: [workflow_dispatch, push, pull_request]
+
+# Nega tudo ao GITHUB_TOKEN por padrão; o workflow reutilizado só lê o código.
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run:
+    # Fixado por SHA, como as outras actions do repositório (2.x).
+    uses: flarum/framework/.github/workflows/REUSABLE_backend.yml@cdc86216fced7409f218f38808b7fd3fc7882b17  # 2.x
+    with:
+      enable_backend_testing: true
+      enable_phpstan: true
+      backend_directory: .

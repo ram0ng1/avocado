@@ -1,4 +1,14 @@
 <?php
+
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 // Popula o Flarum de teste com dados mínimos para que /, /tags e /all
 // não fiquem vazios. Roda dentro do diretório raiz do Flarum.
 

@@ -2,13 +2,10 @@ import app from 'flarum/forum/app';
 import { formatDate } from '../utils';
 
 /**
- * Formato de relógio do tema — 12h (2:30 PM) ou 24h (14:30).
- *
- * O input nativo `datetime-local` desenhava a hora no formato do *navegador* e
- * não havia como pedir 24h: quem usa o fórum em en-US ficava preso em A.M./P.M.
- * Por isso o seletor de lembrete virou um controle próprio, e o formato sai
- * daqui: setting do admin (avocado.clock_format), com 'auto' caindo no locale
- * do visitante — o comportamento antigo, agora como escolha e não como limite.
+ * Formato de relógio do tema, 12h (2:30 PM) ou 24h (14:30): setting do admin
+ * (avocado.clock_format), com 'auto' seguindo o locale do visitante. O seletor
+ * de lembrete é um controle próprio porque o `datetime-local` nativo segue o
+ * formato do navegador, sem como pedir 24h.
  */
 export type ClockFormat = '12' | '24';
 

@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
-namespace Ramon\Avocado\Tests\Integration;
+namespace Ramon\Avocado\Tests\unit\Migrations;
 
 use Illuminate\Database\Connection;
 use Illuminate\Database\Schema\Blueprint;
@@ -14,13 +23,11 @@ use Ramon\Avocado\Model\DiscussionHero;
 use Ramon\Avocado\Tests\Support\Database;
 
 /**
- * Drives the real create_avocado_discussion_heroes migration (up/down,
- * idempotency), the FK cascade that prevents orphaned hero rows (§26), and the
- * model's $guarded contract on the discussion_id PK (§7). Each test runs once
- * per available engine (sqlite always; mysql/mariadb/pgsql when configured via
- * AVOCADO_TEST_* env vars), so the migration DDL is validated cross-engine.
+ * Migration real de avocado_discussion_heroes (up/down, idempotência), o cascade
+ * da FK que impede hero órfão e o $guarded da PK. Roda em cada banco disponível
+ * (SQLite sempre; MySQL/MariaDB/PostgreSQL com AVOCADO_TEST_*).
  */
-final class DiscussionHeroTest extends TestCase
+final class DiscussionHeroMigrationTest extends TestCase
 {
     private ?Connection $db = null;
     private ?Builder $schema = null;
@@ -45,8 +52,7 @@ final class DiscussionHeroTest extends TestCase
 
         $this->schema = $this->db->getSchemaBuilder();
 
-        // Clean slate (child-first for the FK), then a minimal core `discussions`
-        // stand-in carrying the legacy column the migration migrates away from.
+        // Limpa (filha primeiro, pela FK) e cria um `discussions` mínimo com a coluna antiga.
         $this->schema->dropIfExists('avocado_discussion_heroes');
         $this->schema->dropIfExists('discussions');
         $this->schema->create('discussions', function (Blueprint $t) {
@@ -75,7 +81,7 @@ final class DiscussionHeroTest extends TestCase
     /** @return array{up: callable, down: callable} */
     private function migration(): array
     {
-        return require dirname(__DIR__, 2)
+        return require dirname(__DIR__, 3)
             . '/migrations/2026_05_24_000000_create_avocado_discussion_heroes_table.php';
     }
 
@@ -90,7 +96,7 @@ final class DiscussionHeroTest extends TestCase
         self::assertFalse($this->schema->hasColumn('discussions', 'avocado_hero_image_path'));
 
         $rows = $this->db->table('avocado_discussion_heroes')->orderBy('discussion_id')->get();
-        // Only the two rows with a non-null legacy value are copied.
+        // Só as duas linhas com valor são copiadas.
         self::assertCount(2, $rows);
         self::assertSame(1, (int) $rows[0]->discussion_id);
         self::assertSame('avocado-disc-hero-1-abc.webp', $rows[0]->image_path);
@@ -105,7 +111,7 @@ final class DiscussionHeroTest extends TestCase
 
         $up = $this->migration()['up'];
         $up($this->schema);
-        $up($this->schema); // second run must not throw or double-copy
+        $up($this->schema); // a segunda rodada não pode estourar nem copiar de novo
 
         self::assertSame(2, $this->db->table('avocado_discussion_heroes')->count());
     }
@@ -161,12 +167,12 @@ final class DiscussionHeroTest extends TestCase
 
         $this->migration()['up']($this->schema);
 
-        // $guarded = ['discussion_id'] — mass assignment must NOT set the PK.
+        // $guarded = ['discussion_id']: atribuição em massa NÃO define a PK.
         $hero = new DiscussionHero();
         $hero->fill(['discussion_id' => 999, 'image_path' => 'mass.webp']); /* o teste verifica exatamente a proteção contra mass assignment; nosemgrep: flarum-v2-mass-assignment */
         self::assertNull($hero->discussion_id);
 
-        // Explicit assignment is the only allowed path for the server-controlled PK.
+        // A PK, controlada pelo servidor, só é definida explicitamente.
         $hero->discussion_id = 2;
         $hero->image_path = 'mass.webp';
         $hero->save();

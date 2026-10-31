@@ -109,7 +109,7 @@ function renderSkeleton() {
   ));
 }
 
-/** Override target for TagsPage.prototype.view — `this` = native Flarum TagsPage instance */
+/** Substitui TagsPage.prototype.view; `this` é a instância nativa do TagsPage. */
 export function tagPageView(this: any, _original: () => any) {
   const tags = (this.tags || []) as any[];
   const loading = !!this.loading;

@@ -1,13 +1,10 @@
 /**
- * Conteúdo do rodapé do tema, compartilhado entre o admin (que edita) e o
- * fórum (que desenha): o formato das listas gravadas, as redes sociais
- * conhecidas e os textos padrão.
+ * Conteúdo do rodapé, compartilhado entre o admin (que edita) e o fórum (que
+ * desenha).
  *
- * **Padrão × vazio.** Uma opção que nunca foi gravada vale o padrão daqui — é
- * o que o admin vê preenchido ao abrir a aba e o que o fórum mostra. Gravada
- * vazia, ela some do rodapé. Por isso estas chaves não têm `->default()` no
- * extend.php: com ele o "nunca gravada" chegaria como string vazia e não daria
- * para distinguir uma coisa da outra.
+ * Uma opção nunca gravada vale o padrão daqui; gravada vazia, some do rodapé.
+ * Por isso estas chaves não têm `->default()` no extend.php: com ele as duas
+ * situações chegariam iguais, como string vazia.
  */
 
 export interface FooterLinkItem {

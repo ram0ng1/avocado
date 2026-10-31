@@ -37,11 +37,9 @@ $extensionStylesheets = [
     'linkrobins-wiki' => 'extensions/Wiki.less',
 ];
 
-// Com o ernestdefoe/wardrobe (vários temas na mesma instalação), o Wardrobe
-// separa o JS/CSS de cada tema, mas os ->content() de todas as extensões rodam
-// em toda página. Sem este portão o <style id="avocado-logo-hide"> (e as
-// fontes, o spinner, o kit do Font Awesome…) entram nas páginas do outro tema
-// e escondem o logo dele. Sem o Wardrobe, o portão não faz nada.
+// Com o ernestdefoe/wardrobe os ->content() de todos os temas rodam em toda página;
+// sem este portão o CSS/JS inline do Avocado vazaria para o outro tema (e esconderia
+// o logo dele). Sem o Wardrobe, não faz nada.
 $onlyForAvocado = static fn (string $class): \Closure => static function (\Flarum\Frontend\Document $document, \Psr\Http\Message\ServerRequestInterface $request) use ($class): void {
     if (class_exists(\Ernestdefoe\Wardrobe\ThemeRegistry::class)
         && resolve(\Flarum\Extension\ExtensionManager::class)->isEnabled('ernestdefoe-wardrobe')) {
@@ -75,9 +73,8 @@ return [
         ->content($onlyForAvocado(\Ramon\Avocado\Content\LinkIconStyle::class))
         ->content($onlyForAvocado(\Ramon\Avocado\Content\DiscussionStyle::class))
         ->content($onlyForAvocado(\Ramon\Avocado\Content\SearchStyle::class))
-        // No CSS-deferral injector here: Flarum core already emits async CSS
-        // natively (warm-visit cache + <link rel="preload" onload>); a custom
-        // deferral only duplicated <noscript>/<link> tags.
+        // Sem adiamento de CSS próprio: o core já carrega o CSS de forma assíncrona,
+        // e um segundo mecanismo só duplicaria as tags <noscript>/<link>.
         ->content($onlyForAvocado(\Ramon\Avocado\Content\LoadFontAwesomeKit::class))
         ->content($onlyForAvocado(\Ramon\Avocado\Content\InjectOnlineUsers::class))
         // Preloads de dado — cada um sai cedo se não estiver na sua rota.
@@ -94,13 +91,9 @@ return [
             (new Extend\Frontend('forum'))->route('/search', 'avocado-search'),
         ]),
 
-    // CSS por extensão: cada folha só entra no forum.css com a extensão ativa
-    // (o MessagesPage.less sozinho tem ~1,8 mil linhas, e o flarum/messages
-    // costuma estar desligado). O Flarum compila todas as folhas de css() num
-    // único Less_Parser, na ordem de registro dos extenders — por isso elas
-    // ficam entre o forum.less e o forum-tail.less, na ordem em que eram
-    // importadas, e enxergam as variáveis/mixins do common sem importar nada.
-    // Ligar/desligar uma extensão dispara a recompilação dos assets no core.
+    // Cada folha só entra no forum.css com a extensão ativa. O Flarum compila as folhas
+    // de css() num único Less_Parser, na ordem de registro: por isso ficam entre o
+    // forum.less e o forum-tail.less e enxergam as variáveis do common sem importar nada.
     ...array_map(
         fn (string $extensionId, string $sheet) => (new Extend\Conditional())
             ->whenExtensionEnabled($extensionId, fn () => [
@@ -113,16 +106,11 @@ return [
     (new Extend\Frontend('forum'))
         ->css(__DIR__.'/less/forum-tail.less'),
 
-    // Tabelas no Markdown (sintaxe de pipes do GFM). O Litedown do
-    // flarum/markdown não tem tabela e o BBCode do core também não — e as
-    // páginas do linkrobins/wiki (guias de referência) vivem de tabelas. O
-    // formatter é um só no fórum, então posts novos também passam a aceitar a
-    // sintaxe; os já salvos guardam o XML antigo e não mudam. O visual fica em
-    // forum/extensions/Wiki.less.
-    // Design de cada artigo do linkrobins/wiki, escolhido pelo autor na tela de
-    // criação/edição do wiki (js/src/forum/utils/wiki.tsx): tabela companheira
-    // 1:1, como a do changelog. O eager-load decide com o banco na mão — sem a
-    // tabela migrada os endpoints seguem sem ele e todo artigo fica no padrão.
+    // Tabelas GFM no Markdown, que o Litedown do flarum/markdown não tem e o wiki
+    // precisa. O formatter é um só, então vale para posts novos também; os já
+    // salvos guardam o XML deles e não mudam.
+    // Design de cada artigo do linkrobins/wiki (tabela companheira 1:1). Sem a tabela
+    // migrada os endpoints seguem sem o eager-load e todo artigo fica no padrão.
     (new Extend\Conditional())
         ->whenExtensionEnabled('linkrobins-wiki', fn () => [
             (new Extend\Model(WikiStyleSchema::ARTICLE_MODEL))
@@ -177,7 +165,7 @@ return [
 
     new Extend\Locales(__DIR__.'/locale'),
 
-    // ── flarum/realtime: NOT NEEDED - flarum/messages already handles it ────────────
+    // Mensagens privadas não precisam de broadcast aqui: o flarum/messages já faz isso.
 
     // ── flarum/realtime — presence "quem está lendo" ─────────────────────────
     // A rota de auth só existe com o realtime ativo: o controller injeta o
@@ -224,10 +212,8 @@ return [
                 ]),
         ]),
 
-    // ── flarum/realtime — post removal/restoration (delete + hide) ───────────
-    // Both events share one channel name (postRemoved): clients always need to
-    // refresh the discussion to reflect the new visible state, so a single
-    // event handler is enough.
+    // ── flarum/realtime — post apagado, ocultado ou restaurado ───────────────
+    // Um só evento (postRemoved): em todos os casos o cliente só recarrega a discussão.
     (new Extend\Conditional())
         ->whenExtensionEnabled('flarum-realtime', fn () => [
             (new \Flarum\Realtime\Extend\Realtime())
@@ -253,25 +239,22 @@ return [
 
     (new Extend\ApiResource(\Flarum\Api\Resource\DiscussionResource::class))
         ->fields(\Ramon\Avocado\Api\DiscussionFields::class)
-        // Eager-load the 1:1 hero companion so DiscussionFields' getters don't
-        // fire one SELECT per discussion when serializing an Index payload.
+        // Sem o eager-load, cada discussão do Index dispararia um SELECT no hero.
         ->endpoint(
             [Endpoint\Index::class, Endpoint\Show::class],
             fn (Endpoint\Index|Endpoint\Show $endpoint) => $endpoint->eagerLoad('avocadoHero')
         ),
 
-    // Curtidas do primeiro post como atributo da discussão: o botão de curtir dos
-    // cards lê daqui em vez de exigir `include=firstPost` (render do post inteiro)
-    // ou um GET /api/posts extra depois do boot.
+    // Curtidas do primeiro post na discussão: o card não precisa de `include=firstPost`
+    // (render do post inteiro) nem de um GET extra depois do boot.
     (new Extend\Conditional())
         ->whenExtensionEnabled('flarum-likes', fn () => [
             (new Extend\ApiResource(\Flarum\Api\Resource\DiscussionResource::class))
                 ->fields(\Ramon\Avocado\Api\DiscussionLikeFields::class),
         ]),
 
-    // Versão e tipo de capa de uma entrada do changelog (tabela companheira). Como
-    // no bookmark, o eager-load decide com o banco na mão: sem a tabela migrada o
-    // endpoint segue sem ele em vez de derrubar toda listagem de discussões.
+    // Versão e capa do changelog. Sem a tabela migrada o endpoint segue sem o
+    // eager-load em vez de derrubar toda listagem de discussões.
     (new Extend\ApiResource(\Flarum\Api\Resource\DiscussionResource::class))
         ->fields(\Ramon\Avocado\Api\ChangelogFields::class)
         ->endpoint(
@@ -281,23 +264,16 @@ return [
                 : $endpoint
         ),
 
-    // Bookmarks do tema: campos e eager-load só existem quando o fof/bookmarks
-    // não está no comando. Cedendo, o tema para de serializar `avocadoBookmarked`
-    // e de carregar a relação por discussão — sem consulta morta em cada Index.
-    // avocadoBookmark é escopado ao ator, então o campo lê uma coleção de (0|1)
-    // linhas já em memória em vez de um SELECT por discussão.
+    // Com o fof/bookmarks ativo o tema cede: nem campos nem eager-load do bookmark.
+    // O eager-load é escopado ao ator, então o campo lê 0 ou 1 linha já em memória.
     (new Extend\Conditional())
         ->whenExtensionDisabled(BookmarksRoute::CONFLICTING_EXTENSION_ID, fn () => [
             (new Extend\ApiResource(\Flarum\Api\Resource\DiscussionResource::class))
                 ->fields(\Ramon\Avocado\Api\BookmarkFields::class)
                 ->endpoint(
                     [Endpoint\Index::class, Endpoint\Show::class],
-                    // O mutator roda por request, então a decisão é tomada com o
-                    // banco na mão: sem a tabela migrada (código novo entregue
-                    // pelo composer, `flarum migrate` ainda não rodado) o
-                    // eager-load sai do endpoint em vez de derrubar toda
-                    // listagem de discussões com "Base table or view not found".
-                    // Guests não têm bookmark nenhum — a query também não entra.
+                    // Sem a tabela migrada (composer já atualizou, migrate não rodou) o
+                    // eager-load sai em vez de derrubar a listagem. Guests não têm bookmark.
                     fn (Endpoint\Index|Endpoint\Show $endpoint) => resolve(BookmarksSchema::class)->available()
                         ? $endpoint->eagerLoadWhere('avocadoBookmark', function ($query, \Flarum\Api\Context $context) {
                             $actor = $context->getActor();
@@ -322,12 +298,8 @@ return [
         ->patch('/avocado/bookmark', 'avocado.bookmark.update', \Ramon\Avocado\Controller\UpdateBookmarkController::class)
         ->delete('/avocado/bookmark', 'avocado.bookmark.delete', \Ramon\Avocado\Controller\DeleteBookmarkController::class),
 
-    // Ícone SVG nas tags (absorvido da extensão `ramon/tag-icon-svg`). Só existe
-    // com o flarum/tags ativo, e só quando a extensão avulsa NÃO está: as duas
-    // registrariam os mesmos campos no TagResource e sobrescreveriam `Icon` duas
-    // vezes. Com ela ativa o tema cede (o attribute `avocadoTagIconSvg` nem sai
-    // no forum e o front não instala nada). O switch em si é o
-    // `avocado.tag_icon_svg_enabled`, lido em TagIconSvg->enabled().
+    // Ícone SVG nas tags. Com a extensão avulsa `ramon/tag-icon-svg` ativa o tema
+    // cede: as duas registrariam os mesmos campos e sobrescreveriam `Icon` duas vezes.
     (new Extend\Conditional())
         ->whenExtensionEnabled(TagIconSvg::TAGS_EXTENSION_ID, fn () => [
             (new Extend\Conditional())
@@ -342,11 +314,8 @@ return [
                     (new Extend\Settings())
                         ->serializeToForum('avocadoTagIconSvg', TagIconSvg::SETTING, fn ($value) => resolve(TagIconSvg::class)->enabledFor($value)),
 
-                    // O tamanho do ícone tem coluna própria (migration posterior): o modal
-                    // de tag só oferece o controle quando o servidor aceita o campo. Num
-                    // Extend\Settings à parte de propósito: `serializeToForum` indexa pela
-                    // chave do setting, e um segundo attribute na mesma instância apagaria
-                    // o `avocadoTagIconSvg` de cima.
+                    // Extend\Settings à parte de propósito: `serializeToForum` indexa pela chave do
+                    // setting, e um segundo attribute na mesma instância apagaria o de cima.
                     (new Extend\Settings())
                         ->serializeToForum('avocadoTagIconSvgScale', TagIconSvg::SETTING, fn ($value) => resolve(TagIconSvg::class)->enabledFor($value) && resolve(TagIconSvg::class)->scaleAvailable()),
                 ]),
@@ -363,6 +332,7 @@ return [
     (new Extend\Event())
         ->listen(\Flarum\Discussion\Event\Started::class, \Ramon\Avocado\Listener\FlushChangelogCounts::class)
         ->listen(\Flarum\Discussion\Event\Deleted::class, \Ramon\Avocado\Listener\FlushChangelogCounts::class)
+        ->listen(\Flarum\Discussion\Event\Deleting::class, \Ramon\Avocado\Listener\DeleteDiscussionHeroFile::class)
         ->listen(\Flarum\Discussion\Event\Hidden::class, \Ramon\Avocado\Listener\FlushChangelogCounts::class)
         ->listen(\Flarum\Discussion\Event\Restored::class, \Ramon\Avocado\Listener\FlushChangelogCounts::class)
         ->listen('Flarum\Tags\Event\DiscussionWasTagged', \Ramon\Avocado\Listener\FlushChangelogCounts::class)
@@ -370,8 +340,8 @@ return [
         // DELETE (e do cascade em discussion_tag), sem janela para um request
         // concorrente regravar o cache com o valor antigo.
         ->listen('eloquent.deleted: Flarum\Tags\Tag', \Ramon\Avocado\Listener\FlushChangelogCounts::class)
-        // Fontes e fire.webp vão para public/assets junto com a recompilação de
-        // assets do core, e não mais no boot de todo request (Support\BundledAssets).
+        // Fontes e fire.webp são copiados junto com a recompilação de assets do core,
+        // para o boot de cada request não pagar a cópia (Support\BundledAssets).
         ->listen(\Flarum\Foundation\Event\ClearingCache::class, \Ramon\Avocado\Listener\SyncBundledAssets::class)
         ->listen(\Flarum\Extension\Event\Enabled::class, \Ramon\Avocado\Listener\SyncBundledAssets::class),
 
@@ -412,12 +382,8 @@ return [
         ->serializeToForum('avocadoShowShare', 'avocado.show_share', 'boolval')
         ->serializeToForum('avocadoShowActionIcons', 'avocado.show_action_icons', 'boolval')
         ->serializeToForum('avocadoFixedAvatarEffect', 'avocado.fixed_avatar_effect', 'boolval')
-        // 'default' = a página de discussão de sempre (hero alto com wash na cor
-        // da tag, fio sem linha). 'editorial' = a variante portada do dfs: hero
-        // plano + a corrente que costura a conversa pela coluna do avatar.
-        // Serializado para o forum porque o skeleton precisa saber qual desenhar;
-        // o CSS em si é ligado pelo atributo em <html> que o
-        // Content\DiscussionStyle escreve antes do primeiro paint.
+        // 'default' ou 'editorial'. Vai para o forum porque o skeleton precisa saber qual
+        // desenhar; o CSS é ligado pelo atributo que o Content\DiscussionStyle põe no <html>.
         ->default('avocado.discussion_style', 'default')
         ->serializeToForum('avocadoDiscussionStyle', 'avocado.discussion_style')
         // Pílula "Escreva uma resposta…" fixa na base da tela em toda a discussão
@@ -432,21 +398,16 @@ return [
         // (js/src/forum/utils/composerMorph.ts).
         ->default('avocado.composer_morph', true)
         ->serializeToForum('avocadoComposerMorph', 'avocado.composer_morph', 'boolval')
-        // Como abre o compositor de nova discussão da home e de /discussions
-        // (FloatingInlineComposer.tsx): 'default' = no lugar do campo, sem efeito
-        // (o de antes); 'inline' = no lugar do campo, com a metamorfose;
-        // 'floating' = cartão na base da tela, com alça e bolha.
+        // Compositor de nova discussão da home: 'default' (no lugar do campo), 'inline'
+        // (no lugar do campo, com a metamorfose) ou 'floating' (cartão na base da tela).
         ->default('avocado.new_discussion_composer', 'inline')
         ->serializeToForum('avocadoNewDiscussionComposer', 'avocado.new_discussion_composer')
         // "↳ Em resposta a" no topo de um post que abre com menção a outro post
         // (js/src/forum/utils/replyTo.ts). Desligado, a menção fica no texto.
         ->default('avocado.reply_to_header', true)
         ->serializeToForum('avocadoReplyToHeader', 'avocado.reply_to_header', 'boolval')
-        // Onde os badges de grupo aparecem no post: 'default' (camada desligada —
-        // disco do core sobre o avatar), 'inline' (ao lado do nome), 'below'
-        // (linha própria), 'side' (embaixo do avatar) ou 'side_icons' (embaixo do
-        // avatar, só ícones). O forum bundle converte isso nas classes
-        // .avocado-badges--* em <html>; ver forum/PostBadges.less.
+        // Posição dos badges de grupo no post; 'default' mantém o disco do core sobre
+        // o avatar. O front converte o valor nas classes .avocado-badges--* do <html>.
         ->default('avocado.post_badge_position', 'inline')
         ->serializeToForum('avocadoPostBadgePosition', 'avocado.post_badge_position')
         ->serializeToForum('avocadoHeroDecorationIcon', 'avocado.hero_decoration_icon', 'boolval')
@@ -492,7 +453,7 @@ return [
         // fórum sai em toda página e o HTML só muda quando o admin salva.
         ->serializeToForum('avocadoCustomHeroHtml',     'avocado.custom_hero_html', fn ($html) => resolve(SanitizedHtmlCache::class)->sanitize('custom_hero_html', (string) $html))
         ->serializeToForum('avocadoColoredEnabled', 'avocado.colored_enabled', 'boolval')
-        ->serializeToForum('avocadoColoredBorderStyle', 'avocado.colored_border_style', null, 'none')
+        ->serializeToForum('avocadoColoredBorderStyle', 'avocado.colored_border_style')
         ->serializeToForum('avocadoThreadsStyle', 'avocado.threads_style', 'boolval')
         ->serializeToForum('avocadoCustomLoadingSpinner', 'avocado.custom_loading_spinner', 'boolval')
         // O botão de salvar segue o mesmo veredito do backend (BookmarksSetting):
@@ -503,10 +464,8 @@ return [
             'avocado.bookmarks_enabled',
             fn ($value) => (bool) filter_var($value ?? true, FILTER_VALIDATE_BOOL) && resolve(BookmarksSchema::class)->available()
         )
-        // Relógio de 12h (2:30 PM) ou 24h (14:30) nos horários que o tema
-        // desenha — hoje o seletor de lembrete e o horário no card salvo.
-        // 'auto' segue o locale do navegador de cada visitante, que é o que o
-        // input nativo fazia; '12'/'24' forçam o formato para o fórum todo.
+        // Formato de hora nos horários que o tema desenha: 'auto' segue o locale do
+        // navegador de cada visitante; '12'/'24' forçam o formato para o fórum todo.
         ->serializeToForum('avocadoClockFormat', 'avocado.clock_format')
         ->serializeToForum('avocadoUserCardEnabled', 'avocado.user_card_enabled', 'boolval')
         ->serializeToForum('avocadoPresenceEnabled', 'avocado.presence_enabled', 'boolval')
@@ -595,13 +554,9 @@ return [
     (new Extend\Policy())
         ->modelPolicy(\Flarum\Discussion\Discussion::class, \Ramon\Avocado\Access\DiscussionPolicy::class),
 
-    // linkrobins/support: linha do tempo de status dos tickets (ver
-    // Support\SupportEvents). Tudo dentro do Conditional: com a extensão
-    // desligada não existe a classe do resource nem do modelo para estender —
-    // o `::class` ali é só uma string, mas o extender resolveria a classe no
-    // boot e estouraria. O modelo é observado pelo service provider, o ator
-    // vem do middleware e o campo entra no ticket com a relação eager-carregada
-    // nas listagens.
+    // Linha do tempo de status dos tickets do linkrobins/support. Tudo dentro do
+    // Conditional: com a extensão desligada o extender resolveria no boot uma classe
+    // que não existe e estouraria.
     (new Extend\Conditional())
         ->whenExtensionEnabled(SupportEvents::EXTENSION_ID, fn () => [
             (new Extend\ServiceProvider())

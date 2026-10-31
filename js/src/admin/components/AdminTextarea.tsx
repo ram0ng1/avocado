@@ -1,7 +1,6 @@
 import app from 'flarum/admin/app';
 import { AdminComponent, getStr, saveSetting } from '../util';
 
-// Like AdminText but multi-line. Used for HTML/CSS settings (custom hero, etc.).
 export default class AdminTextarea extends AdminComponent {
   _timer: any = null;
   oninit(vnode: any) {

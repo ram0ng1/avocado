@@ -10,13 +10,8 @@ export interface ITagPickerAttrs extends ComponentAttrs {
 }
 
 /**
- * Tag picker for the inline composer.
- *
- * Renders the trigger (chips for selected tags + placeholder) and the
- * dropdown (filterable list, hierarchical primary/child tags, optional
- * "bypass minimums" checkbox for privileged users).
- *
- * All state lives on `InlineComposerState`; this component is a thin view.
+ * Seletor de tags do compositor do tema. Todo o estado fica no
+ * `InlineComposerState`; o componente só desenha.
  */
 export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerAttrs> extends Component<CustomAttrs> {
   view() {
@@ -39,7 +34,6 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
     const allTags = (app.store.all('tags') as any[]).filter(Boolean);
     const rootTags = allTags.filter((t) => !t.isChild?.()).sort((a, b) => (a.position?.() ?? 9999) - (b.position?.() ?? 9999));
 
-    // Build a flat list interleaving root tags with their children.
     const tagItems: { tag: any; isChild: boolean }[] = [];
     for (const root of rootTags) {
       tagItems.push({ tag: root, isChild: false });
@@ -54,8 +48,6 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
     const filter = (state.tagFilter || '').toLowerCase();
     return filter ? visible.filter(({ tag }) => tag.name?.().toLowerCase().includes(filter)) : visible;
   }
-
-  // ── Subviews ───────────────────────────────────────────────────────────
 
   private renderTrigger(state: InlineComposerState, instruction: string) {
     return (
@@ -191,8 +183,6 @@ export default class TagPicker<CustomAttrs extends ITagPickerAttrs = ITagPickerA
       </li>
     );
   }
-
-  // ── Helpers ────────────────────────────────────────────────────────────
 
   protected readLimits() {
     const rawMaxP = parseInt(app.forum.attribute('maxPrimaryTags') as string);

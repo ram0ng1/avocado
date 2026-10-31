@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Model;
@@ -9,10 +18,8 @@ use Flarum\Discussion\Discussion;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Tabela companheira 1:1 com `discussions` que armazena o caminho da imagem
- * hero (CLAUDE.md §45). Mantemos a chave primária por `discussion_id` para
- * dispensar coluna auto-incremento e tornar o lookup por discussão uma busca
- * direta no índice da PK.
+ * Caminho do hero da discussão (companheira 1:1 de `discussions`). A PK é o
+ * próprio `discussion_id`, sem auto-incremento.
  *
  * @property int $discussion_id
  * @property string $image_path

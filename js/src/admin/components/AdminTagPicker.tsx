@@ -1,8 +1,7 @@
 import app from 'flarum/admin/app';
 import { AdminComponent, saveSetting, trans } from '../util';
 
-// Multi-select tag picker that matches the AvocadoHome-tagPickerTrigger style
-// from the forum composer. Saves as a JSON array.
+// Seletor múltiplo de tags; grava um array JSON de ids.
 export default class AdminTagPicker extends AdminComponent {
   _saveTimer: any = null;
   _onDocClick: ((e: Event) => void) | null = null;
@@ -22,7 +21,7 @@ export default class AdminTagPicker extends AdminComponent {
     this.selected = new Set();
     this._saveTimer = null;
 
-    // Load initial selection — supports both JSON array and legacy plain string
+    // Aceita o array JSON e também o formato antigo, uma string simples.
     try {
       const raw = app.data.settings[this.attrs.settingKey];
       if (raw) {
@@ -110,7 +109,6 @@ export default class AdminTagPicker extends AdminComponent {
         </label>
 
         <div className="AvocadoAdmin-tagPicker">
-          {/* ── Trigger ── */}
           <button
             type="button"
             className={`AvocadoAdmin-tagPickerTrigger${this.open ? ' is-open' : ''}`}
@@ -151,7 +149,6 @@ export default class AdminTagPicker extends AdminComponent {
             <i className={`fas fa-chevron-${this.open ? 'up' : 'down'} AvocadoAdmin-tagPickerChevron`} aria-hidden="true" />
           </button>
 
-          {/* ── Dropdown ── */}
           {this.open && (
             <div className="AvocadoAdmin-tagPickerDropdown">
               <div className="AvocadoAdmin-tagPickerSearch">

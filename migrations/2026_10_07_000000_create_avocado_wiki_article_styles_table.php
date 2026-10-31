@@ -1,18 +1,23 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\Builder;
 
 /**
- * Tabela companheira 1:1 com `linkrobins_wiki_articles` para o design que o
- * autor escolhe para o artigo na tela de criação do wiki (o "Manual"). Mesmo
- * desenho da `avocado_changelog_entries`: sem coluna nova na tabela da
- * extensão, e a linha só existe enquanto o artigo não estiver no design padrão.
- *
- * A chave estrangeira só entra se o linkrobins/wiki já tiver criado a tabela
- * dele — o tema não depende da extensão, e o migrate do tema pode rodar antes.
+ * Design escolhido para cada artigo do linkrobins/wiki (tabela companheira 1:1).
+ * A chave estrangeira só entra se a tabela do wiki já existir: o tema não
+ * depende da extensão e pode migrar antes dela.
  */
 return [
     'up' => function (Builder $schema) {

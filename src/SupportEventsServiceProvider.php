@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado;
@@ -8,10 +17,8 @@ use Flarum\Foundation\AbstractServiceProvider;
 use Ramon\Avocado\Support\SupportEvents;
 
 /**
- * Liga o observador de status ao modelo da extensão linkrobins/support. Só é
- * registrado com a extensão ativa (Extend\Conditional no extend.php), e ainda
- * assim confere o autoload — a extensão pode estar ativa no banco e ausente do
- * vendor no meio de um deploy.
+ * Observa o modelo do linkrobins/support. Confere o autoload mesmo com a
+ * extensão ativa: no meio de um deploy ela pode estar no banco e não no vendor.
  */
 class SupportEventsServiceProvider extends AbstractServiceProvider
 {

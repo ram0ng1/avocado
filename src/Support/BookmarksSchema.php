@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Support;
@@ -7,16 +16,9 @@ namespace Ramon\Avocado\Support;
 /**
  * A tabela `avocado_bookmarks` existe neste banco?
  *
- * Parece supérfluo — a migration cria a tabela —, mas entre o `composer update`
- * e o `php flarum migrate` o eager-load do bookmark rodava em TODA listagem de
- * discussões e derrubava o fórum inteiro com "Base table or view not found:
- * 1146 avocado_bookmarks doesn't exist" — a home quebrava por causa de um
- * recurso opcional que o admin nem tinha migrado. O mesmo vale para quem
- * restaura um dump anterior à migration.
- *
- * Sem a tabela, o sistema de bookmarks só fica desligado (BookmarksSetting
- * devolve false e o eager-load some do endpoint); rodar as migrations religa.
- * Cache e memo: ver SchemaInspector.
+ * Entre o `composer update` e o `migrate` (ou num dump antigo) o eager-load
+ * derrubaria toda listagem com "Base table or view not found". Sem a tabela os
+ * bookmarks só ficam desligados. Cache e memo: ver SchemaInspector.
  */
 final class BookmarksSchema
 {

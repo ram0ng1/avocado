@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Middleware;
@@ -10,25 +19,9 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 /**
- * Headers de performance e segurança que valem aplicar do lado da aplicação,
- * mesmo quando o operador do host esqueceu de configurar (ou está num shared
- * hosting onde não tem como mexer no nginx/apache).
- *
- * Cobre só o que é seguro adicionar incondicionalmente:
- *
- * - `Vary: Accept-Encoding, Cookie` — garante que CDNs/reverse proxies
- *   diferenciem corretamente a resposta comprimida vs não-comprimida e
- *   nunca sirvam a página de um usuário logado para um anônimo.
- *
- * - `X-Content-Type-Options: nosniff` — impede o browser de adivinhar o
- *   MIME type (mitiga XSS via type confusion em uploads).
- *
- * - `X-Frame-Options: SAMEORIGIN` — proteção básica contra clickjacking.
- *
- * Cache-Control NÃO é setado aqui: as respostas HTML do Flarum carregam
- * state do usuário (CSRF token, payload da sessão), então cachear no proxy
- * sem `private`+gating por cookie quebra UX. Deixe para o operador definir
- * via nginx/apache se quiser cache anônimo agressivo.
+ * Headers seguros de pôr sempre, para hosts onde não dá para mexer no servidor
+ * web. `Vary: Cookie` impede um proxy de servir a página de um usuário logado a
+ * um anônimo. Cache-Control fica de fora: o HTML carrega estado da sessão.
  */
 class AddPerfHeaders implements MiddlewareInterface
 {

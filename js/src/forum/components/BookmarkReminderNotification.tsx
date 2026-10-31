@@ -5,9 +5,8 @@ import { trans, truncate } from '../utils';
 import { bookmarkNote } from '../utils/bookmarks';
 
 /**
- * Renders the `avocadoBookmarkReminder` alert. The subject is the saved
- * discussion (visibility-gated relation); the actor's note is rehydrated from
- * the discussion attributes when available — never from notification data.
+ * Alerta `avocadoBookmarkReminder`. A nota vem dos atributos da discussão
+ * (relação com checagem de visibilidade), nunca dos dados da notificação.
  */
 export default class BookmarkReminderNotification extends Notification {
   icon() {

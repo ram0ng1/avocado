@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Api;
@@ -11,15 +20,9 @@ use Ramon\Avocado\Support\TagIconSvg;
 use Ramon\Avocado\Support\ValidSvgIcon;
 
 /**
- * Os atributos extras do TagResource. O SVG é sanitizado na entrada, então
- * o que chega ao banco já é seguro para embutir no HTML.
- *
- * Com o recurso desligado (switch ou colunas ausentes) os campos saem do
- * payload e deixam de aceitar escrita — o front só os lê quando o flag do forum
- * está ligado, então não há por que carregar 100 KB de SVG por tag à toa.
- *
- * O tamanho (`iconSvgScale`) tem coluna própria, de uma migration posterior: sem
- * ela só esse campo fica de fora, e o front desenha o ícone em 100%.
+ * Ícone SVG da tag. O SVG é sanitizado na entrada, então o que está no banco já
+ * pode ser embutido no HTML. Com o recurso desligado (switch ou colunas
+ * ausentes) os campos saem do payload e não aceitam escrita.
  */
 class TagIconSvgFields
 {

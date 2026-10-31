@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Listener;
@@ -7,11 +16,8 @@ namespace Ramon\Avocado\Listener;
 use Ramon\Avocado\Support\BundledAssets;
 
 /**
- * Sincroniza os assets do tema nos mesmos eventos em que o core recompila os
- * dele (Enabled, Disabled, ClearingCache) — ver Support\BundledAssets.
- *
- * Forçado: o cache:clear é justamente o "conserta tudo" de quem atualizou a
- * extensão ou mexeu em public/assets à mão, então não confia no marcador.
+ * Copia os assets do tema quando o core recompila os dele. Forçado, sem confiar
+ * no marcador: o cache:clear é o "conserta tudo" de quem mexeu em public/assets.
  */
 class SyncBundledAssets
 {

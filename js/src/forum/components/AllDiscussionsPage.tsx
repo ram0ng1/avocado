@@ -19,11 +19,8 @@ import { needsCoreComposer, openCoreDiscussionComposer } from '../utils/coreComp
 import FloatingInlineComposer, { composerPlacement } from './shared/FloatingInlineComposer';
 
 /**
- * AllDiscussionsPage — `/discussions` route.
- *
- * Pagination, realtime queue, sort and self-echo tracking all live in
- * `feedState` (a `DiscussionFeedState`). This page only orchestrates the UI:
- * inline composer, online-users header, WS banner, ThreadCard list.
+ * Rota `/discussions`. Paginação, fila de realtime e ordenação ficam no
+ * `DiscussionFeedState`; a página só monta a interface.
  */
 export default class AllDiscussionsPage extends Page {
   private feedState!: DiscussionFeedState;
@@ -49,7 +46,7 @@ export default class AllDiscussionsPage extends Page {
       pendingDiscs: this.feedState.pendingDiscs,
       currentItems: () => this.feedState.flatItems(),
       onFetchFailure: () => this.feedState.wsFetchFailures++,
-      // No special action on pin/unpin — `flatItems()` re-sorts on every read.
+      // Fixar/desafixar não pede nada: `flatItems()` reordena a cada leitura.
     });
   }
 
@@ -58,8 +55,6 @@ export default class AllDiscussionsPage extends Page {
     this.unbindRealtime?.();
     this.unbindRealtime = null;
   }
-
-  // ── Composer ────────────────────────────────────────────────────────────────
 
   private openComposer() {
     if (!app.session.user) {
@@ -93,8 +88,6 @@ export default class AllDiscussionsPage extends Page {
       m.route.set(app.route('discussion', { id: discussion.id(), slug: discussion.slug?.() || discussion.id() }));
     }
   }
-
-  // ── View ────────────────────────────────────────────────────────────────────
 
   view() {
     const user = app.session.user;

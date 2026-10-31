@@ -8,21 +8,9 @@
   }
 }
 
-// ── Custom Footer (admin → Appearance → Edit Custom Footer) ─────────────────
-// Flarum's core blade emits the custom footer in two places (vendor/flarum/core/
-// views/frontend/{app,forum}.blade.php):
-//   1. <footer class="App-footer" id="footer"></footer>  — Mithril mount target
-//      inside #app, empty until the avocado Footer.view override fills it.
-//   2. {!! $forum['footerHtml'] !!}                       — the admin's raw
-//      `custom_footer` HTML, printed as a <body> child between #app and #modal.
-//
-// The avocado theme renders the footer inside mount #1 and removes the
-// body-level copy #2 at boot (see bootstrap block 0a in js/src/forum/index.tsx).
-// Without that removal the page shows two footers.
-//
-// Beyond that, do NOT add layout overrides here. Core's
-// `.hasPane.panePinned .App-footer { margin-left: var(--pane-width) }` is
-// intentional — it aligns the footer with the content pushed by the sidebar.
+// O core imprime o rodapé customizado duas vezes: o <footer> vazio dentro do
+// #app (que o tema preenche) e o HTML cru como filho do <body>, removido no
+// boot. O margin-left do core com o painel fixo é intencional; não sobrescreva.
 
 #app > footer.App-footer:empty,
 .App > footer.App-footer:empty {
@@ -31,7 +19,6 @@
 
 
 
-// Smooth page loading transition (reduces jarring loading flash)
 .Page-main {
   transition: opacity var(--avocado-t-fast);
 }
@@ -43,31 +30,14 @@
   opacity: 0.5;
 }
 
-// ─── Header search ───────────────────────────────────────────────────────────
-// Two different controls can sit in the header, chosen by `avocado.search_v1`:
-//
-//   V2 (default)  Flarum 2's GlobalSearch — a button that opens the search
-//                 modal, rendered alongside the other header controls. Core
-//                 sizes it in less/common/Search.less: it collapses to a bare
-//                 icon on tablet-up and grows (max-width 180px) to show the
-//                 active query beside a loose clear button. The theme dresses
-//                 it as the same pill V1 shows — see the V2 block further down.
-//
-//   V1 (opt-in)   The legacy inline `Search` component (text input + results
-//                 dropdown), rendered in GlobalSearch's place by the override
-//                 in js/src/forum/index.tsx §15.
-//
-// The two are mutually exclusive and their rules must stay that way: what broke
-// the header bar on 2.0-rc.6 is that the V1 sizing below used to apply
-// unconditionally, so it boxed the V2 button into a fixed 200px slot and
-// clipped the active query inside it. Each block is therefore gated on
-// html[data-avocado-search="v1"] — written before the first paint by
-// src/Content/SearchStyle.php — or on its negation.
+// Dois controles possíveis no cabeçalho, escolhidos por `avocado.search_v1`:
+// o GlobalSearch do Flarum 2 (V2, padrão) e o `Search` inline legado (V1).
+// São mutuamente exclusivos: cada bloco é condicionado a
+// html[data-avocado-search="v1"] ou à negação dele, escrito antes do primeiro
+// paint. Sem essa condição o tamanho do V1 prende o botão do V2 num slot fixo.
 
 html[data-avocado-search="v1"] {
-  // V1-style Search bar (inline dropdown, no modal)
-  // transform: translateZ(0) forces GPU compositing so the width transition is smooth
-  // even when the header is position:fixed (affix state on scroll / discussion page)
+  // translateZ(0) mantém suave a transição de largura com o header fixo.
   .Search {
     position: relative;
     width: 200px;
@@ -79,20 +49,14 @@ html[data-avocado-search="v1"] {
       width: 400px;
     }
 
-    // Clicking back into a bar that still holds a query opens the results panel
-    // in the same frame the bar starts widening. The panel is anchored to the
-    // bar's edges, so it spent that whole 0.3s stretching along with it — the
-    // list looked like it was unfolding sideways instead of just being there.
-    // While the panel is up the bar takes its focused width at once: the
-    // animation exists for an empty bar being opened, where there is nothing
-    // underneath to drag along. Closing is unaffected — `open` drops with the
-    // focus, so the bar still eases back down to 200px.
-    // !important because the base `transition` above is itself !important.
+    // Com o painel de resultados aberto a barra assume a largura final na hora:
+    // ancorado nas bordas dela, o painel esticaria junto durante a animação.
+    // !important porque o `transition` base também é.
     &.open {
       transition: none !important;
     }
 
-    // On tablet and small laptops: don't grow on focus — prevents header overflow
+    // Do tablet ao laptop pequeno a barra não cresce no foco, para não estourar o header.
     @media (max-width: 1100px) {
       &.focused {
         width: 200px;
@@ -100,18 +64,14 @@ html[data-avocado-search="v1"] {
     }
 
     &-input {
-      // 2.0-rc.6 made `.Search` a flex container (less/common/Search.less), so
-      // this wrapper became a flex item: it stops at its max-content width —
-      // the bare width of an <input> — instead of filling the bar. The field
-      // then sat at ~215px inside a 400px focused bar, its pill and its focus
-      // border detached from the control around them. Grow to fill, and allow
-      // shrinking below content width so the 200px idle bar still fits.
+      // `.Search` é flex, e este wrapper parava na largura de um <input> em vez de
+      // preencher a barra. Pode encolher para caber na barra ociosa de 200px.
       flex: 1 1 auto;
       min-width: 0;
       position: relative;
       overflow: hidden;
       border-radius: @border-radius;
-      // Use Flarum's own --transition var so .Input .FormControl keeps its width 0.4s rule
+      // O --transition do core mantém a regra de largura de 0.4s do .Input .FormControl.
       --transition: border-color 0.15s ease;
 
       .Input-prefix-icon {
@@ -119,8 +79,6 @@ html[data-avocado-search="v1"] {
         transition: color 0.15s ease;
       }
 
-      // Pointing at the field picks the magnifier out in the forum's own accent,
-      // the same colour the border takes once the field is focused.
       &:hover .Input-prefix-icon {
         color: var(--primary-color);
       }
@@ -158,9 +116,8 @@ html[data-avocado-search="v1"] {
     }
   }
 
-  // Core turns the header search into a round icon button on tablet-up, because
-  // the V2 control *is* a button. Landing on the V1 input wrapper instead, that
-  // mixin shrinks the field to 36px and hides the clear button — undo both.
+  // No tablet+ o core faz da busca um botão redondo (o V2 é um botão); no V1
+  // isso encolhe o campo para 36px e esconde o limpar.
   @media @tablet-up {
     .Header-secondary .Search .Search-input {
       width: auto;
@@ -173,12 +130,8 @@ html[data-avocado-search="v1"] {
     }
   }
 
-  // Core's global `mark` is a highlighter pill: a coloured fill plus 1px of
-  // padding, a border radius and a drop shadow. At the type size of a results
-  // row that box is taller than the line it sits on, so every match bleeds out
-  // of its row — worst in the users list, where the whole name is a match. The
-  // V2 modal resets it for the same reason (`.SearchModal-results mark`); this
-  // is that reset for the V1 dropdown, so a match reads as bold text.
+  // O `mark` global do core é uma pílula mais alta que a linha de resultado e
+  // vaza dela; aqui um match vira só negrito, como no modal V2.
   .Search-results mark {
     background: none;
     padding: 0;
@@ -188,8 +141,6 @@ html[data-avocado-search="v1"] {
     color: inherit;
   }
 
-  // Search result item layout
-  // Override Flarum core overflow:hidden + white header text on .Dropdown-menu > li > a
   .App-header .Search-results .DiscussionSearchResult {
     > a {
       display: flex;
@@ -220,21 +171,16 @@ html[data-avocado-search="v1"] {
       color: var(--muted-color);
       margin-top: 3px;
       margin-bottom: 4px;
-      // The row inherits `white-space: nowrap` from core's `.Dropdown-menu > li
-      // > a`, which every menu entry is (`.Search-results` is a Dropdown-menu).
-      // A -webkit-box that cannot wrap has no second line to end, so instead of
-      // clamping at two lines with an ellipsis the excerpt ran off the edge of
-      // the dropdown and was chopped mid-word with no sign it had been cut.
+      // Herda `white-space: nowrap` do `.Dropdown-menu > li > a`; sem quebra, o
+      // line-clamp não tem segunda linha e o resumo vaza sem reticências.
       white-space: normal;
-      // Post excerpts routinely contain a bare URL longer than the dropdown is
-      // wide. `break-word` only breaks a word that has no other way to fit, and
-      // an unbroken URL still overflows the line box it is alone on; `anywhere`
-      // is what actually lets the clamp put an ellipsis on it.
+      // URLs longas: `break-word` não quebra uma palavra sozinha na linha, e
+      // `anywhere` permite ao clamp pôr a reticência.
       overflow-wrap: anywhere;
     }
   }
 
-  // On phone the search lives in the drawer — cap it to the available width
+  // No phone a busca fica no drawer.
   @media @phone {
     .Search {
       width: 100% !important;
@@ -247,24 +193,10 @@ html[data-avocado-search="v1"] {
   }
 }
 
-// ── V2 header search: same pill the V1 bar has ───────────────────────────────
-// Core renders the V2 control as a bare icon button with the clear button as a
-// *sibling* outside it, so an active query reads as two loose controls dropped
-// between the header links (see the `discussion:3000 ⊗` pair). The theme wants
-// what V1 shows instead: one rounded field holding the magnifier, the query and
-// the clear button together.
-//
-// The pill is `.Search` itself — the flex row core already gives us — with both
-// buttons inside going transparent, so no extra markup is needed. Colours come
-// from the same tokens the V1 field picks up, which is what keeps the two modes
-// looking alike in light, dark and colored-header forums.
-//
-// The gate is :not([data-avocado-search="v1"]) so these never stack on top of
-// the V1 rules above; it also carries enough specificity to beat core's own
-// `.Header-secondary .Search …` sizing without a single !important.
-//
-// Phone is left alone: there the control lives in the drawer, where core styles
-// it as a labelled row like every other drawer entry — as V1 does too.
+// O core desenha o V2 como botão de ícone com o limpar como irmão solto. Aqui
+// o próprio `.Search` vira a pílula, com os botões transparentes dentro, usando
+// os mesmos tokens do V1. A especificidade do gate ganha do sizing do core sem
+// !important. O phone fica com o core (o controle mora no drawer).
 @media @tablet-up {
   html:not([data-avocado-search="v1"]) .Header-secondary .Search {
     --avocado-search-bg: var(--control-bg);
@@ -280,24 +212,19 @@ html[data-avocado-search="v1"] {
     border: 0;
     border-radius: @border-radius;
     background: var(--avocado-search-bg);
-    // The focus ring is an inset shadow declared only in :focus-within, rather
-    // than a border. A border would have to be carried as 2px of transparent in
-    // every other state just to stop the pill resizing when it lights up; the
-    // shadow costs no geometry, so the resting state declares nothing at all.
+    // Anel de foco como sombra interna, não borda: a borda exigiria 2px
+    // transparentes em todo estado para a pílula não mudar de tamanho.
     transition: box-shadow 0.15s ease, background 0.15s ease;
 
     &:hover {
       background: color-mix(in srgb, var(--avocado-search-bg) 92%, var(--avocado-search-fg));
     }
 
-    // The V1 field gets this from `.FormControl:focus`. Here focus lands on the
-    // trigger button, so :focus-within is the equivalent — and it keeps the pill
-    // marked while focus returns to it after the modal closes.
+    // O foco cai no botão, então :focus-within faz o papel do :focus do V1.
     &:focus-within {
       box-shadow: inset 0 0 0 2px var(--primary-color);
     }
 
-    // The trigger fills the pill: icon and query on one left-aligned row.
     .Search-input {
       flex: 1 1 auto;
       min-width: 0;
@@ -306,9 +233,7 @@ html[data-avocado-search="v1"] {
       height: 100%;
       display: flex;
       align-items: center;
-      // Core's `.Button` centres its content. Left-align instead, so the
-      // magnifier sits at the edge of the pill the way the V1 field's prefix
-      // icon does rather than floating in the middle of an empty bar.
+      // O `.Button` do core centraliza o conteúdo.
       justify-content: flex-start;
       gap: 9px;
       padding: 0 2px 0 13px;
@@ -317,8 +242,7 @@ html[data-avocado-search="v1"] {
       border-radius: 0;
       box-shadow: none;
       color: var(--avocado-search-fg);
-      // The pill behind it is opaque, so the header's frosted-glass treatment
-      // for .Button--flat has nothing to blur and only makes a stacking context.
+      // A pílula é opaca: o vidro fosco do .Button--flat só criaria um stacking context.
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
 
@@ -336,9 +260,7 @@ html[data-avocado-search="v1"] {
         transition: color 0.15s ease;
       }
 
-      // Matches the V1 field: pointing at the bar picks the magnifier out in
-      // the forum's accent. On a colored header the accent *is* the surface
-      // behind it, so the token resolves to the control colour there instead.
+      // No header colorido o accent é a própria superfície, então o token cai na cor do controle.
       &:hover .Button-icon {
         color: var(--avocado-search-accent);
       }
@@ -356,13 +278,11 @@ html[data-avocado-search="v1"] {
       }
     }
 
-    // With no query the label stands in for the placeholder, so it reads like
-    // one instead of like typed text.
+    // Sem busca ativa o rótulo faz papel de placeholder.
     &:not(.Search--active) .Search-input .Button-labelText {
       color: var(--avocado-search-muted);
     }
 
-    // Clear moves inside the pill, where V1 keeps its own.
     .Search-clear {
       display: flex;
       flex-shrink: 0;
@@ -381,8 +301,7 @@ html[data-avocado-search="v1"] {
     }
   }
 
-  // Colored header: the surface behind the pill is the primary colour, so it
-  // borrows the same control tokens core hands the V1 field there.
+  // No header colorido usa os mesmos tokens que o core dá ao campo V1.
   html[data-colored-header="true"]:not([data-avocado-search="v1"]) .Header-secondary .Search {
     --avocado-search-bg: var(--header-colored-control-bg, rgba(0, 0, 0, 0.1));
     --avocado-search-fg: var(--header-colored-control-color, #fff);
@@ -391,26 +310,16 @@ html[data-avocado-search="v1"] {
   }
 }
 
-// Esconde o link "skip to content" do tema. Substitui o middleware
-// RemoveSkipLink (CLAUDE.md §38.2 / §40.3): bufferizar a resposta HTML
-// inteira em memória para extrair uma tag <a> custa proporcional ao tamanho
-// da página em todo hit. Uma regra CSS produz o mesmo resultado visual com
-// custo zero por request.
+// Esconde o "skip to content" do tema por CSS: removê-lo no servidor exigiria
+// bufferizar o HTML inteiro em cada request.
 a.sr-only.sr-only-focusable-custom[href="#content"],
 .App-drawer .App-skipNav,
 .App-drawer .App-skipLink {
   display: none !important;
 }
 
-// ─── Phone: hide phone header controls while drawer is open ──────────────────
-// Flarum's drawer z-index (--zindex-modal = 1050) should be above the phone
-// header controls (calc(--zindex-header + 1) = 1001).  In practice a stacking-
-// context created by the contain:layout on .App-header or the opacity transition
-// on .Page-main can cause the controls to paint above the drawer.
-// When the drawer is open the nav title (.App-titleControl) and the primary
-// action button (.App-primaryControl) are not needed anyway — the user is
-// interacting with the drawer. We hide them instantly so they never bleed
-// through the drawer surface.
+// Um stacking context do .App-header ou do .Page-main pode pintar estes
+// controles sobre o drawer; com ele aberto eles não fazem falta.
 @media @phone {
   .App.drawerOpen .App-titleControl,
   .App.drawerOpen .App-primaryControl {
@@ -419,21 +328,11 @@ a.sr-only.sr-only-focusable-custom[href="#content"],
   }
 }
 
-// ─── Mobile: App-drawer dropdowns usam o painel nativo do Flarum ─────────────
-// O core (phone) renderiza todo .Dropdown-menu como bottom sheet — position:
-// fixed, bottom:0, largura total, slide-up a partir de translate(0, 70vh) com
-// backdrop escurecendo o resto da tela. Esse é o painel nativo do Flarum 2 e é
-// o comportamento que queremos também dentro do .App-drawer.
-//
-// Não sobrescreva position/transform/backdrop aqui: um `position: absolute`
-// ancorado no .ButtonGroup transforma o painel num dropdown minúsculo no canto
-// superior do drawer, e `display:none` no .dropdown-backdrop tira o overlay que
-// fecha o menu ao tocar fora. O .App-drawer aberto tem `transform: none`, então
-// não cria containing block — o `position: fixed` do core resolve contra a
-// viewport corretamente.
+// No phone os dropdowns do drawer usam o bottom sheet nativo do core. Não
+// sobrescreva position/transform/backdrop: o drawer aberto tem `transform: none`,
+// então o `fixed` do core resolve contra a viewport.
 @media @phone {
-  // HeaderList footer ("View all …" link) inside drawer dropdowns:
-  // core only styles this on @tablet-up; on phone just center the button.
+  // O core só estiliza isto no tablet-up.
   .App-drawer .HeaderList-footer {
     display: flex;
     justify-content: center;
@@ -447,20 +346,17 @@ a.sr-only.sr-only-focusable-custom[href="#content"],
   }
 }
 
-// ─── Header title: push logo/name away from nav items ─────────────────────────
 .Header-title {
   padding-left: 12px;
 }
 
-// Core Flarum collapses the header search to 1px on tablet when the input
-// isn't focused. Keep the V1 search bar visible in this breakpoint as well.
+// O core colapsa a busca para 1px no tablet sem foco; o V1 continua visível.
 @media @tablet {
   .Header-title {
-    padding-left: 20px;  // extra breathing room from the nav drawer button
+    padding-left: 20px;
   }
 
-  // V1 only — see the header-search block above. The V2 control is a button
-  // core already sizes, and has no input to widen.
+  // Só V1: o controle do V2 é um botão que o core já dimensiona.
   html[data-avocado-search="v1"] .Header-secondary .Search {
     input:not(:focus) {
       width: 100%;
@@ -491,11 +387,8 @@ a.sr-only.sr-only-focusable-custom[href="#content"],
   }
 }
 
-// ─── Header logo sizing (Custom SVG only) ───────────────────────────────────
-// Only apply custom sizing when custom logo is enabled.
-// When disabled, Flarum's default .Header-logo { display: block; max-height: 30px; } applies.
+// Só com logo customizado; sem ele vale o .Header-logo do core.
 html[data-avocado-logo-custom="true"] {
-  // For fallback PNG logos: fixed height so oversized images don't break the header.
   img.Header-logo {
     height: 35px !important;
     width: auto !important;
@@ -503,7 +396,7 @@ html[data-avocado-logo-custom="true"] {
     vertical-align: middle !important;
     display: inline-block !important;
   }
-  // For the Avocado-injected SVG logo: width/height set explicitly by JS from viewBox aspect ratio.
+  // Largura e altura vêm do JS, pela proporção do viewBox.
   svg.Header-logo {
     height: 50px !important;
     width: auto !important;
@@ -517,14 +410,9 @@ html[data-avocado-logo-custom="true"] {
   }
 }
 
-// ─── Opções do logo SVG (admin › Aparência › Logo) ───────────────────────────
-// As mesmas regras saem inline do Content\HideLogoFlash, para valerem antes de
-// este CSS chegar; aqui ficam como a fonte de verdade.
-//
-// Logo colorido: o desenho assume a cor do cabeçalho — a primária no cabeçalho
-// comum (e a da tag, com os destaques coloridos), a de contraste no "cabeçalho
-// colorido" do Flarum. Só dentro do #home-link: a cópia do logo no rodapé tem a
-// cor dela.
+// As mesmas regras saem inline do HideLogoFlash para valer antes deste CSS;
+// aqui fica a fonte de verdade. Só dentro do #home-link: a cópia do logo no
+// rodapé tem a própria cor.
 html[data-avocado-logo-colored="true"] #home-link svg.Header-logo {
   * {
     fill: var(--header-color) !important;
@@ -539,25 +427,20 @@ html[data-avocado-logo-colored="true"] #home-link svg.Header-logo {
   }
 }
 
-// Ajuste vertical: sobe (negativo) ou desce o logo sem mexer na altura do cabeçalho.
 html[data-avocado-logo-custom="true"] #home-link svg.Header-logo {
   transform: translateY(var(--avocado-logo-offset-y, 0px));
 }
 
-// Custom logo only: flex-align header title and constrain height.
-// Without this scope, the 52px height and flex layout override Flarum's default
-// logo/title behaviour (text name or admin-uploaded PNG) unnecessarily.
+// Escopo no logo customizado para não mexer no título em texto ou PNG do core.
 html[data-avocado-logo-custom="true"] {
-  // Keep header title flex-aligned so SVG logo and title baseline nicely
   .App-header .Header-title {
     display: flex !important;
     align-items: center !important;
     padding: 5px 0;
   }
 
-  // On tablet+ the header is a fixed top bar — constrain to the SVG logo height.
-  // On phone the header lives INSIDE the App-drawer and stacks vertically, so we
-  // must NOT force a fixed height (it would clip the search bar + auth controls).
+  // No phone o header fica dentro do App-drawer, empilhado, e uma altura fixa
+  // cortaria a busca e os controles de login.
   @media @tablet-up {
     .App-header {
       height: 52px !important;
@@ -565,37 +448,25 @@ html[data-avocado-logo-custom="true"] {
       line-height: 1;
     }
 
-    // .App padding-top uses --header-height. Core's default is 52px and the
-    // critical CSS pins .App-header to 52px on tablet+, so this assignment is a
-    // no-op today — kept as documentation in case a future change re-introduces
-    // a wider topbar without updating the SVG-logo branch.
+    // O padding-top do .App usa --header-height; 52px é o padrão do core e o que
+    // o CSS crítico fixa. Fica explícito caso o topo volte a ser mais alto.
     --header-height: 52px;
   }
 }
 
-// Frosted-glass effect on header icon buttons (flags, notifications, user menu toggle)
-// backdrop-filter blurs the hero/content behind them, improving legibility on any bg
+// O blur atrás dos botões melhora a leitura sobre qualquer fundo.
 .App-header .Button--flat {
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
 }
 
-// ─── DiscussionPage sidebar (scrubber/stream pane) ───────────────────────────
-// All other pages get AvocadoNav-helper instead of Page-sidebar via the
-// PageStructure.prototype.sidebar() override in JS — no CSS hiding needed.
-
-// ─── Safety net: suppress Page-hero on all unregistered extension pages ───────
-// JS layers (mainItems.remove + providedHero override) handle this at runtime,
-// but if a third-party extension re-adds a hero after our extend callbacks run,
-// this CSS catches it.
-// Guard uses IndexPage--avocadoRoot (stamped by our IndexPage.view extend) so that
-// extension pages sharing the 'IndexPage' class (e.g. LeaderboardPage uses
-// className="IndexPage LeaderboardPage") are still matched and their hero is hidden.
+// Rede de segurança: o JS já remove o hero das páginas de extensão, mas uma
+// extensão pode readicioná-lo depois. IndexPage--avocadoRoot permite casar
+// páginas que também usam a classe IndexPage (ex.: LeaderboardPage).
 .Page:not(.DiscussionPage):not(.IndexPage--avocadoRoot) {
   .Page-hero { display: none !important; }
 }
 
-// ─── Global: no underlines on links inside avocado theme pages ────────────────
 .AvocadoHome a,
 .AvocadoTagPage a,
 .AvocadoUserPage a,
@@ -612,7 +483,6 @@ html[data-avocado-logo-custom="true"] {
   }
 }
 
-// ─── Online avatars "+N more" badge ───────────────────────────────────────────
 .AvocadoHome-onlineAvatars-more {
   .avocado-flex-center();
   width: 28px;
@@ -630,8 +500,7 @@ html[data-avocado-logo-custom="true"] {
   box-sizing: border-box;
 }
 
-// ─── Header auth buttons (Log In / Sign Up) ───────────────────────────────────
-// !important needed to override Flarum's .Button base styles injected via JS
+// !important para ganhar do .Button base injetado via JS.
 .AvocadoHeader-authBtn {
   .avocado-pill-btn(34px; 16px; 13px);
 
@@ -656,11 +525,8 @@ html[data-avocado-logo-custom="true"] {
   }
 }
 
-// ─── Auth buttons: colored-header override ────────────────────────────────────
-// When "Colored Header" is enabled, --header-bg becomes the primary color so
-// the default primary-color buttons are invisible against the header background.
-// We switch to --header-color (the light/white text color that Flarum assigns
-// automatically to keep text readable on the colored background).
+// Com o header colorido, --header-bg vira a cor primária e os botões
+// primários somem; usa-se --header-color.
 [data-colored-header=true] {
   .AvocadoHeader-authBtn--login {
     border-color: var(--header-color) !important;
@@ -673,8 +539,7 @@ html[data-avocado-logo-custom="true"] {
 
   .AvocadoHeader-authBtn--signup {
     background: var(--header-color) !important;
-    // Text should contrast against --header-color (white on light, dark on dark).
-    // --header-bg in colored mode equals the primary color — reuse it as text.
+    // No modo colorido --header-bg é a primária; serve como cor do texto.
     color: var(--header-bg) !important;
 
     &:hover {
@@ -682,16 +547,14 @@ html[data-avocado-logo-custom="true"] {
     }
   }
 
-  // Separator "or" between the two buttons
   .AvocadoHeader-authSep {
     color: var(--header-color) !important;
     opacity: 0.75;
   }
 }
 
-// ─── Default avatar SVG (person silhouette, primary-colour tinted) ───────────
 .AvocadoDefaultAvatar {
-  display: block !important;  // override inline-flex from .Avatar
+  display: block !important;  // o .Avatar é inline-flex
   border-radius: 50%;
   overflow: hidden;
 
@@ -704,10 +567,8 @@ html[data-avocado-logo-custom="true"] {
   }
 }
 
-// ─── Composer: hide default avatar SVG where Flarum hides the real avatar ────
-// The core .ComposerBody-avatar { display: none } rules don't use !important,
-// so they are overridden by .AvocadoDefaultAvatar { display: block !important }.
-// We restore the expected hidden behaviour for each context Flarum targets.
+// O `display: none` do core no avatar do composer não é !important e perde
+// para o .AvocadoDefaultAvatar.
 @media @phone {
   .ComposerBody-avatar.AvocadoDefaultAvatar {
     display: none !important;
@@ -718,7 +579,6 @@ html[data-avocado-logo-custom="true"] {
   display: none !important;
 }
 
-// ─── Header auth separator ("or" between Log In / Sign Up) ───────────────────
 .AvocadoHeader-authSep {
   font-size: 11px;
   font-weight: 600;
@@ -728,10 +588,7 @@ html[data-avocado-logo-custom="true"] {
   margin: 0 6px;
 }
 
-// ─── Composer: tag pills wrap to next line instead of overflowing ─────────────
-// Flarum renders tags as a <li class="item-tags"> inside .ComposerBody-header (a <ul>).
-// The default <li> is display:inline-block which keeps all tags on one line.
-// We switch to display:block + flex so tags flow onto multiple lines naturally.
+// O <li> inline-block do core deixa todas as tags numa linha só.
 .ComposerBody-header > li.item-tags {
   display: block;
   width: 100%;
@@ -739,7 +596,6 @@ html[data-avocado-logo-custom="true"] {
   white-space: normal;
   overflow: visible;
 
-  // The TagControl inner container — make it wrap
   > .TagControl,
   > .TagsInput,
   > span,
@@ -752,15 +608,12 @@ html[data-avocado-logo-custom="true"] {
   }
 }
 
-// Allow the composer content to grow in height when tags wrap
 .Composer-body .ComposerBody-header {
   overflow: visible;
 }
 
-// Extensões também põem chips no cabeçalho da nova discussão (idioma da
-// fof/discussion-language, enquete da fof/polls, campos do fof/mason…). Eles
-// dividem uma linha com as tags, que deixam de ocupar a largura toda, e o
-// título fica sozinho na linha de baixo.
+// Extensões também põem chips no cabeçalho (idioma, enquete, mason…): eles
+// dividem a linha com as tags e o título desce.
 @media @tablet-up {
   .ComposerBody--discussion .ComposerBody-header {
     display: flex;
@@ -785,15 +638,9 @@ html[data-avocado-logo-custom="true"] {
   }
 }
 
-// ─── Composer: seletor de tags ────────────────────────────────────────────────
-// O botão do flarum/tags é um .Button "resetado" que o core ainda pinta no
-// hover/foco. Lá isso nunca aparece: as etiquetas ficam coladas umas nas outras
-// e o botão tem exatamente o tamanho delas. Aqui elas são pílulas separadas
-// (5px de margem, inclusive depois da última) e todo .Button tem 1px de borda —
-// o fundo cinza sobrava em volta e à direita da etiqueta.
-// O botão volta a abraçar as pílulas (que agora quebram de linha quando não
-// cabem) e, com tags escolhidas, não pinta fundo: ele apareceria no vão entre
-// elas. Sem tags, o hover do core preenche a pílula pontilhada, como sempre.
+// Com as tags como pílulas separadas, o fundo que o core pinta no hover do
+// botão sobrava em volta delas. O botão volta a abraçar as pílulas e, com tags
+// escolhidas, não pinta fundo.
 .ComposerBody-header .DiscussionComposer-changeTags {
   max-width: 100%;
   border: 0;
@@ -823,16 +670,12 @@ html[data-avocado-logo-custom="true"] {
   }
 }
 
-// ─── Settings & Security pages: match avocado design system ──────────────────
-// These pages are wrapped in .AvocadoUserPage via the UserPage override.
-// Override Flarum's native .SettingsPage and .UserSecurityPage layout to
-// match the card-based look of the rest of the user profile pages.
+// Envolvidas em .AvocadoUserPage pelo override do UserPage.
 
 .AvocadoUserPage .SettingsPage,
 .AvocadoUserPage .UserSecurityPage {
   margin-top: 0;
 
-  // Top-level section list
   > ul {
     display: flex;
     flex-direction: column;
@@ -847,7 +690,6 @@ html[data-avocado-logo-custom="true"] {
     }
   }
 
-  // Native HTML <fieldset> — same card look as .FieldSet component
   fieldset {
     border: 1px solid var(--home-border, #eaeaf0);
     border-radius: 18px;
@@ -862,7 +704,6 @@ html[data-avocado-logo-custom="true"] {
       box-shadow: 0 8px 24px rgba(26, 26, 36, 0.06);
     }
 
-    // Section title (legend or label)
     > legend,
     > label:first-child {
       float: none;
@@ -879,7 +720,6 @@ html[data-avocado-logo-custom="true"] {
       margin: 0;
     }
 
-    // Items inside fieldset
     > ul {
       list-style: none;
       padding: 16px 20px 18px;
@@ -903,17 +743,13 @@ html[data-avocado-logo-custom="true"] {
   }
 }
 
-// ─── Font Awesome Kit icons (.fa-kit) ─────────────────────────────────────────
-// Custom kit icons are SVG-based and behave differently from standard FA glyphs.
-// Allow them to size naturally rather than being clipped by fixed width/height.
+// Ícones do kit são SVG: dimensionam pelo conteúdo, sem ser cortados.
 .fa-kit {
   max-height: 44px !important;
   width: fit-content !important;
   padding: 0 10px;
 }
 
-// ─── Avocado SVG Logo (Custom logo only) ──────────────────────────────────────
-// Responsive SVG logo that auto-scales and centers - only when custom logo is enabled.
 html[data-avocado-logo-custom="true"] {
   .AvocadoLogoSvg {
     max-width: 100%;
@@ -923,7 +759,6 @@ html[data-avocado-logo-custom="true"] {
     object-fit: contain;
     object-position: center;
 
-    // On mobile/tablet, allow slightly smaller logo
     @media @tablet {
       max-height: 45px;
     }
@@ -933,7 +768,6 @@ html[data-avocado-logo-custom="true"] {
     }
   }
 
-  // Ensure parent container centers the logo properly
   #home-link.Header-logo {
     display: flex;
     align-items: center;
@@ -941,4 +775,3 @@ html[data-avocado-logo-custom="true"] {
     min-height: 50px;
   }
 }
-

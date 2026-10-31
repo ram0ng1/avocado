@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Content;
@@ -17,20 +26,16 @@ class AddHeroBannerPreload
     ) {}
 
     /**
-     * Validates asset path to prevent directory traversal attacks.
-     * Removes ../ and \.\ sequences.
+     * O caminho vem de um setting e vira URL do disco: nada de path traversal.
      */
     private function validateAssetPath(string $path): ?string
     {
-        // Block path traversal patterns
         if (preg_match('/(\.\.\/|\.\.\\\\|^\.\.+$)/', $path)) {
             return null;
         }
 
-        // Normalize slashes
         $normalized = str_replace('\\', '/', $path);
 
-        // Remove leading slashes
         $normalized = ltrim($normalized, '/');
 
         return $normalized;
@@ -46,24 +51,21 @@ class AddHeroBannerPreload
             ? $heroImage
             : rtrim((string) $this->config->url(), '/') . '/assets/' . $this->validateAssetPath($heroImage);
 
-        if (!$heroUrl || str_ends_with($heroUrl, '/assets/')) {
+        if (str_ends_with($heroUrl, '/assets/')) {
             return;
         }
 
-        // Validate that URL is a valid absolute or relative URL
         if (!preg_match('/^(https?:\/\/|\/)/', $heroUrl)) {
             return;
         }
 
         $escapedUrl = htmlspecialchars($heroUrl, ENT_QUOTES, 'UTF-8');
 
-        // Only output if escapedUrl is not empty
         if (empty($escapedUrl)) {
             return;
         }
 
-        // imagesizes tells the browser which rendered size to expect so it can
-        // pick the right source from imagesrcset (or just prioritise the single src).
+        // imagesizes diz ao navegador o tamanho renderizado esperado, para escolher a fonte certa.
         $document->head[] = '<link rel="preload" as="image" href="' . $escapedUrl . '" fetchpriority="high" imagesizes="100vw">';
     }
 }
