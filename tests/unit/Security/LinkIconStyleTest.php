@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ramon\Avocado\Tests\Security;
+namespace Ramon\Avocado\Tests\unit\Security;
 
 use Flarum\Frontend\Document;
 use Flarum\Settings\SettingsRepositoryInterface;

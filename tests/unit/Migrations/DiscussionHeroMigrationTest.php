@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ramon\Avocado\Tests\Integration;
+namespace Ramon\Avocado\Tests\unit\Migrations;
 
 use Illuminate\Database\Connection;
 use Illuminate\Database\Schema\Blueprint;
@@ -20,7 +20,7 @@ use Ramon\Avocado\Tests\Support\Database;
  * per available engine (sqlite always; mysql/mariadb/pgsql when configured via
  * AVOCADO_TEST_* env vars), so the migration DDL is validated cross-engine.
  */
-final class DiscussionHeroTest extends TestCase
+final class DiscussionHeroMigrationTest extends TestCase
 {
     private ?Connection $db = null;
     private ?Builder $schema = null;
@@ -75,7 +75,7 @@ final class DiscussionHeroTest extends TestCase
     /** @return array{up: callable, down: callable} */
     private function migration(): array
     {
-        return require dirname(__DIR__, 2)
+        return require dirname(__DIR__, 3)
             . '/migrations/2026_05_24_000000_create_avocado_discussion_heroes_table.php';
     }
 

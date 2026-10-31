@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ramon\Avocado\Tests\Unit;
+namespace Ramon\Avocado\Tests\unit;
 
 use PHPUnit\Framework\TestCase;
 use Ramon\Avocado\FontPreloads;

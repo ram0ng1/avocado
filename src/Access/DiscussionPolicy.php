@@ -20,12 +20,10 @@ use Flarum\User\User;
 class DiscussionPolicy extends AbstractPolicy
 {
     /**
-     * Sem declaração de retorno de propósito: métodos de policy devolvem uma
-     * das constantes string do AbstractPolicy (via os helpers allow()/deny()
-     * e as variantes de precedência) ou null para se abster. Constranger a
-     * ?bool gera TypeError, pois allow() devolve a string 'allow'.
+     * Quem pode renomear a discussão pode trocar a imagem do hero; null deixa
+     * outras policies decidirem.
      */
-    public function uploadHeroImage(User $actor, Discussion $discussion)
+    public function uploadHeroImage(User $actor, Discussion $discussion): ?string
     {
         return $actor->can('rename', $discussion) ? $this->allow() : null;
     }

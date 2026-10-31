@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ramon\Avocado\Tests\Unit;
+namespace Ramon\Avocado\Tests\unit;
 
 use Flarum\Api\Client;
 use Flarum\Extension\ExtensionManager;

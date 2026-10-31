@@ -13,7 +13,7 @@ use Flarum\Api\Schema;
 use Flarum\Discussion\Discussion;
 use Flarum\Post\CommentPost;
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
-use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Contracts\Filesystem\Cloud;
 use Ramon\Avocado\Model\DiscussionHero;
 
 class DiscussionFields
@@ -27,7 +27,7 @@ class DiscussionFields
     /** O cartão de resposta do card corta em 100; a folga cobre a truncagem por palavra. */
     private const LAST_POST_EXCERPT_LENGTH = 200;
 
-    protected Filesystem $disk;
+    protected Cloud $disk;
 
     /**
      * Discussões do documento atual esperando o hero, indexadas por objeto.

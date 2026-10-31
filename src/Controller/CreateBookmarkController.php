@@ -13,6 +13,7 @@ use Flarum\User\Exception\PermissionDeniedException;
 use Illuminate\Support\Arr;
 use Laminas\Diactoros\Response\JsonResponse;
 use Psr\Http\Message\ResponseInterface;
+use Flarum\User\User;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Ramon\Avocado\Model\Bookmark;
@@ -55,7 +56,7 @@ class CreateBookmarkController implements RequestHandlerInterface
         ]);
     }
 
-    private function resolveDiscussion(ServerRequestInterface $request, $actor): Discussion
+    private function resolveDiscussion(ServerRequestInterface $request, User $actor): Discussion
     {
         $body = (array) ($request->getParsedBody() ?? []);
         $rawId = Arr::get($body, 'discussionId', Arr::get($request->getQueryParams(), 'discussionId'));

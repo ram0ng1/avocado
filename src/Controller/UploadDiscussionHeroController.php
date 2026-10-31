@@ -9,7 +9,7 @@ use Flarum\Foundation\ValidationException;
 use Flarum\Http\RequestUtil;
 use Flarum\Locale\TranslatorInterface;
 use Illuminate\Contracts\Filesystem\Factory;
-use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Contracts\Filesystem\Cloud;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Intervention\Image\ImageManager;
@@ -21,7 +21,7 @@ use Ramon\Avocado\Model\DiscussionHero;
 
 class UploadDiscussionHeroController implements RequestHandlerInterface
 {
-    protected Filesystem $uploadDir;
+    protected Cloud $uploadDir;
 
     public function __construct(
         protected ImageManager $imageManager,
@@ -113,7 +113,7 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
         $oldPath = $hero?->image_path;
 
         $filename = 'avocado-disc-hero-'.$discussion->id.'-'.Str::lower(Str::random(8)).'.webp';
-        $this->uploadDir->put($filename, $encoded);
+        $this->uploadDir->put($filename, $encoded->toString());
 
         if ($hero === null) {
             $hero = new DiscussionHero();

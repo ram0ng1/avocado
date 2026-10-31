@@ -13,6 +13,7 @@ use Flarum\User\Exception\PermissionDeniedException;
 use Illuminate\Support\Arr;
 use Laminas\Diactoros\Response\JsonResponse;
 use Psr\Http\Message\ResponseInterface;
+use Flarum\User\User;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Ramon\Avocado\Model\Bookmark;
@@ -78,7 +79,7 @@ class UpdateBookmarkController implements RequestHandlerInterface
         ]);
     }
 
-    private function resolveDiscussion(array $body, ServerRequestInterface $request, $actor): Discussion
+    private function resolveDiscussion(array $body, ServerRequestInterface $request, User $actor): Discussion
     {
         $rawId = Arr::get($body, 'discussionId', Arr::get($request->getQueryParams(), 'discussionId'));
 

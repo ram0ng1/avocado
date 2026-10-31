@@ -46,7 +46,7 @@ class AddHeroBannerPreload
             ? $heroImage
             : rtrim((string) $this->config->url(), '/') . '/assets/' . $this->validateAssetPath($heroImage);
 
-        if (!$heroUrl || str_ends_with($heroUrl, '/assets/')) {
+        if (str_ends_with($heroUrl, '/assets/')) {
             return;
         }
 

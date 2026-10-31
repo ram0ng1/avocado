@@ -492,7 +492,7 @@ return [
         // fórum sai em toda página e o HTML só muda quando o admin salva.
         ->serializeToForum('avocadoCustomHeroHtml',     'avocado.custom_hero_html', fn ($html) => resolve(SanitizedHtmlCache::class)->sanitize('custom_hero_html', (string) $html))
         ->serializeToForum('avocadoColoredEnabled', 'avocado.colored_enabled', 'boolval')
-        ->serializeToForum('avocadoColoredBorderStyle', 'avocado.colored_border_style', null, 'none')
+        ->serializeToForum('avocadoColoredBorderStyle', 'avocado.colored_border_style')
         ->serializeToForum('avocadoThreadsStyle', 'avocado.threads_style', 'boolval')
         ->serializeToForum('avocadoCustomLoadingSpinner', 'avocado.custom_loading_spinner', 'boolval')
         // O botão de salvar segue o mesmo veredito do backend (BookmarksSetting):

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ramon\Avocado\Tests\Unit;
+namespace Ramon\Avocado\Tests\unit;
 
 use Flarum\Api\Controller\UploadImageController;
 use Flarum\Foundation\ValidationException;

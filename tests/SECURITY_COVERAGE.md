@@ -17,15 +17,15 @@ without a full HTTP harness).
 | § | Topic | Status | Where / why |
 |---|---|---|---|
 | §2 | Routes / middleware authz | 📝 | `extend.php` routes go to controllers that call `assertAdmin()`/`assertRegistered()`+`assertCan()`. Enforced in code; behavioural test needs HTTP harness. |
-| §3 | Policies & ID comparison | ✅ | `tests/Unit/DiscussionPolicyTest.php` — `uploadHeroImage` returns ALLOW vs `null` (abstain, not deny). |
+| §3 | Policies & ID comparison | ✅ | `tests/unit/DiscussionPolicyTest.php` — `uploadHeroImage` returns ALLOW vs `null` (abstain, not deny). |
 | §4 | GUEST group trap | 🟢 | No migration seeds `group_permission`; no custom permission granted to GUEST. |
 | §5 | `whereVisibleTo` / IDOR | 📝 | Hero upload loads `Discussion::find` then gates via `assertCan('uploadHeroImage')` (policy-gated path, §3). Online-users list hidden from guests (see §37 test target). |
 | §6 | Schema field visibility | 📝 | `DiscussionFields` exposes hero path only; no PII fields added. Review-only. |
-| §7 | Mass assignment / `writable` | ✅ | `tests/Integration/DiscussionHeroTest::test_model_persists_and_guards_the_primary_key` — `$guarded` blocks `discussion_id` mass-assign. |
+| §7 | Mass assignment / `writable` | ✅ | `tests/unit/Migrations/DiscussionHeroMigrationTest::test_model_persists_and_guards_the_primary_key` — `$guarded` blocks `discussion_id` mass-assign. |
 | §8 | Extending core resources | 📝 | `ForumAttributes` adds only counts; `DiscussionFields` adds hero path. No PII; review-only. |
-| §9 | XSS / `m.trust` | ✅ | `tests/Unit/HtmlSanitizerTest.php` — script/style/iframe strip, `on*`, `javascript:`/`vbscript:`/`data:text/html`, dangerous styles, **HTML-comment + `<noscript>`/`<template>` strip, and idempotence (mXSS re-scrub loop)**. The JS twin `sanitizeAdminHtml` mirrors this (incl. `<style>`-body scrub for the footer field) — no JS unit harness in-repo, review-locked. |
-| §9.3 | CSS-context injection | ✅ | `tests/Security/LoadingSpinnerColorTest.php` — `safeColor()` allowlist blocks `</style>` break-out, `expression()`, `url(javascript:)`. Frontend twin `safeCssColor()` (utils.ts) gates the TeamPage group-color `style=` interpolation. |
-| §9.5 | SVG inline / XXE | ✅ | `tests/Unit/SvgSanitizerTest.php` (13 cases) — DOCTYPE/ENTITY reject, `<script>/<a>/<use>` external strip, `on*`, `javascript:`, `@import`. |
+| §9 | XSS / `m.trust` | ✅ | `tests/unit/HtmlSanitizerTest.php` — script/style/iframe strip, `on*`, `javascript:`/`vbscript:`/`data:text/html`, dangerous styles, **HTML-comment + `<noscript>`/`<template>` strip, and idempotence (mXSS re-scrub loop)**. The JS twin `sanitizeAdminHtml` mirrors this (incl. `<style>`-body scrub for the footer field) — no JS unit harness in-repo, review-locked. |
+| §9.3 | CSS-context injection | ✅ | `tests/unit/Security/LoadingSpinnerColorTest.php` — `safeColor()` allowlist blocks `</style>` break-out, `expression()`, `url(javascript:)`. Frontend twin `safeCssColor()` (utils.ts) gates the TeamPage group-color `style=` interpolation. |
+| §9.5 | SVG inline / XXE | ✅ | `tests/unit/SvgSanitizerTest.php` (13 cases) — DOCTYPE/ENTITY reject, `<script>/<a>/<use>` external strip, `on*`, `javascript:`, `@import`. |
 | §10 | SQL injection / filters | 🟢 | All queries use the builder; `ForumAttributes` coerces group IDs via `intval > 0` before `whereIn`. No raw SQL. |
 | §11 | File uploads | 📝 | `UploadDiscussionHeroController` validates size + MIME (finfo) + server-side filename + Intervention re-encode. Guards are inline in `handle()`; behavioural test needs HTTP harness. |
 | §12 | Serving private files | 🟢 | No private-file serving endpoint; assets go to the public `flarum-assets` disk by URL. |
@@ -42,7 +42,7 @@ without a full HTTP harness).
 | §23 | Logging sensitive data | 🟢 | No request-body logging in `src/`. |
 | §24 | Cache keys | 📝 | `InjectOnlineUsers`/`ForumAttributes` cache by a constant key — values are forum-wide (not per-actor) and the guest/empty branch runs before the cache read, so no cross-actor poisoning. Review-only. |
 | §25 | Validators | 🟢 | Validation is inline (filter_var on discussionId, MIME/size). No `AbstractValidator` needed. |
-| §26 | Migrations | ✅ | `tests/Integration/DiscussionHeroTest.php` — idempotent `up`, `down` round-trip, FK `cascadeOnDelete` (orphan prevention). |
+| §26 | Migrations | ✅ | `tests/unit/Migrations/DiscussionHeroMigrationTest.php` — idempotent `up`, `down` round-trip, FK `cascadeOnDelete` (orphan prevention). |
 | §27 | Frontend extend/override | 📝 | JS layer; out of PHP test scope. |
 | §28 | `app.forum.attribute` raw HTML | ✅ | Backed by `LoadingSpinnerColorTest` (CSS) + `HtmlSanitizerTest` (hero HTML) — the two admin-raw surfaces. |
 | §29 | Realtime broadcast leaks | 📝 | `extend.php` broadcasts route by the event's model/actor (not `public`); broadcasts IDs via core events. Review-only. |

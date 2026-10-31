@@ -146,9 +146,6 @@ final class HtmlSanitizer
 
     private static function scrubAttributes(DOMElement $el): void
     {
-        if ($el->attributes === null) {
-            return;
-        }
         // Snapshot attributes — removing while iterating breaks the live NodeList.
         foreach (iterator_to_array($el->attributes) as $attr) {
             $name  = strtolower($attr->nodeName);

@@ -37,15 +37,28 @@
     },
     "require-dev": {
         "flarum/tags": "^2.0.0",
-        "phpunit/phpunit": "^11.5 || ^13.2.0",
+        "flarum/likes": "^2.0.0",
+        "flarum/phpstan": "^2.0",
+        "flarum/sticky": "^2.0.0",
+        "flarum/testing": "^2.0",
         "mockery/mockery": "^1.6",
         "phpstan/phpstan": "^2.2",
+        "phpunit/phpunit": "^11.5 || ^13.2.0",
         "roave/security-advisories": "dev-latest"
     },
     "scripts": {
-        "test": "phpunit",
-        "test-security": "phpunit --group security",
-        "analyse": "phpstan analyse"
+        "analyse:phpstan": "phpstan analyse --memory-limit=2G",
+        "clear-cache:phpstan": "phpstan clear-result-cache",
+        "test": [
+            "@test:unit",
+            "@test:integration"
+        ],
+        "test:unit": "phpunit -c tests/phpunit.unit.xml",
+        "test:integration": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpunit -c tests/phpunit.integration.xml"
+        ],
+        "test:setup": "@php tests/integration/setup.php"
     },
     "suggest": {
         "flarum/tags": "Required for the showcase widget and tag-based hero images (^2.0)."
@@ -81,11 +94,18 @@
                 "gitConf": true,
                 "prettier": true,
                 "typescript": true,
-                "backendTesting": false,
+                "backendTesting": true,
                 "editorConfig": true
             }
         }
     },
     "minimum-stability": "dev",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "scripts-descriptions": {
+        "analyse:phpstan": "Run static analysis",
+        "test": "Runs all tests.",
+        "test:unit": "Runs all unit tests.",
+        "test:integration": "Runs all integration tests.",
+        "test:setup": "Sets up a database for use with integration tests. Execute this only once."
+    }
 }
