@@ -1,25 +1,10 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// Avocado V2 — Messages Page
-// Design: two-column chat shell, glassmorphism sidebar, Signal-style bubbles.
-// Dark tokens → DarkMode.less
-// ─────────────────────────────────────────────────────────────────────────────
+// Página de mensagens: shell de chat em duas colunas. Tokens escuros em DarkMode.less.
 
-// ── CSS tokens (light defaults) ───────────────────────────────────────────────
-// IMPORTANT: declared at :root so the dark overrides in DarkMode.less (also at
-// :root via [data-theme^=dark]) win via cascade. If these are scoped to
-// .AvocadoMessages/.MessagesPage they override the dark tokens by proximity
-// (closest ancestor with the custom property wins) and dark mode breaks.
+// Tokens no :root para os do escuro (também no :root) ganharem por cascata;
+// num ancestral mais próximo eles venceriam por proximidade.
 //
-// Note: DiscussionListPane uses Flarum global vars (--body-bg, --control-bg,
-// --shadow-color) which automatically adapt to light/dark themes.
-//
-// Why --header-height is NOT redefined here: the critical CSS in
-// AddCriticalCss.php pins .App-header to 52px on tablet+, so the actual topbar
-// is 52px (= the core --header-height default). Redefining --header-height to
-// 72px at :root caused .App { padding-top: var(--header-height) } to reserve
-// 72px of padding-top globally while the visible header only filled 52px —
-// producing a 20px body-bg strip below the header on every page. MessagesPage's
-// calc(100vh - var(--header-height, 52px)) now resolves correctly to 100vh-52px.
+// --header-height não é redefinido: o CSS crítico fixa o .App-header em 52px
+// no tablet+, e outro valor reservaria padding a mais no .App.
 :root {
   --avmsg-bg:            #f0f0f4;
   --avmsg-sidebar-bg:    #ffffff;
@@ -40,15 +25,12 @@
   --avmsg-unread-bg:     var(--primary-color);
   --avmsg-online:        var(--avocado-online);
   --avmsg-avatar-ring:   #ffffff;
-  // Skeleton shimmer colors (overridden in dark mode)
   --avmsg-sk-base:       #eaeaf0;
   --avmsg-sk-shine:      #f4f4f7;
 }
 
-// ── AvocadoMessages-inner hidden (no longer rendered in view) ─────────────────
 .AvocadoMessages-inner { display: none !important; }
 
-// ── Strip Flarum page chrome ───────────────────────────────────────────────────
 .MessagesPage {
   font-family: @font-sans;
   background: transparent !important;
@@ -87,7 +69,6 @@
   }
 }
 
-// ── Outer wrapper ──────────────────────────────────────────────────────────────
 .AvocadoMessages {
   font-family: @font-sans;
   display: flex !important;
@@ -112,7 +93,6 @@
   @media @phone { padding: 0 12px; }
 }
 
-// ── Page header ────────────────────────────────────────────────────────────────
 .AvocadoMessages-head {
   display: flex;
   align-items: center;
@@ -137,9 +117,6 @@
   @media @phone { margin-left: 12px; margin-right: 12px; }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Two-column card shell — fills 100% of the page height
-// ─────────────────────────────────────────────────────────────────────────────
 .AvocadoMessages-card {
   display: flex !important;
   align-items: stretch !important;
@@ -151,16 +128,12 @@
 
   @media @phone {
     flex-direction: column !important;
-    // Why: parent .AvocadoMessages uses height: calc(100vh - header) and is a
-    // column flex; an explicit height here guarantees the chat column has a
-    // resolved height to fill via flex:1 + height:100%, instead of collapsing
-    // to its content size (which left the body empty on mobile).
+    // Altura explícita para a coluna do chat ter altura resolvida; sem ela a
+    // coluna colapsava no conteúdo e o corpo ficava vazio no mobile.
     height: 100% !important;
 
-    // Default: show list, hide chat
     .AvocadoMessages-chatCol { display: none !important; }
 
-    // Dialog open: hide list, show chat
     &--onDialog .AvocadoMessages-listCol { display: none !important; }
     &--onDialog .AvocadoMessages-chatCol {
       display: flex !important;
@@ -170,9 +143,6 @@
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// LEFT COLUMN — conversation list
-// ─────────────────────────────────────────────────────────────────────────────
 .AvocadoMessages-listCol {
   flex: 0 0 450px !important;
   width: 450px !important;
@@ -200,7 +170,6 @@
     background: transparent !important;
   }
 
-  // ── Toolbar ──────────────────────────────────────────────────────────────
   .IndexPage-toolbar {
     padding: 14px 20px 12px !important;
     flex-shrink: 0 !important;
@@ -215,8 +184,7 @@
     width: 100% !important;
     box-sizing: border-box !important;
 
-    // Título da lista — texto vem traduzido do JS na custom property
-    // (--avocado-messages-title, setada em forum/index.tsx). Sem valor, some.
+    // O título vem traduzido do JS em --avocado-messages-title; sem valor, some.
     &::before {
       content: var(--avocado-messages-title, '');
       display: block !important;
@@ -229,7 +197,6 @@
       margin: 0 !important;
     }
 
-    // Clear floats (no longer needed but keep for safety)
     &::after { display: none !important; }
 
     .IndexPage-toolbar-view,
@@ -243,7 +210,6 @@
       float: none !important;
     }
 
-    // Sort / view dropdown — matches AvocadoDiscussions-sortTrigger
     .Dropdown > .Button,
     .Button.Dropdown-toggle {
       display: inline-flex !important;
@@ -274,7 +240,6 @@
       }
     }
 
-    // Small icon buttons (refresh, mark-all-read)
     .Button.Button--icon:not(.AvocadoMessages-composeBtn) {
       width: 30px !important;
       height: 30px !important;
@@ -298,7 +263,6 @@
       }
     }
 
-    // Compose button — muted/neutral style matching the refresh icon in light mode
     .AvocadoMessages-composeBtn {
       display: inline-flex !important;
       align-items: center !important;
@@ -346,7 +310,6 @@
     }
   }
 
-  // ── New message button ────────────────────────────────────────────────────
   .MessagesPage-newMessage.Button {
     display: flex !important;
     align-items: center !important;
@@ -373,7 +336,6 @@
     }
   }
 
-  // ── DialogList ──────────────────────────────────────────────────────────
   .DialogList {
     flex: 1 1 auto !important;
     overflow-y: auto !important;
@@ -411,7 +373,6 @@
     }
   }
 
-  // ── DialogListItem ────────────────────────────────────────────────────────
   .DialogListItem {
     border-radius: 16px !important;
     background: transparent !important;
@@ -444,7 +405,6 @@
       }
     }
 
-    // Avatar — online status shown as green border (same as DiscussionPage)
     &-avatar {
       position: relative !important;
       flex-shrink: 0 !important;
@@ -465,17 +425,14 @@
         color: #fff !important;
       }
 
-      // Online: separador (bg) + anel verde — uniforme com o widget de online.
       &.is-online .Avatar,
       .Avatar.is-online {
         border-color: var(--avmsg-sidebar-bg) !important;
         box-shadow: 0 0 0 2px var(--avmsg-online) !important;
       }
 
-      // Hide raw UserOnline element
       .UserOnline { display: none !important; }
 
-      // Unread count badge
       .Bubble {
         position: absolute !important;
         bottom: -2px !important;
@@ -575,7 +532,6 @@
       font-weight: 600 !important;
       color: var(--avmsg-text) !important;
     }
-    // Unread dot — shown on the right side of the item
     &--unread &-button::after {
       content: '' !important;
       display: block !important;
@@ -589,9 +545,6 @@
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RIGHT COLUMN — chat view
-// ─────────────────────────────────────────────────────────────────────────────
 .AvocadoMessages-chatCol {
   flex: 1 1 0 !important;
   min-width: 0 !important;
@@ -604,7 +557,6 @@
     min-height: 420px;
   }
 
-  // ── DialogSection ────────────────────────────────────────────────────────
   .DialogSection {
     display: flex !important;
     flex-direction: column !important;
@@ -613,7 +565,6 @@
     background: transparent !important;
     padding: 0 !important;
 
-    // ── Chat header ────────────────────────────────────────────────────────
     &-header {
       display: flex !important;
       align-items: center !important;
@@ -704,7 +655,6 @@
       }
     }
 
-    // ── Back button (mobile) ───────────────────────────────────────────────
     .DialogSection-back {
       display: none !important;
 
@@ -726,7 +676,6 @@
       }
     }
 
-    // ── Controls dropdown ─────────────────────────────────────────────────
     .DialogSection-controls {
       position: relative !important;
       z-index: 10 !important;
@@ -747,7 +696,6 @@
         transition: background 0.12s ease !important;
         overflow: visible !important;
 
-        // Force FA icon to render visibly
         i, .Button-icon {
           font-size: 17px !important;
           margin: 0 !important;
@@ -773,17 +721,10 @@
         left: auto !important;
         top: calc(100% + 6px) !important;
 
-        // On phone, Flarum core forces every .Dropdown .Dropdown-menu into a
-        // "bottom-sheet" (position:fixed; bottom:0; transform:translate(0,70vh);
-        // visibility:hidden; transition; width:auto !important; max-height:70vh;
-        // padding-bottom:40px !important; display:block always rendered).
-        // For the chat header dropdown that's wrong — we want a regular
-        // anchored popover under the trigger. Reset every conflicting property
-        // here, otherwise the menu renders as an empty animated bar far below.
-        // Note: position stays `absolute` (anchored to the .DialogSection-
-        // controls wrapper which is position:relative), NOT `fixed` — fixed
-        // positioning required hardcoded `top: calc(header + dialogHeader)`
-        // which wasn't accurate for all viewports.
+        // No phone o core transforma todo .Dropdown-menu em bottom sheet; aqui o
+        // menu do cabeçalho do chat precisa ser um popover ancorado. Fica `absolute`
+        // (o wrapper é relative): `fixed` exigiria um top fixo que não serve para
+        // toda viewport.
         @media @phone {
           position: absolute !important;
           right: 0 !important;
@@ -796,10 +737,8 @@
           transform: none !important;
           transition: none !important;
           overflow: visible !important;
-          // Flarum keeps the menu always-rendered on mobile (display:block) and
-          // toggles visibility via .open + transform animation. Since we
-          // disabled the animation above, switch to the desktop show/hide
-          // model: hidden by default, shown when wrapper has .open.
+          // O core mantém o menu sempre renderizado no mobile e alterna por
+          // visibility; sem a animação, volta ao modelo do desktop.
           visibility: hidden;
         }
         border-radius: 14px !important;
@@ -810,7 +749,7 @@
         background: var(--avmsg-card-bg) !important;
         z-index: 200 !important;
 
-        // Flarum core sets li { display: inline-block } — override to stack vertically
+        // O core põe os li em inline-block.
         > li {
           display: block !important;
           margin: 0 !important;
@@ -842,9 +781,6 @@
         }
       }
 
-      // Open state: Flarum's wrapper gets `.open` when dropdown is showing.
-      // On phone we set visibility:hidden by default (replacing core's bottom-
-      // sheet animation), so we need to flip it back here.
       @media @phone {
         &.open .Dropdown-menu {
           visibility: visible !important;
@@ -853,7 +789,6 @@
     }
   }
 
-  // ── Empty state ──────────────────────────────────────────────────────────
   .Placeholder {
     flex: 1 !important;
     display: flex !important;
@@ -882,16 +817,12 @@
   > .LoadingIndicator { display: none !important; }
 }
 
-// ── Suppress ALL Flarum native spinners inside the messages page ──────────────
-// Our skeleton preloaders handle every loading state instead.
+// Os skeletons cobrem todos os estados de carregamento.
 .AvocadoMessages .LoadingIndicator,
 .MessagesPage .LoadingIndicator {
   display: none !important;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MessageStream — scrollable area
-// ─────────────────────────────────────────────────────────────────────────────
 .AvocadoMessages-chatCol .MessageStream {
   flex: 1 1 auto !important;
   overflow-y: auto !important;
@@ -912,7 +843,7 @@
 
   &::-webkit-scrollbar { width: 0; }
 
-  // Extra bottom padding on mobile so last message isn't hidden behind the fixed input
+  // Espaço para o input fixo não cobrir a última mensagem.
   @media @phone { padding: 16px 14px 80px !important; }
 }
 
@@ -920,36 +851,30 @@
   padding: 2px 0 !important;
 }
 
-// ── Messenger-style message grouping ─────────────────────────────────────────
-// Post--grouped is added by JS when the previous message is from the same user.
-// Hide the repeated avatar (replaced by invisible spacer) and the name header.
+// O JS marca Post--grouped quando a mensagem anterior é do mesmo usuário.
 .AvocadoMessages-chatCol .MessageStream .Post.Post--grouped {
   padding-top: 1px !important;
 
-  // Keep avatar spacer (so bubble alignment stays) but hide the image
+  // O avatar segue como espaçador para manter o alinhamento das bolhas.
   .Post-side .Avatar { visibility: hidden !important; }
 
-  // Hide name + time for grouped messages
   .Post-header { display: none !important; }
 
-  // Adjust bubble radius for grouped received: no tail
   &:not(.Post--byCurrentUser):not(.Post--by-actor) .Post-body {
     border-radius: 4px 20px 20px 4px !important;
   }
 
-  // Adjust bubble radius for grouped sent: no tail
   &.Post--byCurrentUser .Post-body,
   &.Post--by-actor .Post-body {
     border-radius: 20px 4px 4px 20px !important;
   }
 }
 
-// Push messages to the bottom when there are few of them
+// Empurra poucas mensagens para a base.
 .AvocadoMessages-chatCol .MessageStream-item:first-child {
   margin-top: auto !important;
 }
 
-// Suppress any slide/pulse animation on new messages or conversation switch
 .AvocadoMessages-chatCol .MessageStream-item,
 .AvocadoMessages-chatCol .Message,
 .AvocadoMessages-chatCol .Post {
@@ -957,7 +882,6 @@
   transition: none !important;
 }
 
-// Load more buttons
 .AvocadoMessages-chatCol .MessageStream-loadNext,
 .AvocadoMessages-chatCol .MessageStream-loadPrev {
   padding: 6px 0 !important;
@@ -977,7 +901,6 @@
   }
 }
 
-// ── Date separator — pill badge ───────────────────────────────────────────────
 .AvocadoMessages-chatCol .MessageStream .PostStream-timeGap {
   display: flex !important;
   align-items: center !important;
@@ -999,9 +922,6 @@
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Chat bubbles — received (left)
-// ─────────────────────────────────────────────────────────────────────────────
 .AvocadoMessages-chatCol .MessageStream .Message,
 .AvocadoMessages-chatCol .MessageStream .Post {
   background: transparent !important;
@@ -1016,7 +936,7 @@
     align-items: flex-start !important;
     gap: 10px !important;
     flex-direction: row !important;
-    position: relative !important; // anchor for absolutely-positioned badge
+    position: relative !important; // âncora do badge absoluto
   }
 
   .Post-side {
@@ -1073,7 +993,7 @@
       &:hover { color: var(--primary-color) !important; }
     }
 
-    // Hide badges here — JS (syncFixedAvatarBadges) moves them to Post-side
+    // O JS move os badges para o Post-side.
     .PostUser-badges { display: none !important; }
 
     .Post-meta time, time {
@@ -1083,7 +1003,6 @@
     }
   }
 
-  // Bubble received — white (only for messages NOT by current user)
   &:not(.Post--by-actor):not(.Post--byCurrentUser) .Post-body {
     border-radius: 4px 20px 20px 20px !important;
   }
@@ -1110,7 +1029,6 @@
     blockquote { border-left: 3px solid var(--primary-color); padding-left: 10px; margin: 5px 0 0; opacity: 0.8; }
   }
 
-  // Hover actions
   .Post-actions, .Post-footer {
     opacity: 0 !important;
     margin-top: 4px !important;
@@ -1147,19 +1065,15 @@
   &:hover .Post-footer { opacity: 1 !important; }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Sent messages — Post--by-actor (set by core) + Post--byCurrentUser (fallback)
-// ─────────────────────────────────────────────────────────────────────────────
+// Post--by-actor vem do core; Post--byCurrentUser é o fallback.
 .AvocadoMessages-chatCol .MessageStream .Message.Post--by-actor,
 .AvocadoMessages-chatCol .MessageStream .Post.Post--by-actor,
 .AvocadoMessages-chatCol .MessageStream .Message.Post--byCurrentUser,
 .AvocadoMessages-chatCol .MessageStream .Post.Post--byCurrentUser {
   .Post-container { flex-direction: row-reverse !important; }
   .Post-main      { align-items: flex-end !important; }
-  // Hide sender name for own messages (unnecessary in 1:1 chat)
   .Post-header    { display: none !important; }
 
-  // Sent messages: Post-header is hidden so PostUser-badges never renders visibly
   .PostUser-badges { display: none !important; }
 
   .Post-body {
@@ -1168,8 +1082,7 @@
     color: #fff !important;
     border-radius: 20px 4px 20px 20px !important;
     box-shadow: 0 4px 18px color-mix(in srgb, var(--primary-color) 28%, transparent) !important;
-    // Offset by the hidden Post-header height so the sent bubble aligns
-    // vertically with the avatar — same visual baseline as received bubbles.
+    // Compensa o Post-header oculto para alinhar com o avatar.
     margin-top: 20px !important;
     position: static !important;
     top: 0 !important;
@@ -1198,7 +1111,6 @@
   }
 }
 
-// ── Deleted message placeholder ────────────────────────────────────────────
 .AvocadoMessages-chatCol .MessageStream .Post.Post--deleted .Post-body,
 .AvocadoMessages-chatCol .MessageStream .Message.Post--deleted .Post-body {
   background: var(--avmsg-search-bg) !important;
@@ -1218,8 +1130,7 @@
   i { font-size: 11px; opacity: 0.7; }
 }
 
-// On own (sent) deleted bubbles, keep the dashed-grey treatment so it reads
-// as deleted rather than a pink bubble with strange content.
+// Mantém o tracejado cinza para não parecer uma bolha rosa estranha.
 .AvocadoMessages-chatCol .MessageStream .Post--byCurrentUser.Post--deleted .Post-body,
 .AvocadoMessages-chatCol .MessageStream .Post--by-actor.Post--deleted .Post-body {
   background: var(--avmsg-search-bg) !important;
@@ -1228,40 +1139,33 @@
   p, a { color: var(--avmsg-muted) !important; }
 }
 
-// ── Badges — hidden in chat (avatars convey identity; badges add visual clutter) ──
 .AvocadoMessages-chatCol .MessageStream .PostUser .PostUser-badges {
   display: none !important;
 }
 
-// ── Hide duplicate PostUser avatar inside Post-header ────────────────────────
-// PostUser renders an Avatar with .Post-avatar inside the header; the real
-// avatar lives in .Post-side, so we hide the header one to prevent duplicates.
+// O avatar real fica no .Post-side.
 .AvocadoMessages-chatCol .MessageStream .Post-header .Post-avatar,
 .AvocadoMessages-chatCol .MessageStream .Post-header .PostUser .Avatar {
   display: none !important;
 }
 
-// ── Online indicator — green border on avatar, same as DiscussionPage ────────
 .AvocadoMessages-chatCol .MessageStream .Post-side--online .Avatar {
   border-color: var(--avmsg-online) !important;
   box-shadow: 0 0 0 2px var(--avmsg-bg) !important;
 }
 
-// Hide the raw UserOnline element; the border on the avatar conveys it
 .AvocadoMessages-chatCol .MessageStream .UserOnline,
 .AvocadoMessages-chatCol .MessageStream .Post-header .UserOnline,
 .AvocadoMessages-chatCol .MessageStream .Post-side > .UserOnline {
   display: none !important;
 }
 
-// Also apply to DialogSection header avatar when user is online
 .AvocadoMessages-chatCol .DialogSection-header.is-online .Avatar,
 .AvocadoMessages-chatCol .DialogSection-header .Avatar.is-online {
   border-color: var(--avmsg-header-bg) !important;
   box-shadow: 0 0 0 2px var(--avmsg-online) !important;
 }
 
-// ── Typing indicator ─────────────────────────────────────────────────────────
 .AvocadoMessages-chatCol .MessageStream .TypingIndicator,
 .AvocadoMessages-chatCol .MessageStream [class*="typing"],
 .AvocadoMessages-chatCol .MessageStream .Message--typing {
@@ -1283,15 +1187,8 @@
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AvocadoInlineReply — inline message composer
-// ─────────────────────────────────────────────────────────────────────────────
-// Pin the inline reply to the bottom of the MessageStream scroll container.
-// position:sticky must live on the actual flex-child of the scroller, which
-// is the .MessageStream-item wrapper (added by index.tsx) — applying it on
-// the inner <div className="AvocadoMessages-inlineReply"> doesn't take
-// effect because the wrapper flows normally above it. `margin-top: auto`
-// pushes the wrapper to the bottom of the flex column when content is short.
+// O sticky precisa estar no filho flex do scroller (o .MessageStream-item);
+// no <div> interno não tem efeito. `margin-top: auto` leva para a base.
 .AvocadoMessages-chatCol .MessageStream > .MessageStream-item:has(> .AvocadoMessages-inlineReply) {
   position: sticky !important;
   bottom: 0 !important;
@@ -1316,7 +1213,7 @@
   @media @phone {
     padding: 10px 12px env(safe-area-inset-bottom, 14px) !important;
     padding-bottom: 12px !important;
-    // On mobile, pin to the viewport (above the OS keyboard / safe area).
+    // No mobile, preso à viewport acima do teclado / safe area.
     position: fixed !important;
     bottom: 0 !important;
     left: 0 !important;
@@ -1344,10 +1241,6 @@
     color: #fff !important;
   }
 
-  // Card-shaped wrap hosting Flarum's TextEditor. Top row keeps the pill
-  // feel (textarea + round submit overlay on the right). Bottom row reveals
-  // the MarkdownToolbar (heading, bold, italic, …). All living inside a
-  // single rounded container.
   &-wrap {
     flex: 1 !important;
     min-width: 0 !important;
@@ -1369,7 +1262,6 @@
       box-shadow: 0 2px 20px rgba(0,0,0,0.08) !important;
     }
 
-    // ── TextEditor: collapse Flarum's chrome so the textarea sits in the pill
     .TextEditor {
       flex: 1 !important;
       min-width: 0 !important;
@@ -1397,12 +1289,11 @@
       box-shadow: none !important;
       resize: none !important;
       width: 100% !important;
-      // right-padding leaves room for the absolutely-positioned round submit
+      // espaço para o botão redondo de enviar
       padding: 13px 56px 10px 20px !important;
       min-height: 48px !important;
-      // Cap at half-viewport so a long draft never eats the whole chat area.
-      // Below the cap the textarea grows naturally with its content (Flarum's
-      // Composer-flexible class drives the height from scrollHeight on input).
+      // Metade da viewport no máximo; abaixo disso o Composer-flexible do core
+      // cresce com o conteúdo.
       max-height: 50vh !important;
       height: auto !important;
       overflow-y: auto !important;
@@ -1414,10 +1305,7 @@
       &::-webkit-scrollbar { width: 0; }
     }
 
-    // ── Controls row: MarkdownToolbar lives in the bottom strip; the submit
-    // button is plucked out of the flow and pinned to the top-right corner of
-    // the textarea (round paper-plane overlay, matching the original pill
-    // aesthetic the user asked to keep).
+    // O botão de enviar sai do fluxo e fica no canto superior do textarea.
     ul.TextEditor-controls {
       display: flex !important;
       flex-wrap: nowrap !important;
@@ -1457,7 +1345,6 @@
       }
     }
 
-    // ── MarkdownToolbar (inside li.TextEditor-toolbar)
     .MarkdownToolbar {
       display: inline-flex !important;
       align-items: center !important;
@@ -1489,7 +1376,6 @@
       }
     }
 
-    // Mention button — sibling of MarkdownToolbar inside li.TextEditor-toolbar
     > .TextEditor > ul.TextEditor-controls > li.TextEditor-toolbar > .Button.Button--icon {
       width: 30px !important;
       height: 30px !important;
@@ -1506,7 +1392,6 @@
       &:hover { background: color-mix(in srgb, var(--avmsg-muted) 12%, transparent) !important; color: var(--avmsg-text) !important; }
     }
 
-    // ── Submit button — round paper-plane overlay (matches original design)
     li.item-submit.App-primaryControl .Button.Button--primary {
       width: 36px !important;
       height: 36px !important;
@@ -1531,14 +1416,10 @@
   }
 }
 
-// Hide original ReplyPlaceholder (replaced by AvocadoInlineReply)
 .AvocadoMessages-chatCol .MessageStream .ReplyPlaceholder {
   display: none !important;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DetailsModal
-// ─────────────────────────────────────────────────────────────────────────────
 .Modal--flat.DetailsModal {
   border-radius: 20px !important;
   overflow: hidden !important;
@@ -1582,10 +1463,6 @@
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Dialog-switch skeleton — shown while switching conversations
-// Matches discussion-page post skeleton style
-// ─────────────────────────────────────────────────────────────────────────────
 .AvocadoMessages-skeleton-dialog {
   display: flex;
   flex-direction: column;
@@ -1680,10 +1557,6 @@
   @media @phone { padding: 4px 14px; }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Messages page skeleton (shown while app.dialogs.isLoading())
-// ─────────────────────────────────────────────────────────────────────────────
-
 @keyframes avmsg-shimmer {
   0%   { background-position: -400px 0; }
   100% { background-position:  400px 0; }
@@ -1702,7 +1575,6 @@
   border-radius: 6px;
 }
 
-// ── List skeleton ─────────────────────────────────────────────────────────────
 .AvocadoMessages-skeleton-list {
   display: flex;
   flex-direction: column;
@@ -1739,13 +1611,11 @@
   &--name { width: 55%; height: 11px; }
   &--msg  { width: 75%; height: 9px; opacity: 0.7; }
 
-  // Chat bubble sizes
   &--bubble-sm  { width: 120px; height: 36px; border-radius: 18px; }
   &--bubble-md  { width: 200px; height: 44px; border-radius: 18px; }
   &--bubble-lg  { width: 260px; height: 56px; border-radius: 18px; }
 }
 
-// ── Chat skeleton ─────────────────────────────────────────────────────────────
 .AvocadoMessages-skeleton-chat {
   flex: 1 1 auto;
   display: flex;
@@ -1790,9 +1660,7 @@
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Conditional: Position composer above MobileTab when extension is active
-// ─────────────────────────────────────────────────────────────────────────────
+// Com MobileTab ativa, o input fica acima da barra.
 html.has-mobile-tab .AvocadoMessages-inlineReply {
   @media @phone {
     bottom: 56px !important;

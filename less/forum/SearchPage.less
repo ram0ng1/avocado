@@ -1,4 +1,4 @@
-// ─── IndexPage layout when search is active (?q=) ────────────────────────────
+// Layout da IndexPage com busca ativa (?q=).
 
 .IndexPage--avocadoSearch {
   .Page-hero {
@@ -20,16 +20,12 @@
   }
 }
 
-// ─── App-level override for posts search page ─────────────────────────────────
-
 .App--avocadoSearch {
   .App-content {
     background: var(--body-bg);
     border-top: 0;
   }
 }
-
-// ─── Shared search container ──────────────────────────────────────────────────
 
 .AvocadoSearch {
   max-width: var(--home-max-width);
@@ -39,8 +35,6 @@
   color: var(--home-title);
   background: var(--body-bg);
 }
-
-// ─── Header ──────────────────────────────────────────────────────────────────
 
 .AvocadoSearch-header {
   display: flex;
@@ -64,8 +58,6 @@
   color: var(--primary-color);
 }
 
-// ─── Empty state ──────────────────────────────────────────────────────────────
-
 .AvocadoSearch-empty {
   display: flex;
   flex-direction: column;
@@ -87,15 +79,11 @@
   }
 }
 
-// ─── Discussion search results stack ─────────────────────────────────────────
-
 .AvocadoSearch-stack {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
-
-// ─── Discussion search card ───────────────────────────────────────────────────
 
 .AvocadoSearch-threadCard {
   border: 1px solid var(--home-border);
@@ -212,8 +200,6 @@
   > i { font-size: 12px; }
 }
 
-// ─── Posts search results stack ───────────────────────────────────────────────
-
 .AvocadoSearch--posts {
   .AvocadoSearch-header {
     margin-bottom: 20px;
@@ -225,8 +211,6 @@
   flex-direction: column;
   gap: 10px;
 }
-
-// ─── Post card ────────────────────────────────────────────────────────────────
 
 .AvocadoSearch-postCard {
   border: 1px solid var(--home-border);
@@ -298,8 +282,8 @@
   border-radius: 999px;
   padding: 4px 12px;
   align-self: flex-start;
-  // align-self:flex-start dá à pílula a largura do conteúdo (max-content);
-  // sem o teto, um título de discussão longo estoura a largura do card.
+  // align-self: flex-start dá à pílula a largura do conteúdo; sem o teto, um
+  // título longo estoura o card.
   max-width: 100%;
   overflow-wrap: anywhere;
   transition: background var(--avocado-t-fast), color var(--avocado-t-fast);
@@ -366,8 +350,6 @@
   }
 }
 
-// ─── Highlight marks ──────────────────────────────────────────────────────────
-
 .AvocadoSearch-threadTitle mark,
 .AvocadoSearch-threadExcerpt mark,
 .AvocadoSearch-postExcerpt mark,
@@ -379,8 +361,6 @@
   color: inherit;
 }
 
-// ─── Unified search page (/search) ────────────────────────────────────────────
-
 .App--search {
   .App-content {
     background: var(--body-bg);
@@ -391,8 +371,6 @@
 .AvocadoSearch--unified {
   padding-top: 36px;
 }
-
-// ─── Hero empty state ─────────────────────────────────────────────────────────
 
 .AvocadoSearch-hero {
   padding: 56px 0 20px;
@@ -429,8 +407,6 @@
     grid-template-columns: 1fr;
   }
 }
-
-// ─── Search bar — bordered pill (hero variant: wider, centered) ───────────────
 
 .AvocadoSearch-barWrap {
   &--hero {
@@ -524,8 +500,6 @@
   }
 }
 
-// ─── Toolbar: tabs left, sort right — below search bar when query active ──────
-
 .AvocadoSearch-toolbar {
   display: flex;
   align-items: center;
@@ -535,8 +509,6 @@
   padding-top: 16px;
   margin-bottom: 20px;
 }
-
-// ─── Tabs — pill buttons ──────────────────────────────────────────────────────
 
 .AvocadoSearch-tabs {
   display: flex;
@@ -578,15 +550,11 @@
 }
 
 
-// ─── User stack ───────────────────────────────────────────────────────────────
-
 .AvocadoSearch-userStack {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
-
-// ─── User card ────────────────────────────────────────────────────────────────
 
 .AvocadoSearch-userCard {
   padding: 14px 18px;
@@ -656,7 +624,7 @@
   flex-shrink: 0;
 }
 
-// Skeleton placeholder that mirrors the real view button (invisible children → exact width match)
+// Filhos invisíveis para o esqueleto ter a largura exata do botão real.
 .AvocadoSearch-userCard-viewBtn--skel {
   .avocado-pill-btn(34px; 13px; 12px);
   background: linear-gradient(90deg, #f0f0f4 25%, #e6e6eb 50%, #f0f0f4 75%);
@@ -667,7 +635,6 @@
   > * { visibility: hidden; }
 }
 
-// Flarum native badges (group badges) inside the user card
 .AvocadoSearch-userCard-badges {
   display: flex;
   flex-wrap: wrap;
@@ -708,8 +675,6 @@
   > i { font-size: 11px; }
 }
 
-// ─── User skeleton ────────────────────────────────────────────────────────────
-
 .AvocadoSearch-userSkeleton {
   display: flex;
   align-items: center;
@@ -730,13 +695,9 @@
   animation: skeletonShimmer 1.4s infinite;
 }
 
-// ─── Thread title hover: no colour change ─────────────────────────────────────
-
 .AvocadoSearch-threadTitle {
   &:hover { color: inherit !important; text-decoration: none; }
 }
-
-// ─── Responsiveness ───────────────────────────────────────────────────────────
 
 @media (max-width: 640px) {
   .AvocadoSearch {
@@ -769,5 +730,3 @@
     gap: 8px;
   }
 }
-
-

@@ -1,12 +1,9 @@
-// As @font-face da DM Sans moram só no CSS crítico inline (src/Content/AddCriticalCss.php,
-// URLs de src/Content/ThemeFonts.php), com a mesma URL do preload — uma declaração
-// aqui com outra URL fazia a fonte ser baixada duas vezes em alguns ambientes.
+// As @font-face ficam só no CSS crítico inline, com a mesma URL do preload;
+// declarar aqui com outra URL baixaria a fonte duas vezes.
 //
-// O CSS do tema é montado em três partes (ver extend.php): esta folha, as folhas
-// de cada extensão de terceiros (registradas só com a extensão ativa, para um
-// fórum sem ela não baixar o CSS) e forum-tail.less. O Flarum compila todas no
-// MESMO Less_Parser, na ordem de registro: variáveis e mixins daqui valem nas
-// outras e a ordem da cascata é a mesma de quando tudo era importado aqui.
+// O Flarum compila esta folha, as folhas por extensão (só com a extensão ativa)
+// e o forum-tail.less no mesmo parser, nessa ordem: variáveis e mixins daqui
+// valem nas outras.
 @import "common/common.less";
 
 @import "forum/App.less";
@@ -20,11 +17,9 @@
 @import "forum/Composer.less";
 @import "forum/ComposerPreview.less";
 @import "forum/ReplyTo.less";
-// Depois do DiscussionPage.less de propósito: a variante editorial precisa
-// ganhar da cascata da página padrão. Inerte sem o atributo em <html>.
+// Depois do DiscussionPage.less para ganhar da cascata padrão.
 @import "forum/DiscussionEditorial.less";
-// Depois do DiscussionEditorial.less: a posição "side" alarga --disc-side-col e
-// o eixo da corrente lê esse mesmo token, então precisa vir por último.
+// Por último: a posição "side" alarga --disc-side-col, que o eixo da corrente lê.
 @import "forum/PostBadges.less";
 @import "forum/AuthModal.less";
 @import "forum/DiscussionModals.less";
@@ -32,13 +27,8 @@
 @import "forum/UserPage.less";
 @import "forum/SearchPage.less";
 @import "forum/SearchModal.less";
-// No ponto em que ficava o MessagesPage.less (de onde saiu): vale sem o flarum/messages.
+// Vale sem o flarum/messages.
 @import "forum/DiscussionListPane.less";
-// Subiram de depois das folhas de extensão para cá: nenhuma delas toca em
-// pre/code/.UrlLink com especificidade que dependa da ordem (as regras de
-// código das bolhas de mensagem são mais específicas e ganham de todo jeito).
 @import "forum/CodeHighlight.less";
 @import "forum/UrlLink.less";
-// Aqui entram, via extend.php, as folhas por extensão: MessagesPage,
-// LeaderboardPage, Gamification, BadgeLabels, FofBookmarks, Fancybox, Mermaid e
-// Support — nessa ordem, a mesma de antes.
+// Aqui entram as folhas por extensão registradas no extend.php.

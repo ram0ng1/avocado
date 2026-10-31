@@ -17,7 +17,7 @@ on:
         required: false
         default: ''
 
-# §35.13 C1 — default-deny do GITHUB_TOKEN. Esse workflow só chama API externa.
+# Nega tudo ao GITHUB_TOKEN por padrão: este workflow só chama uma API externa.
 permissions: {}
 
 concurrency:
@@ -29,8 +29,7 @@ jobs:
     name: Publicar no Fórum
     runs-on: ubuntu-latest
     steps:
-      # §35.13 I3 — auditar egress. Esse job toca em FLARUM_API_KEY,
-      # então harden-runner é especialmente importante aqui.
+      # Audita o egress: este job manuseia a FLARUM_API_KEY.
       - name: Harden Runner
         uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2  # v2.22.2
         with:

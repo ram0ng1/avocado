@@ -10,7 +10,7 @@ on:
       - master
   workflow_dispatch:
 
-# §35.13 C1 — default-deny do GITHUB_TOKEN.
+# Nega tudo ao GITHUB_TOKEN por padrão; cada job declara o que precisa.
 permissions: {}
 
 concurrency:
@@ -45,8 +45,8 @@ jobs:
             p/secrets
             p/javascript
         # --baseline-commit faz o Semgrep reportar só o que NÃO existia no commit
-        # base da PR (master). || true para nunca quebrar o scan (o gate é o
-        # comentário; veja a nota no fim do workflow para transformar em gate).
+        # base da PR (master). `|| true` para nunca quebrar o scan: o gate é o
+        # comentário.
         run: |
           semgrep scan --json --output=findings.json \
             --baseline-commit "${{ github.event.pull_request.base.sha }}" \

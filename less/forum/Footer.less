@@ -1,11 +1,5 @@
-// ─── Rodapé do tema ──────────────────────────────────────────────────────────
-// JS: js/src/forum/components/AvocadoFooter.tsx (admin › Rodapé).
-//
-// Simples de propósito: um bloco estreito e centralizado no fim da página, com
-// uma linha fina em cima e texto discreto. Cada grupo (texto, navegação,
-// contatos, redes, copyright) é uma linha; nada de painel, cor de fundo ou
-// efeito. A largura é a proporção áurea da página (61,8%), que dá ao texto uma
-// medida confortável de leitura sem precisar de um teto em pixels.
+// Largura em proporção áurea (61,8%): medida de leitura confortável sem teto
+// em pixels.
 
 .AvocadoFooter {
   width: 61.8%;
@@ -28,7 +22,6 @@
     margin: 0;
   }
 
-  // Um tom acima do texto ao redor; a cor do fórum só no hover e no foco.
   a {
     color: var(--text-color);
     font-weight: 600;
@@ -49,8 +42,7 @@
     }
   }
 
-  // Os grupos se separam só pelo respiro. (:not(:first-child) e não `* + *`:
-  // precisa ganhar do `ul { margin: 0 }` logo acima.)
+  // :not(:first-child) em vez de `* + *` para ganhar do `ul { margin: 0 }` acima.
   > :not(:first-child) {
     margin-top: 0.9em;
   }
@@ -60,7 +52,6 @@
   margin-top: 0.25em;
 }
 
-// Itens em linha, centralizados, que quebram sozinhos quando não cabem.
 .AvocadoFooter-row {
   display: flex;
   flex-wrap: wrap;
@@ -92,7 +83,6 @@
   }
 }
 
-// O copyright e os links legais: a linha mais discreta.
 .AvocadoFooter-fine {
   font-size: 12.5px;
 
@@ -102,15 +92,12 @@
   }
 }
 
-// ── Páginas sem rodapé ───────────────────────────────────────────────────────
-// As mensagens privadas ocupam a tela inteira, como um aplicativo.
+// Mensagens privadas ocupam a tela inteira.
 .App:has(.MessagesPage) .AvocadoFooter {
   display: none;
 }
 
-// ── Celular ──────────────────────────────────────────────────────────────────
-// Em tela estreita 61,8% espreme o texto: o bloco usa a largura toda, com a
-// margem lateral das páginas do tema.
+// No celular 61,8% espreme o texto.
 @media @phone {
   .AvocadoFooter {
     width: auto;

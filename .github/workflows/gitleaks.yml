@@ -13,7 +13,7 @@ on:
     - cron: '0 8 * * 1'  # toda segunda, 08:00 UTC
   workflow_dispatch:
 
-# §35.13 C1 — default-deny.
+# Nega tudo ao GITHUB_TOKEN por padrão; cada job declara o que precisa.
 permissions: {}
 
 concurrency:

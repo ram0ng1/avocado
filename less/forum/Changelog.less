@@ -1,13 +1,8 @@
-// ─── Changelog ────────────────────────────────────────────────────────────────
-// Linha do tempo de versões: à esquerda a versão e a data, num trilho com um nó
-// por lançamento (na cor do produto); à direita o cartão, com a capa, o produto,
-// os tipos da mudança (sub-tags, na cor de cada uma) e o resumo. Tudo lê os
-// tokens do tema (--home-*, --avocado-*), então o escuro não precisa de regras.
-//
-// `--product-color` vem inline da tag do produto; sem ele cai na cor primária.
+// Linha do tempo de versões. Tudo lê os tokens do tema, então o escuro não
+// precisa de regras. `--product-color` vem inline; sem ele, cor primária.
 
-// Degradê da capa "na cor da tag": do produto (--cover-a) para a cor do primeiro
-// tipo (--cover-b). Sem tipo, o segundo ponto é o próprio produto clareado.
+// Do produto (--cover-a) para o primeiro tipo (--cover-b); sem tipo, o próprio
+// produto clareado.
 .changelog-cover-gradient() {
   background: linear-gradient(
     135deg,
@@ -20,10 +15,7 @@
   --changelog-when-w: 148px;
   --changelog-gap: 30px;
 
-  // Destaques da página (o CTA "Nova versão", o produto ativo, "todos os tipos",
-  // o selo "mais recente") seguem a cor primária do fórum, pelas variáveis do botão
-  // primário do Flarum — que já trazem o hover e o texto com contraste calculado
-  // (primária clara → texto escuro).
+  // As variáveis do botão primário já trazem hover e texto com contraste calculado.
   --changelog-accent: var(--button-primary-bg, var(--primary-color));
   --changelog-accent-hover: var(--button-primary-bg-hover, color-mix(in srgb, var(--primary-color) 88%, #000));
   --changelog-on-accent: var(--button-primary-color, #fff);
@@ -36,7 +28,6 @@
 
   a { text-decoration: none; }
 
-  // ── Header ────────────────────────────────────────────────────────────────
   &-header {
     display: flex;
     align-items: flex-start;
@@ -48,7 +39,6 @@
 
   &-headerText { min-width: 0; }
 
-  // "Nova versão": a pílula do CTA, na cor primária do fórum, com menu quando há vários produtos.
   &-newWrap { position: relative; flex: 0 0 auto; }
 
   &-new {
@@ -119,7 +109,6 @@
     color: var(--home-muted, #6b6b72);
   }
 
-  // ── Seletor de produto ────────────────────────────────────────────────────
   &-products {
     display: flex;
     flex-wrap: wrap;
@@ -158,7 +147,6 @@
 
     &:active { transform: scale(0.97); }
 
-    // O ativo é a pílula do CTA, na cor primária do fórum; ícone e ponto herdam o texto.
     &.is-active {
       background: var(--changelog-accent);
       border-color: transparent;
@@ -171,7 +159,6 @@
     }
   }
 
-  // ── Filtro de tipo ────────────────────────────────────────────────────────
   &-types {
     display: flex;
     flex-wrap: wrap;
@@ -199,21 +186,18 @@
       box-shadow: none;
     }
 
-    // "Todos os tipos" não tem cor própria: usa a primária do fórum quando ativo.
     &--all.is-active {
       background: var(--changelog-accent);
       color: var(--changelog-on-accent);
     }
   }
 
-  // ── Linha do tempo ────────────────────────────────────────────────────────
   &-timeline {
     display: flex;
     flex-direction: column;
     gap: 34px;
   }
 
-  // Rótulo de seção (mês): caixa-alta pequena com um fio que corre até a borda.
   &-month {
     display: flex;
     align-items: center;
@@ -239,7 +223,6 @@
     flex-direction: column;
     gap: 18px;
 
-    // O trilho: passa pelo meio do vão entre a coluna de data e o cartão.
     &::before {
       content: '';
       position: absolute;
@@ -259,7 +242,6 @@
     column-gap: var(--changelog-gap);
     align-items: start;
 
-    // O nó do trilho, alinhado à primeira linha do cartão.
     &::before {
       content: '';
       position: absolute;
@@ -275,7 +257,6 @@
     }
   }
 
-  // ── Coluna de versão + data ───────────────────────────────────────────────
   &-when {
     position: sticky;
     top: 96px;
@@ -304,7 +285,6 @@
     color: var(--home-muted);
   }
 
-  // ── Cartão ────────────────────────────────────────────────────────────────
   &-card {
     min-width: 0;
     overflow: hidden;
@@ -323,7 +303,7 @@
   }
 
   // Altura fixa em vez de aspect-ratio + max-height: com largura automática o
-  // navegador repassa o teto de altura para a largura e a capa encolhe.
+  // navegador repassa o teto para a largura e a capa encolhe.
   &-cover {
     display: block;
     width: 100%;
@@ -340,13 +320,11 @@
     }
   }
 
-  // Capa sem imagem: banner na cor da tag, com o ícone do tipo gigante e apagado.
   &-cover--color {
     position: relative;
     height: 150px;
     .changelog-cover-gradient();
 
-    // Um brilho no canto de cima tira o degradê da cara de bloco chapado.
     &::after {
       content: '';
       position: absolute;
@@ -372,7 +350,6 @@
     padding: 20px 22px 16px;
   }
 
-  // ── Selos: mais recente · produto · tipos ─────────────────────────────────
   &-labels {
     display: flex;
     flex-wrap: wrap;
@@ -422,7 +399,6 @@
     > i { font-size: 11px; }
   }
 
-  // ── Texto ─────────────────────────────────────────────────────────────────
   &-entryTitle {
     margin: 0;
     font-size: 24px;
@@ -447,7 +423,6 @@
     .avocado-line-clamp(3);
   }
 
-  // ── Notas completas (primeiro post, sob demanda) ──────────────────────────
   &-notes {
     margin-top: 14px;
     padding-top: 14px;
@@ -462,7 +437,6 @@
 
     p { margin: 0 0 10px; }
 
-    // Títulos viram rótulos de seção ("O que há de novo"), como o mês da linha do tempo.
     h1, h2, h3, h4 {
       margin: 20px 0 6px;
       font-size: 12.5px;
@@ -496,7 +470,6 @@
     color: var(--home-muted);
   }
 
-  // ── Rodapé do cartão ──────────────────────────────────────────────────────
   &-foot {
     display: flex;
     align-items: center;
@@ -566,7 +539,6 @@
     &.is-open > i { transform: rotate(180deg); }
   }
 
-  // ── Vazio / erro ──────────────────────────────────────────────────────────
   &-error {
     padding: 28px 18px;
     border: 1px dashed var(--home-border);
@@ -594,7 +566,6 @@
     &:hover { background: var(--avocado-surface-1); }
   }
 
-  // ── Skeleton ──────────────────────────────────────────────────────────────
   &-skeleton {
     display: flex;
     flex-direction: column;
@@ -625,7 +596,6 @@
   }
 }
 
-// ── Responsivo ────────────────────────────────────────────────────────────────
 @media @tablet {
   .AvocadoChangelog {
     --changelog-when-w: 112px;
@@ -633,7 +603,6 @@
   }
 }
 
-// No celular o trilho some e a versão/data sobem para uma linha acima do cartão.
 @media @phone {
   .AvocadoChangelog {
     padding: 16px 10px 40px;
@@ -675,15 +644,12 @@
   }
 }
 
-// ── Campos do changelog no compositor ─────────────────────────────────────────
-// Moram na mesma linha do chip de imagem (.AvocadoHome-composerHeroChipRow) e
-// herdam o desenho dele; aqui só o que é próprio: o input da versão e a amostra
-// do degradê no chip de "capa na cor da tag".
+// Herdam o desenho do chip de imagem do compositor.
 
 .AvocadoChangelogField-version {
   cursor: text;
 
-  // O chip "ativo" do hero reserva espaço para a miniatura; aqui não há.
+  // O chip ativo do hero reserva espaço para a miniatura; aqui não há.
   &.is-set { padding-left: 12px; }
 }
 
@@ -719,14 +685,12 @@
   .changelog-cover-gradient();
 }
 
-// No modal de renomear a linha de chips não tem o filete e o respiro do compositor.
 .AvocadoChangelogField-modal .AvocadoHome-composerHeroChipRow {
   padding: 0;
   border-bottom: 0;
   justify-content: center;
 }
 
-// ── Seletor de cor da capa (chip + painel) ────────────────────────────────────
 .AvocadoChangelogField-picker {
   position: relative;
   display: inline-flex;
@@ -739,8 +703,8 @@
 }
 
 .AvocadoChangelogField-pop {
-  // `fixed` com coordenadas calculadas em ChangelogFields (popoverStyle): escapa do
-  // overflow do cabeçalho da versão e do compositor, e acima do compositor e dos modais.
+  // `fixed` com coordenadas calculadas no JS para escapar do overflow do
+  // cabeçalho e do compositor, ficando acima dos modais.
   position: fixed;
   z-index: 1500;
   overflow-y: auto;

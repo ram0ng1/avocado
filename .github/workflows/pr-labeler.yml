@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [opened, reopened, synchronize]
 
-# §35.13 C1 — default-deny.
+# Nega tudo ao GITHUB_TOKEN por padrão; cada job declara o que precisa.
 permissions: {}
 
 jobs:

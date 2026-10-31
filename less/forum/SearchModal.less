@@ -1,52 +1,21 @@
-// ─── Avocado SearchModal — Flarum v2 GlobalSearch ─────────────────────────────
-// Replaces the default Bootstrap modal chrome with the Avocado spotlight-style
-// search dialog (pill tabs, FA icons, ESC kbd, footer with arrow keys).
-//
-// Trigger flow:
-//   GlobalSearch (input in header) → onclick → app.modal.show(SearchModal)
-//   SearchModal renders into <#modal> with class
-//     `Modal SearchModal Modal--flat modal-dialog`
-//
-// DOM produced by core (after our JS overrides):
-//   .Modal.SearchModal.Modal--flat
-//     .Modal-content
-//       .Modal-close (hidden — ESC kbd is the visual close hint)
-//       <form>
-//         .Modal-body.SearchModal-body
-//           .SearchModal-form  (search input + ESC kbd row)
-//           .Tabs
-//             .Tabs-nav        (pill-style tab buttons w/ FA icons)
-//             .Tabs-content.SearchModal-tabs-content
-//               .SearchModal-section ×N
-//                 .Modal-divider (hidden)
-//                 ul.Dropdown-menu.SearchModal-results / -fullPage
-//                   .Dropdown-header
-//                   li.DiscussionSearchResult / .PostSearchResult / .UserSearchResult
-//           .Avocado-searchModal-foot  (injected by JS: tip + arrow keys)
+// GlobalSearch do Flarum 2 como diálogo estilo spotlight: abas em pílula, ESC
+// como fechar e rodapé com atalhos (injetado pelo JS).
 
-// ── Backdrop ────────────────────────────────────────────────────────────────
-// Flarum 2.x renders a single .Modal-backdrop element as a sibling of
-// .ModalManager nodes. We give it the spotlight-style blur + dim ONLY when
-// the active modal is a SearchModal (so other modals like LogIn/SignUp keep
-// their default chrome). A classe no <body> vem de js/src/forum/utils/modalBackdrop.ts
-// e substitui um body:has(.ModalManager .SearchModal.Modal--flat): o :has() com o
-// body como sujeito era reavaliado a cada mutação de DOM da página inteira.
+// Só com o SearchModal ativo, para os outros modais manterem o chrome padrão.
+// A classe no body substitui um body:has(.ModalManager …), reavaliado a cada
+// mutação do DOM.
 body.avocado-backdrop--search .Modal-backdrop {
   background: rgba(15, 15, 20, 0.42) !important;
   backdrop-filter: blur(4px);
   opacity: 1 !important;
 }
 
-// ── Modal positioning & shell ───────────────────────────────────────────────
-// Flarum places the modal inside #modal which is centered by core CSS.
-// We override to top-anchor and constrain to 640px.
+// Ancorado no topo e limitado a 640px.
 .Modal.SearchModal.Modal--flat {
-  // Override the default core max-width (modal-dialog defaults vary)
   max-width: 640px !important;
   width: 100%;
   margin: 80px auto 16px !important;
 
-  // Subtle "pop" entrance — matches the mockup's keyframes
   animation: avocadoSearchPop 0.22s cubic-bezier(.2, .9, .3, 1.1);
 
   .Modal-content {
@@ -57,22 +26,19 @@ body.avocado-backdrop--search .Modal-backdrop {
     border: 0;
   }
 
-  // Hide the default close button — ESC kbd inside the input row replaces it
+  // O ESC na linha do input substitui o botão de fechar.
   .Modal-close {
     display: none !important;
   }
 
-  // Hide the default "Search" title header — the input row IS the header
   .Modal-header {
     display: none !important;
   }
 
-  // Reset body padding — each section provides its own
   .Modal-body {
     padding: 0 !important;
   }
 
-  // Hide the inter-section dividers — visual separators come from borders
   .Modal-divider {
     display: none !important;
   }
@@ -83,7 +49,6 @@ body.avocado-backdrop--search .Modal-backdrop {
   to   { opacity: 1; transform: none; }
 }
 
-// Mobile: full-screen sheet
 @media @phone {
   .Modal.SearchModal.Modal--flat {
     max-width: 100% !important;
@@ -99,7 +64,6 @@ body.avocado-backdrop--search .Modal-backdrop {
   }
 }
 
-// ── Search input row ─────────────────────────────────────────────────────────
 .SearchModal {
   &-form {
     position: relative;
@@ -109,8 +73,6 @@ body.avocado-backdrop--search .Modal-backdrop {
     padding: 16px 22px;
     border-bottom: 1px solid var(--avocado-border-subtle, #eaeaf0);
 
-    // Flarum's <Input> renders <div class="Input Input--withPrefix">. We want it
-    // to behave as a borderless flex row inside the form.
     > .Input {
       flex: 1;
       display: flex;
@@ -124,7 +86,6 @@ body.avocado-backdrop--search .Modal-backdrop {
       min-width: 0;
     }
 
-    // Prefix search icon
     .Input-prefix-icon,
     .Input-icon {
       position: static !important;
@@ -139,14 +100,12 @@ body.avocado-backdrop--search .Modal-backdrop {
       background: transparent !important;
     }
 
-    // Hide the clear button — ESC kbd handles dismissal
     .Input-clear,
     .Button.Input-clear {
       display: none !important;
     }
 
-    // The actual input element. FormControl ships with a default border-radius
-    // and padding that fight the spotlight layout — flatten it completely.
+    // O FormControl traz raio e padding que brigam com o layout.
     input.SearchModal-input,
     .SearchModal-input,
     input[type="search"].FormControl {
@@ -172,8 +131,6 @@ body.avocado-backdrop--search .Modal-backdrop {
         color: var(--avocado-muted-placeholder, #b2b2bb);
       }
 
-      // Strip the WebKit "search" decorations (cancel/results buttons) — the
-      // ESC kbd is our only close affordance.
       &::-webkit-search-decoration,
       &::-webkit-search-cancel-button,
       &::-webkit-search-results-button,
@@ -182,22 +139,17 @@ body.avocado-backdrop--search .Modal-backdrop {
       }
     }
 
-    // Loading indicator (input.loading)
     .LoadingIndicator {
       flex-shrink: 0;
     }
 
-    // Visual gambit overlay — Flarum core wraps gambit matches in <mark> via
-    // app.search.gambits.match(). The matcher uses ASCII word boundaries which
-    // misfire on accented input (e.g. "discussão:39" gets a partial highlight
-    // around "ão:39"). The overlay itself is hidden — gambit filters still
-    // apply, only the cosmetic highlight is suppressed.
+    // O realce de gambits do core usa limite de palavra ASCII e erra com acentos
+    // ("discussão:39" realça "ão:39"). Só o realce some; os filtros continuam.
     .SearchModal-visual-wrapper {
       display: none;
     }
   }
 
-  // ── Tabs (pill style) ─────────────────────────────────────────────────────
   .Tabs {
     display: flex;
     flex-direction: column;
@@ -249,11 +201,7 @@ body.avocado-backdrop--search .Modal-backdrop {
         background: var(--control-bg) !important;
       }
 
-      // Active pill uses Flarum's primary color so the modal inherits the
-      // forum's brand (and the colored extension overrides per-tag).
-      // --button-primary-* are auto-contrast variables Flarum sets at :root
-      // based on the primary's YIQ luminance, so light primaries get dark text
-      // and vice-versa.
+      // --button-primary-* já tem contraste automático, e o colored troca por tag.
       &[active],
       &.active {
         background: var(--button-primary-bg, var(--primary-color)) !important;
@@ -264,7 +212,6 @@ body.avocado-backdrop--search .Modal-backdrop {
     }
   }
 
-  // ── Tabs content (results scroll area) ────────────────────────────────────
   &-tabs-content {
     max-height: 380px;
     overflow-y: auto;
@@ -278,13 +225,11 @@ body.avocado-backdrop--search .Modal-backdrop {
     }
   }
 
-  // ── Sections inside the scroll area ───────────────────────────────────────
   &-section {
     margin: 0;
     padding: 0;
   }
 
-  // ── Section heading ("Search Preview", "Recent searches", etc.) ───────────
   .Dropdown-header {
     font: 800 10px/1 @font-sans !important;
     letter-spacing: 0.8px;
@@ -295,7 +240,6 @@ body.avocado-backdrop--search .Modal-backdrop {
     list-style: none;
   }
 
-  // ── "Search all …" full-page link ─────────────────────────────────────────
   &-fullPage {
     list-style: none;
     margin: 0;
@@ -330,7 +274,6 @@ body.avocado-backdrop--search .Modal-backdrop {
     }
   }
 
-  // ── Results list ──────────────────────────────────────────────────────────
   &-results {
     list-style: none;
     margin: 0;
@@ -348,7 +291,6 @@ body.avocado-backdrop--search .Modal-backdrop {
       font-weight: inherit;
     }
 
-    // ── Empty / loading messages ───────────────────────────────────────────
     .Dropdown-message {
       padding: 30px;
       text-align: center;
@@ -370,7 +312,6 @@ body.avocado-backdrop--search .Modal-backdrop {
       }
     }
 
-    // ── Discussion / Post / User result rows ───────────────────────────────
     .DiscussionSearchResult,
     .PostSearchResult,
     .UserSearchResult {
@@ -389,7 +330,6 @@ body.avocado-backdrop--search .Modal-backdrop {
         box-shadow: none;
       }
 
-      // Discussion / Post: contains a MinimalDiscussionListItem inside
       > .DiscussionListItem,
       > .MinimalDiscussionListItem {
         margin: 0 !important;
@@ -403,7 +343,6 @@ body.avocado-backdrop--search .Modal-backdrop {
 
         &:hover { background: transparent !important; }
 
-        // Avatar
         .DiscussionListItem-author,
         .Avatar {
           flex-shrink: 0;
@@ -417,12 +356,10 @@ body.avocado-backdrop--search .Modal-backdrop {
           font-size: 12px;
         }
 
-        // Hide author/badges in compact rows — title + meta is enough
         .DiscussionListItem-controls,
         .DiscussionListItem-count,
         .DiscussionListItem-stub { display: none !important; }
 
-        // Title
         .DiscussionListItem-title {
           font: 800 14px/1.3 @font-sans !important;
           color: var(--text-color) !important;
@@ -438,7 +375,6 @@ body.avocado-backdrop--search .Modal-backdrop {
           }
         }
 
-        // Meta (info row: author · time · replies)
         .DiscussionListItem-info {
           font: 500 12px/1.4 @font-sans !important;
           color: var(--muted-color) !important;
@@ -460,7 +396,6 @@ body.avocado-backdrop--search .Modal-backdrop {
       }
     }
 
-    // User row layout
     .UserSearchResult {
       > a {
         display: flex !important;
@@ -490,7 +425,6 @@ body.avocado-backdrop--search .Modal-backdrop {
     }
   }
 
-  // ── Gambit options dropdown ───────────────────────────────────────────────
   &-options {
     list-style: none;
     margin: 0;
@@ -512,7 +446,6 @@ body.avocado-backdrop--search .Modal-backdrop {
   }
 }
 
-// ── ESC kbd badge / close button (injected by JS) ───────────────────────────
 .Avocado-searchModal-kbd {
   display: inline-flex;
   align-items: center;
@@ -531,8 +464,6 @@ body.avocado-backdrop--search .Modal-backdrop {
   pointer-events: none;
 }
 
-// The ESC kbd inside the input row is a real <button> that closes the modal.
-// Override the no-pointer default and give it hover/focus affordances.
 button.Avocado-searchModal-kbd--close {
   cursor: pointer;
   pointer-events: auto;
@@ -555,7 +486,6 @@ button.Avocado-searchModal-kbd--close {
   }
 }
 
-// ── Footer (injected by JS) ─────────────────────────────────────────────────
 .Avocado-searchModal-foot {
   display: flex;
   justify-content: space-between;
@@ -578,10 +508,7 @@ button.Avocado-searchModal-kbd--close {
   }
 }
 
-// ── Loading skeleton ────────────────────────────────────────────────────────
-// Replaces the default core LoadingIndicator while a search request is in
-// flight. Mirrors the result-row layout so the modal height stays steady.
-// Reuses @keyframes avocado-shimmer from Skeletons.less.
+// Espelha as linhas de resultado para a altura do modal não pular.
 .SearchModal-results--skeleton {
   list-style: none;
   margin: 0;
@@ -629,7 +556,7 @@ button.Avocado-searchModal-kbd--close {
     &--meta  { width: 40%; height: 10px; }
   }
 
-  // Stagger the rows slightly so the shimmer doesn't pulse in lockstep
+  // Escalonado para o shimmer não pulsar em sincronia.
   &:nth-child(2) &-line--title { width: 78%; }
   &:nth-child(2) &-line--meta  { width: 32%; }
   &:nth-child(3) &-line--title { width: 50%; }
@@ -640,7 +567,6 @@ button.Avocado-searchModal-kbd--close {
   &:nth-child(5) &-line--meta  { width: 38%; }
 }
 
-// ── Dark mode adjustments ───────────────────────────────────────────────────
 [data-theme^=dark] {
   body.avocado-backdrop--search .Modal-backdrop {
     background: rgba(0, 0, 0, 0.55) !important;
@@ -655,8 +581,6 @@ button.Avocado-searchModal-kbd--close {
     &-form { border-bottom-color: var(--avocado-border-subtle); }
     .Tabs-nav { border-bottom-color: var(--avocado-border-soft); }
 
-    // Active pill in dark mode keeps the primary color (Flarum brand) so the
-    // colored extension's per-tag overrides also apply.
     .Tabs-nav > .Button[active],
     .Tabs-nav > .Button.active {
       background: var(--button-primary-bg, var(--primary-color)) !important;
@@ -685,7 +609,6 @@ button.Avocado-searchModal-kbd--close {
     border-top-color: var(--avocado-border-soft);
   }
 
-  // Skeleton shimmer colors for dark mode (mirrors Skeletons.less DarkMode rule)
   .Avocado-searchSkeleton {
     &-av,
     &-line {

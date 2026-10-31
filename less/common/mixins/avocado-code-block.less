@@ -1,10 +1,7 @@
-// Bloco de código das páginas de leitura (posts da discussão e artigos do
-// linkrobins/wiki): cartão claro com uma barra no topo, onde o JS põe o botão
-// de copiar (.avocado-code-copy, initCodeBlocks em forum/index.tsx). Chamado
-// dentro do seletor do corpo do texto (ex.: .Post-body { .avocado-code-block(); }).
+// Bloco de código das páginas de leitura (posts e wiki), com barra no topo
+// para o botão de copiar que o JS injeta.
 .avocado-code-block() {
   pre {
-    // ── Light-mode defaults (JS dark override via [data-theme="dark"]) ──────────
     --pre-bg:          #f8f8fa;
     --pre-text:        #24292e;
     --pre-border:      rgba(0, 0, 0, 0.09);
@@ -17,14 +14,13 @@
     color: var(--pre-text);
     border: 1px solid var(--pre-border);
     border-radius: 12px;
-    padding: 38px 18px 16px;  // top-padding makes room for the header bar
+    padding: 38px 18px 16px;  // espaço para a barra do topo
     overflow-x: auto;
     margin: 14px 0;
     font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
     font-size: 13px;
     line-height: 1.6;
 
-    // ── Top header bar (always visible) ────────────────────────────────────────
     &::before {
       content: '';
       position: absolute;
@@ -38,11 +34,10 @@
       pointer-events: none;
     }
 
-    // ── Language label, in the header bar ──────────────────────────────────────
-    // O texto vem do JS (data-code-lang, só para linguagem declarada pelo autor).
+    // O rótulo só existe quando o autor declara a linguagem.
     &[data-code-lang]::before {
       content: attr(data-code-lang);
-      padding: 0 44px 0 14px;  // right: room for the copy button
+      padding: 0 44px 0 14px;  // espaço para o botão de copiar
       font-family: @font-mono;
       font-size: 11px;
       font-weight: 500;
@@ -63,7 +58,6 @@
     }
 }
 
-// ── Copy button — injected by JS as .avocado-code-copy inside <pre> ──────────
 pre .avocado-code-copy {
   position: absolute;
   top: 6px;
@@ -96,7 +90,6 @@ pre .avocado-code-copy {
 }
 }
 
-// Os mesmos tokens no tema escuro — chamado dentro do seletor do <pre>.
 .avocado-code-block-dark() {
   --pre-bg:            #0d1117;
   --pre-text:          #e6edf3;
@@ -105,7 +98,6 @@ pre .avocado-code-copy {
   --pre-header-border: rgba(255, 255, 255, 0.07);
   --pre-label:         rgba(230, 237, 243, 0.62);
 
-  // Copy button: lighter tint on dark
   .avocado-code-copy { color: var(--pre-text); }
   .avocado-code-copy:hover { background: rgba(255, 255, 255, 0.08); }
 }

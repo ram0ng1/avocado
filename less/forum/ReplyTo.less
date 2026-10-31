@@ -1,7 +1,4 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// "↳ Em resposta a [avatar] Nome" — linha entre o cabeçalho e o corpo de um
-// post que abre com menção a outro post (js/src/forum/utils/replyTo.ts).
-// ─────────────────────────────────────────────────────────────────────────────
+// "↳ Em resposta a [avatar] Nome" entre o cabeçalho e o corpo do post.
 
 .AvocadoReplyTo {
   display: flex;
@@ -20,7 +17,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  // O tema pinta todo <a> do post de primária com !important (DiscussionPage.less).
+  // Todo <a> do post é pintado de primária com !important.
   color: var(--muted-color) !important;
   text-decoration: none;
 
@@ -55,15 +52,12 @@
     text-overflow: ellipsis;
   }
 }
-// Linha da prévia ao vivo da resposta (contêiner montado pelo replyTo.ts).
 .AvocadoReplyTo-slot .AvocadoReplyTo {
   margin-top: 0;
 }
 
-// ── Chip no cabeçalho do compositor: "↩ [avatar] Nome ×" ─────────────────────
-// Na cor de destaque, a mesma do botão de enviar ao lado: com destaques coloridos
-// ela vira a cor da tag (forum/colored.less troca --button-primary-*), e o
-// --primary-color dentro do compositor não acompanha.
+// Chip no compositor. Usa a cor do botão de enviar porque o colored accents
+// troca --button-primary-*, e --primary-color não acompanha no compositor.
 .ComposerBody-header > li.item-avocadoReplyTo {
   margin-left: 10px;
   vertical-align: top;
@@ -127,13 +121,10 @@
   height: 18px;
   font-size: 9px;
   line-height: 18px;
-  // O tema põe anel/margem nos avatares do cabeçalho; aqui é um avatar de texto.
   margin: 0 !important;
   box-shadow: none !important;
 }
 
-// Post respondido em destaque enquanto o mouse está na linha, e um brilho curto
-// quando o clique rola até ele.
 .PostStream-item.AvocadoReplyTo-target > .Post,
 .PostStream-item.AvocadoReplyTo-flash > .Post {
   background: color-mix(in srgb, var(--primary-color) 7%, transparent);

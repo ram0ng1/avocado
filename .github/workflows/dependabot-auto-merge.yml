@@ -18,7 +18,7 @@ name: Dependabot auto-merge
 #   • NÃO exigir review obrigatório (o token do Actions é proibido de aprovar).
 on: pull_request_target
 
-# §35.13 C1 — default-deny.
+# Nega tudo ao GITHUB_TOKEN por padrão; cada job declara o que precisa.
 permissions: {}
 
 concurrency:

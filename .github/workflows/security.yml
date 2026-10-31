@@ -2,8 +2,7 @@ name: Security Scan
 
 # Duas camadas de SAST:
 #   1. Rulesets genéricos do Semgrep (PHP, OWASP, secrets, JS).
-#   2. Regras específicas de Flarum v2 (.github/semgrep/flarum-v2.yaml) —
-#      derivadas do playbook de segurança CLAUDE.md (§2–§37).
+#   2. Regras específicas de Flarum v2 (.github/semgrep/flarum-v2.yaml).
 # Audits de dependência ficam no ci.yml (composer audit, npm audit,
 # dependency-review). CodeQL (JS/TS) fica no codeql.yml.
 on:
@@ -17,7 +16,7 @@ on:
     - cron: '0 7 * * 1'  # toda segunda, 07:00 UTC
   workflow_dispatch:
 
-# §35.13 C1 — default-deny.
+# Nega tudo ao GITHUB_TOKEN por padrão; cada job declara o que precisa.
 permissions: {}
 
 concurrency:
@@ -33,10 +32,8 @@ jobs:
       security-events: write   # upload SARIF
       actions: read
     container:
-      # 1.96.0 saía com exit ≠ 0 na camada 2 (ruleset custom) sem escrever o
-      # SARIF — a etapa de upload então falhava com "Path does not exist".
-      # 1.163.0 roda as 22 regras e gera o arquivo (verificado localmente:
-      # `semgrep --validate` => 0 erros; `semgrep scan` => SARIF de 19 achados).
+      # Versões antigas saem com erro na camada 2 (ruleset custom) sem escrever
+      # o SARIF, e o upload falha; esta roda todas as regras e gera o arquivo.
       image: semgrep/semgrep:1.163.0
     steps:
       - name: Checkout
@@ -81,9 +78,8 @@ jobs:
       # BLOQUEANTE em diff-aware: num PR, falha se houver achado NOVO vs. o
       # commit base (--baseline-commit ... --error). Em push/schedule, varre
       # tudo mas NÃO reprova — os achados legados ficam informativos no SARIF.
-      # Assim o gate aperta o código novo (inclui o gerado por IA) sem travar
-      # no legado, no mesmo espírito do baseline do PHPStan.
-      - name: Semgrep — regras Flarum v2 (CLAUDE.md)
+      # Assim o gate aperta o código novo sem travar no legado.
+      - name: Semgrep — regras Flarum v2
         env:
           EVENT: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}

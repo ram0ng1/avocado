@@ -1,9 +1,8 @@
-// Fim do CSS do tema: compilado depois das folhas por extensão (extend.php) no
-// mesmo Less_Parser do forum.less, então enxerga as variáveis/mixins de lá.
-// A ordem é a de antes da divisão — DarkMode/colored seguem depois de tudo.
+// Compilado depois das folhas por extensão, no mesmo parser do forum.less
+// (enxerga as variáveis e mixins de lá). DarkMode/colored ficam por último.
 @import "forum/Skeletons.less";
-// fof/reactions fica aqui (sem condicional): o Reactions.less tem regras gerais
-// da barra de ações do post (.Post-footer/.Post-actions) que valem sem a extensão.
+// Sem condicional: há regras gerais da barra de ações do post que valem
+// mesmo sem fof/reactions.
 @import "forum/Reactions.less";
 @import "forum/DarkMode.less";
 @import "forum/colored.less";

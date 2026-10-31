@@ -1,9 +1,6 @@
-// Campo "Ícone SVG" do modal Editar tag: uma área de soltar/escolher arquivo com
-// a prévia do ícone (sobre a cor da tag e solto), e um interruptor para o modo
-// monocromático. Não há campo de código — o SVG entra só por arquivo.
+// Sem campo de código: o SVG entra só por arquivo.
 
 .EditTagModal .TagIconSvgField {
-  // ── Área de arquivo ───────────────────────────────────────────────────────
   &-zone {
     display: flex;
     align-items: center;
@@ -15,7 +12,6 @@
     background: var(--control-bg);
     transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 
-    // Com ícone salvo a área vira um cartão sólido.
     &.has-icon {
       border-style: solid;
       background: var(--body-bg);
@@ -30,7 +26,6 @@
     &.has-error { border-color: var(--alert-error-color, #b35c5c); }
   }
 
-  // ── Prévias ───────────────────────────────────────────────────────────────
   &-previews {
     display: flex;
     align-items: center;
@@ -48,23 +43,20 @@
     font-size: 26px;
     background: var(--control-bg);
     color: var(--muted-color);
-    // No tamanho máximo o desenho passa da prévia; corta aqui em vez de invadir a vizinha.
+    // No tamanho máximo o desenho passa da prévia.
     overflow: hidden;
 
-    // Ícone na cor de contraste sobre a cor da tag, como em rótulos e cartões.
     &--onColor {
       background: var(--tag-bg, var(--control-bg-dark, #e7e7ed));
       color: var(--contrast-color, var(--muted-color));
     }
 
-    // Ícone na cor da tag sobre fundo neutro, como no menu lateral.
     &--plain {
       background: var(--control-bg-dark, #eceef3);
       color: var(--color, var(--muted-color));
     }
   }
 
-  // ── Texto ─────────────────────────────────────────────────────────────────
   &-info {
     flex: 1 1 140px;
     min-width: 0;
@@ -100,8 +92,6 @@
     color: var(--alert-error-color, #b35c5c);
   }
 
-  // ── Tamanho do ícone ─────────────────────────────────────────────────────
-  // As prévias são o retorno visual; aqui só o rótulo, o valor e a régua.
   &-size {
     margin-top: 14px;
 
@@ -147,7 +137,7 @@
     &:hover { color: var(--primary-color); }
   }
 
-  // A régua: trilha pintada até o polegar (`--fill` vem inline do valor).
+  // `--fill` vem inline do valor.
   &-sizeInput {
     -webkit-appearance: none;
     appearance: none;
@@ -211,7 +201,6 @@
     }
   }
 
-  // ── Interruptor "usar a cor do texto" ────────────────────────────────────
   &-switch {
     position: relative;
     display: flex;
@@ -220,7 +209,7 @@
     margin-top: 14px;
     cursor: pointer;
 
-    // O checkbox nativo continua no DOM (é o `bidi`), só some da vista.
+    // O checkbox nativo segue no DOM (é o `bidi`).
     > input {
       position: absolute;
       opacity: 0;
@@ -263,9 +252,8 @@
   }
 }
 
-// Estado do interruptor. Fora do bloco acima de propósito: um `&` no meio do
-// seletor expandiria para `.EditTagModal .TagIconSvgField` inteiro e o irmão
-// `+ .TagIconSvgField-track` nunca casaria — o interruptor ficava sempre "desligado".
+// Fora do bloco acima: um `&` no meio do seletor expandiria o pai inteiro e o
+// `+ .TagIconSvgField-track` nunca casaria.
 .EditTagModal .TagIconSvgField-switch > input:checked + .TagIconSvgField-track {
   background: var(--primary-color);
 

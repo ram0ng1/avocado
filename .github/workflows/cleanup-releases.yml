@@ -3,10 +3,10 @@ name: Limpar Releases Antigas
 on:
   workflow_dispatch:
 
-# §35.13 C1 — default-deny.
+# Nega tudo ao GITHUB_TOKEN por padrão; cada job declara o que precisa.
 permissions: {}
 
-# §35.13 I4 — uma execução por vez (operação destrutiva).
+# Uma execução por vez: a operação é destrutiva.
 concurrency:
   group: cleanup-releases
   cancel-in-progress: false

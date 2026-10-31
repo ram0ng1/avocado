@@ -1,38 +1,11 @@
-// ─── Badges de grupo no post — cápsula com rótulo, posição configurável ──────
+// Badges de grupo como cápsula com rótulo, sem depender de extensão. O rótulo
+// vem de `content: attr(aria-label)`, que o `.Badge` do core já carrega, então
+// vale para qualquer badge que siga a convenção.
 //
-// Recurso nativo do tema, portado do irmão dfs. NÃO depende de extensão.
-//
-// O truque central é que o rótulo vem de CSS, não de JS: o `.Badge` do core já
-// carrega `aria-label` com o nome do grupo (é o tooltip dele), então um
-// pseudo-elemento com `content: attr(aria-label)` transforma o disco numa
-// cápsula sem reconstruir lista nenhuma. Isso vale para QUALQUER badge que siga
-// a convenção do core, inclusive os que outras extensões adicionarem.
-//
-// A posição sai do setting `avocado.post_badge_position`, que o forum bundle
-// converte em classes na raiz (ver `syncBadgePositionClass` em index.tsx):
-//
-//   default     → NENHUMA classe: a camada inteira fica desligada
-//   inline      → ao lado do nome            → .avocado-badges--custom
-//   below       → linha própria sob o nome   → + .avocado-badges--below
-//   side        → embaixo do avatar          → + .avocado-badges--side
-//   side_icons  → embaixo do avatar, só ícones → + .avocado-badges--side --side-icons
-//
-// `--custom` é a chave geral: TODA regra deste arquivo pende dela, então o valor
-// 'default' (badge redondo do core sobreposto ao avatar, como o tema desenha em
-// DiscussionPage.less) não é um caso especial escrito aqui — é simplesmente este
-// arquivo inteiro não valendo. Nenhuma regra para desfazer, nada que possa
-// sobrar meio aplicado.
-//
-// Só de tablet pra cima. No telefone o badge continua sobreposto ao avatar, que
-// é o layout compacto do core e do tema.
+// `--custom` na raiz liga a camada: na posição 'default' nenhuma classe é
+// posta e nada aqui se aplica. Só do tablet para cima.
 
 @media @tablet-up {
-  // ── A cápsula ───────────────────────────────────────────────────────────────
-  // O `.Badge` do core é um disco de largura fixa (`--size`). Aqui ele cresce
-  // para caber o rótulo, mantendo a cor do grupo (`--badge-bg`) e a cor de
-  // contraste que o core já calcula. Vale para as DUAS listas da página (a do
-  // cabeçalho e o clone da coluna do avatar) — a posição escolhida decide qual
-  // delas aparece, não como ela se parece.
   .avocado-badges--custom .Page.DiscussionPage .PostUser-badges .Badge {
     width: auto;
     max-width: 100%;
@@ -49,9 +22,7 @@
       flex-shrink: 0;
     }
 
-    // `min-width: 0` + overflow para o rótulo poder encolher: na coluna do
-    // avatar a cápsula tem teto de largura, e um nome de grupo comprido
-    // estouraria a coluna em vez de ser cortado.
+    // O rótulo precisa poder encolher: na coluna do avatar a cápsula tem teto de largura.
     &::after {
       content: attr(aria-label);
       min-width: 0;
@@ -61,10 +32,8 @@
     }
   }
 
-  // ── A lista no cabeçalho ────────────────────────────────────────────────────
-  // O tema posiciona `.PostUser-badges` de forma absoluta para sobrepor o badge
-  // ao avatar (regra em DiscussionPage.less). Com a cápsula isso não serve mais:
-  // ela volta ao fluxo, ao lado do nome.
+  // O tema posiciona a lista de forma absoluta sobre o avatar; com a cápsula ela
+  // volta ao fluxo, ao lado do nome.
   .avocado-badges--custom .Page.DiscussionPage .Post-header .PostUser-badges {
     position: static;
     display: inline-flex;
@@ -75,9 +44,7 @@
     padding: 0; // desfaz o padding-inline-start do `badges--packed`
     white-space: nowrap;
     pointer-events: auto;
-    // O core (@tablet-up) dá à lista `float: left` e `width: 64px` — largura de
-    // uma pilha de discos, que corta a cápsula pela metade. Aqui ela mede o que
-    // o conteúdo pedir.
+    // O `float: left` e `width: 64px` do core cortam a cápsula.
     float: none;
     width: auto;
     text-align: left;
@@ -86,18 +53,13 @@
       display: inline-flex;
     }
 
-    // Quem não está em grupo nenhum tem a lista vazia. O core esconde com
-    // `.badges:empty`, mas a regra de `display` abaixo é !important e passaria
-    // por cima — sem isto sobraria uma caixa vazia empurrando nome e data.
+    // A regra de display abaixo é !important e passaria por cima do `.badges:empty`
+    // do core.
     &:empty {
       display: none !important;
     }
   }
 
-  // Com o avatar fixo ligado o tema esconde a lista do cabeçalho e mostra o
-  // clone sobre o avatar. Nas posições que usam o cabeçalho isso se inverte.
-  // `:not(:empty)` porque este !important precisa PERDER para a lista vazia —
-  // senão reabre a caixa que a regra `:empty` acima acabou de fechar.
   .avocado-badges--custom .Page.DiscussionPage .CommentPost--fixedAvatar .PostUser-badges--inSide {
     display: none !important;
   }
@@ -106,12 +68,8 @@
     display: inline-flex !important;
   }
 
-  // ── position: below ─────────────────────────────────────────────────────────
-  // `.PostUser` é `display: contents`, então `h3.PostUser-name` e
-  // `ul.PostUser-badges` são, para o layout, filhos diretos de `li.item-user`.
-  // Virando esse li numa coluna, o nome fica na primeira linha e os badges na
-  // segunda — e o `align-items: baseline` do cabeçalho continua alinhando o selo
-  // de verificado e a data pela linha de base do NOME, não pela dos badges.
+  // `.PostUser` é `display: contents`, então nome e badges são filhos diretos do li.
+  // Virando coluna, o baseline do cabeçalho segue alinhando pela linha do nome.
   .avocado-badges--custom.avocado-badges--below .Page.DiscussionPage .Post-header li.item-user {
     display: flex;
     flex-direction: column;
@@ -119,16 +77,13 @@
     gap: 6px;
   }
 
-  // `--custom` repetido no seletor não é enfeite: a regra da lista do cabeçalho
-  // acima também o carrega, e sem ele aqui esta declaração ficaria uma classe
-  // abaixo dela — o `margin-left: 8px` de lá venceria e o bloco de badges
-  // nasceria deslocado da margem do nome.
+  // `--custom` repetido para empatar com a regra do cabeçalho acima; sem ele o
+  // `margin-left: 8px` de lá venceria.
   .avocado-badges--custom.avocado-badges--below .Page.DiscussionPage .Post-header .PostUser-badges {
     margin-left: 0;
   }
 
-  // A prévia ao vivo da resposta é markup do core: `header > .PostUser`, sem o
-  // `li.item-user` em volta. A coluna vai no próprio `.PostUser`.
+  // A prévia ao vivo não tem o `li.item-user` em volta.
   .avocado-badges--custom.avocado-badges--below .Page.DiscussionPage .CommentPost.editing .Post-header > .PostUser {
     display: flex;
     flex-direction: column;
@@ -137,53 +92,28 @@
   }
 }
 
-// ── position: side / side_icons ───────────────────────────────────────────────
-// A coluna da esquerda deixa de ser só a foto e passa a ser a identidade de quem
-// escreveu: avatar em cima, badges empilhados embaixo — o layout clássico de
-// fórum. Só no desktop: a cápsula tem rótulo e precisa de uns 150px, largura que
-// no tablet sairia do lado errado da conta contra a coluna de leitura.
-//
-// Quem desenha esta lista é o clone `--inSide` que o `sideItems` injeta
-// (index.tsx §18b) — o `<ul>` do cabeçalho não tem como ser movido por CSS para
-// dentro do `.Post-side`. Ou seja: esta posição exige o "Fixed avatar effect"
-// ligado, que é quem faz o tema montar o clone.
+// Só no desktop: a cápsula precisa de uns 150px. A lista é o clone `--inSide`
+// que o JS injeta no `.Post-side` (o <ul> do cabeçalho não pode ser movido por
+// CSS), então exige o "Fixed avatar effect" ligado.
 @media @desktop-up {
-  // O `html` no seletor não é enfeite: sem ele esta declaração ficaria em
-  // (0,3,0) contra a de DiscussionEditorial.less, que é
-  // `html[data-avocado-disc-style] .Page.DiscussionPage` (0,3,1) e ganharia,
-  // fixando a coluna na largura do avatar. Com o `html` — e com as duas classes
-  // da raiz — esta fica em (0,4,1) e vence sem depender da ordem de import.
+  // O `html` sobe a especificidade para (0,4,1) e ganha do DiscussionEditorial.less
+  // (0,3,1) sem depender da ordem de import.
   html.avocado-badges--custom.avocado-badges--side .Page.DiscussionPage {
-    // Larga o bastante para uma cápsula de nome comum (uma como "Admin" mede
-    // ~71px); nomes maiores ganham reticências (ver `&::after` da cápsula). Era
-    // 156px, herdado do dfs — mas com a foto centrada nessa largura sobrava meia
-    // coluna vazia à direita dela, e o nome do autor ficava longe demais da
-    // própria foto. Estreitar a coluna é o que mais aproxima os dois, porque é
-    // essa metade vazia que domina a distância.
+    // Comporta uma cápsula comum ("Admin" mede ~71px); nomes maiores ganham
+    // reticências. Mais larga, a foto centrada deixava o nome longe dela.
     --disc-side-col: 120px;
 
-    // O vão até a coluna de leitura encolhe. Com a foto centrada numa coluna
-    // dessa largura já sobra bastante espaço em branco à direita dela; somado ao
-    // vão padrão de 24px, o nome do autor ficava longe demais da própria foto e
-    // os dois deixavam de ler como um bloco só. Este é o ajuste que aproxima sem
-    // mexer na cápsula nem no eixo da corrente — se ainda quiser mais perto, o
-    // outro botão é o --disc-side-col acima, mas aí a cápsula corta antes.
+    // Vão menor para nome e foto lerem como um bloco só.
     --disc-gap: 12px;
   }
 
-  // `:not(.ReplyPlaceholder)` mantém o botão "Escrever uma resposta" no layout
-  // do core, como no resto do tema.
   .avocado-badges--custom.avocado-badges--side .Page.DiscussionPage .CommentPost:not(.ReplyPlaceholder) {
     .Post-container {
       grid-template-columns: var(--disc-side-col) 1fr;
     }
 
-    // `display: flex` explícito nos DOIS: sem o efeito de avatar fixo ligado o
-    // tema não dá display nenhum a estes elementos (as regras de Post.less que
-    // fazem isso são todas escopadas em `.CommentPost--fixedAvatar`). O wrapper
-    // caía como bloco, `align-items` não tinha eixo para agir, e a foto ficava
-    // encostada à esquerda com a cápsula pendurada no canto — em vez de os dois
-    // centrados na coluna. Declarar aqui faz as duas configurações medirem igual.
+    // Sem o avatar fixo o tema não dá display a estes elementos, e a foto ficava
+    // encostada à esquerda.
     .Post-side {
       width: var(--disc-side-col);
       display: flex;
@@ -191,7 +121,6 @@
       align-items: flex-start;
     }
 
-    // O wrapper vira uma pilha: foto, depois os badges.
     .Post-side-inner {
       display: flex;
       width: 100%;
@@ -213,9 +142,7 @@
     }
   }
 
-  // O clone sai de trás do avatar e vira a pilha embaixo dele. Especificidade
-  // 0,6,0 para ganhar do `display: none !important` que o esconde nas outras
-  // posições, com ou sem o avatar fixo ligado.
+  // 0,6,0 para ganhar do `display: none !important` das outras posições.
   .avocado-badges--custom.avocado-badges--side .Page.DiscussionPage .CommentPost .PostUser-badges--inSide {
     display: flex !important;
     position: static !important;
@@ -232,19 +159,12 @@
     z-index: auto;
   }
 
-  // ...e o do cabeçalho sai de cena. Vale também para a prévia ao vivo da
-  // resposta, que ganha o mesmo clone no `.Post-side` (index.tsx, logo depois
-  // do §18b).
+  // Vale também para a prévia ao vivo, que ganha o mesmo clone.
   .avocado-badges--custom.avocado-badges--side .Page.DiscussionPage .CommentPost .Post-header .PostUser-badges {
     display: none !important;
   }
 
-  // ── Modificador: só os ícones, lado a lado ─────────────────────────────────
-  // Mesmo mecanismo (o `--side` vem junto no <html>); muda só a forma. Sem
-  // rótulo a coluna não precisa dos 156px: 100px comportam quatro discos numa
-  // fila, e o que passar disso desce para a linha de baixo. O nome do grupo não
-  // se perde — continua no `aria-label`, que é o tooltip do core e o nome
-  // acessível do elemento.
+  // O nome do grupo segue no `aria-label` (tooltip e nome acessível).
   html.avocado-badges--custom.avocado-badges--side.avocado-badges--side-icons .Page.DiscussionPage {
     --disc-side-col: 100px;
   }
@@ -255,7 +175,6 @@
     justify-content: center;
   }
 
-  // A cápsula volta a ser o disco do core: sem rótulo, largura igual à altura.
   .avocado-badges--custom.avocado-badges--side.avocado-badges--side-icons .Page.DiscussionPage .PostUser-badges--inSide .Badge {
     width: 20px;
     padding: 0;
@@ -267,12 +186,8 @@
   }
 }
 
-// ─── Convivência com linkrobins/badge-labels ─────────────────────────────────
-// A extensão faz a MESMA coisa por outro caminho (reconstrói a lista em JS, com
-// o rótulo como elemento de verdade). Se ela estiver ligada, as duas desenhariam
-// rótulo em cima de rótulo. Aqui a camada nativa se cala inteira e deixa a
-// extensão trabalhar — os guardas do outro lado já existem em DiscussionPage.less
-// e Post.less. Ver forum/extensions/BadgeLabels.less.
+// linkrobins/badge-labels faz o mesmo em JS; com ela ligada esta camada se
+// cala para não desenhar rótulo sobre rótulo.
 html.lrBadgeLabels {
   .Page.DiscussionPage .PostUser-badges .Badge::after {
     content: none;

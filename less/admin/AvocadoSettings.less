@@ -1,4 +1,3 @@
-// ─── Upload image preview ─────────────────────────────────────────────────────
 .UploadImageButton-image img {
   max-height: 60px;
   max-width: 240px;
@@ -8,10 +7,7 @@
   margin-top: 8px;
 }
 
-// ─── Barra de grupos + busca ──────────────────────────────────────────────────
-// A página é dividida em grupos (Aparência, Página inicial, Discussões,
-// Comunidade, Acesso) e a barra fica GRUDADA no topo: com o card aberto e o
-// scroll longo, trocar de grupo não pode exigir voltar ao começo da página.
+// Barra sticky: com scroll longo, trocar de grupo não pode exigir voltar ao topo.
 
 .AvocadoAdmin-toolbar {
   position: sticky;
@@ -62,7 +58,6 @@
   }
 }
 
-// Quantos cards o grupo tem — dá noção do tamanho antes de clicar.
 .AvocadoAdmin-tabCount {
   min-width: 18px;
   padding: 1px 6px;
@@ -102,7 +97,7 @@
   color: var(--text-color);
 
   &::placeholder { color: var(--muted-color); }
-  // O X nativo do type=search duplicaria o botão de limpar ao lado.
+  // O X nativo do type=search duplicaria o botão de limpar.
   &::-webkit-search-cancel-button { display: none; }
 }
 
@@ -127,21 +122,16 @@
   font-size: 13px;
 }
 
-// ─── Settings cards ───────────────────────────────────────────────────────────
-// Each section is wrapped in a card that matches the avocado forum design system.
-
 .AvocadoAdmin-card {
   border: 1px solid var(--control-bg-dark, #e7e7ed);
   border-radius: 16px;
   background: var(--body-bg, #fff);
   margin-bottom: 16px;
-  // No `overflow: hidden` — the AdminTagPicker dropdown is absolutely
-  // positioned and needs to escape the card on the Y-axis. The rounded
-  // header look is preserved by giving the header itself top-rounded corners.
+  // Sem overflow: hidden: o dropdown do AdminTagPicker precisa escapar do card.
+  // O cabeçalho tem os próprios cantos arredondados.
 }
 
-// Card de um recurso desligado: à vista, para se saber o que existe, mas
-// apagado. A interação já sai pelo `inert` no miolo (AdminCard.tsx).
+// A interação já é bloqueada pelo `inert` no miolo.
 .AvocadoAdmin-card.is-disabled {
   .AvocadoAdmin-card-header,
   .AvocadoAdmin-card-body {
@@ -195,7 +185,6 @@
   flex-direction: column;
   gap: 0;
 
-  // Override Flarum default Form-group bottom margin so we control spacing
   > .Form-group,
   > .AvocadoAdmin-toggle,
   > .AvocadoAdmin-subGroup {
@@ -203,14 +192,12 @@
   }
 }
 
-// ─── Sub-divider between logical groups within a card ─────────────────────────
 .AvocadoAdmin-subDivider {
   height: 1px;
   background: var(--control-bg-dark, #f0f0f4);
   margin: 14px -20px;
 }
 
-// ─── Sub-group: indented dependent settings ───────────────────────────────────
 .AvocadoAdmin-subGroup {
   margin-top: 10px;
   padding: 14px 16px;
@@ -225,13 +212,12 @@
     margin-bottom: 0;
   }
 
-  // Ensure form controls have white bg so they don't look disabled against the grey subGroup
+  // Fundo branco para não parecer desabilitado sobre o cinza do subgrupo.
   .FormControl {
     background: var(--body-bg, #fff) !important;
   }
 }
 
-// ─── Labels ───────────────────────────────────────────────────────────────────
 .AvocadoAdmin-label {
   display: block;
   font-size: 13px;
@@ -246,7 +232,6 @@
   gap: 8px;
 }
 
-// ─── Saving dot animation ─────────────────────────────────────────────────────
 .AvocadoAdmin-savingDot {
   display: inline-block;
   width: 6px;
@@ -262,7 +247,6 @@
   50%       { opacity: 0.35; transform: scale(0.75); }
 }
 
-// ─── Custom Select ────────────────────────────────────────────────────────────
 .AvocadoAdmin-select-wrap {
   position: relative;
   display: inline-flex;
@@ -273,7 +257,7 @@
 
 .AvocadoAdmin-select {
   width: 100%;
-  padding-right: 32px !important; // room for chevron
+  padding-right: 32px !important; // espaço para a seta
   appearance: none;
   -webkit-appearance: none;
   cursor: pointer;
@@ -287,11 +271,9 @@
   pointer-events: none;
 }
 
-// ─── Toggle row spacing ───────────────────────────────────────────────────────
 .AvocadoAdmin-toggle {
   padding: 10px 0;
 
-  // Flarum Switch base layout
   .Switch {
     gap: 10px;
     align-items: flex-start;
@@ -306,20 +288,17 @@
 
   .helpText {
     margin-top: 4px;
-    margin-left: 44px; // align under the label (past the toggle knob)
+    margin-left: 44px; // alinha sob o rótulo, depois do switch
     font-size: 12px;
     color: var(--muted-color);
   }
 }
-
-// ─── Tag picker ───────────────────────────────────────────────────────────────
 
 .AvocadoAdmin-tagPicker {
   position: relative;
   max-width: 480px;
 }
 
-// Trigger button — pill when empty, rounded-rect when chips are present
 .AvocadoAdmin-tagPickerTrigger {
   display: inline-flex;
   align-items: center;
@@ -339,7 +318,6 @@
   box-sizing: border-box;
   transition: border-color var(--avocado-t-fast), border-radius var(--avocado-t-fast);
 
-  // Switches to rounded-rect when tag chips are present
   &:has(.AvocadoAdmin-tagChip) { border-radius: 14px; }
 
   &:hover,
@@ -365,7 +343,6 @@
   flex-shrink: 0;
 }
 
-// Tag chip inside the trigger
 .AvocadoAdmin-tagChip {
   display: inline-flex;
   align-items: center;
@@ -389,7 +366,6 @@
   margin-left: 2px;
 }
 
-// Dropdown panel
 .AvocadoAdmin-tagPickerDropdown {
   position: absolute;
   top: calc(100% + 6px);
@@ -406,7 +382,6 @@
   scrollbar-width: thin;
 }
 
-// Search bar inside dropdown
 .AvocadoAdmin-tagPickerSearch {
   display: flex;
   align-items: center;
@@ -435,7 +410,6 @@
   }
 }
 
-// Tag list
 .AvocadoAdmin-tagPickerList {
   list-style: none;
   margin: 0;
@@ -493,7 +467,6 @@
 }
 
 
-// ─── Custom code textarea ─────────────────────────────────────────────────────
 .AvocadoAdmin-codeField {
   font-family: ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
   font-size: 12px;
@@ -502,7 +475,6 @@
   min-height: 120px;
 }
 
-// ─── SpinnerPicker ────────────────────────────────────────────────────────────
 .AvocadoSpinnerPicker {
   display: flex;
   gap: 12px;
@@ -551,7 +523,6 @@
   }
 }
 
-// ─── css-orbital admin preview ────────────────────────────────────────────────
 .avs-co {
   display: inline-block;
   width: 40px;
@@ -600,11 +571,8 @@
   75%     { transform: translate(0, -60%); }
 }
 
-// ─── Listas editáveis (links e redes do rodapé — AdminFooterLists.tsx) ─────────
-// Uma linha por item: os campos crescem, os botões de mover/remover ficam no
-// fim, e o "adicionar" vem embaixo, alinhado à esquerda.
-// `align-self: stretch`: o .Form-group do painel alinha os filhos à esquerda sem
-// esticá-los, e a lista encolhia até a largura mínima dos campos.
+// `align-self: stretch`: o .Form-group alinha os filhos à esquerda sem esticar,
+// e a lista encolhia até a largura mínima dos campos.
 .AvocadoAdmin-list {
   display: flex;
   flex-direction: column;
@@ -612,7 +580,6 @@
   gap: 8px;
 }
 
-// Mais larga que um campo comum do painel: um endereço precisa de espaço.
 .AvocadoAdmin-listRow {
   display: flex;
   align-items: center;
@@ -635,7 +602,7 @@
   flex: 1 1 0;
 }
 
-// O seletor de rede: largura fixa para os links ficarem alinhados em coluna.
+// Largura fixa para os links ficarem alinhados em coluna.
 .AvocadoAdmin-listNetwork {
   flex: 0 0 172px;
 

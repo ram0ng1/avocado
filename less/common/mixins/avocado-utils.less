@@ -1,23 +1,15 @@
-// ── Avocado Utility Mixins ─────────────────────────────────────────────────────
-// Reusable patterns to avoid copy-paste throughout the theme.
-// Import via: @import "mixins/avocado-utils";
-// ──────────────────────────────────────────────────────────────────────────────
-
-// Flex row centered on both axes
 .avocado-flex-center() {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-// Flex row centered on cross-axis only (horizontal layouts), with optional gap
 .avocado-flex-row(@gap: 0) {
   display: flex;
   align-items: center;
   gap: @gap;
 }
 
-// Pill / rounded button base — override colors at call site
 .avocado-pill-btn(@height: 36px; @h-padding: 16px; @font-size: 13px) {
   display: inline-flex;
   align-items: center;
@@ -33,15 +25,13 @@
   transition: background var(--avocado-t-fast), color var(--avocado-t-fast), opacity var(--avocado-t-fast);
 }
 
-// Single-line text truncation with ellipsis
 .avocado-truncate() {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-// Multi-line text clamp. overflow-wrap quebra tokens longos (URLs, palavras
-// gigantes) em vez de deixá-los vazar/cortados no meio dentro do box clampado.
+// overflow-wrap quebra URLs e palavras longas em vez de vazarem do box.
 .avocado-line-clamp(@lines) {
   display: -webkit-box;
   -webkit-line-clamp: @lines;
@@ -50,18 +40,12 @@
   overflow-wrap: break-word;
 }
 
-// Avatar online ring — green border + white separator shadow
-// @ring-color defaults to the CSS variable; override for dark mode via the variable itself.
-// Uniform online indicator — a green ring around the avatar's body-bg
-// separator, matching the online-avatars widget (the canonical reference the
-// whole theme mirrors). Pure box-shadow so it works on <img> and <span>
-// avatars alike; pass an avatar that already sits on a body-bg border/background
-// so the green reads as an outer ring (a separate white separator is not needed).
+// Só box-shadow, para valer em avatares <img> e <span>. O avatar já deve ter
+// borda/fundo body-bg para o verde ler como anel externo.
 .avocado-online-ring(@ring: 2px) {
   box-shadow: 0 0 0 @ring var(--avocado-online);
 }
 
-// Icon circle (fixed-size circle with centered icon)
 .avocado-icon-circle(@size: 28px; @bg: var(--control-bg)) {
   width: @size;
   height: @size;
@@ -71,8 +55,6 @@
   flex-shrink: 0;
 }
 
-// Card base — used for thread cards, category cards, fieldsets
-// Uses --control-bg which Flarum already adapts for dark mode
 .avocado-card(@radius: 18px) {
   border: 1px solid var(--avocado-border-subtle);
   border-radius: @radius;
@@ -80,7 +62,6 @@
   transition: box-shadow var(--avocado-t-medium), border-color var(--avocado-t-medium);
 }
 
-// Card hover lift
 .avocado-card-hover() {
   &:hover {
     border-color: #dfdfe6;

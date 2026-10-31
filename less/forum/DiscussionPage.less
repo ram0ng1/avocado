@@ -1,7 +1,3 @@
-// ── Avocado Discussion Page (/d/) — Clean Feed Design ─────────────────────────
-// Light gray hero · clean feed rows (no bubble cards) · avatar column layout
-
-// ── Design tokens ─────────────────────────────────────────────────────────────
 .Page.DiscussionPage {
   --disc-bg:      #ffffff;
   --disc-border:  #f0f0f4;
@@ -13,22 +9,19 @@
   font-family: @font-sans;
   background: var(--disc-bg);
 
-  // Core sets .Page-content { margin-top: 10px } on tablet+, which leaves a
-  // 10px body-bg strip between the App-header and DiscussionHero. Remove it.
+  // O core dá 10px de margin-top ao .Page-content no tablet+, criando uma faixa sob o header.
   @media @tablet-up {
     .Page-content { margin-top: 0; }
   }
 }
 
-// ── DiscussionHero — solid tag color, adaptive text contrast ────────────────────
-// JS sets --discussion-color (tag hex) + --disc-hero-text (#fff|#202126 based on
-// WCAG luminance) + --disc-hero-surface (rgba white|dark for buttons/pills).
+// O JS define --discussion-color (tag), --disc-hero-text (por luminância WCAG)
+// e --disc-hero-surface (botões e pílulas).
 .DiscussionHero {
   position: relative;
   background: var(--discussion-color, var(--primary-color));
   overflow: hidden;
 
-  // Diagonal dark overlay for depth and readability (same as AvocadoTagPage)
   &::before {
     content: '';
     position: absolute;
@@ -40,9 +33,7 @@
   .container { padding: 0; max-width: 100%; }
 }
 
-// ── Hero image controls (visible only to OP / mods) ─────────────────────────
-// Floats in the top-right of the inner container. Buttons reuse the hero's
-// surface variable so they read on both flat-color and image variants.
+// Só para o autor e moderadores. Usa a superfície do hero para ler sobre cor e imagem.
 .DiscussionHero-imageControls {
   position: absolute;
   top: 14px;
@@ -83,7 +74,6 @@
     cursor: not-allowed;
   }
 
-  // Compact: hide label on phones, keep icon-only.
   @media (max-width: 600px) {
     span { display: none; }
     padding: 0;
@@ -93,7 +83,6 @@
 }
 
 .DiscussionHero-imageBtn--danger {
-  // Always icon-only; the trash icon is self-explanatory and saves space.
   width: 32px;
   padding: 0;
   justify-content: center;
@@ -104,10 +93,7 @@
   }
 }
 
-// ── Variant: tag-defined background image ───────────────────────────────────
-// JS sets `backgroundImage` inline when the discussion's first tag has a
-// custom hero image. The dark overlay is intensified so the title and meta
-// text remain legible regardless of the photo's exposure.
+// Overlay mais forte para o título ler independente da exposição da foto.
 .DiscussionHero--withImage {
   background-color: var(--discussion-color, var(--primary-color));
   background-size: cover;
@@ -120,31 +106,26 @@
       linear-gradient(135deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.10) 70%);
   }
 
-  // Make the inner content sit on top of the overlay.
   .DiscussionHero-inner { position: relative; z-index: 1; }
 
-  // Pills/badges read better with a slightly stronger surface tint.
   .AvocadoHome-badge,
   .AvocadoHome-tagPill {
     backdrop-filter: blur(2px);
   }
 }
 
-// Centered inner container — wider padding for breathing room
 .DiscussionHero-inner {
   position: relative;
   max-width: var(--home-max-width, 1320px);
   margin: 0 auto;
   padding: 48px 20px 52px;
 
-  // Reserve space so title never overlaps decoration icons.
-  // 1 icon  (right: 20px): ~100px icon + 20px offset + 40px buffer = 160px
-  // 2 icons (right: 0):    G + sep + Ole Miss + buffer = 380px
+  // Reserva espaço para o título não cobrir a decoração.
+  // 1 ícone: ~100px + 20px de offset + 40px de folga = 160px.
   &.has-deco-icon      { padding-right: 160px; }
   &.has-two-deco-icons { padding-right: 420px; }
 }
 
-// Desktop to tablet transition: reduce padding gradually
 @media (max-width: 1129px) {
   .DiscussionHero-inner.has-two-deco-icons {
     padding-right: 300px !important;
@@ -157,7 +138,6 @@
   }
 }
 
-// Tablet: reduce padding-right significantly
 @media (max-width: 900px) {
   .DiscussionHero-inner.has-two-deco-icons {
     padding-right: 200px !important;
@@ -178,7 +158,6 @@
   }
 }
 
-// Phone: restore normal padding
 @media @phone {
   .DiscussionHero-inner {
     padding: 32px 16px 40px !important;
@@ -190,20 +169,17 @@
   }
 }
 
-// Nav row: back circle + pills on same line
 .DiscussionHero-nav {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
   margin-bottom: 18px;
-  flex: 1; // Allow to expand
-  max-width: 100%; // Don't constrain width
-  z-index: 1; // Above the decorations
+  flex: 1;
+  max-width: 100%;
+  z-index: 1; // acima das decorações
 }
 
-// Back button — identical to .AvocadoTagPage-back
-// Uses --disc-hero-surface for bg so it adapts to light/dark tag colors
 .DiscussionHero-back {
   width: 34px;
   height: 34px;
@@ -223,19 +199,16 @@
   &:hover { opacity: 0.85; }
 }
 
-// Pill group (badges + tag pills)
 .DiscussionHero-pills {
   display: flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
-  flex: 1; // Allow to expand and wrap unlimited tags
+  flex: 1;
   max-width: 100%;
 }
 
-// ── AvocadoHome-badge inside hero — icon-only circle, same logic as homepage badges ─
-// Dark/saturated backgrounds so badges stand out on any hero color. Tooltip handled in JS.
-// Specificity 0,2,0 wins over .AvocadoHome-badge 0,1,0.
+// 0,2,0 ganha do .AvocadoHome-badge (0,1,0). Tooltip via JS.
 .DiscussionHero .AvocadoHome-badge {
   width: 24px;
   height: 24px;
@@ -252,8 +225,7 @@
   &--ignoring  { background: rgba(80, 82, 94, 0.55); color: rgba(255,255,255,0.65); }
 }
 
-// Tag pills inside hero — white background with the pill's own tag color.
-// Keeps each tag's identity visible regardless of hero background color.
+// Fundo branco com a cor da própria tag, legível sobre qualquer hero.
 .DiscussionHero .AvocadoHome-tagPill {
   background: rgba(255, 255, 255, 0.92);
   color: var(--tag-color, #b22244);
@@ -264,7 +236,6 @@
   &:hover { opacity: 0.88; }
 }
 
-// Discussion title — adaptive color, larger and more impactful
 .DiscussionHero-title {
   color: var(--disc-hero-text, #fff);
   font-size: clamp(22px, 3.5vw, 36px);
@@ -276,7 +247,6 @@
   word-break: break-word;
 }
 
-// Meta row (participants + post count)
 .DiscussionHero-meta {
   display: flex;
   align-items: center;
@@ -291,7 +261,6 @@
 
 .DiscussionHero-participants { display: flex; align-items: center; }
 
-// Stacked participant avatars
 .DiscussionHero-participantAvatar {
   display: inline-flex;
   flex-shrink: 0;
@@ -342,25 +311,17 @@
   i { font-size: 13px; }
 }
 
-// ── Dynamic decoration icons system ────────────────────────────────────────────
-// Responsive, flexible sizing that adapts to custom icon sizes automatically
-// No hardcoded dimensions — everything scales based on actual icon content width
-
 .DiscussionHero-decorationIcon {
-  // Use automatic sizing based on content width
   width: fit-content;
   height: auto;
   
-  // Much smaller to not cover content
   max-width: 100px;
   min-width: 30px;
   
-  // Significantly reduced font size
   font-size: clamp(45px, 11vw, 100px);
   line-height: 1;
   text-align: center;
   
-  // Adaptive color with opacity blending
   color: color-mix(
     in srgb,
     var(--tag-color-secondary, var(--discussion-color, white))
@@ -370,20 +331,19 @@
   
   pointer-events: none;
   display: none;
-  overflow: visible; // Allow icons to show
+  overflow: visible;
   padding: 0 1px;
   flex-shrink: 1;
-  z-index: 2; // Visible above most content
+  z-index: 2;
 
   &.is-visible {
     display: flex;
-    align-items: center;   // centers icon vertically within the stretched height
+    align-items: center;
     justify-content: center;
   }
 
-  // Undo .fa-kit global overrides that break sizing inside the decoration icons.
-  // .fa-kit has max-height:44px and padding:0 10px globally — both must be reset
-  // so the icon fills the decoration box at the intended font-size.
+  // O .fa-kit tem max-height: 44px e padding: 0 10px globais; sem zerar, o
+  // ícone não preenche a caixa.
   .fa-kit {
     max-height: none !important;
     padding: 0 !important;
@@ -393,17 +353,14 @@
     line-height: 1;
   }
 
-  // Standard FA glyphs
   i:not(.fa-kit) {
     display: block;
     line-height: 1;
   }
 }
 
-// Centered decoration container ────────────────────────────────────────────
-// Positioned absolutely on the right side, vertically centered in the hero.
-// align-items: stretch so all children share the same height — each child
-// then uses flex internally to center its own icon vertically.
+// align-items: stretch dá a mesma altura a todos os filhos; cada um centra
+// o próprio ícone.
 .DiscussionHero-decorationsContainer {
   position: absolute;
   right: 20px;
@@ -420,28 +377,24 @@
   overflow: visible;
 }
 
-// Wide logos (e.g. Ole Miss script) exceed 100px — let them grow naturally.
+// Logos largos passam de 100px.
 .has-two-deco-icons .DiscussionHero-decorationIcon {
   max-width: unset;
 }
 
-// Two icons: flush with the inner container's right edge
 .has-two-deco-icons .DiscussionHero-decorationsContainer {
   right: 0;
 }
 
-// ── Separator icon: flex item between the two decoration icons
-// Uses align-items: center so its icon is centered within the stretched height
-// that it inherits from the container (align-items: stretch on parent).
 .DiscussionHero-decoSeparator {
   display: flex;
-  align-items: center;     // vertical center within the shared row height
+  align-items: center;
   justify-content: center;
   flex-shrink: 0;
   font-size: clamp(32px, 8vw, 52px);
   color: var(--deco-sep-color, rgba(255, 255, 255, 0.5));
   pointer-events: none;
-  z-index: 3; // above icons (z-index: 2) so it's never obscured by overflow
+  z-index: 3; // acima dos ícones, para o overflow nunca cobri-lo
   padding: 0 12px;
 
   i,
@@ -453,42 +406,34 @@
   }
 }
 
-// ── Two-icon layout: gap between icons (no divider = small gap; divider = none, its own padding handles it)
 .has-two-deco-icons {
   --deco-pair-gap: 16px;
 
   &.has-deco-divider {
-    --deco-pair-gap: 0px; // .DiscussionHero-decoSeparator padding: 0 12px handles spacing
+    --deco-pair-gap: 0px; // o padding do separador já espaça
   }
 }
 
-// ── Breakpoint visibility ─────────────────────────────────────────────────────
-
-// Phone: hide large icons, restore padding
 @media @phone {
   .DiscussionHero-decorationsContainer {
     display: none !important;
   }
 }
 
-// 2-icon layout too wide below 1130px — hide it there, single icon is fine.
-// Using an explicit max-width because @desktop in avocado extends up to 1199px
-// (overrides @screen-desktop-hd to 1200px in less/common/variables.less).
+// O par de ícones não cabe abaixo de 1130px. Max-width explícito porque o
+// @desktop do tema vai até 1199px.
 @media (max-width: 1129px) {
   .has-two-deco-icons .DiscussionHero-decorationsContainer {
     display: none !important;
   }
 
-  // 2 icons hidden here — shrink padding-right to 1-icon value
   .DiscussionHero-inner.has-two-deco-icons {
     padding-right: 160px !important;
   }
 }
 
-// Phone reset MUST come after all max-width blocks above to win the cascade.
-// The (max-width: 1129px) block overrides the @phone reset at line ~104 because
-// it appears later in the source with equal specificity and !important.
-// Repeating the reset here guarantees phones always get full-width padding.
+// Repetido depois dos blocos max-width acima, que têm a mesma especificidade
+// e !important e ganhariam pela ordem.
 @media @phone {
   .DiscussionHero-inner.has-deco-icon,
   .DiscussionHero-inner.has-two-deco-icons {
@@ -497,9 +442,6 @@
 }
 
 
-// ── Page container ─────────────────────────────────────────────────────────────
-
-// ── CommentPost: clean feed row — .Page.DiscussionPage .CommentPost has 0,3,0 vs Flarum's 0,1,0
 .Page.DiscussionPage .CommentPost {
   background: transparent;
   overflow: visible;
@@ -508,7 +450,6 @@
   &:hover { box-shadow: none; }
 }
 
-// ── Tablet+: two-column layout (avatar column | content column) ───────────────
 @media @tablet-up {
   .Page.DiscussionPage {
 
@@ -519,8 +460,7 @@
       align-items: start;
       padding: 0;
 
-      // Extra children added by extensions (3rd+) must sit in the content column,
-      // not the avatar column.
+      // Filhos extras de extensões vão para a coluna do conteúdo.
       > *:nth-child(n+3) {
         grid-column: 2;
       }
@@ -540,18 +480,9 @@
   }
 }
 
-// ── Desktop: largura da coluna de leitura ─────────────────────────────────────
-// Mesma medida do tema irmão dfs. O `min()` faz a página encostar nas margens da
-// janela enquanto ela for menor que o teto, então o ganho de espaço vale em
-// qualquer tela e não só nas bem largas.
-//
-// Vale nas DUAS opções de estilo de discussão — a variante editorial
-// (forum/DiscussionEditorial.less) acrescenta a corrente por cima disto, não
-// outra largura.
-//
-// ATENÇÃO: a expressão vai escapada (`~"..."`). Sem isso o LESS resolve o
-// `100% - 48px` em tempo de compilação e emite `52%` — a página sai MAIS
-// estreita em vez de mais larga.
+// Largura da coluna de leitura, nas duas opções de estilo. O `min()` encosta
+// nas margens enquanto a janela for menor que o teto. Escapado (`~"..."`): sem
+// isso o LESS resolve `100% - 48px` na compilação e emite `52%`.
 @media @desktop-up {
   .Page.DiscussionPage {
     --disc-max-width: 1440px;
@@ -561,8 +492,6 @@
       width: 100%;
     }
 
-    // Os posts tomam a largura que sobra; o recuo à direita é o vão até a
-    // coluna lateral.
     .Page-content {
       max-width: none;
       width: auto;
@@ -579,7 +508,6 @@
   }
 }
 
-// ── Desktop: sticky avatar variant ────────────────────────────────────────────
 @media @desktop-up {
   .Page.DiscussionPage {
     .CommentPost.CommentPost--fixedAvatar {
@@ -601,7 +529,6 @@
   }
 }
 
-// ── Tablet: smaller tokens ─────────────────────────────────────────────────────
 @media @tablet {
   .Page.DiscussionPage {
     --disc-avatar: 40px;
@@ -609,15 +536,13 @@
   }
 }
 
-// ── Phone: compact layout ──────────────────────────────────────────────────────
 @media @phone {
   .Page.DiscussionPage {
     --disc-avatar: 34px;
     --disc-gap:    12px;
   }
-  // Mobile: no grid — Flarum's original block layout. Post-side hides its avatar
-  // via Flarum's own @phone rule; hide the side entirely so sideClone badges
-  // don't render as a stray block before Post-main.
+  // No phone volta o layout em bloco do core; o Post-side some inteiro para
+  // os badges clonados não virarem um bloco solto.
   .Page.DiscussionPage .CommentPost .Post-side {
     display: none;
   }
@@ -625,7 +550,6 @@
     min-width: 0;
   }
 
-  // DiscussionHero on phone — centered, title as focal point
   .DiscussionHero-inner {
     padding: 32px 20px 36px;
     display: flex;
@@ -638,7 +562,7 @@
     justify-content: center;
     width: 100%;
   }
-  // Pills flex: initial so justify-content:center on the nav actually centers the group
+  // flex: initial para o justify-content: center centralizar o grupo.
   .DiscussionHero-pills {
     flex: initial;
     justify-content: center;
@@ -652,7 +576,6 @@
 
 }
 
-// ── Avatar — specificity 0,4,0 to 0,5,0 beats Flarum's .Avatar 0,1,0 ──────────
 .Page.DiscussionPage .CommentPost .Post-side .Avatar,
 .Page.DiscussionPage .CommentPost .Post-side a .Avatar {
   width: var(--disc-avatar);
@@ -672,8 +595,7 @@
   text-decoration: none;
 }
 
-// ── Avatar inside PostUser-name link: hidden on desktop (real avatar is in Post-side)
-// On mobile, Post-side is hidden so this inline avatar IS the user's avatar — keep it visible.
+// No mobile o Post-side some e este avatar inline é o avatar do usuário.
 @media @tablet-up {
   .Page.DiscussionPage .PostUser-name .Avatar,
   .Page.DiscussionPage .PostUser-name .Post-avatar,
@@ -682,34 +604,28 @@
   }
 }
 
-// ── UserOnline: shown as green border on the avatar ──────────────────────────
-// Same specificity as base rule but comes later in file — cascade wins, no !important needed
+// Mesma especificidade da regra base, vence pela ordem.
 .Page.DiscussionPage .CommentPost .Post-side--online .Avatar,
 .Page.DiscussionPage .CommentPost .Post-side--online a .Avatar {
   .avocado-online-ring(2px);
 }
 
-// Keep the moved UserOnline element hidden (it exists only for the class trigger)
+// Só existe para o JS ler a classe.
 .Page.DiscussionPage .CommentPost .Post-side > .UserOnline {
   display: none !important;
 }
 
-// Hide UserOnline dot (detected by JS for the avatar border, not shown as a dot)
 .Page.DiscussionPage .PostUser .UserOnline,
 .Page.DiscussionPage .Post-header .UserOnline {
   display: none !important;
 }
 
-// ── PostUser-badges — desktop/tablet ─────────────────────────────────────────
-// fixedAvatar OFF: badges no Post-header vão direto no flow
-// fixedAvatar ON : badges do Post-header ficam ocultas, JS cria um clone em Post-side
+// fixedAvatar desligado: badges no fluxo do Post-header. Ligado: ficam ocultas
+// e o JS cria um clone no Post-side.
 //
-// `:not(.LrBadgeLabels-list)` isenta a lista quando linkrobins/badge-labels está
-// ativo: lá cada badge vira uma pill com título e a extensão posiciona a lista
-// sozinha, então sobrepor o overlay no avatar (ou escondê-la) só quebraria o
-// layout dela. Um :not() em vez de um prefixo em <html> porque ele mantém a
-// especificidade compatível com a regra do clone --inSide logo abaixo (0,4,0),
-// que precisa continuar ganhando desta. Ver forum/extensions/BadgeLabels.less.
+// `:not(.LrBadgeLabels-list)` isenta a lista do linkrobins/badge-labels, que se
+// posiciona sozinha. É um :not() e não um prefixo em <html> para manter a
+// especificidade abaixo da regra do clone --inSide.
 @media @tablet-up {
   .Page.DiscussionPage .PostUser-badges:not(.LrBadgeLabels-list) {
     position: absolute;
@@ -718,12 +634,10 @@
     pointer-events: none;
   }
 
-  // Quando fixed avatar está ativo, esconde o badges original do Post-header
   .Page.DiscussionPage .CommentPost--fixedAvatar .Post-header .PostUser-badges:not(.LrBadgeLabels-list) {
     display: none !important;
   }
 
-  // Mostra apenas o clone dos badges que está em Post-side
   .Page.DiscussionPage .CommentPost--fixedAvatar .PostUser-badges--inSide {
     display: block !important;
     position: sticky;
@@ -737,22 +651,12 @@
 }
 
 
-// ── Editing state (ReplyPlaceholder composer preview) ────────────────────────
-// While editing/composing, core renders <article class="Post CommentPost
-// editing"> with avatar + badges directly inside .Post-side (no .Post-side-
-// inner wrapper, no --inSide class — those only exist for our JS-extended
-// regular posts). Our base rule above absolutely positions every
-// .PostUser-badges with a left offset based on the sticky-avatar layout —
-// applied to the editing preview it floats the badge to a wrong containing
-// block. Re-anchor everything so the editing preview matches a regular post:
-// avatar centered in Post-side, badge overlapping the avatar's bottom-right
-// corner.
+// Na prévia de edição o core põe avatar e badges direto no .Post-side, sem o
+// wrapper interno nem o --inSide; a regra absoluta acima jogaria o badge no
+// containing block errado.
 @media @tablet-up {
   .Page.DiscussionPage .CommentPost.editing {
-    // Make Post-side a positioning context AND keep the avatar flush-left so
-    // the badge anchored to top-left of Post-side actually lands on the
-    // avatar's top-left corner (with `justify-content: center` the avatar
-    // would slide to the middle, leaving the badge stranded in empty space).
+    // Avatar à esquerda: centralizado, o badge ancorado no topo ficaria no vazio.
     .Post-side {
       position: relative;
       display: flex;
@@ -760,9 +664,7 @@
       justify-content: flex-start;
     }
 
-    // Badge overlapping the avatar's top-left corner — same visual idea
-    // as the --inSide variant on regular posts but using absolute positioning
-    // since there's no .Post-side-inner wrapper to anchor against.
+    // Absoluto porque não há .Post-side-inner para ancorar.
     .Post-side > .PostUser-badges {
       position: absolute;
       top: -4px;
@@ -777,7 +679,6 @@
       z-index: 2;
     }
 
-    // Keep core's PostUser-name avatar hidden (the real avatar is in Post-side)
     .PostUser > .PostUser-badges {
       position: static;
       left: auto;
@@ -787,16 +688,11 @@
       pointer-events: auto;
     }
 
-    // Hide our --inSide clone (only relevant when JS injects it on real posts)
     .PostUser-badges--inSide { display: none !important; }
   }
 
-  // Badge do core (posição "padrão do Flarum"): no fluxo, o `margin-left`
-  // negativo contava a partir do fim do nome — o disco mudava de lugar conforme
-  // o tamanho do nome e empurrava o que vem depois (o selo de verificado) para
-  // cima dele. Absoluto, ancorado no avatar (que fica a avatar + gap à esquerda
-  // do cabeçalho), cai no mesmo canto do clone dos posts. As outras posições
-  // trazem a lista de volta ao fluxo (PostBadges.less).
+  // Na posição padrão, o margin-left negativo no fluxo contava do fim do nome
+  // e o disco mudava de lugar. Absoluto, cai no mesmo canto do clone.
   html:not(.avocado-badges--custom) .Page.DiscussionPage .CommentPost.editing .Post-header > .PostUser > .PostUser-badges {
     position: absolute;
     top: 0;
@@ -805,16 +701,12 @@
   }
 }
 
-// Ambos os blocos @phone abaixo ficam sob `html:not(.lrBadgeLabels--phone)`:
-// com o badge-labels configurado para valer no telefone, a extensão renderiza
-// as pills em linha no header e posiciona a lista sozinha — o overlay sobre o
-// avatar sobreporia tudo num quadrado de 32px. O guarda entra nos dois blocos
-// (e não só no de baixo) para que a especificidade relativa entre eles não mude:
-// ambos ganham o mesmo +0,1,1 e a regra de edição continua vencendo.
+// Com badge-labels valendo no telefone, a extensão posiciona as pills no
+// header; o overlay as amontoaria num quadrado de 32px. O guarda vai nos dois
+// blocos para manter a especificidade relativa entre eles.
 html:not(.lrBadgeLabels--phone) {
 @media @phone {
-  // Phone hides .Post-side entirely (see @phone rule for .CommentPost
-  // .Post-side); the badge inside PostUser-name renders inline in the header.
+  // No phone o badge fica inline no header.
   .Page.DiscussionPage .CommentPost.editing .PostUser .PostUser-badges {
     position: static;
     top: auto;
@@ -825,14 +717,8 @@ html:not(.lrBadgeLabels--phone) {
   }
 }
 
-// ── PostUser-badges — mobile ──────────────────────────────────────────────────
-// Post-side is hidden on mobile; the avatar is inside PostUser-name > a.
-// Since PostUser { display: contents }, PostUser-badges is a sibling of PostUser-name
-// (not a child), so position:relative on PostUser-name doesn't create a containing
-// block for it. Post-header { position:relative } (our rule) would be the containing
-// block, but that mis-aligns the badge vertically.
-// Fix: make li.item-user the containing block — avatar starts at its x=0, so
-// left: 6px / top: -12px overlays the avatar's top-left corner correctly.
+// Com PostUser em display: contents, a lista é irmã do PostUser-name e o
+// Post-header a desalinharia; o li.item-user vira o containing block.
 @media @phone {
   .Page.DiscussionPage .Post-header > ul > li.item-user {
     position: relative;
@@ -846,9 +732,8 @@ html:not(.lrBadgeLabels--phone) {
     pointer-events: none;
   }
 }
-} // /html:not(.lrBadgeLabels--phone)
+}
 
-// ── Post header — .Page.DiscussionPage .Post-header has 0,3,0 vs Flarum's 0,1,0
 .Page.DiscussionPage .Post-header {
   margin-bottom: 10px;
   border-bottom: none;
@@ -859,9 +744,7 @@ html:not(.lrBadgeLabels--phone) {
   overflow: visible;
 }
 
-// On mobile: force the header ul itself to be a flex row so li.item-user and
-// li.item-meta are proper flex children. Without this, only the <ul> is a flex
-// item of Post-header — the lis inside flow as inline and wrap freely.
+// Sem isto os li fluem inline e quebram livremente.
 @media @phone {
   .Page.DiscussionPage .Post-header {
     flex-wrap: nowrap;
@@ -879,56 +762,44 @@ html:not(.lrBadgeLabels--phone) {
     padding: 0;
   }
 
-  // Every li becomes its own flex row so its content is vertically centered
-  // (otherwise small badges sit at the top of the li, not its center).
+  // Senão badges pequenos ficam no topo do li.
   .Page.DiscussionPage .Post-header > ul > li {
     display: flex;
     align-items: center;
     line-height: 1;
   }
 
-  // item-user contains avatar + username (and absolute badge — no flex impact)
   .Page.DiscussionPage .Post-header > ul > li.item-user {
     flex-shrink: 0;
   }
 
-  // item-meta (date) shrinks and truncates if needed, never pushes to next line
   .Page.DiscussionPage .Post-header > ul > li.item-meta {
     flex-shrink: 1;
     min-width: 0;
     white-space: nowrap;
   }
 
-  // PostMeta's Dropdown-toggle is a Flarum .Button which ships with
-  // padding 8px 12px. That doubles the visual gap between it and the
-  // previous item; strip it so the ul gap controls spacing.
+  // O padding do .Button dobraria o vão; o gap da ul controla o espaçamento.
   .Page.DiscussionPage .Post-header > ul > li.item-meta .Dropdown-toggle {
     padding: 0;
   }
 
-  // Flarum core ships .Avatar / .username / time with margin-right: 5px
-  // (less/forum/Post.less). Combined with the ul's flex gap they create
-  // 9-10px of visible space between items. Reset them inside Post-header so
-  // only the gap controls spacing.
+  // O margin-right: 5px do core soma com o gap da ul.
   .Page.DiscussionPage .Post-header .PostUser-name .Avatar,
   .Page.DiscussionPage .Post-header .PostUser-name .username,
   .Page.DiscussionPage .Post-header .PostMeta time {
     margin-right: 0;
   }
 
-  // VerifiedPopover-anchor / VerifiedBadge ship with margin-left: 5px which
-  // doubles up with the ul's gap. Reset inside the post header so spacing
-  // stays uniform across all items.
+  // O margin-left: 5px soma com o gap da ul.
   .Page.DiscussionPage .Post-header > ul > li.item-verified .VerifiedPopover-anchor,
   .Page.DiscussionPage .Post-header > ul > li.item-verified > .VerifiedBadge {
     margin-left: 0;
   }
 }
 
-// Centro do selo de verificado no centro do nome: alinhado pela linha de base
-// do <li>, ele ficava ~1px abaixo. O post do autor da discussão desce o nome
-// 2px (Post.less, `Post--by-start-user`) e lá o selo acompanha. Vale também
-// para a prévia da resposta, que leva o mesmo `ul > li.item-verified`.
+// Pela linha de base o selo ficava ~1px abaixo do centro do nome. Vale também
+// para a prévia da resposta.
 @media @tablet-up {
   .Page.DiscussionPage .Post-header > ul > li.item-verified .VerifiedPopover-anchor,
   .Page.DiscussionPage .Post-header > ul > li.item-verified > .VerifiedBadge {
@@ -937,16 +808,11 @@ html:not(.lrBadgeLabels--phone) {
   }
 }
 
-// PostUser is a <div> in Flarum 2.0 — display:contents makes its children
-// (h3.PostUser-name and ul.PostUser-badges) flex items in Post-header.
-// Specificity 0,3,0 beats Flarum's .PostUser 0,1,0 — no !important needed.
+// display: contents põe nome e badges como itens do Post-header.
 .Page.DiscussionPage .PostUser {
   display: contents;
 }
 
-// PostUser-name is an <h3> in Flarum 2.0.
-// Reset h3 defaults; display as inline-flex so it sits on the same line as PostMeta.
-// Specificity 0,3,0 beats Flarum's h3 0,0,1
 .Page.DiscussionPage .PostUser-name {
   display: inline-flex;
   align-items: center;
@@ -957,7 +823,6 @@ html:not(.lrBadgeLabels--phone) {
   line-height: 1;
 }
 
-// The link wrapping avatar + UserOnline + username inside PostUser-name
 .Page.DiscussionPage .PostUser-name > a,
 .Page.DiscussionPage .PostUser-name .Link {
   display: inline-flex;
@@ -980,24 +845,17 @@ html:not(.lrBadgeLabels--phone) {
   text-decoration: underline;
 }
 
-// Hide UserOnline dot inside the username link on desktop/tablet — the green border
-// on the Post-side avatar is used instead. On mobile, Post-side is hidden so we
-// show the online indicator as a green border on the inline avatar via sibling CSS.
+// No desktop o online é a borda verde do avatar do Post-side.
 .Page.DiscussionPage .PostUser-name .UserOnline {
   display: none !important;
 }
 
-// Mobile: green border on the inline avatar when the user is online.
-// UserOnline sits as a sibling span inside the <a> tag, right after the Avatar.
-// Use the adjacent sibling combinator to style the Avatar when UserOnline is present.
 @media @phone {
-  // When UserOnline exists inside the link, add green border to the Avatar
   .Page.DiscussionPage .PostUser-name a:has(.UserOnline) .Avatar {
     .avocado-online-ring(2px);
   }
 }
 
-// Dot separator between name and timestamp
 .Page.DiscussionPage .PostUser-name + .PostMeta::before {
   content: "·";
   color: var(--disc-muted);
@@ -1006,12 +864,11 @@ html:not(.lrBadgeLabels--phone) {
 }
 
 
-// .Page.DiscussionPage .PostMeta has specificity 0,3,0 vs Flarum's .PostMeta 0,1,0
 .Page.DiscussionPage .PostMeta {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-left: auto;  // pushes date to right on desktop; overridden on phone below
+  margin-left: auto;
   font-size: 12px;
   font-weight: 600;
   font-family: @font-sans;
@@ -1033,14 +890,12 @@ html:not(.lrBadgeLabels--phone) {
   a:hover { color: var(--primary-color); }
 }
 
-// On mobile, date flows inline after name (no auto-push to right)
 @media @phone {
   .Page.DiscussionPage .PostMeta {
     margin-left: 0;
   }
 }
 
-// ── Post body — specificity 0,3,0 vs Flarum's .Post-body 0,1,0
 .Page.DiscussionPage .Post-body {
   background: transparent;
   border: none;
@@ -1084,8 +939,7 @@ html:not(.lrBadgeLabels--phone) {
     color: var(--disc-title);
   }
 
-  // Bloco de código com barra de topo e botão de copiar (o botão entra pelo JS,
-  // initCodeBlocks em index.tsx). Também usado nos artigos do linkrobins/wiki.
+  // Também usado nos artigos do linkrobins/wiki.
   .avocado-code-block();
 
   blockquote {
@@ -1098,7 +952,6 @@ html:not(.lrBadgeLabels--phone) {
     font-style: italic;
     position: relative;
 
-    // fa-quote-right icon, grey, top-left
     &::before {
       content: "";
       position: absolute;
@@ -1121,7 +974,6 @@ html:not(.lrBadgeLabels--phone) {
     p { margin-bottom: 0.4em; }
     & > *:last-child { margin-bottom: 0; }
 
-    // PostMention (quoted username) — italic, slightly primary-tinted
     .PostMention {
       font-style: italic;
       font-weight: 600;
@@ -1144,17 +996,9 @@ html:not(.lrBadgeLabels--phone) {
     margin: 12px 0;
   }
 
-  // Inside a centred block — `[center]`, which s9e renders as a div carrying
-  // `text-align: center` — images go back to being inline.
-  //
-  // `display: block` above is right for a screenshot, which should own its line,
-  // but it is what made a centred post fail to centre: a block element ignores
-  // `text-align` and, with no `auto` margin, sits left. A row of badges came out
-  // stacked and flush left while the prose around it centred correctly.
-  //
-  // Inline-block instead of `margin: auto` so a run of images flows on one line
-  // and centres as a group, which is what a badge row is. A lone image still
-  // centres, because that is what `text-align` does to an inline box.
+  // Dentro de [center] (div com `text-align: center`) as imagens voltam a ser
+  // inline-block: em bloco, sem margem auto, elas ignoravam o text-align e
+  // ficavam à esquerda. Inline-block centraliza uma fileira como grupo.
   [style*="text-align:center"],
   [style*="text-align: center"] {
     img:not(.Avatar):not(.emoji):not([class*="avatar"]) {
@@ -1164,12 +1008,8 @@ html:not(.lrBadgeLabels--phone) {
     }
   }
 
-  // Favicon do rótulo de link interno (core: UrlLink.less). Um link colado para
-  // outra discussão do fórum vira `[favicon] #3023`, e a regra de imagem acima
-  // dava ao favicon a margem de 12px e o raio de screenshot — o rótulo crescia
-  // para uma pílula alta com o ícone caído no canto. A classe extra ganha das
-  // duas regras de imagem (inclusive dentro de [center]) e devolve o ícone ao
-  // tamanho de texto que o core desenhou.
+  // Favicon do rótulo de link interno: a classe extra ganha das regras de
+  // imagem (inclusive em [center]) e devolve o tamanho de texto do core.
   img.UrlLink-favicon:not(.Avatar):not(.emoji):not([class*="avatar"]) {
     display: inline;
     max-width: none;
@@ -1236,10 +1076,7 @@ html:not(.lrBadgeLabels--phone) {
   }
 }
 
-// ── Post footer — desktop/tablet: keep Flarum's native inline-block layout ───
-// Flarum core: Post-actions { float: right } + Post-footer { display: inline-block; height: 0 }
-// The inline-block footer sits to the LEFT of the floated actions — do not change display.
-// Only adjust margins to position it relative to Post-body.
+// O footer inline-block fica à esquerda das ações flutuantes; não mude o display.
 @media @tablet-up {
   .Page.DiscussionPage .Post-footer {
     margin-top: 8px;
@@ -1247,13 +1084,12 @@ html:not(.lrBadgeLabels--phone) {
   }
 }
 
-// ── Post footer — mobile: Flarum original inline-block next to floated actions
 @media @phone {
   .Page.DiscussionPage .Post-footer {
     display: inline-block;
-    height: auto;        // Flarum uses height:0 which causes overflow; auto fixes it
-    margin-top: 5px;     // Flarum default
-    margin-bottom: 20px; // Flarum default
+    height: auto;        // o height: 0 do core causa overflow
+    margin-top: 5px;
+    margin-bottom: 20px;
 
     .Post-likedBy {
       overflow-wrap: break-word;
@@ -1308,7 +1144,6 @@ html:not(.lrBadgeLabels--phone) {
 
 
 
-// ── EventPost — .Page.DiscussionPage .EventPost has 0,3,0 vs Flarum's 0,1,0 ────
 .Page.DiscussionPage .EventPost {
   background: transparent;
   border: none;
@@ -1325,7 +1160,6 @@ html:not(.lrBadgeLabels--phone) {
     align-items: center;
   }
 
-  // Icon circle in Post-side
   .Post-side {
     display: flex;
     align-items: center;
@@ -1347,7 +1181,6 @@ html:not(.lrBadgeLabels--phone) {
     font-style: normal;
   }
 
-  // display:none !important kept — intentionally hiding Flarum's header/footer on event posts
   .Post-header { display: none !important; }
   .Post-footer { display: none !important; }
   .Post-main   { padding-left: 0; }
@@ -1385,7 +1218,6 @@ html:not(.lrBadgeLabels--phone) {
 }
 
 
-// ── PostStream load-more button — specificity 0,4,0 vs Flarum's .Button 0,1,0
 .Page.DiscussionPage .PostStream-loadMore {
   text-align: center;
   padding: 24px 0 8px;
@@ -1404,7 +1236,6 @@ html:not(.lrBadgeLabels--phone) {
   }
 }
 
-// ── Sidebar ────────────────────────────────────────────────────────────────────
 .Page.DiscussionPage .Page-sidebar {
   font-family: @font-sans;
 
@@ -1415,8 +1246,7 @@ html:not(.lrBadgeLabels--phone) {
 
 .Page.DiscussionPage .Page-sidebar .SplitDropdown {
   gap: 0;
-  // No overflow:hidden — it can clip the Dropdown-toggle on mobile.
-  // Each child carries its own border-radius instead.
+  // Sem overflow: hidden, que corta o toggle no mobile.
 
   .SplitDropdown-button {
     border-radius: 16px 0 0 16px;
@@ -1426,7 +1256,6 @@ html:not(.lrBadgeLabels--phone) {
     border-left: none;
   }
 
-  // .Dropdown wrapper div must participate in flex layout
   > .Dropdown {
     display: flex;
     flex-shrink: 0;
@@ -1440,51 +1269,36 @@ html:not(.lrBadgeLabels--phone) {
     display: flex;
     align-items: center;
     justify-content: center;
-    // On phone, Flarum core intentionally sets:
-    //   App-primaryControl > .Button { background: transparent !important;
-    //                                  color: var(--header-control-color) !important; }
-    // — the button is transparent with the header control color as icon color.
-    // We must NOT override background/color here, or we fight that rule.
-    // Layout-only rules above are sufficient for desktop; phone is handled by Flarum.
+    // No phone o core deixa o botão transparente com a cor de controle do header;
+    // não sobrescreva background/color aqui.
   }
 }
 
-// ── Botões da lateral em pílula ──────────────────────────────────────────────
-// "Responder ▾" e "Seguir ▾" eram os únicos botões do tema com o canto de 14px
-// do core. No Flarum 2 o grupo é `.ButtonGroup.Dropdown--split` (a classe
-// `.SplitDropdown` do bloco acima é da 1.x e não casa com nada): o botão fecha a
-// pílula pela esquerda e a seta do menu pela direita. Mesma especificidade das
-// regras do core que zeram os cantos de dentro; aqui ganha por vir depois.
-// No celular o grupo de "Responder" mora no cabeçalho, onde a regra de lá o
-// mantém reto (border-radius: 0 !important); o de "Seguir" fica na página e
-// entra na pílula como no desktop.
+// No Flarum 2 o grupo é `.ButtonGroup.Dropdown--split`. Mesma especificidade
+// das regras do core que zeram os cantos internos; ganha pela ordem. No phone o
+// "Responder" fica no cabeçalho, onde a regra de lá o mantém reto.
 .Page.DiscussionPage .Page-sidebar .Dropdown--split {
   > .SplitDropdown-button {
     border-radius: 999px 0 0 999px;
     padding-left: 18px;
   }
 
-  // O respiro a mais compensa a curva, senão a seta encosta na borda.
+  // O respiro compensa a curva.
   > .Dropdown-toggle {
     border-radius: 0 999px 999px 0;
     padding-right: 6px;
   }
 
-  // Com uma ação só (visitante: "Entrar para responder") a seta some e o botão
-  // é a pílula inteira. O !important responde ao do core, que nesse caso força
-  // o canto padrão: `.Dropdown--split.itemCount1 .Button`.
+  // Com uma ação só a seta some. O !important responde ao do core em
+  // `.Dropdown--split.itemCount1 .Button`.
   &.itemCount1 > .SplitDropdown-button {
     border-radius: 999px !important;
     padding-right: 18px;
   }
 }
 
-// On phone: Flarum's .App-primaryControl > .Button { background: transparent !important;
-// color: var(--header-control-color) !important } makes the toggle invisible when the
-// DiscussionPage-nav has a white background (it does — no header-bg override here).
-// Additionally, body.colored--active mutates --header-control-color to the tag's contrast
-// color (white for dark tags), further hiding the white icon on white nav.
-// Fix: explicit primary-color background + white icon, which always contrasts.
+// O botão transparente do core some sobre o nav branco, e o colored ainda
+// troca --header-control-color; fundo primário com ícone branco sempre contrasta.
 @media @phone {
   .Page.DiscussionPage .DiscussionPage-nav .App-primaryControl .Dropdown-toggle {
     display: flex !important;
@@ -1495,10 +1309,8 @@ html:not(.lrBadgeLabels--phone) {
     opacity: 1 !important;
     border-radius: 0 !important;
   }
-  // Two Flarum rules suppress the icon/caret inside non-primary-control toggles:
-  //   .Dropdown-toggle:not(.Button--flat) .Button-icon { display: none !important; }  (spec 2)
-  //   .App-primaryControl.Dropdown .Button-caret    { display: none !important; }     (spec 2)
-  // Our selectors have spec 5 so they win.
+  // Duas regras do core escondem ícone e seta com especificidade 2; estes
+  // seletores têm 5.
   .Page.DiscussionPage .DiscussionPage-nav .App-primaryControl .Dropdown-toggle .icon,
   .Page.DiscussionPage .DiscussionPage-nav .App-primaryControl .Dropdown-toggle .Button-icon {
     display: block !important;
@@ -1534,10 +1346,7 @@ html:not(.lrBadgeLabels--phone) {
   .Scrubber-bar { border-radius: 4px; }
 }
 
-// ── Phone: PostStreamScrubber color reset ─────────────────────────────────────
-// On phone, the Scrubber renders inside .App-titleControl which forces
-// color: var(--header-color) !important onto all descendants.
-// Override here so the scrubber text is legible regardless of header color.
+// O .App-titleControl força a cor do header em todos os descendentes.
 @media @phone {
   .PostStreamScrubber .Dropdown-menu {
     color: var(--text-color);
@@ -1556,9 +1365,6 @@ html:not(.lrBadgeLabels--phone) {
   }
 }
 
-// ── OP badge — appears in Post-header between username (priority 100) and
-//    timestamp (priority 0). Zinc-style chip matching mockup.
-//    .Page.DiscussionPage .AvocadoPost-opBadge has 0,2,0 — no !important needed.
 .Page.DiscussionPage .AvocadoPost-opBadge {
   display: inline-flex;
   align-items: center;
@@ -1577,18 +1383,13 @@ html:not(.lrBadgeLabels--phone) {
   flex-shrink: 0;
 }
 
-// ── TypingUsersContainer → modern floating pill ──────────────────────────────
-// Default core markup: <div class="TypingUsersContainer [-active]">
-//   <div class="TypingUsers"><i class="fas fa-ellipsis-h fa-beat"></i> name está digitando</div>
-// </div>
 .TypingUsersContainer {
-  // Reset core styles (it ships padding/background/border-radius on the container).
   padding: 0;
   background: transparent;
   border-radius: 0;
 
   margin: 0 0 12px 0;
-  min-height: 28px; // reserve room so layout doesn't jump when text appears
+  min-height: 28px; // reserva espaço para o layout não pular
   display: flex;
   align-items: center;
 
@@ -1596,7 +1397,6 @@ html:not(.lrBadgeLabels--phone) {
     margin-bottom: 8px;
   }
 
-  // Pill itself
   .TypingUsers {
     display: inline-flex;
     align-items: center;
@@ -1620,8 +1420,7 @@ html:not(.lrBadgeLabels--phone) {
     text-overflow: ellipsis;
     white-space: nowrap;
 
-    // Replace fa-ellipsis-h with three animated dots — keep the <i> as a flex
-    // anchor so we don't fight markup. Hide its glyph and stamp our own dots.
+    // O <i> segue como âncora flex; o glifo some e os pontos são desenhados aqui.
     > i.fas {
       position: relative;
       display: inline-flex;
@@ -1629,17 +1428,14 @@ html:not(.lrBadgeLabels--phone) {
       justify-content: center;
       width: 22px;
       height: 14px;
-      // hide the FA glyph: it's added via ::before with content from the icon font
       &::before { content: ''; display: none; }
 
-      // three pulsing dots positioned with absolute children of the pseudo
       &::after {
         content: '';
         position: absolute;
         left: 0; right: 0; top: 50%;
         height: 4px;
-        // Three dots painted via a gradient — animating background-position
-        // shifts which dot is "lit" without needing extra DOM.
+        // Animar o background-position troca o ponto aceso sem DOM extra.
         background:
           radial-gradient(circle at  4px 50%, currentColor 50%, transparent 55%) no-repeat,
           radial-gradient(circle at 11px 50%, currentColor 50%, transparent 55%) no-repeat,
@@ -1651,14 +1447,12 @@ html:not(.lrBadgeLabels--phone) {
     }
   }
 
-  // Active state — fade/slide in
   &.TypingUsersContainer-active .TypingUsers {
     opacity: 1;
     transform: translateY(0);
   }
 
-  // Idle state ("no-activity" message): muted, no background — keeps the slot
-  // visible without competing with content above the composer.
+  // Ocioso: discreto, sem competir com o conteúdo acima do composer.
   &:not(.TypingUsersContainer-active) .TypingUsers {
     background: transparent;
     border-color: transparent;
@@ -1670,20 +1464,14 @@ html:not(.lrBadgeLabels--phone) {
   }
 }
 
-// Three-dot wave: each dot gets its peak brightness in turn.
 @keyframes AvocadoTyping-dots {
   0%, 100% { opacity: 0.35; }
   20%      { opacity: 1;    }
   60%      { opacity: 0.6;  }
 }
 
-// ── Guest CTA between posts ────────────────────────────────────────────────────
-// The Flarum core adds a 1px ::after divider to every .PostStream-item that has
-// a following sibling .PostStream-item. Suppress those dividers adjacent to the
-// CTA card — the card's own border/background provides visual separation.
-//
-// Position 1: CTA is inside .PostStream-afterFirstPost (post #1 → afterFirstPost → post #2)
-// Position 2-5: CTA is .PostStream-avocadoCta (post N → CTA → post N+1)
+// O core põe um divisor ::after entre itens do PostStream; junto do CTA o
+// próprio card já separa.
 .PostStream-item:has(+ .PostStream-afterFirstPost)::after,
 .PostStream-afterFirstPost::after,
 .PostStream-item:has(+ .PostStream-avocadoCta)::after,
@@ -1695,8 +1483,6 @@ html:not(.lrBadgeLabels--phone) {
   margin: 12px 0;
 
   @media @tablet-up {
-    // Align CTA with Post-main: offset by the avatar column so left edge
-    // matches the post content, not the avatar.
     padding-left: var(--avatar-column-width);
     padding-right: var(--post-padding);
   }
@@ -1775,8 +1561,7 @@ html:not(.lrBadgeLabels--phone) {
   }
 }
 
-// ── Guest link gating ──────────────────────────────────────────────────────────
-// External links replaced by a lock-icon + label pill; clicking opens login modal.
+// Links externos viram uma pílula com cadeado que abre o login.
 .AvocadoGuestLink {
   display: inline-flex;
   align-items: center;
@@ -1805,28 +1590,17 @@ html:not(.lrBadgeLabels--phone) {
   font-family: @font-sans;
 }
 
-// ── Sidebar stats card — hidden (kept in JS for data access, not shown in UI)
+// Mantido no JS para os dados; não aparece na UI.
 .AvocadoSidebar-stats {
   display: none;
 }
 
 
 
-// ─── Threads Style ─────────────────────────────────────────────────────────────
-// Redesign da página de discussão seguindo o Avocado Design System (kit.css):
-//   OP      → card (border + border-radius:21px + padding:20px) com meta row +
-//             tag row separada + título grande + body + stats bar com border-top
-//   Replies → grupo indentado (margin-left:20px + left-border) com linhas compactas
-//
-// JS injects:
-//   - div.AvocadoThreads-tagRow (pills .AvocadoHome-tagPill) after Post-header
-//   - h2.AvocadoThreads-title after tagRow
-//   - span.DiscussionHero-back-label into .DiscussionHero-back
-//   - class avocado-threads on .Page.DiscussionPage
+// Estilo "threads": o OP vira um card e as respostas um grupo recuado. O JS
+// injeta a linha de tags, o título e a classe avocado-threads.
 
 .avocado-threads.Page.DiscussionPage {
-
-  // ─── DiscussionHero → ghost "← Back" pill only ──────────────────────────────
 
   .DiscussionHero {
     background: transparent;
@@ -1848,7 +1622,6 @@ html:not(.lrBadgeLabels--phone) {
 
   .DiscussionHero-nav { margin-bottom: 0; }
 
-  // Back → ghost pill (Avocado-btnGhost)
   .DiscussionHero-back {
     width: auto !important;
     height: 34px !important;
@@ -1871,7 +1644,6 @@ html:not(.lrBadgeLabels--phone) {
     font: 800 12px/1 @font-sans;
   }
 
-  // ─── OP Post: card matching .Avocado-threadView ─────────────────────────────
   .PostStream > .PostStream-item:first-child > .CommentPost {
     border: 1px solid var(--avocado-border-subtle, #eaeaf0);
     border-radius: 21px;
@@ -1879,15 +1651,12 @@ html:not(.lrBadgeLabels--phone) {
     margin-bottom: 14px;
   }
 
-  // OP: 44px avatar (.Avocado-threadView avatar)
   @media @tablet-up {
     .PostStream > .PostStream-item:first-child > .CommentPost {
       --disc-avatar: 44px;
     }
   }
 
-  // ─── OP Post-header → .Avocado-threadView-meta ───────────────────────────────
-  // display:flex + align-items:center + gap:8px + font:700 14px
   .PostStream > .PostStream-item:first-child > .CommentPost .Post-header {
     margin-bottom: 6px;
     align-items: center;
@@ -1896,21 +1665,17 @@ html:not(.lrBadgeLabels--phone) {
     border-bottom: none;
   }
 
-  // Username: 14px/700 (Avocado-threadView-meta font)
   .PostStream > .PostStream-item:first-child > .CommentPost .PostUser-name .username {
     font-size: 14px;
     font-weight: 700;
   }
 
-  // Time: flows inline (no margin-left:auto push)
   .PostStream > .PostStream-item:first-child > .CommentPost .PostMeta {
     margin-left: 0 !important;
     font-size: 13px;
     font-weight: 500;
   }
 
-  // ─── Tag row (div.AvocadoThreads-tagRow injected by JS) ──────────────────────
-  // .Avocado-threadView-tagRow: display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 8px
   .AvocadoThreads-tagRow {
     display: flex;
     flex-wrap: wrap;
@@ -1918,8 +1683,6 @@ html:not(.lrBadgeLabels--phone) {
     margin: 4px 0 8px;
   }
 
-  // ─── Title (h2.AvocadoThreads-title injected by JS) ─────────────────────────
-  // .Avocado-threadView-title: font:900 32px/1.15; letter-spacing:-0.5px; margin:0 0 10px
   .AvocadoThreads-title {
     display: block;
     font: 900 32px/1.15 @font-sans;
@@ -1930,7 +1693,6 @@ html:not(.lrBadgeLabels--phone) {
     overflow-wrap: break-word;
   }
 
-  // ─── OP Post-body: .Avocado-threadView-body (17px/1.5, margin-bottom:14px) ───
   .PostStream > .PostStream-item:first-child > .CommentPost .Post-body {
     font-size: 17px;
     line-height: 1.5;
@@ -1938,8 +1700,6 @@ html:not(.lrBadgeLabels--phone) {
     margin-bottom: 14px;
   }
 
-  // ─── OP Post-footer: .Avocado-threadView-stats ───────────────────────────────
-  // border-top:1px solid var(--divider); padding-top:14px; display:flex; gap:14px
   .PostStream > .PostStream-item:first-child > .CommentPost .Post-footer {
     display: flex !important;
     align-items: center;
@@ -1963,7 +1723,6 @@ html:not(.lrBadgeLabels--phone) {
     display: none;
   }
 
-  // Stat buttons: .Avocado-statBtn (padding:0; background:none; border:0; font:800 13px/1)
   .PostStream > .PostStream-item:first-child > .CommentPost .Post-footer {
     .Button.Button--link,
     .avocado-action-btn {
@@ -1995,15 +1754,12 @@ html:not(.lrBadgeLabels--phone) {
     }
   }
 
-  // Phone: compact card padding
   @media @phone {
     .PostStream > .PostStream-item:first-child > .CommentPost {
       padding: 14px;
     }
   }
 
-  // ─── Reply group: .Avocado-replyGroup ────────────────────────────────────────
-  // margin-left:20px; border-left:2px solid var(--border-soft); padding-left:20px
   .PostStream > .PostStream-item:not(:first-child) {
     margin-left: 20px;
     border-left: 2px solid var(--avocado-border-soft, #f0f0f4);
@@ -2011,8 +1767,6 @@ html:not(.lrBadgeLabels--phone) {
     margin-bottom: 2px;
   }
 
-  // ─── Reply CommentPost: .Avocado-replyLine ───────────────────────────────────
-  // padding:10px 8px; border-radius:10px; hover:background:var(--surface-1)
   .PostStream > .PostStream-item:not(:first-child) > .CommentPost {
     border-radius: 10px;
     padding: 10px 8px;
@@ -2021,47 +1775,40 @@ html:not(.lrBadgeLabels--phone) {
     &:hover { background: var(--avocado-surface-1, #f4f4f7); }
   }
 
-  // 28px avatar for replies
   @media @tablet-up {
     .PostStream > .PostStream-item:not(:first-child) > .CommentPost {
       --disc-avatar: 28px;
     }
   }
 
-  // Thinner ring on 28px avatar
   .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-side .Avatar {
     border-width: 1.5px;
     box-shadow: none;
   }
 
-  // Reply Post-header: .Avocado-replyLine-head (margin-bottom:3px; gap:8px)
   .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-header {
     margin-bottom: 3px;
     align-items: center;
     gap: 8px;
   }
 
-  // Reply username: 13px/700
   .PostStream > .PostStream-item:not(:first-child) > .CommentPost .PostUser-name .username {
     font-size: 13px;
     font-weight: 700;
   }
 
-  // Reply PostMeta: 12px/500
   .PostStream > .PostStream-item:not(:first-child) > .CommentPost .PostMeta {
     margin-left: 0 !important;
     font-size: 12px;
     font-weight: 500;
   }
 
-  // Reply body: .Avocado-replyLine-text (15px/1.45)
   .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-body {
     font-size: 15px;
     line-height: 1.45;
     padding-bottom: 4px;
   }
 
-  // ─── Reply Post-footer: .Avocado-replyLine-actions ───────────────────────────
   .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-footer {
     display: flex !important;
     align-items: center;
@@ -2083,7 +1830,6 @@ html:not(.lrBadgeLabels--phone) {
     display: none;
   }
 
-  // Reply action buttons: .Avocado-replyLine-action (padding:0; bg:none; 11px/800)
   .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-footer {
     .Button.Button--link,
     .avocado-action-btn {
@@ -2106,29 +1852,25 @@ html:not(.lrBadgeLabels--phone) {
     }
   }
 
-  // EventPost in reply area: compact
   .PostStream > .PostStream-item:not(:first-child) > .EventPost {
     border-radius: 8px;
     padding: 4px 8px;
   }
 
-  // ─── Phone ───────────────────────────────────────────────────────────────────
   @media @phone {
     .PostStream > .PostStream-item:not(:first-child) {
       margin-left: 12px;
       padding-left: 12px;
     }
 
-    // Show avatar for replies on phone (base CSS hides all Post-side on phone)
+    // O CSS base esconde o Post-side no phone.
     .PostStream > .PostStream-item:not(:first-child) > .CommentPost .Post-side {
       display: flex !important;
     }
   }
 }
 
-// ── DiscussionList sidebar inside DiscussionPage — Avocado design ──────────────
-// Applies to the sliding panel (App-drawer) that shows the discussion list
-// while reading a thread on mobile, and to the sidebar on tablet/desktop.
+// Vale para o painel do drawer no mobile e para a sidebar no tablet/desktop.
 
 .DiscussionPage .DiscussionList,
 .App-drawer .DiscussionList {
@@ -2136,13 +1878,11 @@ html:not(.lrBadgeLabels--phone) {
   background: #f4f4f7;
   padding: 10px 10px 20px;
 
-  // ── Container: no extra margin ──────────────────────────────────────────────
   &-discussions > li {
     list-style: none;
     margin: 0 0 6px;
   }
 
-  // ── Each item ───────────────────────────────────────────────────────────────
   .DiscussionListItem {
     position: relative;
     background: #fff;
@@ -2157,13 +1897,11 @@ html:not(.lrBadgeLabels--phone) {
       box-shadow: 0 4px 14px rgba(26, 26, 36, 0.07);
     }
 
-    // ── Active / selected ────────────────────────────────────────────────────
     &.active {
       border-color: var(--primary-color) !important;
       box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 18%, transparent) !important;
     }
 
-    // ── Content wrapper ──────────────────────────────────────────────────────
     .DiscussionListItem-content {
       display: flex;
       align-items: flex-start;
@@ -2173,7 +1911,6 @@ html:not(.lrBadgeLabels--phone) {
       border-radius: 14px;
     }
 
-    // ── Avatar column ────────────────────────────────────────────────────────
     .DiscussionListItem-author {
       flex-shrink: 0;
       margin-right: 10px;
@@ -2186,7 +1923,6 @@ html:not(.lrBadgeLabels--phone) {
         border-radius: 50% !important;
         font-size: 15px !important;
         font-weight: 700 !important;
-        // Restore Flarum's own --avatar-bg instead of overriding with body-bg
         background-color: var(--avatar-bg) !important;
         box-shadow: none !important;
         display: flex !important;
@@ -2194,7 +1930,6 @@ html:not(.lrBadgeLabels--phone) {
         justify-content: center !important;
       }
 
-      // badges (sticky, locked, etc.)
       .DiscussionListItem-badges {
         position: absolute;
         right: -6px;
@@ -2212,7 +1947,6 @@ html:not(.lrBadgeLabels--phone) {
       }
     }
 
-    // ── Main body ────────────────────────────────────────────────────────────
     .DiscussionListItem-main {
       flex: 1;
       min-width: 0;
@@ -2220,7 +1954,6 @@ html:not(.lrBadgeLabels--phone) {
       margin: 0;
     }
 
-    // ── Title ────────────────────────────────────────────────────────────────
     .DiscussionListItem-title {
       font-family: @font-sans;
       font-size: 13.5px;
@@ -2233,7 +1966,6 @@ html:not(.lrBadgeLabels--phone) {
       .avocado-line-clamp(2);
     }
 
-    // Unread dot
     &--unread .DiscussionListItem-title::after {
       --size: 7px;
       content: "";
@@ -2247,7 +1979,6 @@ html:not(.lrBadgeLabels--phone) {
       vertical-align: middle;
     }
 
-    // ── Info row (tags, replied by, excerpt) ─────────────────────────────────
     .DiscussionListItem-info {
       display: flex;
       flex-direction: column;
@@ -2263,7 +1994,6 @@ html:not(.lrBadgeLabels--phone) {
       li { margin: 0; list-style: none; }
     }
 
-    // Tags — show max 3, hide the rest
     .item-tags {
       text-align: left;
       width: 100%;
@@ -2288,14 +2018,12 @@ html:not(.lrBadgeLabels--phone) {
 
         .TagLabel-icon { font-size: 9px; }
 
-        // Hide 4th tag onwards
         &:nth-child(n+4) {
           display: none !important;
         }
       }
     }
 
-    // "X replied Y ago"
     .item-terminalPost {
       color: #8f9097;
       font-size: 11px;
@@ -2307,7 +2035,6 @@ html:not(.lrBadgeLabels--phone) {
       .icon { font-size: 9px; margin-right: 2px; }
     }
 
-    // Excerpt
     .item-excerpt {
       font-size: 11px;
       color: #a0a0ac;
@@ -2321,7 +2048,6 @@ html:not(.lrBadgeLabels--phone) {
       text-align: left;
     }
 
-    // ── Stats (comment count) ────────────────────────────────────────────────
     .DiscussionListItem-stats {
       flex-shrink: 0;
       align-self: flex-start;
@@ -2344,14 +2070,8 @@ html:not(.lrBadgeLabels--phone) {
       .DiscussionListItem-stats-item-icon { font-size: 12px; }
     }
 
-    // ── Controls (ellipsis "...") — coluna da direita, abaixo do contador ─────
-    // O contador de respostas ocupa o canto de cima (12–30px); o ⋮ fica
-    // centrado no que sobra da linha abaixo dele (top/bottom + margem
-    // automática), então nunca cai sobre o contador nem sai da linha, da mais
-    // baixa (63px: só título e a linha de resposta) à mais alta.
-    // `transform: none` desfaz o translateY(-50%) da lista principal
-    // (DiscussionList.less), que lá centra o botão a partir de `top: 50%`; aqui,
-    // somado a um `top` em px, ele subia o botão para cima do contador.
+    // Centrado no que sobra abaixo do contador. `transform: none` desfaz o
+    // translateY(-50%) da lista principal, que aqui subiria o botão sobre o contador.
     .DiscussionListItem-controls {
       position: absolute;
       top: 30px;
@@ -2374,7 +2094,6 @@ html:not(.lrBadgeLabels--phone) {
     }
   }
 
-  // ── Load more button ─────────────────────────────────────────────────────────
   .DiscussionList-loadMore .Button {
     width: 100%;
     border-radius: 999px;

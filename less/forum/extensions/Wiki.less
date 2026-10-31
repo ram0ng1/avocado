@@ -1,31 +1,13 @@
-// ── linkrobins/wiki — Avocado Design System ──────────────────────────────────
-// Extensão: linkrobins/wiki (https://github.com/linkrobins/flarum-wiki)
+// linkrobins/wiki, com dois designs escolhidos por artigo: o padrão (layout da
+// extensão vestido com as peças do tema) e o "Manual" (seção 8), atrás de
+// .AvocadoWiki-manual.
 //
-// Dois designs, escolhidos por artigo na tela de criação/edição do wiki
-// (atributo avocadoWikiStyle, ver js/src/forum/utils/wiki.tsx):
-// - Padrão (seções 0–7): o layout da extensão — sumário à direita, título e
-//   linha de autor dela — vestido com as peças do tema: barra do índice,
-//   cartões, busca em pílula, tabelas em cartão, citações como avisos e os
-//   blocos de código dos posts (mixin .avocado-code-block).
-// - Manual (seção 8): manual de referência, com sumário fixo à esquerda, hero
-//   com a sobrelinha em mono, título grande e linha-fina, e seções com régua.
-//   Fica atrás da classe .AvocadoWiki-manual, que o PageStructure do artigo
-//   ganha quando o autor escolhe esse design.
-// Cores e fontes são as do tema: os destaques seguem a cor primária do fórum.
-//
-// O JS (js/src/forum/utils/wiki.tsx) tira o cabeçalho de extensão do tema das
-// páginas do wiki — cada uma já traz o próprio <h1> — e devolve a sidebar do
-// índice como barra horizontal (.AvocadoWiki-toolbar, mesmo mixin do support).
-//
-// Os seletores levam .LinkRobinsWiki-page junto (duas classes) para ganhar da
-// folha da própria extensão, que usa uma classe só, sem depender da ordem em
-// que o forum.css é concatenado.
+// Os seletores levam .LinkRobinsWiki-page junto para ganhar da folha da
+// extensão (uma classe só) sem depender da ordem de concatenação.
 
 @wiki-rail-width: 220px;
 @wiki-rail-gap:   48px;
 @wiki-read-width: 780px;
-
-// ─── 0. Tokens ───────────────────────────────────────────────────────────────
 
 .LinkRobinsWiki-page {
   --wiki-line:      var(--avocado-border-subtle);
@@ -51,32 +33,25 @@ body.dark-mode {
   }
 }
 
-// ─── 1. Barra do índice ("Novo artigo" + categorias) ─────────────────────────
-
 .AvocadoWiki-toolbar {
   .avocado-extension-toolbar();
 
-  // No tablet+ a barra mostra só o wiki: a sidebar dele herda a navegação do
-  // fórum inteiro (Início, Todas as discussões, Tags…), que numa barra de
-  // filtros vira ruído — ela continua no menu do topo. No telefone o menu é o
-  // seletor do cabeçalho do aparelho e fica completo.
+  // No tablet+ a barra mostra só o wiki: a navegação do fórum vira ruído numa
+  // barra de filtros e continua no menu do topo.
   @media @tablet-up {
     .IndexPage-nav.sideNav .Dropdown--select .Dropdown-menu > li:not(.item-wiki-index):not([class*="item-wiki-cat-"]) {
       display: none;
     }
 
-    // "Novo artigo" vem primeiro na sidebar (prioridade 110); na barra ele
-    // fecha a linha, depois das categorias — como o "Novo ticket" do support.
+    // "Novo artigo" vem primeiro na sidebar; na barra ele fecha a linha.
     .IndexPage-nav.sideNav > ul > li.App-primaryControl {
       order: 2;
     }
   }
 }
 
-// A barra entra antes do conteúdo da página (providedContent do tema), mas o
-// lugar dela é abaixo do título "Wiki" e da busca, como os filtros de qualquer
-// lista. O contêiner da extensão vira `display: contents` só para o cabeçalho
-// dele poder subir para antes da barra; a lista segue depois, na ordem normal.
+// O contêiner da extensão vira `display: contents` para o cabeçalho subir para
+// antes da barra.
 @media @tablet-up {
   .LinkRobinsWiki-page .Page-content:has(> .AvocadoWiki-toolbar) {
     display: flex;
@@ -96,15 +71,11 @@ body.dark-mode {
   }
 }
 
-// ─── 2. Cabeçalho das páginas ────────────────────────────────────────────────
-
 .LinkRobinsWiki-page .LinkRobinsWiki-header {
   align-items: center;
   margin-bottom: 22px;
 }
 
-// O <h1> da página ("Wiki", a categoria, a busca, "Novo artigo") no tamanho do
-// cabeçalho de extensão do tema (.AvocadoExtensionPage-title), que ele substitui.
 .LinkRobinsWiki-page .LinkRobinsWiki-title {
   font-size: 38px;
   font-weight: 900;
@@ -122,15 +93,12 @@ body.dark-mode {
   }
 }
 
-// Busca em pílula, como a do cabeçalho do fórum.
 .LinkRobinsWiki-page .LinkRobinsWiki-search-input {
   height: 40px;
   border-radius: 999px;
   background: var(--avocado-surface-1);
   border-color: transparent;
 }
-
-// ─── 3. Índice: grupos e cartões ─────────────────────────────────────────────
 
 .LinkRobinsWiki-page .LinkRobinsWiki-list {
   gap: 14px;
@@ -186,12 +154,8 @@ body.dark-mode {
   background: var(--avocado-surface-2);
 }
 
-// ─── 4. Artigo: menu de ações e avisos ───────────────────────────────────────
-
-// O menu (…) no tamanho dos botões redondos do tema. O core esconde o ícone de
-// todo .Dropdown-toggle que não é Button--flat (a regra é pensada para os
-// seletores com rótulo), e o menu da extensão é só ícone — sem isto o botão
-// vira uma bolinha cinza vazia.
+// O tema esconde o ícone de todo .Dropdown-toggle que não é flat, e este menu
+// é só ícone.
 .LinkRobinsWiki-page .LinkRobinsWiki-articleControls .Button--icon {
   display: inline-flex;
   align-items: center;
@@ -217,8 +181,6 @@ body.dark-mode {
 .LinkRobinsWiki-page .LinkRobinsWiki-draftNotice {
   border-radius: 12px;
 }
-
-// ─── 5. Artigo: texto ────────────────────────────────────────────────────────
 
 .LinkRobinsWiki-page .LinkRobinsWiki-articleBody {
   font-size: 16px;
@@ -259,8 +221,6 @@ body.dark-mode {
     overflow-wrap: anywhere;
   }
 
-  // Blocos de código: os mesmos dos posts (barra no topo + copiar), com o nome
-  // da linguagem na barra.
   .avocado-code-block();
 
   pre {
@@ -272,16 +232,13 @@ body.dark-mode {
       overflow-wrap: normal;
     }
 
-    // O rótulo em si (texto e tipografia) é o do mixin; aqui só a cor do wiki,
-    // direto no ::before para valer também no tema escuro.
+    // Direto no ::before para valer também no tema escuro.
     &[data-code-lang]::before {
       color: var(--wiki-accent);
     }
   }
 
-  // Tabelas: cartão com cabeçalho em versalete. A extensão já as deixa em
-  // bloco com rolagem própria; fit-content faz o cartão abraçar uma tabela
-  // estreita e max-width a deixa rolar quando não cabe.
+  // fit-content abraça tabelas estreitas; max-width deixa rolar as largas.
   table {
     display: block;
     width: fit-content;
@@ -319,12 +276,10 @@ body.dark-mode {
     background: var(--wiki-head-bg);
   }
 
-  // A primeira coluna é o nome (evento, permissão, classe): numa linha só.
   td:first-child code {
     white-space: nowrap;
   }
 
-  // Destaque dentro de uma célula (ex.: "inside transaction") vira selo de aviso.
   td > strong:only-child {
     display: inline-block;
     padding: 1px 8px;
@@ -337,8 +292,6 @@ body.dark-mode {
     background: var(--wiki-warn-soft);
   }
 
-  // Citação = aviso: cartão com filete à esquerda; o negrito do começo é o
-  // título. Substitui as aspas grandes das citações dos posts.
   blockquote {
     margin: 16px 0 24px;
     padding: 12px 16px;
@@ -371,8 +324,6 @@ body.dark-mode {
 
 }
 
-// ─── 6. Depois do texto: FAQ, relacionados, histórico, comentários ──────────
-
 .LinkRobinsWiki-page .LinkRobinsWiki-faq,
 .LinkRobinsWiki-page .LinkRobinsWiki-related,
 .LinkRobinsWiki-page .LinkRobinsWiki-history,
@@ -393,8 +344,6 @@ body.dark-mode {
   letter-spacing: -0.01em;
 }
 
-// ─── 7. Editor (novo / editar) ───────────────────────────────────────────────
-
 .LinkRobinsWiki-page .LinkRobinsWiki-form {
   max-width: @wiki-read-width;
 
@@ -408,9 +357,6 @@ body.dark-mode {
   border-radius: 12px;
 }
 
-// Campo "Design" (js/src/forum/utils/wiki.tsx): duas opções lado a lado, cada
-// uma com ícone, nome e uma linha do que ela faz; a escolhida leva a cor
-// primária, como os chips do compositor.
 .AvocadoWiki-styleOptions {
   display: flex;
   flex-wrap: wrap;
@@ -481,19 +427,13 @@ body.dark-mode {
   color: var(--muted-color);
 }
 
-// ─── 8. Design "Manual" ──────────────────────────────────────────────────────
-// O segundo design do artigo, escolhido pelo autor no campo "Design" da tela de
-// criação/edição: manual de referência, com o sumário fixo à esquerda, um hero
-// com a sobrelinha em mono, título grande e o primeiro parágrafo como
-// linha-fina, e seções com régua. Tudo daqui fica atrás da classe que o JS põe
-// no PageStructure do artigo (.AvocadoWiki-manual, junto de .LinkRobinsWiki-page);
-// o artigo chega no payload da página, então ela já sai no primeiro render.
+// Design "Manual": sumário fixo à esquerda, hero com sobrelinha em mono e
+// seções com régua. O artigo vem no payload, então a classe já sai no
+// primeiro render.
 
 .AvocadoWiki-manual {
-  // ─── 8a. Colunas ──────────────────────────────────────────────────────
-  // O sumário (.LinkRobinsWiki-tocRail) vem depois do texto no DOM; a ordem do
-  // flex o leva para a esquerda, como num manual. Abaixo do desktop a própria
-  // extensão troca a coluna pela barra de sumário fixa no topo.
+  // O sumário vem depois do texto no DOM; a ordem do flex o leva para a esquerda.
+  // Abaixo do desktop a extensão troca a coluna por uma barra fixa.
 
   &.LinkRobinsWiki-page--show .LinkRobinsWiki-articleLayout {
     gap: @wiki-rail-gap;
@@ -512,7 +452,6 @@ body.dark-mode {
     font-size: 14px;
   }
 
-  // "Sumário": o rótulo pequeno em mono no topo da coluna.
   &.LinkRobinsWiki-page .LinkRobinsWiki-toc-title {
     font-family: @font-mono;
     font-size: 12px;
@@ -529,8 +468,7 @@ body.dark-mode {
     border-left: 0;
   }
 
-  // A coluna lista só as seções (o nível mais raso de título); as subseções
-  // ficam no painel do telefone, onde não há texto ao lado competindo.
+  // Só o nível mais raso; as subseções ficam no painel do telefone.
   &.LinkRobinsWiki-page .LinkRobinsWiki-tocRail .LinkRobinsWiki-toc-item:not(.LinkRobinsWiki-toc-item--level-1) {
     display: none;
   }
@@ -561,16 +499,11 @@ body.dark-mode {
     font-weight: 600;
   }
 
-  // Painel do telefone: cartão do tema.
   &.LinkRobinsWiki-page .LinkRobinsWiki-mobileToc-inner {
     border-color: var(--wiki-line);
     border-radius: 14px;
     box-shadow: var(--shadow-subtle);
   }
-
-  // ─── 8b. Hero ─────────────────────────────────────────────────────────
-  // A linha de categoria · autor · edição sobe para cima do título e vira a
-  // "sobrelinha" em mono, na cor primária. O menu de ações (…) continua no canto.
 
   &.LinkRobinsWiki-page .LinkRobinsWiki-articleHeader {
     display: flex;
@@ -585,7 +518,7 @@ body.dark-mode {
     order: -1;
     gap: 8px;
     min-height: 34px;
-    padding-right: 48px; // fica livre do menu de ações, que é absoluto
+    padding-right: 48px; // livre do menu de ações, que é absoluto
     font-family: @font-mono;
     font-size: 13px;
     letter-spacing: 0.02em;
@@ -597,7 +530,7 @@ body.dark-mode {
   }
 
   &.LinkRobinsWiki-page .LinkRobinsWiki-byline-cat {
-    color: var(--wiki-accent) !important; // a extensão pinta com a cor da categoria, inline
+    color: var(--wiki-accent) !important; // a extensão pinta inline com a cor da categoria
   }
 
   &.LinkRobinsWiki-page .LinkRobinsWiki-articleTitle {
@@ -615,10 +548,7 @@ body.dark-mode {
     padding-right: 0;
   }
 
-  // ─── 8c. Texto: linha-fina, ficha, seções e rodapé ─────────────────────────
-
   &.LinkRobinsWiki-page .LinkRobinsWiki-articleBody {
-    // Linha-fina: o primeiro parágrafo do artigo fecha o hero.
     > p:first-child {
       max-width: 62ch;
       margin-bottom: 20px;
@@ -627,8 +557,6 @@ body.dark-mode {
       color: var(--muted-color);
     }
 
-    // Ficha logo abaixo da linha-fina (uma tabela de uma linha só, como a de
-    // "Composer · Extension id · …"): rótulo em cima, valor em mono, sem cartão.
     > p:first-child + table {
       width: auto;
       border: 0;
@@ -650,8 +578,7 @@ body.dark-mode {
         color: var(--muted-color);
       }
 
-      // Cada valor numa linha só: no telefone a ficha rola de lado, inteira,
-      // em vez de quebrar "ramon-chat" no hífen.
+      // No telefone a ficha rola de lado em vez de quebrar no hífen.
       code {
         padding: 0;
         background: none;
@@ -660,7 +587,6 @@ body.dark-mode {
       }
     }
 
-    // Seções: o primeiro <h2> abre o corpo com a régua que fecha o hero.
     h2 {
       margin: 48px 0 12px;
       font-size: 28px;
@@ -677,8 +603,7 @@ body.dark-mode {
       border-top: 1px solid var(--wiki-line);
     }
 
-    // Quem escreve um `---` antes da primeira seção já pôs a régua: a do
-    // título sai, senão ficam duas linhas seguidas.
+    // Um `---` antes da primeira seção já é a régua; senão ficam duas.
     > hr + h2:first-of-type {
       margin-top: 0;
       padding-top: 22px;
@@ -699,7 +624,6 @@ body.dark-mode {
       scroll-margin-top: calc(var(--header-height, 52px) + 24px);
     }
 
-    // Rodapé do artigo: régua e nota em itálico.
     hr {
       margin: 48px 0 18px;
       border: 0;
