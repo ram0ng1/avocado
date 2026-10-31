@@ -38,6 +38,7 @@ import HomeState from '../states/HomeState';
 import ThreadCard from './shared/ThreadCard';
 import OnlineUsers from './shared/OnlineUsers';
 import InlineComposer from './shared/InlineComposer';
+import { needsCoreComposer, openCoreDiscussionComposer } from '../utils/coreComposer';
 import FloatingInlineComposer, { composerPlacement } from './shared/FloatingInlineComposer';
 import OverflowNav from './shared/OverflowNav';
 
@@ -138,8 +139,16 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
       document.querySelector<HTMLInputElement>('.AvocadoComposerDock .AvocadoHome-composerTitle')?.focus();
       return;
     }
-    this.composerOpen = true;
-    m.redraw();
+    // Extensões que acrescentam campos à nova discussão (idioma, enquete,
+    // modelos…) só funcionam no compositor do core.
+    needsCoreComposer().then((useCore) => {
+      if (useCore) {
+        openCoreDiscussionComposer();
+        return;
+      }
+      this.composerOpen = true;
+      m.redraw();
+    });
   }
 
   // ── View ────────────────────────────────────────────────────────────────────

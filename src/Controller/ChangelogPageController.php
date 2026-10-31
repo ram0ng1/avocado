@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ramon\Avocado\Controller;
 
+use Flarum\Extension\ExtensionManager;
 use Flarum\Frontend\Controller as FrontendController;
 use Flarum\Frontend\Frontend;
 use Flarum\Http\Exception\RouteNotFoundException;
@@ -26,7 +27,8 @@ class ChangelogPageController implements RequestHandlerInterface
         private SettingsRepositoryInterface $settings,
         // Frontend do fórum entregue por binding contextual no AvocadoServiceProvider,
         // como no TeamPageController.
-        private Frontend $frontend
+        private Frontend $frontend,
+        private ExtensionManager $extensions,
     ) {}
 
     #[\Override]
@@ -34,7 +36,7 @@ class ChangelogPageController implements RequestHandlerInterface
     {
         $enabled = filter_var($this->settings->get('avocado.changelog_enabled', false), FILTER_VALIDATE_BOOL);
 
-        if (! $enabled || ! class_exists(\Flarum\Tags\Tag::class)) {
+        if (! $enabled || ! $this->extensions->isEnabled('flarum-tags')) {
             throw new RouteNotFoundException();
         }
 

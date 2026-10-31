@@ -15,6 +15,7 @@ import SortDropdown from './shared/SortDropdown';
 import WsUpdateBanner from './shared/WsUpdateBanner';
 import OnlineUsers from './shared/OnlineUsers';
 import InlineComposer from './shared/InlineComposer';
+import { needsCoreComposer, openCoreDiscussionComposer } from '../utils/coreComposer';
 import FloatingInlineComposer, { composerPlacement } from './shared/FloatingInlineComposer';
 
 /**
@@ -70,8 +71,16 @@ export default class AllDiscussionsPage extends Page {
       document.querySelector<HTMLInputElement>('.AvocadoComposerDock .AvocadoHome-composerTitle')?.focus();
       return;
     }
-    this.composerOpen = true;
-    m.redraw();
+    // Extensões que acrescentam campos à nova discussão (idioma, enquete,
+    // modelos…) só funcionam no compositor do core.
+    needsCoreComposer().then((useCore) => {
+      if (useCore) {
+        openCoreDiscussionComposer();
+        return;
+      }
+      this.composerOpen = true;
+      m.redraw();
+    });
   }
 
   private closeComposer() {

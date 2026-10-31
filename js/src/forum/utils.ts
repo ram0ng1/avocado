@@ -24,6 +24,14 @@ export const trans = (key: string, fallback: string, params: Record<string, any>
 
 // ─── Number guard ─────────────────────────────────────────────────────────────
 
+/**
+ * Relações para o `include` da API. As de tags (`tags`, `discussion.tags`…) só
+ * existem com o flarum/tags ativo; pedir uma relação desconhecida derruba o
+ * request inteiro com 400.
+ */
+export const apiInclude = (...relations: string[]): string =>
+  relations.filter((relation) => 'flarum-tags' in flarum.extensions || !/(^|\.)tags$/.test(relation)).join(',');
+
 export const numberOr = (value: unknown, fallback = 0): number => {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;

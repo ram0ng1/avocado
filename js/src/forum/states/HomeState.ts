@@ -1,5 +1,5 @@
 import app from 'flarum/forum/app';
-import { numberOr } from '../utils';
+import { numberOr, apiInclude } from '../utils';
 import { firstPostLikes } from '../utils/likes';
 
 /**
@@ -7,7 +7,7 @@ import { firstPostLikes } from '../utils/likes';
  * em atributos da discussão (Api\DiscussionFields / DiscussionLikeFields).
  * Incluir os posts fazia o servidor renderizar dois posts inteiros por card.
  */
-const SHOWCASE_INCLUDE = 'user,lastPostedUser,tags';
+const SHOWCASE_INCLUDE = (): string => apiInclude('user', 'lastPostedUser', 'tags');
 
 /** Teto do request de complemento da lista (ver `fillFeed`). */
 const FILL_LIMIT = 50;
@@ -219,7 +219,7 @@ export default class HomeState {
     }
     this.invalidate();
     return app.store
-      .find('discussions', { include: ['user', 'lastPostedUser', 'tags'], 'page[limit]': 20 } as any)
+      .find('discussions', { include: apiInclude('user', 'lastPostedUser', 'tags'), 'page[limit]': 20 } as any)
       .then(() => {
         this.homeLoading = false;
         this.fillFeed();
@@ -283,7 +283,7 @@ export default class HomeState {
 
     const sort = this.feedSort() === 'latest' ? '-lastPostedAt' : '';
     const params: Record<string, unknown> = {
-      include: SHOWCASE_INCLUDE,
+      include: SHOWCASE_INCLUDE(),
       'page[limit]': Math.min(FILL_LIMIT, count + INDEX_PAGE_SIZE),
     };
     if (sort) params.sort = sort;
@@ -481,7 +481,7 @@ export default class HomeState {
     return app.store
       .find('discussions', {
         filter: { tag: slug },
-        include: SHOWCASE_INCLUDE,
+        include: SHOWCASE_INCLUDE(),
         sort: '-createdAt',
         'page[limit]': this.showcaseLimit(),
       } as any)

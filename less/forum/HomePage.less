@@ -1197,6 +1197,20 @@
   &--ignoring  { background: rgba(107, 114, 128, 0.12); color: #6b7280; }
 }
 
+// Selos de extensões (Discussion.badges()) no mesmo tamanho dos selos acima.
+.AvocadoHome-extBadges {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  > li { display: inline-flex; }
+
+  .Badge {
+    .Badge--size(20px);
+    box-shadow: none;
+  }
+}
+
 // ─── Tag overflow badge (+N) — phone only ────────────────────────────────────
 .AvocadoHome-tagMore {
   display: none; // hidden on desktop; shown on phone via @media below
