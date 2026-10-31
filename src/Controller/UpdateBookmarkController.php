@@ -37,6 +37,12 @@ class UpdateBookmarkController implements RequestHandlerInterface
 {
     public const NOTE_MAX_LENGTH = 1000;
 
+    /**
+     * Lembretes pendentes por usuário. O comando envia um lote por rodada, e
+     * sem teto um único usuário enchia a fila e atrasava os lembretes de todos.
+     */
+    public const MAX_PENDING_REMINDERS = 100;
+
     public function __construct(
         protected BookmarksSetting $bookmarks,
         protected TranslatorInterface $translator,
@@ -73,6 +79,10 @@ class UpdateBookmarkController implements RequestHandlerInterface
         }
 
         if (array_key_exists('remindAt', $body)) {
+            if ($remindAt !== null && ! $this->hasPendingReminder($bookmark) && $this->pendingReminders($actor) >= self::MAX_PENDING_REMINDERS) {
+                throw new ValidationException(['remindAt' => $this->translator->trans('ramon-avocado.api.too_many_reminders', ['max' => self::MAX_PENDING_REMINDERS])]);
+            }
+
             $bookmark->remind_at = $remindAt;
             $bookmark->reminder_sent_at = null;
         }
@@ -152,5 +162,20 @@ class UpdateBookmarkController implements RequestHandlerInterface
         }
 
         return $remindAt;
+    }
+
+    /** Reagendar um lembrete que já está na fila não ocupa vaga nova. */
+    private function hasPendingReminder(Bookmark $bookmark): bool
+    {
+        return $bookmark->exists && $bookmark->remind_at !== null && $bookmark->reminder_sent_at === null;
+    }
+
+    private function pendingReminders(User $actor): int
+    {
+        return Bookmark::query()
+            ->where('user_id', $actor->id)
+            ->whereNotNull('remind_at')
+            ->whereNull('reminder_sent_at')
+            ->count();
     }
 }
