@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ramon\Avocado\Notification;
 
+use Carbon\Carbon;
 use Flarum\Database\AbstractModel;
 use Flarum\Discussion\Discussion;
 use Flarum\Notification\AlertableInterface;
@@ -12,14 +13,13 @@ use Flarum\User\User;
 
 /**
  * Lembrete de bookmark: notifica o dono do bookmark sobre a discussão salva.
- * O construtor tipado garante o contrato de subject (CLAUDE.md §46.1); `data`
- * fica null de propósito — a nota é rehidratada da tabela na página de salvos,
- * nunca persistida no payload da notificação (§19).
+ * A nota não vai para a notificação (é lida da tabela na página de salvos).
  */
 class BookmarkReminderBlueprint implements BlueprintInterface, AlertableInterface
 {
     public function __construct(
-        public Discussion $discussion
+        public Discussion $discussion,
+        public ?Carbon $remindAt = null,
     ) {
     }
 
@@ -33,9 +33,14 @@ class BookmarkReminderBlueprint implements BlueprintInterface, AlertableInterfac
         return null;
     }
 
+    /**
+     * O horário do lembrete diferencia cada um: o NotificationSyncer casa as
+     * notificações por tipo, assunto e dados, e sem isso o lembrete de um
+     * usuário apagava os dos outros na mesma discussão.
+     */
     public function getData(): mixed
     {
-        return null;
+        return $this->remindAt ? ['remindAt' => $this->remindAt->toIso8601String()] : null;
     }
 
     public static function getType(): string

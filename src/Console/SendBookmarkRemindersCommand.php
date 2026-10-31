@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ramon\Avocado\Console;
 
 use Carbon\Carbon;
+use Flarum\Discussion\Discussion;
 use Flarum\Notification\NotificationSyncer;
 use Illuminate\Console\Command;
 use Ramon\Avocado\Model\Bookmark;
@@ -12,12 +13,10 @@ use Ramon\Avocado\Notification\BookmarkReminderBlueprint;
 use Ramon\Avocado\Support\BookmarksSetting;
 
 /**
- * Envia os lembretes de bookmark vencidos. Roda sem ator (schedule, §20), por
- * isso a visibilidade é re-checada com as permissões do próprio destinatário
- * antes do sync (§19) — se a discussão ficou privada, o lembrete é descartado.
- * `reminder_sent_at` é sempre carimbado, mesmo no descarte, para o scheduler
- * não reprocessar a mesma linha para sempre. O lote é limitado por execução;
- * o que sobrar sai na próxima rodada do schedule.
+ * Envia os lembretes de bookmark vencidos. Roda sem ator, então a visibilidade
+ * é conferida com o próprio destinatário: se ele não vê mais a discussão, o
+ * lembrete é descartado. `reminder_sent_at` é carimbado mesmo no descarte, para
+ * a linha não voltar a cada rodada; o que passar do lote sai na próxima.
  */
 class SendBookmarkRemindersCommand extends Command
 {
@@ -54,8 +53,10 @@ class SendBookmarkRemindersCommand extends Command
             $user = $bookmark->user;
             $discussion = $bookmark->discussion;
 
-            if ($user && $discussion && $user->can('view', $discussion)) {
-                $notifications->sync(new BookmarkReminderBlueprint($discussion), [$user]);
+            // `can('view')` não serve aqui: nenhuma policy concede essa
+            // habilidade e o Gate cai para admin. A visibilidade real é o escopo.
+            if ($user && $discussion && Discussion::whereVisibleTo($user)->whereKey($discussion->id)->exists()) {
+                $notifications->sync(new BookmarkReminderBlueprint($discussion, $bookmark->remind_at), [$user]);
                 $sent++;
             }
 

@@ -129,7 +129,9 @@ class UpdateBookmarkController implements RequestHandlerInterface
         }
 
         try {
-            $remindAt = Carbon::parse($raw);
+            // O Eloquent grava a data sem o fuso: converte antes, senão um
+            // horário com offset vira outro instante no banco.
+            $remindAt = Carbon::parse($raw)->utc();
         } catch (\Throwable) {
             throw new ValidationException(['remindAt' => $this->translator->trans('ramon-avocado.api.invalid_reminder_date')]);
         }
