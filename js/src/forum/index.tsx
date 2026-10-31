@@ -24,6 +24,8 @@ import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
 import WelcomeHero from 'flarum/forum/components/WelcomeHero';
 import TagsPage from 'ext:flarum/tags/forum/components/TagsPage';
 import sortTags from 'ext:flarum/tags/common/utils/sortTags';
+
+const sortTagsSafe = (tags: any[]): any[] => (sortTags ? sortTags(tags) : tags);
 import { applyColor, clearColor } from './colored';
 import UserPage from 'flarum/forum/components/UserPage';
 import UserControls from 'flarum/forum/utils/UserControls';
@@ -2294,7 +2296,8 @@ app.initializers.add(
     });
 
     // ── 14. TagsPage: completely replace view ────────────────────────────────
-    override(TagsPage.prototype, 'view', tagPageView);
+    // Os imports `ext:flarum/tags/...` chegam undefined com o flarum/tags desligado.
+    if (TagsPage) override(TagsPage.prototype, 'view', tagPageView);
 
     // ── 14b. DiscussionsSearchSource: point "see all" link to /search ─────────
     // The default points to app.route('index', {q}) → /all?q=...
@@ -2701,7 +2704,7 @@ app.initializers.add(
       const user = this.attrs.post.user();
       if (!user) return;
       const badges = user.badges?.().toArray?.() ?? [];
-      if (!badges.length) return;
+      if (!badges.length || !items.has('avatar')) return;
 
       const avatarNode = items.get('avatar');
       items.remove('avatar');
@@ -3658,8 +3661,10 @@ app.initializers.add(
         const cardClass = 'AvocadoMessages-card' + (hasDialog ? ' AvocadoMessages-card--onDialog' : '');
 
         const items = this.contentItems();
-        const sidebarVnode = items.get('sidebar');
-        const dialogVnode = items.get('dialog');
+        // O flarum/messages só adiciona 'dialog' quando há conversa aberta (ou
+        // carregando); ItemList.get() de uma chave ausente lança TypeError.
+        const sidebarVnode = items.has('sidebar') ? items.get('sidebar') : null;
+        const dialogVnode = items.has('dialog') ? items.get('dialog') : null;
 
         // FORCE re-create of dialog component with a unique key tied to dialog ID
         // This ensures MessageStream.oncreate() is called when dialog changes
@@ -3972,7 +3977,7 @@ app.initializers.add(
     // DiscussionListItem: inject --item-tag-color for native Flarum list border rules
     // + apply color on click so the discussion page opens pre-colored.
     extend(DiscussionListItem.prototype, 'view', function (vdom) {
-      const tags = sortTags((this.attrs.discussion?.tags?.() as any[]) || []);
+      const tags = sortTagsSafe((this.attrs.discussion?.tags?.() as any[]) || []);
       const color: string | null = tags.length ? (tags[0] as any).color?.() : null;
       if (!color || !vdom?.attrs) return;
 
@@ -3990,12 +3995,12 @@ app.initializers.add(
     // and clear it when leaving (color snaps via suppressTransitions in applyColor).
     extend(DiscussionHero.prototype, 'oninit', function () {
       if (!app.forum.attribute<boolean>('avocadoColoredEnabled')) return;
-      const tags = sortTags((this.attrs.discussion?.tags?.() as any[]) || []);
+      const tags = sortTagsSafe((this.attrs.discussion?.tags?.() as any[]) || []);
       applyColor(tags.length ? (tags[0] as any).color?.() : null);
     });
     extend(DiscussionHero.prototype, 'onupdate', function () {
       if (!app.forum.attribute<boolean>('avocadoColoredEnabled')) return;
-      const tags = sortTags((this.attrs.discussion?.tags?.() as any[]) || []);
+      const tags = sortTagsSafe((this.attrs.discussion?.tags?.() as any[]) || []);
       applyColor(tags.length ? (tags[0] as any).color?.() : null);
     });
     extend(DiscussionHero.prototype, 'onremove', function () {

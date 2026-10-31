@@ -1,10 +1,11 @@
 import app from 'flarum/forum/app';
 import { bindRealtime, pushPayloadDiscussion } from '../realtime';
+import { apiInclude } from '../utils';
 
 // O firstPost fica: se o post já estiver no store (curtido daqui, visto na
 // discussão), é ele que o card lê para as curtidas, e o refetch o mantém em dia.
 // A última resposta vem em `avocadoLastPostExcerpt`, então o lastPost sai.
-const INCLUDE = 'user,firstPost,lastPostedUser,tags';
+const INCLUDE = (): string => apiInclude('user', 'firstPost', 'lastPostedUser', 'tags');
 
 export interface DiscussionFeedHandlers {
   /** Returns true when the broadcast should affect the calling feed. */
@@ -37,7 +38,7 @@ export interface DiscussionFeedHandlers {
 export function bindDiscussionFeedRealtime(handlers: DiscussionFeedHandlers): () => void {
   const { filter = () => true, selfActionIds, updatedLikeIds, pendingDiscs, currentItems = () => [], onFetchFailure, onHydrated } = handlers;
 
-  const refetch = (id: string | number) => app.store.find('discussions', String(id), { include: INCLUDE });
+  const refetch = (id: string | number) => app.store.find('discussions', String(id), { include: INCLUDE() });
 
   return bindRealtime({
     onPost: (data) => {

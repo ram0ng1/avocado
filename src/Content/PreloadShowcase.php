@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ramon\Avocado\Content;
 
 use Flarum\Api\Client;
+use Flarum\Extension\ExtensionManager;
 use Flarum\Frontend\Document;
 use Flarum\Http\SlugManager;
 use Flarum\Settings\SettingsRepositoryInterface;
@@ -44,6 +45,7 @@ class PreloadShowcase
         protected Client $api,
         protected SettingsRepositoryInterface $settings,
         protected SlugManager $slugManager,
+        protected ExtensionManager $extensions,
     ) {
     }
 
@@ -58,7 +60,7 @@ class PreloadShowcase
         }
 
         // O showcase depende de flarum/tags; sem a extensão não há o que filtrar.
-        if (! class_exists(\Flarum\Tags\Tag::class)) {
+        if (! $this->extensions->isEnabled('flarum-tags')) {
             return;
         }
 

@@ -2,11 +2,12 @@ import DiscussionListState from 'flarum/forum/states/DiscussionListState';
 import type Discussion from 'flarum/common/models/Discussion';
 import type { DiscussionListParams } from 'flarum/forum/states/DiscussionListState';
 import type { PaginatedListRequestParams } from 'flarum/common/states/PaginatedListState';
+import { apiInclude } from '../utils';
 
 // Sem firstPost/lastPost: o ThreadCard lê resumo, curtidas e a última resposta
 // de atributos da discussão, e incluir os posts custava o render do s9e de dois
 // posts inteiros por card.
-const FEED_INCLUDE = ['user', 'lastPostedUser', 'tags'];
+const FEED_INCLUDE = (): string => apiInclude('user', 'lastPostedUser', 'tags');
 
 /**
  * `DiscussionFeedState` is `DiscussionListState` with the extras Avocado's
@@ -37,7 +38,7 @@ export default class DiscussionFeedState<P extends DiscussionListParams = Discus
    */
   requestParams(): PaginatedListRequestParams {
     const params = super.requestParams();
-    return { ...params, include: FEED_INCLUDE };
+    return { ...params, include: FEED_INCLUDE() };
   }
 
   /**

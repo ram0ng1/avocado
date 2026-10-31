@@ -6,6 +6,7 @@ namespace Ramon\Avocado\Api;
 
 use Flarum\Api\Schema\Attribute;
 use Flarum\Discussion\Discussion;
+use Flarum\Extension\ExtensionManager;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Flarum\User\User;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
@@ -26,6 +27,7 @@ class ForumAttributes
     public function __construct(
         protected SettingsRepositoryInterface $settings,
         protected CacheRepository $cache,
+        protected ExtensionManager $extensions,
     ) {
     }
 
@@ -92,10 +94,9 @@ class ForumAttributes
             return 0;
         }
 
-        // O showcase depende de flarum/tags. Quando a extensão está ausente
-        // a classe não é carregável e qualquer referência fataria no boot
-        // — guarde antes de tocar no model.
-        if (! class_exists(\Flarum\Tags\Tag::class)) {
+        // O showcase depende de flarum/tags. Instalada mas desligada, a classe
+        // carrega e a tabela existe, mas a relação e o filtro por tag não.
+        if (! $this->extensions->isEnabled('flarum-tags')) {
             return 0;
         }
 
