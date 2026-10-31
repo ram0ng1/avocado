@@ -56,7 +56,7 @@ class SendBookmarkRemindersCommand extends Command
             // `can('view')` não serve aqui: nenhuma policy concede essa
             // habilidade e o Gate cai para admin. A visibilidade real é o escopo.
             if ($user && $discussion && Discussion::whereVisibleTo($user)->whereKey($discussion->id)->exists()) {
-                $notifications->sync(new BookmarkReminderBlueprint($discussion, $bookmark->remind_at), [$user]);
+                $notifications->sync(new BookmarkReminderBlueprint($discussion, $bookmark->id, $bookmark->remind_at), [$user]);
                 $sent++;
             }
 

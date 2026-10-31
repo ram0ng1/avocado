@@ -19,6 +19,7 @@ class BookmarkReminderBlueprint implements BlueprintInterface, AlertableInterfac
 {
     public function __construct(
         public Discussion $discussion,
+        public ?int $bookmarkId = null,
         public ?Carbon $remindAt = null,
     ) {
     }
@@ -34,13 +35,17 @@ class BookmarkReminderBlueprint implements BlueprintInterface, AlertableInterfac
     }
 
     /**
-     * O horário do lembrete diferencia cada um: o NotificationSyncer casa as
-     * notificações por tipo, assunto e dados, e sem isso o lembrete de um
-     * usuário apagava os dos outros na mesma discussão.
+     * O NotificationSyncer casa as notificações por tipo, assunto e dados: sem
+     * o bookmark e o horário, o lembrete de um usuário apagava os dos outros na
+     * mesma discussão, e um lembrete novo não gerava alerta novo.
      */
     public function getData(): mixed
     {
-        return $this->remindAt ? ['remindAt' => $this->remindAt->toIso8601String()] : null;
+        if ($this->bookmarkId === null) {
+            return null;
+        }
+
+        return ['bookmarkId' => $this->bookmarkId, 'remindAt' => $this->remindAt?->toIso8601String()];
     }
 
     public static function getType(): string
