@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ramon\Avocado\Content;
 
 use Flarum\Api\Client;
+use Flarum\Extension\ExtensionManager;
 use Flarum\Frontend\Document;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -28,7 +29,7 @@ class PreloadHomeFeed
     private const ROUTES = ['default', 'index'];
 
     /** Espelha o SHOWCASE_INCLUDE do HomeState (sem posts — ver PreloadShowcase). */
-    private const INCLUDES = 'user,lastPostedUser,tags';
+    private const INCLUDES = ['user', 'lastPostedUser', 'tags'];
 
     /** Tamanho da página que a index já entrega no boot (padrão do Flarum). */
     private const INDEX_PAGE_SIZE = 20;
@@ -39,6 +40,7 @@ class PreloadHomeFeed
     public function __construct(
         protected Client $api,
         protected SettingsRepositoryInterface $settings,
+        protected ExtensionManager $extensions,
     ) {
     }
 
@@ -86,7 +88,10 @@ class PreloadHomeFeed
     private function fetch(ServerRequestInterface $request, int $limit, bool $defaultIndexOrder): ?array
     {
         $params = [
-            'include' => self::INCLUDES,
+            // `tags` só existe com o flarum/tags ligado; relação desconhecida é 400.
+            'include' => implode(',', $this->extensions->isEnabled('flarum-tags')
+                ? self::INCLUDES
+                : array_diff(self::INCLUDES, ['tags'])),
             'page'    => ['limit' => $limit],
         ];
 

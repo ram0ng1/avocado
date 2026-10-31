@@ -757,6 +757,34 @@ html[data-avocado-logo-custom="true"] {
   overflow: visible;
 }
 
+// Extensões também põem chips no cabeçalho da nova discussão (idioma da
+// fof/discussion-language, enquete da fof/polls, campos do fof/mason…). Eles
+// dividem uma linha com as tags, que deixam de ocupar a largura toda, e o
+// título fica sozinho na linha de baixo.
+@media @tablet-up {
+  .ComposerBody--discussion .ComposerBody-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+
+    > li {
+      margin-right: 0;
+      min-width: 0;
+    }
+
+    > li.item-tags {
+      width: auto;
+      flex: 0 1 auto;
+    }
+
+    > li.item-discussionTitle,
+    > li.item-avocadoHeroImage {
+      flex-basis: 100%;
+    }
+  }
+}
+
 // ─── Composer: seletor de tags ────────────────────────────────────────────────
 // O botão do flarum/tags é um .Button "resetado" que o core ainda pinta no
 // hover/foco. Lá isso nunca aparece: as etiquetas ficam coladas umas nas outras

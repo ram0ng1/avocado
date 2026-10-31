@@ -5,6 +5,7 @@ import Avatar from 'flarum/common/components/Avatar';
 import Tooltip from 'flarum/common/components/Tooltip';
 import Dropdown from 'flarum/common/components/Dropdown';
 import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
+import listItems from 'flarum/common/helpers/listItems';
 import {
   trans,
   numberOr,
@@ -271,6 +272,16 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
           })()
         : null;
 
+    // Selos que as extensões põem em Discussion.badges() (approval, byobu,
+    // best-answer, polls, frontpage, follow-tags…). Fixado, trancado, seguindo
+    // e salvo já têm o desenho próprio do cartão logo acima.
+    const extensionBadges = (() => {
+      const items = discussion.badges?.();
+      if (!items) return [];
+      ['sticky', 'locked', 'bookmarked', ...(isFollowing ? ['subscription'] : [])].forEach((key) => items.has(key) && items.remove(key));
+      return items.toArray();
+    })();
+
     const primaryTagColor: string = (allTags.length ? allTags[0].color?.() : null) || 'var(--primary-color)';
 
     return (
@@ -340,6 +351,7 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
                   </span>
                 </Tooltip>
               )}
+              {extensionBadges.length > 0 && <ul className="AvocadoHome-extBadges badges">{listItems(extensionBadges)}</ul>}
               {tags.slice(0, 4).map((tag: any, idx: number) => {
                 const tagColor = tag.color?.() || null;
                 const isCurrentTag = currentTag && tag.id?.() === currentTag.id?.();
@@ -435,30 +447,32 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
         {/* Like + reply stats (home variant only) */}
         {!isSearch && (
           <div className="AvocadoHome-threadStats">
-            <button
-              className={[
-                'AvocadoHome-statBtn AvocadoHome-statBtn--likes',
-                isLiked ? ' AvocadoHome-statBtn--liked' : '',
-                isLiking ? ' AvocadoHome-statBtn--loading' : '',
-                updatedLikeIds.has(id) ? ' AvocadoHome-statBtn--pop' : '',
-              ].join('')}
-              onclick={(e: Event) => {
-                e.stopPropagation();
-                if (!app.session.user) {
-                  app.modal.show(() => (flarum as any).reg.asyncModuleImport('flarum/forum/components/LogInModal'));
-                  return;
-                }
-                onToggleLike(discussion);
-              }}
-              title={trans('ramon-avocado.forum.home.like', 'Like')}
-            >
-              <i className={isLiked ? 'fas fa-thumbs-up' : 'far fa-thumbs-up'} aria-hidden="true" />
-              <span>
-                {likes === 1
-                  ? trans('ramon-avocado.forum.home.like_count_singular', '1 like')
-                  : trans('ramon-avocado.forum.home.like_count_plural', '{count} likes', { count: likes })}
-              </span>
-            </button>
+            {'flarum-likes' in flarum.extensions && (
+              <button
+                className={[
+                  'AvocadoHome-statBtn AvocadoHome-statBtn--likes',
+                  isLiked ? ' AvocadoHome-statBtn--liked' : '',
+                  isLiking ? ' AvocadoHome-statBtn--loading' : '',
+                  updatedLikeIds.has(id) ? ' AvocadoHome-statBtn--pop' : '',
+                ].join('')}
+                onclick={(e: Event) => {
+                  e.stopPropagation();
+                  if (!app.session.user) {
+                    app.modal.show(() => (flarum as any).reg.asyncModuleImport('flarum/forum/components/LogInModal'));
+                    return;
+                  }
+                  onToggleLike(discussion);
+                }}
+                title={trans('ramon-avocado.forum.home.like', 'Like')}
+              >
+                <i className={isLiked ? 'fas fa-thumbs-up' : 'far fa-thumbs-up'} aria-hidden="true" />
+                <span>
+                  {likes === 1
+                    ? trans('ramon-avocado.forum.home.like_count_singular', '1 like')
+                    : trans('ramon-avocado.forum.home.like_count_plural', '{count} likes', { count: likes })}
+                </span>
+              </button>
+            )}
             <button
               className="AvocadoHome-statBtn AvocadoHome-statBtn--replies"
               onclick={(e: Event) => {

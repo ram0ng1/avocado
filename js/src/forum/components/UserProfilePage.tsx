@@ -2,7 +2,7 @@ import app from 'flarum/forum/app';
 import UserPage from 'flarum/forum/components/UserPage';
 import UserControls from 'flarum/forum/utils/UserControls';
 
-import { renderProfileCardSkeleton, renderLoadMore, renderEmpty, trans, userSlug } from '../utils';
+import { renderProfileCardSkeleton, renderLoadMore, renderEmpty, trans, userSlug, apiInclude } from '../utils';
 import { bookmarksEnabled } from '../utils/bookmarks';
 import { toggleDiscussionLike } from '../utils/likes';
 
@@ -133,7 +133,7 @@ export class AvocadoUserPostsPage extends AvocadoUserBase {
         filter: { author: userSlug(user), type: 'comment' },
         sort: '-createdAt',
         page: { offset: this.offset, limit: PAGE_SIZE },
-        include: 'user,discussion,discussion.tags',
+        include: apiInclude('user', 'discussion', 'discussion.tags'),
       })
       .then((results: any) => {
         const items = Array.isArray(results) ? results : [];
@@ -208,7 +208,7 @@ export class AvocadoUserDiscussionsPage extends AvocadoUserBase {
         sort: '-createdAt',
         page: { offset: this.offset, limit: PAGE_SIZE },
         // Sem firstPost/lastPost: o ThreadCard lê tudo de atributos da discussão.
-        include: 'user,lastPostedUser,tags',
+        include: apiInclude('user', 'lastPostedUser', 'tags'),
       })
       .then((results: any) => {
         const items = Array.isArray(results) ? results : [];
@@ -285,7 +285,7 @@ export class AvocadoUserLikesPage extends AvocadoUserBase {
         filter: { type: 'comment', likedBy: user.id() },
         sort: '-createdAt',
         page: { offset: this.offset, limit: PAGE_SIZE },
-        include: 'user,discussion,discussion.tags',
+        include: apiInclude('user', 'discussion', 'discussion.tags'),
       })
       .then((results: any) => {
         const items = Array.isArray(results) ? results : [];
@@ -354,7 +354,7 @@ export class AvocadoUserMentionsPage extends AvocadoUserBase {
         filter: { type: 'comment', mentioned: user.id() },
         sort: '-createdAt',
         page: { offset: this.offset, limit: PAGE_SIZE },
-        include: 'user,discussion,discussion.tags',
+        include: apiInclude('user', 'discussion', 'discussion.tags'),
       })
       .then((results: any) => {
         const items = Array.isArray(results) ? results : [];

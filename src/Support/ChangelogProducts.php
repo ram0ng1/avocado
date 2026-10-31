@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ramon\Avocado\Support;
 
+use Flarum\Extension\ExtensionManager;
 use Flarum\Http\SlugManager;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Flarum\Tags\Tag;
@@ -19,13 +20,14 @@ class ChangelogProducts
     public function __construct(
         protected SettingsRepositoryInterface $settings,
         protected SlugManager $slugManager,
+        protected ExtensionManager $extensions,
     ) {
     }
 
     public function enabled(): bool
     {
         return filter_var($this->settings->get('avocado.changelog_enabled', false), FILTER_VALIDATE_BOOL)
-            && class_exists(Tag::class);
+            && $this->extensions->isEnabled('flarum-tags');
     }
 
     /**
