@@ -123,6 +123,10 @@ export default function installComposerPreview(): void {
         ? trans('ramon-avocado.forum.composer.hide_preview', 'Hide preview')
         : trans('ramon-avocado.forum.home.composer_preview', 'Preview');
 
+    // O `preview` do core só rola até a prévia no fim da discussão — a mesma
+    // função deste botão; os dois juntos eram dois olhos idênticos na barra.
+    if (items.has('preview')) items.remove('preview');
+
     items.add(
       'avocadoPreview',
       m(
