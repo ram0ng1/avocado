@@ -34,6 +34,12 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
     /** Hero source images larger than this are rejected before the decoder runs. */
     private const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
+    /**
+     * Teto em pixels, conferido no cabeçalho antes de decodificar: o GD aloca o
+     * bitmap fora do memory_limit, e um PNG de 1 MB pode declarar 20000×20000.
+     */
+    private const MAX_PIXELS = 40_000_000;
+
     /** MIME types accepted as hero-image source uploads. */
     private const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
@@ -98,29 +104,41 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
             throw new ValidationException(['file' => $this->translator->trans('ramon-avocado.api.unsupported_image_type')]);
         }
 
-        $encoded = $this->imageManager
+        $dimensions = @getimagesize($tmpPath);
+        if (! $dimensions || $dimensions[0] * $dimensions[1] > self::MAX_PIXELS) {
+            throw new ValidationException(['file' => $this->translator->trans('ramon-avocado.api.image_too_large')]);
+        }
+
+        // O hero é estático: decodificar todos os quadros de um GIF/WebP animado
+        // só custa memória (cada quadro vira um bitmap inteiro).
+        $encoded = ImageManager::withDriver($this->imageManager->driver()::class, decodeAnimation: false)
             ->read($tmpPath)
             ->scaleDown(width: 1600)
             ->toWebp(quality: 78);
 
-        /** @var DiscussionHero|null $hero */
-        $hero = $discussion->avocadoHero;
-
-        // Capture the previous image path BEFORE we save. Write the new file,
-        // point the DB row at it, and only THEN delete the previous file. If
-        // put()/save() fails between steps we leak an orphan file (cleanable)
-        // instead of losing the user's current hero image (unrecoverable).
-        $oldPath = $hero?->image_path;
-
         $filename = 'avocado-disc-hero-'.$discussion->id.'-'.Str::lower(Str::random(8)).'.webp';
         $this->uploadDir->put($filename, $encoded->toString());
 
-        if ($hero === null) {
-            $hero = new DiscussionHero();
-            $hero->discussion_id = (int) $discussion->id;
-        }
-        $hero->image_path = $filename;
-        $hero->save();
+        // A linha da discussão travada serializa dois uploads simultâneos: sem
+        // isso os dois criavam o hero (o segundo dava 500 na chave primária) e o
+        // arquivo de um deles ficava sem dono. O arquivo antigo só sai depois
+        // que a linha aponta para o novo.
+        $oldPath = $discussion->getConnection()->transaction(function () use ($discussion, $filename) {
+            Discussion::query()->whereKey($discussion->id)->lockForUpdate()->value('id');
+
+            /** @var DiscussionHero|null $hero */
+            $hero = DiscussionHero::query()->find($discussion->id);
+            $oldPath = $hero?->image_path;
+
+            if ($hero === null) {
+                $hero = new DiscussionHero();
+                $hero->discussion_id = (int) $discussion->id;
+            }
+            $hero->image_path = $filename;
+            $hero->save();
+
+            return $oldPath;
+        });
 
         if ($oldPath && $oldPath !== $filename && $this->uploadDir->exists($oldPath)) {
             $this->uploadDir->delete($oldPath);

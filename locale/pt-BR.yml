@@ -666,6 +666,7 @@ ramon-avocado:
     file_not_readable: "Não foi possível ler o arquivo enviado."
     no_file_uploaded: "Nenhum arquivo enviado."
     file_too_large: "Arquivo grande demais (máx. {max})."
+    image_too_large: "Imagem grande demais (máx. 40 megapixels)."
     unsupported_image_type: "Tipo de imagem não suportado."
     svg_forbidden_declaration: "O SVG contém uma declaração DOCTYPE ou ENTITY proibida."
     svg_parse_failed: "SVG inválido: não foi possível interpretar o XML."

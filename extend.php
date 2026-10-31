@@ -363,6 +363,7 @@ return [
     (new Extend\Event())
         ->listen(\Flarum\Discussion\Event\Started::class, \Ramon\Avocado\Listener\FlushChangelogCounts::class)
         ->listen(\Flarum\Discussion\Event\Deleted::class, \Ramon\Avocado\Listener\FlushChangelogCounts::class)
+        ->listen(\Flarum\Discussion\Event\Deleting::class, \Ramon\Avocado\Listener\DeleteDiscussionHeroFile::class)
         ->listen(\Flarum\Discussion\Event\Hidden::class, \Ramon\Avocado\Listener\FlushChangelogCounts::class)
         ->listen(\Flarum\Discussion\Event\Restored::class, \Ramon\Avocado\Listener\FlushChangelogCounts::class)
         ->listen('Flarum\Tags\Event\DiscussionWasTagged', \Ramon\Avocado\Listener\FlushChangelogCounts::class)
