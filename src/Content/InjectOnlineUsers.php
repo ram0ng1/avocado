@@ -23,19 +23,13 @@ use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
- * Injects online-user data directly into <head> as window.__avocadoOnlineUsers
- * so the JS component can render avatars synchronously on first paint — no API
- * round-trip, no layout-shift after page load.
- *
- * The users-table SELECT is cached for 30 seconds: on a busy forum every page
- * load would otherwise re-run the query and the filter pass even though the
- * "online in the last 5 minutes" set barely moves between requests. With the
- * cache, traffic on the users table scales with traffic / 30s, not with raw
- * page-view RPS.
+ * Quem está online, no <head> (window.__avocadoOnlineUsers), para os avatares
+ * saírem no primeiro paint. A consulta fica 30s no cache: o conjunto quase não
+ * muda entre requests e a tabela users não deve escalar com cada página vista.
  */
 class InjectOnlineUsers
 {
-    /** Cache TTL in seconds — small enough to feel real-time, large enough to absorb bursts. */
+    /** Curto o bastante para parecer tempo real, longo o bastante para absorver picos. */
     private const CACHE_TTL = 30;
 
     private const CACHE_KEY = 'avocado.online_users.payload';
@@ -68,8 +62,7 @@ class InjectOnlineUsers
             fn () => $this->fetchOnlineUsers()
         );
 
-        // JSON_HEX_* flags prevent `</script>` / quote break-outs when a username
-        // (or display_name, with nickname extensions installed) embeds HTML.
+        // JSON_HEX_*: um nome de usuário (ou apelido) com HTML não fecha o <script>.
         $json = json_encode(
             $users,
             JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
@@ -79,9 +72,7 @@ class InjectOnlineUsers
     }
 
     /**
-     * `slug` é o que vai na URL do perfil: sai do slug driver de usuários
-     * configurado no admin (username por padrão, id no IdSlugDriver), e não do
-     * username direto — o front monta /u/{slug} com ele.
+     * `slug` sai do slug driver configurado (o IdSlugDriver usa o id), não do username.
      *
      * @return array<int, array{id: int, username: string, slug: string, displayName: string, avatarUrl: ?string}>
      */

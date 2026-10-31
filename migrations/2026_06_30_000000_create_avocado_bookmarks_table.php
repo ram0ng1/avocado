@@ -15,11 +15,9 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\Builder;
 
 /**
- * Tabela companheira que guarda os bookmarks (discussões salvas) por usuário
- * (CLAUDE.md §45 — nada vai na `discussion_user`/core). O índice único
- * (user_id, discussion_id) impede duplicatas e serve as três rotas de acesso:
- * listar os salvos do ator, o exists() por-ator no filtro de busca e o
- * eager-load escopado ao ator que alimenta o campo `bookmarked`.
+ * Bookmarks por usuário em tabela própria, fora da `discussion_user` do core.
+ * O índice único (user_id, discussion_id) impede duplicatas e serve todas as
+ * consultas, sempre escopadas ao ator.
  */
 return [
     'up' => function (Builder $schema) {

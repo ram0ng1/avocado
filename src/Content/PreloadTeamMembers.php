@@ -20,28 +20,16 @@ use Flarum\Settings\SettingsRepositoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
- * Preloads the /team member list into the boot payload as `app.data.avocadoTeam`.
- *
- * Without this, TeamPage mounted with `loading = true`, fired one
- * `app.store.find('users', { filter: { group } })` per configured group and only
- * swapped the skeleton for real cards once every request had resolved — a
- * guaranteed flash on a page whose entire content is that list.
- *
- * The /team route is served by TeamPageController, which produces a frontend
- * document with no route-specific apiDocument, so nothing about the team was in
- * the boot at all.
- *
- * Registered globally in extend.php (Extend\Frontend runs its content on every
- * forum page), so the route guard below is what keeps the queries off every
- * other page. Guarding on routeName rather than mutating the shared Frontend
- * instance from the controller keeps this free of per-request state.
+ * Membros do /team no payload do boot (`app.data.avocadoTeam`): a página é só
+ * essa lista e, buscada depois, nasceria em skeleton. O content roda em toda
+ * página; o guard por nome de rota evita estado por request no Frontend compartilhado.
  */
 class PreloadTeamMembers
 {
-    /** Matches the route name registered in extend.php. */
+    /** Mesmo nome de rota do extend.php. */
     private const ROUTE = 'avocado-team';
 
-    /** Mirrors the page[limit] used by TeamPage.load(). */
+    /** Espelha o page[limit] do TeamPage.load(). */
     private const PER_GROUP_LIMIT = 50;
 
     public function __construct(
@@ -56,11 +44,8 @@ class PreloadTeamMembers
             return;
         }
 
-        // Mesmo gate do endpoint (UserResource Index → can('searchUsers')). Sem a
-        // permissão — o caso de todo visitante deslogado aqui — cada sub-request
-        // montava o pipeline da API inteiro só para levar 403 e cair no catch,
-        // uma vez por grupo. O front já trata a ausência do preload (busca e
-        // recebe o mesmo 403), então sair cedo não muda nada na tela.
+        // Mesmo gate do endpoint (searchUsers): sem ele cada grupo montaria um
+        // sub-request inteiro só para levar 403.
         if (RequestUtil::getActor($request)->cannot('searchUsers')) {
             return;
         }
@@ -112,8 +97,6 @@ class PreloadTeamMembers
             return;
         }
 
-        // Vira app.data.avocadoTeam no front, no formato que store.pushPayload()
-        // consome direto.
         $document->payload['avocadoTeam'] = [
             'data'     => $data,
             'included' => $included,
@@ -142,9 +125,7 @@ class PreloadTeamMembers
         try {
             $body = (string) $this->api
                 ->withoutErrorHandling()
-                // withParentRequest faz a chamada rodar como o visitante real,
-                // então o preload respeita a visibilidade de usuários — um guest
-                // não recebe no boot nada que não veria pela API.
+                // Roda como o visitante real: o boot nunca entrega o que ele não veria pela API.
                 ->withParentRequest($request)
                 ->withQueryParams([
                     'filter'  => ['group' => $groupId],
@@ -158,8 +139,7 @@ class PreloadTeamMembers
 
             return is_array($decoded) ? $decoded : null;
         } catch (\Throwable $e) {
-            // Guests levam 403 aqui (listar usuários é permissão), o que é o
-            // comportamento correto — o front cai no fetch e trata igual.
+            // Sem permissão o 403 é o esperado: o front cai no fetch.
             return null;
         }
     }

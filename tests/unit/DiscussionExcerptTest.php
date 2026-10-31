@@ -19,13 +19,11 @@ use Ramon\Avocado\Api\DiscussionFields;
 use ReflectionClass;
 
 /**
- * `avocadoExcerpt` roda para cada linha de um payload de Index: um post cujo XML
- * o redutor não soubesse tratar derrubava a listagem inteira com 500, não só o
- * card daquela discussão. Estes testes fixam o contrato — texto corrido, sem
- * citação, sem imagem, e null (nunca exceção) para entrada estranha.
+ * `avocadoExcerpt` roda para cada linha do Index: um XML que o redutor não
+ * tratasse derrubaria a listagem inteira. Contrato: texto corrido, sem citação
+ * nem imagem, e null (nunca exceção) para entrada estranha.
  *
- * `plainExcerpt()` é privado e puro (string → ?string), então é chamado por
- * reflexão: não precisa de container, disco nem modelo carregado.
+ * `plainExcerpt()` é privado e puro, então é chamado por reflexão.
  */
 final class DiscussionExcerptTest extends TestCase
 {
@@ -62,9 +60,8 @@ final class DiscussionExcerptTest extends TestCase
     }
 
     /**
-     * O caso que gerava o TypeError: o `.*?</QUOTE>` casava até o fechamento da
-     * citação interna e deixava o `</QUOTE>` externo órfão, o XML resultante não
-     * carregava e `removeFormatting()` devolvia null.
+     * Citação aninhada: uma regex `.*?</QUOTE>` deixaria o fechamento externo órfão
+     * e o XML não carregaria mais (TypeError).
      */
     public function test_nested_quotes_do_not_break_the_excerpt(): void
     {

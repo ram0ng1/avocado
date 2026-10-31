@@ -18,8 +18,8 @@ use Flarum\User\User;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Um evento na linha do tempo de um ticket do linkrobins/support — hoje só a
- * mudança de status (`type` = 'status'), gravada por Support\SupportEvents.
+ * Evento na linha do tempo de um ticket do linkrobins/support (por ora só
+ * `type` = 'status'), gravado por Support\SupportEvents.
  *
  * @property int $id
  * @property int $ticket_id

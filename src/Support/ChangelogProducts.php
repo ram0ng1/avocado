@@ -58,9 +58,7 @@ class ChangelogProducts
     /**
      * Slugs dos produtos, na ordem em que o admin os cadastrou no fórum.
      *
-     * O filtro `tag` da API resolve por slug através do slug driver ativo; gerar
-     * o slug pelo SlugManager mantém o Utf8SlugDriver e o id_with_slug corretos
-     * sem hardcode de formato.
+     * Gerados pelo SlugManager, para valerem com qualquer slug driver.
      *
      * @return list<string>
      */

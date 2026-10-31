@@ -18,15 +18,9 @@ use Illuminate\Contracts\Cache\Repository as Cache;
 /**
  * HtmlSanitizer com o resultado guardado no cache do Flarum.
  *
- * O HTML do hero personalizado vai no payload do fórum — toda página e todo
- * GET /api passam pelo `serializeToForum`, e cada passada rodava o parse do DOM
- * de novo (até cinco passes no pior caso) sobre um texto que só muda quando o
- * admin salva. O sanitizador é determinístico, então a saída é guardada junto do
- * hash da entrada: trocou o HTML, o hash não bate e a próxima leitura refaz.
- *
- * Uma chave por campo (e não uma por hash) para não acumular entradas órfãs a
- * cada edição do admin. A versão no nome muda quando a regra do sanitizador
- * mudar — e o `cache:clear` de todo deploy já descarta o resto.
+ * O `serializeToForum` roda em toda página, e o HTML só muda quando o admin salva.
+ * A saída é guardada com o hash da entrada, numa chave por campo para não
+ * acumular entradas órfãs. Mude a versão da chave quando a regra mudar.
  */
 class SanitizedHtmlCache
 {

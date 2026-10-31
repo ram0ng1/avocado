@@ -43,9 +43,8 @@ class SendBookmarkRemindersCommand extends Command
             return;
         }
 
-        // with() logo após query() — no Eloquent\Builder cru; encadeá-lo depois
-        // do where() faz o PHPStan (sem larastan) narrar para Query\Builder e
-        // reclamar que with() não existe.
+        // with() logo após query(): depois do where() o PHPStan (sem larastan) estreita
+        // para Query\Builder e reclama que with() não existe.
         $due = Bookmark::query()
             ->with(['user', 'discussion'])
             ->whereNotNull('remind_at')

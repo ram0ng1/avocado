@@ -25,9 +25,7 @@ class TeamPageController implements RequestHandlerInterface
 {
     public function __construct(
         private SettingsRepositoryInterface $settings,
-        // The forum Frontend is supplied via a contextual binding registered in
-        // AvocadoServiceProvider::register() — keeps the magic 'flarum.frontend.forum'
-        // string out of the controller and avoids injecting the whole container.
+        // Frontend do fórum entregue por binding contextual (AvocadoServiceProvider).
         private Frontend $frontend
     ) {}
 

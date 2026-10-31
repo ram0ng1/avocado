@@ -16,16 +16,9 @@ namespace Ramon\Avocado\Support;
 /**
  * Onde a página "Salvos" do Avocado atende — e quando ela simplesmente não existe.
  *
- * O fof/bookmarks é um sistema de bookmarks dedicado e registra a MESMA rota de
- * frontend `/bookmarks`. Duas rotas GET no mesmo path fazem o FastRoute abortar
- * ao compilar a tabela de rotas (BadRouteException) e o fórum inteiro deixa de
- * subir — era isso que derrubava a instalação ao ativar o tema com a extensão
- * presente.
- *
- * Com ela ativa o tema cede o sistema inteiro: a rota, os campos de API e o
- * eager-load do bookmark do Avocado saem do ar (ver extend.php), e o botão de
- * salvar do card passa a gravar na extensão. A tabela `avocado_bookmarks` fica
- * dormente, intacta, e volta a valer se o fof for desativado.
+ * O fof/bookmarks registra a mesma rota `/bookmarks`, e duas rotas GET iguais
+ * derrubam o boot (FastRoute\BadRouteException). Com ele ativo o tema cede o
+ * sistema inteiro; a tabela `avocado_bookmarks` fica intacta para quando ele sair.
  */
 final class BookmarksRoute
 {

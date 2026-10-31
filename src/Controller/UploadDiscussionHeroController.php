@@ -40,7 +40,7 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
         $this->uploadDir = $filesystemFactory->disk('flarum-assets');
     }
 
-    /** Hero source images larger than this are rejected before the decoder runs. */
+    /** Recusado antes de o decodificador rodar. */
     private const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
     /**
@@ -49,7 +49,6 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
      */
     private const MAX_PIXELS = 40_000_000;
 
-    /** MIME types accepted as hero-image source uploads. */
     private const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
     public function handle(ServerRequestInterface $request): ResponseInterface
@@ -64,19 +63,14 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
         }
 
         /** @var Discussion|null $discussion */
-        // Só discussões que o ator vê: sem isso um moderador com "renomear" global
-        // trocava a imagem de uma discussão oculta para ele, e a diferença entre
-        // 404 e 403 revelava quais IDs ocultos existem.
+        // Só discussões visíveis ao ator: senão a diferença entre 404 e 403 revelaria
+        // quais IDs ocultos existem.
         $discussion = Discussion::whereVisibleTo($actor)->find($discussionId);
         if (! $discussion) {
             throw new ValidationException(['discussionId' => $this->translator->trans('ramon-avocado.api.discussion_not_found')]);
         }
 
-        // Use a dedicated ability so the authorization rule is named for what
-        // it gates (hero-image upload) rather than piggy-backing on the
-        // unrelated "rename" permission. The policy currently delegates to
-        // rename — admins can override that later without touching this
-        // controller. See Ramon\Avocado\Access\DiscussionPolicy.
+        // Ability própria em vez de `rename`; ver Access\DiscussionPolicy.
         $actor->assertCan('uploadHeroImage', $discussion);
 
         $file = Arr::get($request->getUploadedFiles(), 'avocado-discussion-hero');
@@ -84,8 +78,7 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
             throw new ValidationException(['file' => $this->translator->trans('ramon-avocado.api.no_file_uploaded')]);
         }
 
-        // Size guard: hero source images are never multi-megabyte; reject before
-        // Intervention attempts to decode the bitmap into memory (OOM/DoS).
+        // Recusa antes de o Intervention decodificar o bitmap (OOM/DoS).
         $size = $file->getSize();
         if ($size === null || $size > self::MAX_UPLOAD_BYTES) {
             throw new ValidationException([
@@ -93,10 +86,7 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
             ]);
         }
 
-        // MIME guard: don't trust the client's Content-Type. Sniff on disk via
-        // finfo — mime_content_type() is a thin wrapper over the same database
-        // but is deprecated for new code and unavailable on PHP builds compiled
-        // without ext-fileinfo's CLI alias. Use the finfo API directly.
+        // O Content-Type do cliente não vale: o MIME é detectado no disco pelo finfo.
         $tmpPath = $file->getStream()->getMetadata('uri');
         $mime = '';
         if (is_string($tmpPath) && is_readable($tmpPath)) {
@@ -128,10 +118,9 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
         $filename = 'avocado-disc-hero-'.$discussion->id.'-'.Str::lower(Str::random(8)).'.webp';
         $this->uploadDir->put($filename, $encoded->toString());
 
-        // A linha da discussão travada serializa dois uploads simultâneos: sem
-        // isso os dois criavam o hero (o segundo dava 500 na chave primária) e o
-        // arquivo de um deles ficava sem dono. O arquivo antigo só sai depois
-        // que a linha aponta para o novo.
+        // O lock na linha da discussão serializa uploads simultâneos: sem ele os dois
+        // criariam o hero (500 na PK) e um arquivo ficaria órfão. O antigo só sai
+        // depois que a linha aponta para o novo.
         $oldPath = $discussion->getConnection()->transaction(function () use ($discussion, $filename) {
             Discussion::query()->whereKey($discussion->id)->lockForUpdate()->value('id');
 

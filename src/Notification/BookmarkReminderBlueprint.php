@@ -44,9 +44,8 @@ class BookmarkReminderBlueprint implements BlueprintInterface, AlertableInterfac
     }
 
     /**
-     * O NotificationSyncer casa as notificações por tipo, assunto e dados: sem
-     * o bookmark e o horário, o lembrete de um usuário apagava os dos outros na
-     * mesma discussão, e um lembrete novo não gerava alerta novo.
+     * O NotificationSyncer casa por tipo, assunto e dados: sem o bookmark e o
+     * horário, um lembrete apagaria os de outros usuários na mesma discussão.
      */
     public function getData(): mixed
     {

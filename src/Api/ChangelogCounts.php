@@ -22,25 +22,11 @@ use Illuminate\Database\ConnectionInterface;
 use Ramon\Avocado\Support\ChangelogProducts;
 
 /**
- * As versões do changelog não entram na contagem de discussões.
+ * Desconta as versões do changelog das contagens de discussões do usuário e da
+ * tag. As colunas do core continuam como estão; só o valor no JSON muda.
  *
- * `users.discussion_count` e `tags.discussion_count` são colunas mantidas pelo
- * core/flarum-tags a cada discussão criada; mexer nos ouvintes que as mantêm
- * seria reescrever esse código. Aqui só o que sai no JSON muda: cada contagem
- * perde as versões que a compõem — as do autor, no usuário; as que carrega, na
- * tag (uma tag de produto, ou de tipo, lê 0, porque tudo nela é versão).
- *
- * Uma consulta agrupada por request (as versões são poucas e a subconsulta usa
- * o índice de `discussion_tag`) em vez de uma por usuário ou tag do documento.
- * O resultado fica memorizado na instância — singleton no AvocadoServiceProvider,
- * a mesma que o extend.php entrega aos dois campos.
- *
- * Entre requests, os dois mapas ficam no cache do Flarum: só mudam quando uma
- * discussão nasce, some ou troca de tag, e cada um desses eventos chama
- * `flush()` (extend.php, mesmo padrão dos ouvintes do fof/*). Sem isso, toda
- * página com usuário ou tag no documento — praticamente todas — pagava as duas
- * consultas agrupadas. O TTL é só rede de segurança para uma escrita que não
- * passe pelos eventos (SQL direto, importação).
+ * Os mapas ficam no cache entre requests e são invalidados pelos eventos de
+ * discussão/tag (`flush()`); o TTL cobre escritas fora dos eventos (SQL direto).
  */
 final class ChangelogCounts
 {
@@ -85,10 +71,7 @@ final class ChangelogCounts
         $this->byTag = null;
     }
 
-    /**
-     * Invalida o cache entre requests e os memos deste. Chamado pelos ouvintes
-     * de discussão/tag no extend.php.
-     */
+    /** Invalida o cache e os memos deste request. */
     public function flush(): void
     {
         $this->cache->forget(self::CACHE_KEY);
@@ -116,16 +99,14 @@ final class ChangelogCounts
     }
 
     /**
-     * Preenche os dois mapas de uma vez: do cache quando a lista de produtos
-     * gravada bate com a atual (trocar `avocado.changelog_tags` invalida sozinho),
-     * senão das duas consultas — e regrava.
+     * O cache só vale se a lista de produtos gravada bater com a atual, então
+     * trocar `avocado.changelog_tags` o invalida sozinho.
      */
     private function load(): void
     {
         $ids = $this->releaseIds();
 
         if ($ids === []) {
-            // Changelog desligado ou sem produtos: nada a descontar, nem a ler.
             $this->byAuthor = $this->byTag = [];
 
             return;

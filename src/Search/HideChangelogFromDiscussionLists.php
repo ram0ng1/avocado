@@ -20,18 +20,9 @@ use Ramon\Avocado\Support\ChangelogProducts;
 /**
  * Tira as versões do changelog das listas de discussão do fórum.
  *
- * Uma versão é uma discussão numa tag de produto, mas o lugar dela é a página do
- * changelog: na home, em "todas as discussões" e no perfil do autor ela só
- * misturaria nota de lançamento com conversa. Duas consultas continuam vendo as
- * versões, de propósito:
- *
- *  - com filtro de TAG — é como o próprio changelog lista, e como o fórum lista
- *    qualquer tag pedida de forma explícita;
- *  - busca por TEXTO — quem procura por um termo quer achar também a nota que o
- *    menciona.
- *
- * Mesmo desenho do HideHiddenTagsFromAllDiscussionsPage do flarum/tags,
- * inclusive o cuidado com as uniões que outros mutators (sticky) já montaram.
+ * Continuam vendo as versões, de propósito, a busca com filtro de tag (é como o
+ * changelog lista) e a busca por texto. Mesmo desenho do
+ * HideHiddenTagsFromAllDiscussionsPage do flarum/tags, inclusive com as uniões.
  */
 class HideChangelogFromDiscussionLists
 {

@@ -25,16 +25,11 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Pusher\Pusher;
 
 /**
- * Autoriza o presence channel `presence-avocado-discussion={id}` ("quem está
- * lendo agora"). A rota só existe quando flarum/realtime está ativo (extend.php
- * condiciona o registro), então o singleton Pusher do provider dele está
- * garantido no container. Guests não entram (presence exige user id) e a
- * discussão precisa ser visível ao ator (§5). Quem desativou discloseOnline
- * entra com payload `hidden` — vê os demais, mas não é listado nem contado — e
- * com um ID opaco, novo a cada conexão, no lugar do ID real: o Pusher entrega o
- * `user_id` de cada membro a todos os inscritos, então esconder só na tela
- * deixava o ID real de quem pediu para não aparecer visível no websocket.
- * O CSRF NÃO é isento aqui: o client manda X-CSRF-Token no auth (§16).
+ * Autoriza o presence channel "quem está lendo" de uma discussão visível ao
+ * ator. A rota só existe com o flarum/realtime ativo, então o Pusher está no
+ * container. Quem desativou discloseOnline entra `hidden` e com um ID opaco:
+ * o Pusher entrega o `user_id` de cada membro a todos os inscritos.
+ * O CSRF não é isento: o client manda X-CSRF-Token no auth.
  */
 class PresenceAuthController implements RequestHandlerInterface
 {

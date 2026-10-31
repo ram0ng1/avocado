@@ -18,13 +18,8 @@ use Flarum\Discussion\Discussion;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Tabela companheira 1:1 com `discussions` com o que uma versão do changelog
- * precisa além do título e do corpo: o número da versão e o tipo de capa
- * (banner colorido a partir das tags ou de uma predefinição, para quem não envia
- * imagem — ver `coverPattern`).
- *
- * A linha só existe enquanto houver algo a guardar — limpar os dois campos a
- * apaga (ver `write`).
+ * Versão e capa de uma entrada do changelog (companheira 1:1 de `discussions`).
+ * Limpar os dois campos apaga a linha.
  *
  * @property int $discussion_id
  * @property string|null $version
@@ -63,8 +58,7 @@ class ChangelogEntry extends AbstractModel
 
     protected $keyType = 'int';
 
-    // Nada aqui é atribuído em massa: `write()` põe cada coluna pelo nome, como o
-    // DiscussionHero. A allowlist de escrita é o `writable()` de Api\ChangelogFields.
+    // Nada é atribuído em massa: `write()` põe cada coluna pelo nome.
     protected $guarded = ['*'];
 
     protected $casts = [
@@ -91,8 +85,7 @@ class ChangelogEntry extends AbstractModel
             $entry->discussion_id = (int) $discussion->id;
         }
 
-        // Coluna a coluna, e só as duas que existem: os valores já chegam validados
-        // pelo Schema, mas nenhuma chave a mais de `$values` alcança o model.
+        // Coluna a coluna: nenhuma chave a mais de `$values` alcança o model.
         if (array_key_exists('version', $values)) {
             $entry->version = $values['version'];
         }

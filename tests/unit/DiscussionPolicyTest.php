@@ -22,13 +22,8 @@ use PHPUnit\Framework\Attributes\Group;
 use Ramon\Avocado\Access\DiscussionPolicy;
 
 /**
- * DiscussionPolicy::uploadHeroImage() gates the hero-image upload by delegating
- * to the core `rename` ability. These tests pin that delegation:
- *  - actor who can rename  -> ALLOW
- *  - actor who cannot      -> null (abstain, NOT deny — so other policies still run)
- *
- * Returning deny() instead of null here would veto every other policy in the
- * chain (§3); the abstain contract is the part worth locking down.
+ * uploadHeroImage() delega para `rename`: quem pode renomear é ALLOW; quem não
+ * pode é null (abstém, NÃO nega), senão vetaria as outras policies da cadeia.
  */
 #[Group('security')]
 final class DiscussionPolicyTest extends MockeryTestCase

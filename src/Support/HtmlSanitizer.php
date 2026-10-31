@@ -18,39 +18,17 @@ use DOMElement;
 use DOMXPath;
 
 /**
- * Defense-in-depth HTML sanitizer for admin-paste fields (custom hero HTML,
- * loading-spinner HTML, etc.) that ultimately reach `m.trust()` / `innerHTML`
- * on the public site.
- *
- * Strips:
- *  - <script>, <style>, <iframe>, <object>, <embed>, <link>, <meta>, <base>, <form>
- *  - SVG <foreignObject> and the SMIL animation elements (<animate>, <set>,
- *    <animateMotion>, <animateTransform>): an <animate attributeName="href"
- *    values="javascript:…"> rewrites a link at runtime, past any attribute check
- *  - all on*= event-handler attributes
- *  - href / src / action / formaction / xlink:href pointing at
- *    javascript: / vbscript: / data:text/html schemes — tested after removing
- *    whitespace and control characters, because browsers strip them from URLs
- *    (`java&#9;script:` runs as `javascript:`)
- *  - inline style attributes containing expression(), @import, or *script: schemes
- *
- * <style> is stripped because admin-pasted CSS reaches every guest via
- * serializeToForum and can carry @import url(evil) / expression() payloads
- * (the inline-style scrub only covers style="..." attributes, not <style>
- * element bodies).
- *
- * Not a full allow-list (HTMLPurifier territory) — sized for "the admin pasted
- * markup we want to render, but XSS sinks should never reach guests".
+ * Defesa em profundidade para o HTML que o admin cola (hero, spinner) e que
+ * chega a `m.trust()`/`innerHTML` para todo visitante. Denylist, não allowlist:
+ * tira elementos executáveis, <style>, SMIL, handlers on* e URLs/estilos perigosos.
  */
 final class HtmlSanitizer
 {
-    // <noscript> and <template> change the HTML parser's context: their bodies
-    // are re-parsed by the browser in a way DOMDocument doesn't replicate, which
-    // is a classic mutation-XSS (mXSS) vector. They have no legitimate use in an
-    // admin "paste some markup" field, so drop them outright.
+    // <noscript> e <template> mudam o contexto do parser de HTML de um jeito que o
+    // DOMDocument não reproduz (mXSS), e não têm uso aqui.
     private const STRIP_ELEMENTS = [
         'script', 'style', 'iframe', 'object', 'embed', 'link', 'meta', 'base', 'form', 'noscript', 'template',
-        // loadHTML lowercases tag names, SVG ones included.
+        // loadHTML põe os nomes em minúsculas, inclusive os do SVG.
         'foreignobject', 'animate', 'set', 'animatemotion', 'animatetransform',
     ];
 
@@ -61,9 +39,7 @@ final class HtmlSanitizer
     private const DANGEROUS_STYLE = '/expression\s*\(|javascript:|vbscript:|@import/i';
 
     /**
-     * Upper bound on the parse→scrub→serialize passes (see sanitize()). Clean
-     * markup converges in two passes; the cap stops a pathological input from
-     * looping forever.
+     * Teto de passes; markup limpo converge em dois.
      */
     private const MAX_PASSES = 5;
 
@@ -74,12 +50,8 @@ final class HtmlSanitizer
             return '';
         }
 
-        // mXSS defense-in-depth: a denylist scrub can leave markup that, once the
-        // browser re-parses our serialized output, mutates into a different (and
-        // dangerous) tree than DOMDocument saw. Re-run the scrub until the
-        // serialization stops changing, so any node that only becomes dangerous
-        // after a parse→serialize round trip is caught on the next pass. Normal
-        // input stabilizes after the first (normalizing) pass.
+        // mXSS: a saída reparseada pode virar outra árvore. Repete até a serialização
+        // parar de mudar, para pegar o que só fica perigoso depois de um ciclo.
         $current = $trimmed;
         for ($i = 0; $i < self::MAX_PASSES; $i++) {
             $next = self::scrubOnce($current);
@@ -97,8 +69,7 @@ final class HtmlSanitizer
         $dom = new DOMDocument('1.0', 'UTF-8');
         $previous = libxml_use_internal_errors(true);
 
-        // Wrap with a root marker so we can serialize children without the wrapping
-        // <html>/<body> shell that loadHTML adds.
+        // Raiz marcada, para serializar sem o <html>/<body> que o loadHTML acrescenta.
         $wrapped = '<?xml encoding="UTF-8"?><div id="__avs_root__">' . $trimmed . '</div>';
         $loaded  = $dom->loadHTML($wrapped, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NONET);
 
@@ -111,9 +82,7 @@ final class HtmlSanitizer
 
         $xpath = new DOMXPath($dom);
 
-        // 1. Drop comment nodes. Conditional comments and `<!-- --><script>`-style
-        //    constructs are an mXSS vector, and comments never carry rendered
-        //    content an admin needs in this field.
+        // Comentários saem: comentários condicionais e `<!-- --><script>` são vetor de mXSS.
         $comments = $xpath->query('//comment()');
         if ($comments !== false) {
             foreach (iterator_to_array($comments) as $comment) {
@@ -121,7 +90,6 @@ final class HtmlSanitizer
             }
         }
 
-        // 2. Drop dangerous elements entirely.
         $query = '//' . implode(' | //', self::STRIP_ELEMENTS);
         $nodes = $xpath->query($query);
         if ($nodes !== false) {
@@ -130,7 +98,6 @@ final class HtmlSanitizer
             }
         }
 
-        // 3. Walk every remaining element, strip on* attrs and dangerous URLs/styles.
         $allEls = $xpath->query('//*');
         if ($allEls !== false) {
             foreach ($allEls as $el) {
@@ -141,7 +108,6 @@ final class HtmlSanitizer
             }
         }
 
-        // 4. Serialize children of the wrapper back out.
         $root = $dom->getElementById('__avs_root__');
         if ($root === null) {
             return '';
@@ -155,7 +121,7 @@ final class HtmlSanitizer
 
     private static function scrubAttributes(DOMElement $el): void
     {
-        // Snapshot attributes — removing while iterating breaks the live NodeList.
+        // Cópia: remover durante a iteração quebra a NodeList viva.
         foreach (iterator_to_array($el->attributes) as $attr) {
             $name  = strtolower($attr->nodeName);
             $value = (string) $attr->nodeValue;
@@ -177,10 +143,8 @@ final class HtmlSanitizer
     }
 
     /**
-     * The browser's URL parser drops ASCII tab/newline anywhere in the value and
-     * trims leading C0 controls and spaces, so `java\tscript:` and
-     * `\x01javascript:` both run as `javascript:`. Test the scheme the browser
-     * will actually see, not the raw attribute.
+     * O navegador ignora tab/quebra de linha na URL e controles no começo
+     * (`java\tscript:` roda como `javascript:`): testa o esquema que ele vai ver.
      */
     public static function isDangerousUrl(string $value): bool
     {

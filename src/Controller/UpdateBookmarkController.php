@@ -29,10 +29,9 @@ use Ramon\Avocado\Model\Bookmark;
 use Ramon\Avocado\Support\BookmarksSetting;
 
 /**
- * Define nota e/ou lembrete do bookmark do ator (upsert: salva a discussão se
- * ainda não estava salva). O par é sempre derivado do servidor (user_id = ator,
- * §7) e a discussão precisa ser visível ao ator (§5). Trocar o lembrete zera
- * `reminder_sent_at`, rearmando o envio pelo scheduler.
+ * Nota e/ou lembrete do bookmark do ator (upsert). O user_id vem do servidor e
+ * a discussão precisa ser visível ao ator. Trocar o lembrete zera
+ * `reminder_sent_at`, rearmando o envio.
  */
 class UpdateBookmarkController implements RequestHandlerInterface
 {
@@ -138,8 +137,8 @@ class UpdateBookmarkController implements RequestHandlerInterface
         }
 
         try {
-            // O Eloquent grava a data sem o fuso: converte antes, senão um
-            // horário com offset vira outro instante no banco.
+            // O Eloquent grava a data sem o fuso: sem converter, um horário com offset
+            // viraria outro instante no banco.
             $remindAt = Carbon::parse($raw)->utc();
         } catch (\Throwable) {
             throw new ValidationException(['remindAt' => $this->translator->trans('ramon-avocado.api.invalid_reminder_date')]);

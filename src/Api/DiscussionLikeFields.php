@@ -20,18 +20,9 @@ use Flarum\Discussion\Discussion;
 use Illuminate\Database\ConnectionInterface;
 
 /**
- * Curtidas do primeiro post como atributos da discussão, para o botão de curtir
- * dos cards (ThreadCard) e a pontuação de "populares" da home.
- *
- * O card só precisa de dois números — quantas curtidas e se o visitante é uma
- * delas. Antes eles vinham do post inteiro: `include=firstPost` nas listas (o
- * s9e renderizando o HTML de cada post, mais menções, likers e permissões por
- * post) ou um GET /api/posts a mais depois do boot só para isso. Aqui sai uma
- * consulta agrupada em `post_likes` para a página inteira.
- *
- * Só nas listagens de discussões: no Show o post já vem com as curtidas
- * (default include do flarum/likes), e incluída em outro recurso a discussão
- * não vira card.
+ * Curtidas do primeiro post como atributos da discussão, para os cards não
+ * precisarem de `include=firstPost` (render do post inteiro). Uma consulta
+ * agrupada para a página, só nas listagens.
  */
 class DiscussionLikeFields
 {
@@ -75,9 +66,7 @@ class DiscussionLikeFields
     }
 
     /**
-     * Fase síncrona do getter: enfileira a discussão. O getter adiado só roda
-     * depois que todas as linhas do documento passaram aqui (mesmo esquema do
-     * heroBuffer do DiscussionFields), então o lote sai completo.
+     * O getter adiado só roda depois de todas as linhas, então o lote sai completo.
      */
     private function bufferDiscussion(Discussion $discussion): void
     {
@@ -98,10 +87,8 @@ class DiscussionLikeFields
             )));
             $this->buffer = [];
 
-            // O lote SUBSTITUI o anterior em vez de somar: cada documento
-            // consulta o que serializa, e um resultado de outro documento (outro
-            // sub-request do mesmo processo) nunca é reaproveitado — nem fica
-            // velho depois de uma curtida no meio do caminho.
+            // Substitui em vez de somar: um resultado de outro sub-request do mesmo
+            // processo nunca é reaproveitado, nem fica velho.
             $this->likes = $this->fetch($postIds, $context);
         }
 
@@ -109,9 +96,7 @@ class DiscussionLikeFields
     }
 
     /**
-     * Uma consulta para todos os primeiros posts do documento. A contagem é a
-     * mesma do `likesCount` do flarum/likes (countRelation, sem filtro); o
-     * "curti" só existe para quem está logado.
+     * Mesma contagem do `likesCount` do flarum/likes.
      *
      * @param  list<int> $postIds
      * @return array<int, array{count: int, liked: bool}>

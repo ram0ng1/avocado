@@ -47,10 +47,8 @@ class CustomLoadingSpinner
         if ($style === 'custom') {
             $raw = trim((string) ($this->settings->get('avocado.loading_spinner_custom') ?? ''));
             if ($raw === '') return;
-            // Defense-in-depth: scrub admin-pasted HTML before it lands in innerHTML.
-            // Inline scripts created via innerHTML do not run, but `<img onerror>`,
-            // `<svg onload>`, and the like do. Resultado em cache (por hash da
-            // entrada): este content roda em toda página.
+            // O HTML do admin vai para innerHTML, onde `<img onerror>` e afins executam.
+            // Resultado em cache por hash: este content roda em toda página.
             $clean = $this->sanitizer->sanitize('loading_spinner_custom', $raw);
             if ($clean === '') return;
             $this->injectSpinner($document, $this->wrap($clean), $primaryColor);
@@ -71,10 +69,7 @@ class CustomLoadingSpinner
     // ── Shared injection ─────────────────────────────────────────────────────
 
     /**
-     * Envolve o SVG no contêiner do spinner com um rótulo acessível traduzido.
-     *
-     * O spinner é injetado no `<head>` e roda antes do bundle JS subir, então o
-     * texto tem de vir do backend — o translator já está no locale da request.
+     * O spinner aparece antes do bundle JS, então o rótulo acessível é traduzido aqui.
      */
     private function wrap(string $inner): string
     {
@@ -88,11 +83,8 @@ class CustomLoadingSpinner
     }
 
     /**
-     * Accept only `#rgb` / `#rgba` / `#rrggbb` / `#rrggbbaa` hex or `rgb()/rgba()`
-     * with numeric args. Anything else (including `</style><script>…`-style
-     * break-out attempts) falls back to the default — admin-only setting but
-     * the value lands raw inside a `<style>` block at boot, so this must be
-     * narrow.
+     * Só hex ou rgb()/rgba() numérico: o valor entra cru num `<style>`, então
+     * qualquer outra coisa (como `</style><script>`) cai na cor padrão.
      */
     private function safeColor(string $raw): string
     {

@@ -18,14 +18,9 @@ use Flarum\Settings\SettingsRepositoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
- * Injects a preconnect to the Font Awesome Kit CDN plus the FontAwesomeConfig
- * stanza that switches the kit's runtime into mutation-observer mode (so
- * Mithril-added .fa-kit icons render without a refresh flash).
- *
- * Both lines are no-ops — and a wasted preconnect — on forums that don't load
- * a kit at all, so the injector is gated behind an admin opt-in. The Kit
- * script itself is expected to be loaded by whoever opts in (typically pasted
- * into the admin custom_header HTML field straight from the FA dashboard).
+ * Preconnect para o Kit do Font Awesome e o modo mutation-observer, para os
+ * ícones .fa-kit que o Mithril insere renderizarem sem flash. Opt-in no admin:
+ * o script do Kit em si é colado pelo admin (custom_header).
  */
 class LoadFontAwesomeKit
 {

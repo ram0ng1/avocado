@@ -31,7 +31,7 @@ final class FontPreloads
 
             $href = $preload['href'];
 
-            // Já versionado (ou com query qualquer): o core pode ter corrigido isso.
+            // Já com query: o core pode ter passado a versionar sozinho.
             if (str_contains($href, '?')) {
                 continue;
             }

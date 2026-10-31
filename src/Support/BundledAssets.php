@@ -22,19 +22,9 @@ use Throwable;
  * Copia para public/assets os arquivos que o tema serve por URL fixa (as fontes
  * referenciadas pelo LESS e o fire.webp).
  *
- * Antes isso rodava no boot do service provider em TODO request: um stat por
- * entrada para montar a assinatura + a leitura do marcador. Com PHP-FPM o memo
- * estático não sobrevive entre requests, então o custo era permanente. Agora a
- * sincronização acompanha o ciclo de vida dos assets do próprio core — o Flarum
- * recompila os dele em `Enabled`, `Disabled` e `ClearingCache` (Forum/Admin
- * ServiceProvider), e é o mesmo `cache:clear` que todo update por composer já
- * exige para o forum.js novo chegar. O boot só confere se o marcador existe (um
- * stat), para o caso de um public/assets novo em folha.
- *
- * Os chunks lazy (js/dist/forum/components) NÃO entram aqui: o
- * `->jsDirectory()` do extend.php já os publica em
- * assets/js/ramon-avocado/forum/components quando o core recompila os assets —
- * conferido apagando um chunk, rodando `cache:clear` e pedindo uma página.
+ * A cópia acompanha a recompilação de assets do core (`Enabled`, `Disabled`,
+ * `ClearingCache`), não o boot: com PHP-FPM nenhum memo sobrevive entre
+ * requests. Os chunks lazy do JS ficam com o `->jsDirectory()` do extend.php.
  */
 class BundledAssets
 {
@@ -102,8 +92,7 @@ class BundledAssets
                 continue;
             }
             if (! $this->files->isDirectory($destDir)) {
-                // `force` engole o warning do mkdir; quem diz se deu certo é o
-                // is_dir logo abaixo (cobre também a corrida com outro request).
+                // O is_dir abaixo é quem decide, o que cobre a corrida com outro request.
                 $this->files->makeDirectory($destDir, 0755, true, true);
                 clearstatcache(true, $destDir);
 

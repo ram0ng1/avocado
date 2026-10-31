@@ -21,15 +21,9 @@ use Ramon\Avocado\Model\SupportEvent;
 use Ramon\Avocado\Support\SupportEvents;
 
 /**
- * `avocadoEvents` no ticket do linkrobins/support: a linha do tempo de status,
- * já com quem mudou (nome e avatar inline, para a página não precisar de mais
- * uma relação carregada). O front (utils/support.tsx) intercala isso com as
- * respostas, como a discussão faz com os event posts.
- *
- * A relação é eager-carregada no Index e no Show (extend.php); num PATCH — a
- * resposta que o front recebe ao trocar o status — é um ticket só, e aí o
- * load fica por conta do campo, senão o store apagaria a linha do tempo com
- * um `[]` até a página recarregar.
+ * Linha do tempo de status do ticket do linkrobins/support, com nome e avatar
+ * inline. No PATCH a relação não vem eager-carregada, então o campo a carrega:
+ * um `[]` apagaria a linha do tempo no store.
  */
 class SupportEventFields
 {

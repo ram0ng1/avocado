@@ -27,9 +27,8 @@ use Ramon\Avocado\Model\Bookmark;
 use Ramon\Avocado\Support\BookmarksSetting;
 
 /**
- * Remove o bookmark do ator para uma discussão. O delete é escopado ao próprio
- * user_id (§7), então um ator nunca apaga o bookmark de outro. Idempotente:
- * remover algo já removido devolve `bookmarked: false` sem erro.
+ * O delete é escopado ao user_id do ator, então ninguém apaga o bookmark de
+ * outro. Idempotente: remover de novo devolve `bookmarked: false`.
  */
 class DeleteBookmarkController implements RequestHandlerInterface
 {
@@ -56,9 +55,8 @@ class DeleteBookmarkController implements RequestHandlerInterface
             throw new ValidationException(['discussionId' => $this->translator->trans('ramon-avocado.api.invalid_discussion_id')]);
         }
 
-        // Não precisa de whereVisibleTo aqui: só apagamos uma linha que pertence
-        // ao próprio ator. Se a discussão sumiu/ficou privada, remover o bookmark
-        // órfão continua sendo a ação correta.
+        // Sem whereVisibleTo: a linha é do próprio ator, e remover o bookmark de uma
+        // discussão que ficou privada continua correto.
         Bookmark::query()
             ->where('user_id', (int) $actor->id)
             ->where('discussion_id', $discussionId)

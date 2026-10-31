@@ -16,15 +16,9 @@ namespace Ramon\Avocado\Support;
 /**
  * O viewBox recortado do logo SVG, medido uma vez no navegador do admin.
  *
- * O recorte (bounding box de cada elemento desenhado + 3% de folga) precisa de
- * getBBox — geometria real de path, texto e transform —, que só o navegador
- * calcula. Antes o front refazia essa medição em toda página; agora o admin
- * mede ao abrir a página do tema e grava aqui, e o servidor só lê.
- *
- * A setting guarda também o caminho do arquivo medido
- * (`{"path":"avocado-logo-x.svg","viewBox":"x y w h"}`): um logo novo tem outro
- * nome, então um viewBox antigo nunca é aplicado ao arquivo errado — sem
- * correspondência, o front volta a medir como antes.
+ * O recorte precisa de getBBox, que só o navegador calcula, então o admin mede e
+ * o servidor só lê. Guarda também o caminho do arquivo: um logo novo tem outro
+ * nome, e um viewBox antigo nunca vale para ele (o front mede sozinho).
  */
 final class LogoViewBox
 {

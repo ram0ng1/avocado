@@ -20,16 +20,9 @@ use Ramon\Avocado\Model\WikiArticleStyle;
 use Ramon\Avocado\Support\WikiStyleSchema;
 
 /**
- * `avocadoWikiStyle` nos artigos do linkrobins/wiki: o design da página do
- * artigo, escolhido pelo autor na tela de criação/edição do wiki
- * (`default` = layout da extensão vestido pelo tema; `manual` = manual de
- * referência, ver less/forum/extensions/Wiki.less).
- *
- * Quem grava é quem passa pelos endpoints de criar/editar do próprio wiki — a
- * extensão já checa `createArticle`/`update` neles. A leitura vem da relação
- * `avocadoStyle`, que os endpoints carregam em lote (extend.php). Sem ela
- * carregada o campo fica FORA da resposta em vez de sair nulo, pelo mesmo
- * motivo do ChangelogFields: um `null` sobrescreveria no store o valor bom.
+ * Design do artigo do linkrobins/wiki. A permissão de escrita já é checada
+ * pelos endpoints do wiki. Sem a relação carregada o campo fica fora da
+ * resposta: um `null` sobrescreveria no store o valor bom.
  */
 class WikiArticleFields
 {

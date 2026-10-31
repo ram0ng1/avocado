@@ -29,10 +29,9 @@ use Ramon\Avocado\Model\Bookmark;
 use Ramon\Avocado\Support\BookmarksSetting;
 
 /**
- * Salva uma discussão para o ator. O par é sempre derivado do servidor
- * (user_id = ator, §7) e a discussão precisa ser visível ao ator (§5) — não dá
- * para salvar o que não se pode ver. insertOrIgnore torna o POST idempotente:
- * o índice único absorve cliques repetidos/corridas sem estourar (§62).
+ * Salva uma discussão para o ator. O user_id vem sempre do servidor e a
+ * discussão precisa ser visível ao ator. insertOrIgnore deixa o POST
+ * idempotente: o índice único absorve cliques repetidos e corridas.
  */
 class CreateBookmarkController implements RequestHandlerInterface
 {

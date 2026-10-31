@@ -22,7 +22,7 @@ use Ramon\Avocado\Support\SupportEvents;
 
 /**
  * Guarda o ator do request da API para os ganchos de modelo que não recebem
- * request nenhum — hoje, a linha do tempo dos tickets do support. Entra depois
+ * request nenhum (a linha do tempo dos tickets do support). Entra depois
  * dos middlewares de autenticação do core, então o ator já está resolvido.
  */
 class RememberActor implements MiddlewareInterface

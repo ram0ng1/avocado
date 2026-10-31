@@ -16,14 +16,9 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\Builder;
 
 /**
- * Move o caminho da hero image da tabela `discussions` (core) para uma tabela
- * companheira (CLAUDE.md §45). A migração roda em três passos idempotentes:
- *
- *   1. Cria `avocado_discussion_heroes` se ainda não existe.
- *   2. Copia linhas com valor existente — só se a coluna antiga ainda estiver
- *      presente, para suportar instalações novas onde a migração anterior já
- *      foi consolidada.
- *   3. Dropa a coluna antiga em `discussions`.
+ * Move o caminho do hero de `discussions` (core) para uma tabela companheira,
+ * sem coluna nova na tabela do core. Idempotente: cria a tabela, copia os
+ * valores só se a coluna antiga existir e então a remove.
  */
 return [
     'up' => function (Builder $schema) {

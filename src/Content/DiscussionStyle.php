@@ -18,17 +18,9 @@ use Flarum\Settings\SettingsRepositoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
- * Publishes the admin's discussion-style choice on <html> before the first paint.
- *
- * less/forum/DiscussionEditorial.less keys off
- * html[data-avocado-disc-style="editorial"]. Setting the attribute from the
- * forum bundle instead would land one frame late: the default page (tall hero
- * washed in the tag colour, no conversation spine) would paint first and then
- * rearrange — the same data flash the logo and the spinner already avoid this
- * way (see HideLogoFlash, CustomLoadingSpinner).
- *
- * Only the non-default value is written. A forum on the default style gets no
- * attribute and no inline script at all.
+ * Põe o estilo de discussão no <html> antes do primeiro paint: pelo bundle o
+ * atributo chegaria um quadro atrasado e a página trocaria de layout na tela.
+ * Só o valor não padrão é escrito.
  */
 class DiscussionStyle
 {

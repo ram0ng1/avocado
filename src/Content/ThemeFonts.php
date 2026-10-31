@@ -18,19 +18,9 @@ use Illuminate\Contracts\Filesystem\Cloud;
 use Illuminate\Contracts\Filesystem\Factory;
 
 /**
- * Fonte única da tipografia do tema: qual família vale (setting
- * `avocado.font_family`), as @font-face dela e a URL do preload.
- *
- * A @font-face (CSS crítico inline) e o `<link rel="preload">` precisam pedir
- * EXATAMENTE a mesma URL — senão o navegador baixa o arquivo duas vezes. Antes
- * havia uma segunda declaração em less/common/fonts.less com caminho relativo à
- * raiz (`/assets/fonts/…`), que divergia da URL absoluta do preload em instalação
- * em subpasta, CDN de assets ou host diferente do configurado. Agora as duas
- * saem daqui, do disco `flarum-assets` — o mesmo que o core usa para as fontes
- * do Font Awesome.
- *
- * O LESS não conhece a escolha: toda regra usa `@font-sans`, que é
- * `var(--avocado-font-sans, …)`, e o valor da variável sai de stack().
+ * Tipografia do tema: a família escolhida, as @font-face e a URL do preload.
+ * A @font-face e o preload saem daqui, do disco `flarum-assets`, para pedirem a
+ * MESMA URL (inclusive em subpasta ou CDN); senão a fonte baixa duas vezes.
  */
 final class ThemeFonts
 {
@@ -139,11 +129,8 @@ final class ThemeFonts
      * Normaliza a lista de famílias digitada pelo admin, ou null se não sobrar
      * nada aproveitável.
      *
-     * O valor vai para dentro de um <style> inline, então não é repassado como
-     * veio: cada família é validada (letras, números, espaço, hífen e
-     * sublinhado) e REEMITIDA entre aspas simples — uma aspa sem par engoliria o
-     * resto do CSS crítico, que fica todo numa linha só. Palavras-chave
-     * genéricas saem sem aspas, e a lista sempre termina num fallback genérico.
+     * O valor vai para um <style> inline: cada família é validada e REEMITIDA entre
+     * aspas simples, porque uma aspa sem par engoliria o resto do CSS crítico.
      */
     public static function sanitizeFamily(string $value): ?string
     {
@@ -192,8 +179,7 @@ final class ThemeFonts
     }
 
     /**
-     * As mesmas 4 faces de sempre — a itálica do apelido 'DM Sans' vinha só do
-     * LESS e mora aqui, para o itálico real valer onde 'DM Sans' vem primeiro.
+     * Inclui a itálica do apelido 'DM Sans', para o itálico real valer onde ele vem primeiro.
      */
     private function dmSansFaces(): string
     {

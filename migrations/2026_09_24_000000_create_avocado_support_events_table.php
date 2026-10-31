@@ -15,15 +15,9 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\Builder;
 
 /**
- * Linha do tempo de um ticket do linkrobins/support: cada mudança de status
- * vira uma linha aqui, com quem mudou e quando. A extensão só dispara a
- * notificação e segue; sem esta tabela a página do ticket não teria como
- * mostrar "fulano marcou como resolvido" entre as respostas, como a discussão
- * mostra os event posts dela.
- *
- * Tabela companheira da tabela da extensão (CLAUDE.md §45): some junto com o
- * ticket pela chave estrangeira e não toca no schema dela. Criada mesmo com a
- * extensão desligada — a migration é do tema — e fica vazia até ela existir.
+ * Linha do tempo de status dos tickets do linkrobins/support, que não guarda
+ * histórico próprio. Tabela companheira: não toca no schema da extensão e é
+ * criada mesmo com ela desligada.
  */
 return [
     'up' => function (Builder $schema) {
