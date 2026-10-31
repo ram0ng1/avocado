@@ -45,12 +45,10 @@ class InjectOnlineUsers
             return;
         }
 
-        // Não expõe a lista de online users para visitantes não autenticados:
-        // tratar a presença como informação de comunidade evita revelar
-        // usernames / avatares de membros para qualquer crawler ou visitante
-        // anônimo. Guests recebem uma lista vazia.
+        // Presença é informação da comunidade: visitantes e contas que não
+        // podem ver o fórum (fórum fechado, e-mail não confirmado) não recebem.
         $actor = RequestUtil::getActor($request);
-        if ($actor->isGuest()) {
+        if ($actor->isGuest() || $actor->cannot('viewForum')) {
             $document->head[] = '<script>window.__avocadoOnlineUsers=[];</script>';
             return;
         }
@@ -84,9 +82,13 @@ class InjectOnlineUsers
 
         return User::select(['id', 'username', 'avatar_url', 'preferences'])
             ->where('last_seen_at', '>=', Carbon::now()->subMinutes(5))
-            ->limit(50)
+            // Os mais recentes primeiro; folga para quem esconde o status
+            // (preferência em JSON, filtrada aqui) não encurtar a lista.
+            ->orderByDesc('last_seen_at')
+            ->limit(100)
             ->get()
             ->filter(fn (User $u) => $u->preferences['discloseOnline'] ?? true)
+            ->take(50)
             ->map(fn (User $u) => [
                 'id'          => $u->id,
                 'username'    => $u->username,
