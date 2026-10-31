@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Ramon\Avocado\Api;
 
 use Flarum\Api\Schema\Attribute;
+use Flarum\Api\Context;
 use Flarum\Discussion\Discussion;
 use Flarum\Extension\ExtensionManager;
 use Flarum\Settings\SettingsRepositoryInterface;
+use Flarum\User\Guest;
 use Flarum\User\User;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
 
@@ -34,8 +36,10 @@ class ForumAttributes
     public function __invoke(): array
     {
         return [
+            // Mesma regra do PreloadTeamMembers: quem não pode buscar usuários
+            // não vê a lista, e nem quantos são.
             Attribute::make('avocadoTeamPageMemberCount')
-                ->get(fn () => $this->cache->remember(
+                ->get(fn (object $forum, Context $context) => $context->getActor()->cannot('searchUsers') ? 0 : $this->cache->remember(
                     'avocado.team_page_member_count',
                     self::CACHE_TTL,
                     fn () => $this->computeTeamPageMemberCount(),
@@ -109,7 +113,9 @@ class ForumAttributes
 
         // Contagem DISTINCT sobre o conjunto de tags: uma discussão marcada com
         // duas tags do showcase é um card só, não dois.
-        $count = Discussion::query()
+        // O cache é um só para todos: conta o que um visitante vê, para não
+        // revelar discussões ocultas, privadas ou em tags restritas.
+        $count = Discussion::whereVisibleTo(new Guest())
             ->whereHas('tags', fn ($q) => $q->whereIn('tags.id', $tagIds))
             ->count();
 

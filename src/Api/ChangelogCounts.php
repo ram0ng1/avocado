@@ -131,8 +131,11 @@ final class ChangelogCounts
             return;
         }
 
+        // Mesmos critérios das contagens que estão sendo descontadas: a do
+        // usuário (core) ignora privadas; a da tag (flarum/tags), privadas e ocultas.
         $this->byAuthor = Discussion::query()
             ->whereIn('id', $this->releaseDiscussions())
+            ->where('is_private', false)
             ->selectRaw('user_id, count(*) as releases')
             ->groupBy('user_id')
             ->pluck('releases', 'user_id')
@@ -141,7 +144,10 @@ final class ChangelogCounts
 
         $this->byTag = $this->db
             ->table('discussion_tag')
-            ->whereIn('discussion_id', $this->releaseDiscussions())
+            ->whereIn('discussion_id', fn ($query) => $query->select('id')->from('discussions')
+                ->whereIn('id', $this->releaseDiscussions())
+                ->where('is_private', false)
+                ->whereNull('hidden_at'))
             ->selectRaw('tag_id, count(*) as releases')
             ->groupBy('tag_id')
             ->pluck('releases', 'tag_id')
