@@ -1,19 +1,24 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
-namespace Ramon\Avocado\Tests\Unit;
+namespace Ramon\Avocado\Tests\unit;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Yaml\Yaml;
 
 /**
- * Locale parity: every translation key must exist in BOTH en.yml and pt-BR.yml.
- *
- * Companion to the i18n/no-hardcoded-text ESLint rule — that one forces strings
- * through the translator; this one makes sure a key added to one language isn't
- * forgotten in the other (which would render the raw key / English fallback to
- * pt-BR users).
+ * Toda chave de tradução precisa existir no en.yml E no pt-BR.yml, senão um dos
+ * idiomas mostra a chave crua ou o fallback.
  */
 final class LocaleParityTest extends TestCase
 {

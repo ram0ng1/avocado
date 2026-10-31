@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Tests\Support;
@@ -11,15 +20,12 @@ use Illuminate\Events\Dispatcher;
 use PDO;
 
 /**
- * Eloquent (Capsule) connections to each engine the migration + model tests run
- * against. Modelled on the backup extension's tests/Support/Engines.php.
+ * Conexões Eloquent para cada banco dos testes de migration e model.
  *
- * Server engines come from env vars, formatted `key=value;key=value`:
+ * Os servidores vêm de variáveis no formato `key=value;key=value`:
  *   AVOCADO_TEST_MYSQL=host=127.0.0.1;port=3306;username=root;password=;database=avocado_test
- * An engine whose var is unset (or whose server is unreachable) is reported
- * unavailable, so its test rows skip and the suite still runs (SQLite only) on
- * a bare checkout. Server engines talk to a DEDICATED `avocado_test` database
- * the harness creates on demand — never a real install.
+ * Sem a variável (ou sem servidor) o banco é pulado e a suíte roda só com SQLite.
+ * Sempre num banco `avocado_test` dedicado, nunca numa instalação real.
  */
 final class Database
 {
@@ -33,7 +39,7 @@ final class Database
 
     private static ?Capsule $capsule = null;
 
-    /** Get the connection for an engine and make it Eloquent's default, or null if unavailable. */
+    /** Conexão do banco, já como padrão do Eloquent, ou null se indisponível. */
     public static function use(string $engine): ?Connection
     {
         $conn = self::connection($engine);
@@ -91,7 +97,7 @@ final class Database
         $conn = $capsule->getConnection($engine);
 
         if ($engine === 'sqlite') {
-            // Enforce FK constraints even if the config flag is ignored by the build.
+            // Liga as FKs mesmo que o build ignore a flag de configuração.
             $conn->statement('PRAGMA foreign_keys = ON');
         }
 
@@ -146,7 +152,7 @@ final class Database
 
     private static function ensureDatabase(string $driver, string $host, int $port, string $user, string $pass, string $db): void
     {
-        // Strict identifier — the CREATE DATABASE below can't be parametrised.
+        // Identificador estrito: o CREATE DATABASE abaixo não aceita bind.
         if (! preg_match('/^[A-Za-z0-9_]+$/', $db)) {
             throw new \RuntimeException("Unsafe test database name: $db");
         }

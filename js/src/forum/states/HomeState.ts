@@ -22,14 +22,9 @@ const INDEX_PAGE_SIZE = 20;
 export type HomeFeedSort = 'popular' | 'latest';
 
 /**
- * State for the Avocado home page.
- *
- * Owns:
- *  - The cached home feed (popular or latest, admin-chosen) and "topCategories".
- *  - The async showcase-discussions fetch and its per-slug cache.
- *  - The showcase tag-ID parsing from `app.forum.attribute('avocadoShowcaseTag')`.
- *
- * The page itself only reads these getters; it never calls `app.store` directly.
+ * Estado da home: o feed (populares ou recentes, conforme o admin), as
+ * categorias e a vitrine, com cache. A página só lê os getters, nunca o
+ * `app.store`.
  */
 export default class HomeState {
   homeLoading = true;
@@ -46,13 +41,11 @@ export default class HomeState {
   /** Preload da lista de tags em voo (dedup entre a home e o showcase). */
   private tagListLoad: Promise<any> | null = null;
 
-  // Memoization — invalidated when the store discussion count changes.
+  // Memo, invalidado quando muda o número de discussões no store.
   private cachedFeed: any[] | null = null;
   private cachedStoreSize = -1;
 
-  // ── Read-only getters ──────────────────────────────────────────────────
-
-  /** All discussions currently in the store, robust to paged-vs-flat shape. */
+  /** Todas as discussões no store, aceitando o formato paginado ou plano. */
   allDiscussions(): any[] {
     try {
       const pages = (app as any).discussions?.getPages?.();
@@ -73,8 +66,8 @@ export default class HomeState {
   }
 
   /**
-   * Popularity score: weighted sum of replies, likes, views, with a recency
-   * bonus that decays linearly across one week.
+   * Pontuação: soma ponderada de respostas, likes e visualizações, com bônus de
+   * recência que decai linearmente em uma semana.
    */
   discussionScore(d: any): number {
     const replyCount = numberOr(d.replyCount?.(), 0);
@@ -86,7 +79,7 @@ export default class HomeState {
     return replyCount * 2 + likeCount * 3 + views * 0.1 + recency * 20;
   }
 
-  /** IDs of tags configured as the showcase source. */
+  /** Ids das tags da vitrine. */
   showcaseTagIds(): Set<string> {
     if (!app.forum?.attribute('avocadoShowcaseEnabled')) return new Set();
     const raw = app.forum?.attribute('avocadoShowcaseTag') || '';
@@ -118,7 +111,7 @@ export default class HomeState {
     return Math.min(MAX_FEED_COUNT, Math.max(1, n));
   }
 
-  /** Discussions for the home rail, in the admin-chosen order and count. */
+  /** Discussões da home, na ordem e na quantidade do admin. */
   feedDiscussions(): any[] {
     this.invalidateIfStoreChanged();
     if (this.cachedFeed?.length) return this.cachedFeed;
@@ -153,7 +146,7 @@ export default class HomeState {
     });
   }
 
-  /** Top-level tags sorted by their admin-defined position. */
+  /** Tags de primeiro nível, na ordem do admin. */
   topCategories(limit = 7): any[] {
     try {
       const tags = (app.store.all('tags') as any[]).filter((t) => t && !t.parent?.());
@@ -163,14 +156,12 @@ export default class HomeState {
     }
   }
 
-  /** Showcase discussions (cached, asynchronously populated). */
+  /** Discussões da vitrine (cache, preenchido de forma assíncrona). */
   showcase(): any[] {
     return this.showcaseItems;
   }
 
-  // ── Mutating actions ───────────────────────────────────────────────────
-
-  /** Drop the memoized feed when the store grows or shrinks. */
+  /** Descarta o feed memoizado quando o store cresce ou encolhe. */
   invalidate(): void {
     this.cachedFeed = null;
   }
@@ -197,23 +188,19 @@ export default class HomeState {
     return load;
   }
 
-  /** Fetch the home feed (deduplicates against existing store contents). */
+  /** Busca o feed da home, deduplicando contra o store. */
   loadHome(): Promise<void> {
     const existing = app.store.all('discussions');
     if (existing.length > 0) {
-      // O store já está quente — na home isso é o caso NORMAL, não a exceção: o
-      // apiDocument do boot da index traz 20 discussions com tags e
-      // lastPostedUser. Como loadHome() roda no oninit, antes do primeiro
-      // view(), desligar a flag aqui é síncrono e o 1º paint já sai com os
-      // cards. A versão anterior segurava o skeleton por 350ms com um
-      // setTimeout, o que produzia exatamente o flash que ele tentava evitar —
-      // skeleton visível e depois substituído, com o dado pronto o tempo todo.
+      // Na home o store já vem quente do boot (20 discussões com tags e
+      // lastPostedUser). O loadHome() roda no oninit, antes do primeiro view(), então
+      // desligar a flag aqui é síncrono e o primeiro paint já sai com os cards, sem
+      // flash de skeleton.
       this.homeLoading = false;
 
-      // Esse payload não traz o firstPost (desde a série 2.0 RC o Index manda
-      // só o *linkage*), e o card não precisa dele: descrição, capa, curtidas e
-      // a última resposta vêm em atributos da discussão. O clique de curtir usa
-      // o linkage (utils/likes). Nada a buscar depois do boot.
+      // O payload não traz o firstPost (o Index manda só o linkage) e o card não
+      // precisa dele: tudo vem em atributos da discussão. O like usa o linkage
+      // (utils/likes).
       this.feedFromBoot();
       return this.fillFeed();
     }
@@ -223,7 +210,7 @@ export default class HomeState {
       .then(() => {
         this.homeLoading = false;
         this.fillFeed();
-        // Attempt to populate showcase from the newly-fetched store as a side-effect.
+        // Tenta montar a vitrine com o que acabou de chegar ao store.
         if (this.showcaseLoading && !this.showcaseFetched) {
           const fromStore = this.showcaseFromStore();
           if (fromStore.length >= this.showcaseLimit()) {
@@ -231,11 +218,9 @@ export default class HomeState {
             this.showcaseLoading = false;
             this.showcaseFetched = true;
           }
-          // Parcial não pinta: o feed da home traz só a 1ª página, então a tag
-          // pode ter mais discussões do que couberam nela. Marcar `fetched`
-          // aqui truncava o trilho no que o store por acaso tivesse; pintar
-          // sem marcar trocava a grade embaixo do usuário. O fetch por tag,
-          // já em voo, dá a palavra final.
+          // Parcial não pinta: o feed traz só a primeira página e a tag pode ter mais
+          // discussões. Marcar `fetched` truncaria o trilho; pintar sem marcar trocaria a
+          // grade embaixo do usuário. O fetch por tag, já em voo, dá a palavra final.
         }
         m.redraw();
       })
@@ -303,18 +288,10 @@ export default class HomeState {
   }
 
   /**
-   * Fetch the showcase rail.
-   *
-   * Resolves synchronously when:
-   *  - the showcase feature is disabled,
-   *  - no showcase tag is configured,
-   *  - o boot trouxe o trilho pronto (Content\PreloadShowcase — caminho
-   *    normal, e o único sem skeleton), ou
-   *  - the store already holds enough showcase items.
-   *
-   * Otherwise fetches each configured tag's slug + discussions in parallel
-   * and merges the results into `this.showcaseItems`, mantendo o skeleton no
-   * ar até lá — um resultado parcial nunca é pintado.
+   * Busca o trilho da vitrine. Resolve na hora com o recurso desligado, sem tag
+   * configurada, com o trilho vindo do boot (Content\PreloadShowcase, o caminho
+   * normal) ou com o store já cobrindo os itens. Senão busca cada tag em
+   * paralelo, com o skeleton no ar até o fim: um resultado parcial nunca é pintado.
    */
   loadShowcase(): Promise<void> {
     if (this.showcaseFetched || this.showcaseLoading) return Promise.resolve();
@@ -364,16 +341,11 @@ export default class HomeState {
       return Promise.resolve();
     }
 
-    // Store incompleto: ele só enxerga a primeira página do feed da home, e as
-    // discussões da tag de showcase que ficaram fora dela simplesmente não
-    // estão ali. Aceitar esse subconjunto como resultado final era o bug de
-    // "a tag tem 3 discussões mas o trilho mostra 1".
-    //
-    // E o parcial também não pode ser PINTADO enquanto o fetch corre: a grade
-    // sairia com 1 card ocupando a linha inteira e depois viraria 5 colunas,
-    // que é exatamente o salto que o skeleton existe para evitar. Segura o
-    // skeleton (dimensionado por avocadoShowcaseItemCount, que o servidor
-    // calcula com a contagem real) até o resultado definitivo chegar.
+    // Store incompleto: ele só vê a primeira página do feed, e discussões da tag
+    // fora dela não estão ali (a tag tem 3 discussões e o trilho mostraria 1). O
+    // parcial também não pode ser pintado enquanto o fetch corre: a grade pularia
+    // de 1 card para 5 colunas. O skeleton (dimensionado por
+    // avocadoShowcaseItemCount, calculado no servidor) segura até o resultado final.
 
     return Promise.all(tagIds.map((id) => this.resolveTagSlug(id)))
       .then((slugs) => slugs.filter(Boolean) as string[])
@@ -467,9 +439,9 @@ export default class HomeState {
     const cached = fromStore();
     if (cached) return Promise.resolve(cached);
 
-    // GET /api/tags/{id} não serve aqui: o slug driver padrão do flarum/tags
-    // (Utf8SlugDriver) resolve a rota pela coluna `slug`, então um id numérico
-    // devolve 404 e o trilho ficava vazio. A listagem é o caminho confiável.
+    // GET /api/tags/{id} não serve: o slug driver padrão do flarum/tags resolve a
+    // rota pela coluna `slug`, e um id numérico dá 404. A listagem é o caminho
+    // confiável.
     return this.loadTags()
       .then(() => fromStore())
       .catch(() => null);

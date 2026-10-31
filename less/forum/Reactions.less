@@ -1,27 +1,12 @@
-// ─── fof/reactions — Avocado visual style ────────────────────────────────────
-// Facebook-style reaction picker.
-//
-// DOM map (extension class → role):
-//   .Reactions                    root wrapper (wraps react btn + count badges)
-//   .Reactions--react             relative container that triggers popup on hover
-//   .Reactions--ShowReactions     trigger / unreact button
-//   .CommentPost--Reactions       floating pill popup
-//   .Reactions--Ul                emoji list <ul> inside popup
-//   .Reactions--Ul > li > button  individual emoji button
-//   .Reactions--reactions         count badges row (below post body)
-//   .Button-emoji-parent          single count badge button
+// fof/reactions: seletor no estilo do Facebook.
 
-// ── Root wrapper ──────────────────────────────────────────────────────────────
 .Reactions {
   display: inline-flex;
   align-items: center;
 }
 
-// ── Overflow + stacking-context fix ──────────────────────────────────────────
-// The popup lives inside: .Post-actions > ul > li.item-react > .Reactions > .Reactions--react
-// Any positioned ancestor with overflow ≠ visible clips the absolute popup.
-// Note: .Post-footer contains the badge row (footerItems); .Post-actions contains
-// the trigger button (actionItems) — both need overflow:visible coverage.
+// Qualquer ancestral posicionado com overflow ≠ visible corta o popup.
+// .Post-footer tem os contadores e .Post-actions o gatilho; os dois precisam.
 .Page.DiscussionPage .Post-actions,
 .Page.DiscussionPage .Post-actions > ul,
 .Page.DiscussionPage .Post-actions > ul > li,
@@ -34,18 +19,15 @@
   clip-path: none !important;
 }
 
-// The trigger container needs position:relative as containing block for the popup.
 .Page.DiscussionPage .Reactions--react {
   position: relative !important;
 }
 
-// Align the reaction li with the Like li in Post-actions > ul
 .Page.DiscussionPage .Post-actions > ul > li {
   vertical-align: middle !important;
 }
 
-// ── Trigger container ─────────────────────────────────────────────────────────
-// Needs a reliable self-contained height so bottom:100% on the popup lands correctly.
+// Altura própria para o bottom: 100% do popup cair no lugar certo.
 .Reactions .Reactions--react {
   display: inline-flex;
   align-items: center;
@@ -53,17 +35,13 @@
   position: relative;
 }
 
-// ── Trigger button (react / unreact) ─────────────────────────────────────────
-// Flat style matching other Post-footer Button--link buttons.
 .Reactions .Reactions--ShowReactions,
 .Reactions .Reactions--react .Reactions--ShowReactions {
-  // Reset Flarum Button--link defaults
   float: none !important;
   margin: 0 !important;
   padding: 5px 10px !important;
   text-decoration: none !important;
 
-  // Flat button (same as Like)
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -95,9 +73,8 @@
     color: var(--primary-color) !important;
   }
 
-  // SVG icon (the custom smiley/react svg)
-  // Only target <path> — the <rect id="Rectangle-5"> is a transparent background
-  // rect that becomes a solid dark square if filled with currentColor.
+  // Só o <path>: o <rect> é um fundo transparente que vira um quadrado escuro
+  // se receber currentColor.
   svg.button-react {
     width: 20px !important;
     height: 20px !important;
@@ -107,7 +84,6 @@
     rect { fill: none !important; }
   }
 
-  // Emoji image / font icon inside button (when user has reacted)
   .emoji, img.emoji {
     width: 16px !important;
     height: 16px !important;
@@ -121,7 +97,6 @@
     flex-shrink: 0;
   }
 
-  // Nested Button-label wrappers — make them transparent/pass-through
   .Button-label,
   .Button-labelText {
     display: contents !important;
@@ -129,12 +104,7 @@
   }
 }
 
-// ── Popup: horizontal pill ────────────────────────────────────────────────────
-// Centered horizontally over the trigger (.Reactions--react):
-//   left: 50%          → moves the left edge to the trigger's horizontal center
-//   translateX(-50%)   → shifts the popup left by half its own width → centered
 .Reactions .CommentPost--Reactions {
-  // Override extension defaults
   position: absolute !important;
   top: auto !important;
   bottom: calc(100% + 10px) !important;
@@ -147,9 +117,7 @@
   padding: 3px !important;
   box-sizing: border-box !important;
 
-  // overflow:visible is critical — without it the spring-animation emojis
-  // (which start at translateY(20px) and temporarily overflow the 54px box)
-  // and the tooltip ::after (which goes above the box) get clipped.
+  // Sem overflow visível os emojis da animação e o tooltip ::after são cortados.
   overflow: visible !important;
 
   border-radius: 100px !important;
@@ -159,11 +127,10 @@
   line-height: 1 !important;
   z-index: 9999 !important;
 
-  // Entrance animation — translateX(-50%) centralizes; translateY+scale = slide in
   transform: translateX(-50%) translateY(8px) scale(0.92) !important;
   transition: opacity 220ms ease, visibility 0s linear 220ms, transform 220ms cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
 
-  // Invisible hover bridge — prevents popup from hiding when cursor moves toward it
+  // Ponte invisível: o popup não fecha no caminho do cursor até ele.
   &::before {
     content: '';
     display: block;
@@ -175,7 +142,6 @@
   }
 }
 
-// ── Emoji list ────────────────────────────────────────────────────────────────
 .Reactions .Reactions--Ul {
   display: flex !important;
   align-items: center !important;
@@ -209,9 +175,7 @@
       cursor: pointer !important;
       overflow: visible;
 
-      // Flarum's Button component wraps content in .Button-label { overflow:hidden }
-      // which clips the emoji when it scales up. display:contents removes the box
-      // entirely so the emoji is a direct flex child of the button.
+      // O .Button-label do core tem overflow: hidden e corta o emoji ampliado.
       .Button-label,
       .Button-labelText {
         display: contents !important;
@@ -219,22 +183,19 @@
         margin: 0 !important;
       }
 
-      // Emoji image
       .emoji,
       img.emoji {
         width: 32px !important;
         height: 32px !important;
         display: block;
-        // Spring entrance: start small + below center
         transform: scale(0.5) translateY(20px);
-        // transform-origin: bottom center → scaling grows UPWARD, never clips popup bottom
+        // Cresce para cima, sem cortar a base do popup.
         transform-origin: bottom center;
         transition: transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
         will-change: transform;
         margin: 0 !important;
       }
 
-      // Font-icon reaction
       .reaction-icon,
       .button-emoji {
         font-size: 26px !important;
@@ -246,7 +207,6 @@
         will-change: transform;
       }
 
-      // Tooltip from aria-label
       &::after {
         content: attr(aria-label);
         position: absolute;
@@ -268,7 +228,6 @@
         z-index: 2;
       }
 
-      // Hover: scale up + float upward (transform-origin:bottom keeps it from clipping down)
       &:hover,
       &:focus {
         background: transparent !important;
@@ -287,10 +246,9 @@
   }
 }
 
-// ── Popup visible: slide into view + spring emojis into position ─────────────
 .Reactions .Reactions--react:hover .CommentPost--Reactions,
 .Reactions .CommentPost--Reactions.mobile-show {
-  // Keep translateX(-50%) so centering is preserved at the end of the animation
+  // Mantém o translateX(-50%) para seguir centralizado.
   transform: translateX(-50%) translateY(0) scale(1) !important;
   transition: opacity 220ms ease, visibility 0s linear 0s, transform 220ms cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
 }
@@ -306,9 +264,7 @@
   > li:nth-child(n+7) > button { .emoji, img.emoji, .reaction-icon, .button-emoji { transform: scale(1) translateY(0); transition-delay: 0.34s; } }
 }
 
-// ── Reaction count badges ─────────────────────────────────────────────────────
-// Clean inline row: emoji + count, transparent background, design-system font.
-// Count=1 is missing from the extension's output — our JS injects it.
+// A extensão não exibe o contador quando é 1; o JS o injeta.
 .Reactions--reactions {
   display: flex !important;
   flex-wrap: wrap;
@@ -316,7 +272,6 @@
   gap: 6px;
   vertical-align: unset !important;
 
-  // Nested Button-label wrappers — pass-through so emoji + count are flex children
   .Button-label,
   .Button-labelText {
     display: contents !important;
@@ -379,9 +334,7 @@
   }
 }
 
-// ── Unreact button (user already reacted) ────────────────────────────────────
-// .Reactions directly wraps the button (no .Reactions--react in between).
-// JS injects the user's emoji — ensure it sizes correctly inside the flat button.
+// Aqui .Reactions envolve o botão direto, sem .Reactions--react no meio.
 .Reactions > .Reactions--ShowReactions {
   img.emoji,
   .emoji,
@@ -393,14 +346,12 @@
   }
 }
 
-// ── ReactionsModal — centered ─────────────────────────────────────────────────
 .ReactionsModal .Modal-container {
   margin: auto;
   top: 50%;
   transform: translateY(-50%);
 }
 
-// ── Mobile — tamanho reduzido (centralização já vem do bloco principal) ───────
 @media @phone {
   .Reactions .CommentPost--Reactions {
     height: 46px !important;

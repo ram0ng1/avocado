@@ -1,13 +1,10 @@
 /**
- * Recorte do logo SVG: o viewBox justo em volta do que o arquivo desenha, com
- * 3% de folga. Ferramentas de exportação costumam deixar margem no viewBox, e o
- * logo sairia menor que a altura do header.
+ * viewBox justo em volta do desenho do logo SVG, com 3% de folga: ferramentas de
+ * exportação deixam margem e o logo sairia menor que o header.
  *
- * Precisa de getBBox (geometria real de path, texto e transform), então só roda
- * no navegador. O admin mede uma vez e grava em `avocado.logo_svg_viewbox`
- * (Support\LogoViewBox no PHP), e o servidor embute o logo já recortado; o
- * fórum só mede por conta própria no fallback — logo novo ainda sem medida.
- * Um único código para os dois lados garante o mesmo número.
+ * Usa getBBox, então só roda no navegador. O admin mede e grava em
+ * `avocado.logo_svg_viewbox`; o fórum só mede no fallback (logo ainda sem
+ * medida). O mesmo código nos dois lados garante o mesmo número.
  */
 
 /** Setting com `{ path, viewBox }` — o caminho amarra a medida ao arquivo medido. */
@@ -39,7 +36,7 @@ export function measureTightViewBox(svgEl: Element): string | null {
       } catch (_) {}
     });
     if (isFinite(x0)) {
-      const pad = (x1 - x0) * 0.03; // 3% padding
+      const pad = (x1 - x0) * 0.03;
       tightViewBox = `${x0 - pad} ${y0 - pad} ${x1 - x0 + pad * 2} ${y1 - y0 + pad * 2}`;
     }
   } catch (_) {}

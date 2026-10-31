@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
-namespace Ramon\Avocado\Tests\Unit;
+namespace Ramon\Avocado\Tests\unit;
 
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
@@ -151,4 +160,43 @@ final class SvgIconSanitizerTest extends TestCase
         $this->assertStringContainsString('fill="#ff0000"', $out);
         $this->assertStringNotContainsString('style=', $out);
     }
+
+    /**
+     * O CSS resolve escapes antes de reconhecer `url(` e `@import`, e o
+     * `image-set()` carrega uma URL sem `url(`: os três fariam o navegador de
+     * cada visitante buscar um endereço de fora.
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('externalCss')]
+    public function testDropsStylesThatLoadExternalResources(string $css): void
+    {
+        $out = SvgIconSanitizer::sanitize(
+            '<svg '.self::NS.' viewBox="0 0 1 1" style="'.$css.'">'
+            .'<style>.a{'.$css.'}</style><rect class="a" width="1" height="1"/></svg>'
+        );
+
+        $this->assertNotNull($out);
+        $this->assertStringNotContainsString('evil', $out);
+        $this->assertStringContainsString('<rect', $out);
+    }
+
+    /** @return array<string, array{0: string}> */
+    public static function externalCss(): array
+    {
+        return [
+            'escaped url'    => ['fill:\\75 rl(https://evil.test/x)'],
+            'image-set'      => ['background-image:image-set(&quot;https://evil.test/x&quot; 1x)'],
+            'escaped import' => ['@\\69 mport &quot;https://evil.test/x&quot;'],
+        ];
+    }
+
+    public function testKeepsLocalCssEscapes(): void
+    {
+        $out = SvgIconSanitizer::sanitize(
+            '<svg '.self::NS.' viewBox="0 0 1 1"><style>.a{fill:#f00}.a::after{content:"\\2014"}</style><rect class="a" width="1" height="1"/></svg>'
+        );
+
+        $this->assertNotNull($out);
+        $this->assertStringContainsString('<style', $out);
+    }
+
 }

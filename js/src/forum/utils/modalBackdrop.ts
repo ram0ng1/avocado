@@ -4,20 +4,13 @@ import ModalManager from 'flarum/common/components/ModalManager';
 
 /**
  * Classes no <body> que dizem qual modal está montado, para o CSS vestir o
- * `.Modal-backdrop` (irmão do .ModalManager, então não dá para alcançá-lo com
- * um seletor descendente do modal).
+ * `.Modal-backdrop`, irmão do .ModalManager. No lugar de um `body:has(...)` no
+ * LESS, que faria o navegador reavaliar a regra a cada mutação na página: aqui
+ * a pergunta é feita só quando a resposta muda.
  *
- * Antes isso era `body:has(.ModalManager .SearchModal…) .Modal-backdrop` no
- * LESS. Um :has() com o <body> como sujeito obriga o navegador a reavaliar a
- * regra a cada mutação em qualquer lugar da página (digitar na busca, posts
- * entrando na discussão), não só ao abrir/fechar um modal. Aqui a pergunta é
- * feita uma vez, nos únicos momentos em que a resposta muda.
- *
- * A checagem é pelo DOM (e não por contagem de oncreate/onremove) para casar
- * exatamente com o que o :has() via: o modal conta enquanto o elemento existe
- * — inclusive empilhado atrás de outro e durante a animação de saída — e um
- * modal de extensão que sobrescreva onremove sem chamar o super não deixa a
- * classe presa (o onupdate do ModalManager ressincroniza).
+ * A checagem é pelo DOM, como o :has() faria: o modal conta enquanto o elemento
+ * existe (empilhado ou saindo), e um onremove de extensão sem super não deixa a
+ * classe presa, porque o onupdate do ModalManager ressincroniza.
  */
 const BACKDROP_CLASSES: Record<string, string> = {
   // Spotlight da busca V2 (less/forum/SearchModal.less).

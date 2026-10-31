@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
-namespace Ramon\Avocado\Tests\Unit;
+namespace Ramon\Avocado\Tests\unit;
 
 use Flarum\Api\Controller\UploadImageController;
 use Flarum\Foundation\ValidationException;
@@ -15,13 +24,9 @@ use ReflectionProperty;
 use Ramon\Avocado\Controller\UploadLogoSvgController;
 
 /**
- * Exercises UploadLogoSvgController::sanitizeSvg() — the SVG XSS/XXE scrub that
- * runs on every admin logo upload before the markup is rendered inline (§9.5).
- *
- * sanitizeSvg() (and the cleanNode/sanitizeStyleNode/useHasExternalHref helpers
- * it drives) só toca no translator — as mensagens de rejeição são traduzidas —,
- * então driblamos o construtor do UploadImageController e injetamos um stub que
- * devolve a própria chave: aqui se assere o tipo da exceção, não o texto dela.
+ * UploadLogoSvgController::sanitizeSvg(), o filtro de XSS/XXE do logo, que é
+ * embutido inline em toda página. Só depende do translator, então o construtor é
+ * contornado com um stub; asserta-se o tipo da exceção, não o texto.
  */
 #[Group('security')]
 final class SvgSanitizerTest extends TestCase
@@ -38,8 +43,8 @@ final class SvgSanitizerTest extends TestCase
         (new ReflectionProperty(UploadImageController::class, 'translator'))
             ->setValue($controller, $translator);
 
-        // PHP 8.1+ reflection reaches private methods without setAccessible(),
-        // which is a deprecated no-op since 8.5.
+        // Desde o PHP 8.1 a reflexão alcança métodos privados sem setAccessible(),
+        // que é no-op obsoleto no 8.5.
         $method = new ReflectionMethod(UploadLogoSvgController::class, 'sanitizeSvg');
 
         return (string) $method->invoke($controller, $svg);
@@ -164,7 +169,7 @@ final class SvgSanitizerTest extends TestCase
         self::assertStringContainsString('#a', $out);
     }
 
-    // ── Achados da auditoria de segurança ───────────────────────────────────
+    // ── Namespaces estranhos e xlink ────────────────────────────────────────
 
     public function test_xhtml_namespaced_form_is_stripped(): void
     {
@@ -194,7 +199,7 @@ final class SvgSanitizerTest extends TestCase
 
     public function test_prefixed_xlink_href_data_uri_is_stripped(): void
     {
-        // `removeAttribute('href')` não achava um `xlink:href`: a remoção é pelo nó.
+        // `removeAttribute('href')` não acha um `xlink:href`: a remoção é pelo nó.
         $out = $this->sanitize(
             '<svg ' . self::NS . ' xmlns:xlink="http://www.w3.org/1999/xlink">'
             . '<image xlink:href="data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=" width="10" height="10"/></svg>'

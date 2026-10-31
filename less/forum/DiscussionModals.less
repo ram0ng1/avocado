@@ -1,28 +1,10 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// Avocado — Discussion modals (Rename + Edit Tags)
-// ─────────────────────────────────────────────────────────────────────────────
-//
-// Dois deles são de fora do tema e vinham com o chrome cru do Flarum:
-//
-//   RenameDiscussionModal  (core)          .Modal.RenameDiscussionModal.Modal--small
-//   TagDiscussionModal     (flarum/tags)   .Modal.TagDiscussionModal.TagSelectionModal.Modal--simple
-//
-// Nada aqui é JS: só cascata sobre o DOM que eles já produzem. Todo seletor
-// mora sob `.Modal.<Nome>` — dois níveis de classe a mais que o core e que o
-// flarum/tags —, então nenhuma destas regras precisa de `!important` para
-// ganhar da folha original, e nenhuma vaza para os outros modais do fórum.
-//
-// A casca comum abaixo serve também o `.AvocadoBookmarkModal`, que é do tema;
-// o miolo dele fica em Bookmarks.less para não separar do resto de bookmarks.
-//
-// Linguagem: a mesma do SearchModal V2 (SearchModal.less) — superfície única
-// sem borda, sombra difusa, hairline no lugar de caixa, campo sem preenchimento
-// nem moldura. O peso do diálogo vem do conteúdo, não do chrome.
+// Rename (core) e TagDiscussion (flarum/tags), só por cascata sobre o DOM que
+// eles já produzem. Tudo sob `.Modal.<Nome>`: dois níveis de classe a mais que
+// a origem dispensam !important e não vazam para outros modais. A casca serve
+// também o `.AvocadoBookmarkModal` (miolo em Bookmarks.less).
 
 @avm-radius:     18px;
 
-// Botão de ação dos modais: compacto, com o raio do tema (o de todo .Button),
-// sem cápsula — o mesmo desenho em todo diálogo do tema.
 .avocado-modal-button() {
   height: 34px;
   padding: 0 16px;
@@ -31,9 +13,6 @@
   font-weight: 600;
 }
 
-// Campo de formulário dos modais: contorno fino, sem preenchimento — o campo
-// se lê pela linha, não por uma caixa cinza. No foco, um anel suave na cor
-// primária. Serve também o modal de bookmarks (Bookmarks.less).
 .avocado-modal-field() {
   padding: 8px 12px;
   background: transparent;
@@ -51,7 +30,6 @@
   }
 }
 
-// Foco do campo acima (o TagsInput o usa em `:focus-within`).
 .avocado-modal-field-focus() {
   outline: 0;
   background: transparent;
@@ -59,11 +37,8 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 12%, transparent);
 }
 
-// ─── Backdrop ────────────────────────────────────────────────────────────────
-// `.Modal-backdrop` é irmão do .ModalManager, daí a classe no body em vez de um
-// seletor descendente. Ela vem de js/src/forum/utils/modalBackdrop.ts (Rename,
-// TagDiscussion, AvocadoBookmark e AvocadoTagsModal) e substitui o antigo
-// body:has(.ModalManager …), que era reavaliado a cada mutação de DOM da página.
+// O backdrop é irmão do .ModalManager, daí a classe no body. Substitui um
+// body:has(.ModalManager …), reavaliado a cada mutação do DOM.
 body.avocado-backdrop--dim {
   .Modal-backdrop {
     background: rgba(15, 15, 20, 0.42);
@@ -71,7 +46,6 @@ body.avocado-backdrop--dim {
   }
 }
 
-// ─── Casca comum ─────────────────────────────────────────────────────────────
 .Modal.RenameDiscussionModal,
 .Modal.TagDiscussionModal,
 .Modal.AvocadoBookmarkModal {
@@ -79,10 +53,8 @@ body.avocado-backdrop--dim {
 
   .Modal-content {
     border-radius: @avm-radius;
-    // Superfície única: o core pinta header e body de cores diferentes, o que
-    // é o degrau cinza que aparecia no topo dos dois modais.
+    // O core pinta header e body de cores diferentes e deixa um degrau no topo.
     background: var(--body-bg);
-    // Sem borda — a definição vem da sombra, como no SearchModal.
     border: 0;
     box-shadow: var(--shadow-lifted);
     overflow: hidden;
@@ -96,8 +68,7 @@ body.avocado-backdrop--dim {
 
     h3 {
       margin: 0;
-      // O título do modal de tags embute o nome da discussão; sem o reserve à
-      // direita ele passa por baixo do X.
+      // O título embute o nome da discussão e passaria por baixo do X.
       padding-right: 34px;
       font-family: @font-sans;
       font-size: 15px;
@@ -121,7 +92,6 @@ body.avocado-backdrop--dim {
     color: var(--text-color);
   }
 
-  // Fecha: botão fantasma circular em vez do X solto do core.
   .Modal-close {
     top: 12px;
     right: 12px;
@@ -158,17 +128,15 @@ body.avocado-backdrop--dim {
   to   { opacity: 1; transform: none; }
 }
 
-// ─── Renomear discussão ──────────────────────────────────────────────────────
 .Modal.RenameDiscussionModal {
-  // 375px do .Modal--small espremia um campo que recebe o título inteiro.
+  // Os 375px do .Modal--small espremem o título inteiro.
   max-width: 440px;
 
   .Modal-body {
     padding: 4px 20px 18px;
   }
 
-  // `.Form--centered` centraliza texto e trava altura em 50px; num campo de
-  // título, texto à esquerda.
+  // `.Form--centered` centraliza o texto e trava a altura em 50px.
   .Form--centered {
     display: flex;
     flex-direction: column;
@@ -201,16 +169,12 @@ body.avocado-backdrop--dim {
     .Button--primary {
       .avocado-modal-button();
       width: auto;
-      // O core dá `margin: 0 auto`, o que recentraliza o botão.
+      // O `margin: 0 auto` do core recentralizaria o botão.
       margin: 0;
     }
   }
 }
 
-// ─── Editar tags ─────────────────────────────────────────────────────────────
-// Leve: campo de contorno fino com lupa, chips tingidos (não sólidos), lista
-// de linhas baixas com o ícone num quadradinho tingido da cor da tag — que
-// fica sólido, com o check, quando a tag está escolhida.
 .Modal.TagDiscussionModal {
   max-width: 520px;
 
@@ -218,8 +182,7 @@ body.avocado-backdrop--dim {
     padding: 0;
   }
 
-  // O core monta "campo + OK" com display:table; flex alinha e deixa o botão
-  // quebrar para baixo no telefone.
+  // O core usa display: table; com flex o botão pode quebrar no telefone.
   .TagSelectionModal-form {
     display: flex;
     align-items: flex-start;
@@ -251,20 +214,18 @@ body.avocado-backdrop--dim {
     }
   }
 
-  // ── Campo: busca + tags escolhidas ─────────────────────────────────────────
   .TagsInput.FormControl {
     .avocado-modal-field();
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 6px;
-    // Altura do botão OK; cresce só quando os chips quebram linha.
     height: auto;
     min-height: 34px;
     padding: 4px 8px 4px 11px;
     overflow: visible;
 
-    // Lupa: o glifo do Font Awesome do core (7), com a 6 de reserva.
+    // O glifo do Font Awesome 7, com o 6 de reserva.
     &::before {
       content: '\f002';
       flex: 0 0 auto;
@@ -275,18 +236,15 @@ body.avocado-backdrop--dim {
       color: var(--avocado-muted-placeholder);
     }
 
-    // O flarum/tags põe o outline nativo aqui; o anel do foco toma o lugar.
     &:focus-within {
       .avocado-modal-field-focus();
     }
 
     input {
-      // O core usa `margin-right: -100%` para medir em ch; no flex isso
-      // arrastaria os chips para fora.
+      // O `margin-right: -100%` do core, usado para medir em ch, arrastaria os chips.
       margin: 0;
       height: 24px;
       padding: 0 2px;
-      // Base pequena: fica na linha dos chips enquanto couber.
       flex: 1 1 20px;
       min-width: 20px;
       max-width: 100%;
@@ -302,7 +260,6 @@ body.avocado-backdrop--dim {
     }
   }
 
-  // Cada chip vira item direto do flex do campo (wrap linha a linha).
   .TagsInput-selected {
     display: contents;
   }
@@ -312,7 +269,6 @@ body.avocado-backdrop--dim {
     cursor: pointer;
     margin: 0;
 
-    // Chip tingido: fundo leve na cor da tag, texto na cor da tag.
     .TagLabel {
       --avm-chip: var(--tag-bg, var(--primary-color));
       display: inline-flex;
@@ -322,8 +278,8 @@ body.avocado-backdrop--dim {
       padding: 0 8px;
       border-radius: 7px;
       background: color-mix(in srgb, var(--avm-chip) 13%, transparent);
-      // O flarum/tags pinta o texto com `--tag-color` (o contraste, branco) e
-      // !important; redefinir a variável é o que muda a cor do texto.
+      // O flarum/tags pinta o texto com `--tag-color` e !important; só redefinindo a
+      // variável a cor muda.
       --tag-color: color-mix(in srgb, var(--avm-chip) 80%, var(--text-color));
       color: var(--tag-color);
       box-shadow: none;
@@ -338,7 +294,7 @@ body.avocado-backdrop--dim {
       }
     }
 
-    // Afordância de remoção. Só pontuação — nada de texto fixo aqui.
+    // Só pontuação, sem texto fixo.
     .TagLabel-text::after {
       content: '\00d7';
       margin-left: 4px;
@@ -356,7 +312,6 @@ body.avocado-backdrop--dim {
     }
   }
 
-  // ── Lista de tags ──────────────────────────────────────────────────────────
   .Modal-footer {
     padding: 0;
     background: transparent;
@@ -386,7 +341,6 @@ body.avocado-backdrop--dim {
       border-radius: 10px;
       transition: background var(--avocado-t-fast);
 
-      // O core separa os grupos com uma barra de 2px; uma fina resolve.
       &.pinned + li:not(.pinned) {
         margin-top: 4px;
         border-top: 1px solid var(--avocado-border-soft);
@@ -407,8 +361,7 @@ body.avocado-backdrop--dim {
       }
     }
 
-    // Ícone num quadradinho tingido. O <li> recebe `style="color: <cor da
-    // tag>"` do flarum/tags, então currentColor é a cor da tag; sem cor, a primária.
+    // O <li> recebe `color` inline da tag, então currentColor é a cor dela.
     .SelectTagListItem-icon {
       width: 26px;
       height: 26px;
@@ -432,7 +385,7 @@ body.avocado-backdrop--dim {
     .SelectTagListItem-icon .SelectTagListItem-tagIcon {
       width: auto;
       height: auto;
-      // Neutraliza o `.TagIcon` (tags sem ícone vêm como <span> pintado).
+      // Tags sem ícone vêm como <span> pintado pelo `.TagIcon`.
       background: transparent;
       font-size: 12px;
       color: inherit;
@@ -442,7 +395,6 @@ body.avocado-backdrop--dim {
       font-size: 11px;
     }
 
-    // Escolhida: o quadradinho fica sólido e o check aparece em branco.
     > li.selected .SelectTagListItem-icon {
       background: var(--primary-color);
     }
@@ -451,8 +403,7 @@ body.avocado-backdrop--dim {
       background: currentColor;
     }
 
-    // O check carrega a classe `TagIcon` (16x16 + fundo); em `inset: 0` isso
-    // descentralizaria o glifo. `auto` devolve o box ao tile inteiro.
+    // O check carrega `TagIcon` (16x16 + fundo); com `inset: 0` o glifo sairia do centro.
     > li.selected .SelectTagListItem-checkIcon {
       width: auto;
       height: auto;
@@ -476,7 +427,6 @@ body.avocado-backdrop--dim {
       text-overflow: ellipsis;
     }
 
-    // O flarum/tags aumenta as fixadas para 16px; aqui todas no mesmo tamanho.
     > li.pinned:not(.child) .SelectTagListItem-name {
       font-size: @font-sm;
     }
@@ -506,8 +456,6 @@ body.avocado-backdrop--dim {
     }
   }
 
-  // ── Ignorar requisitos de tag (moderação) ──────────────────────────────────
-  // Controle discreto no rodapé; ligado, fica na cor primária.
   .TagSelectionModal-controls {
     padding: 8px 12px 12px;
     border-top: 1px solid var(--avocado-border-soft);
@@ -541,10 +489,7 @@ body.avocado-backdrop--dim {
   }
 }
 
-// ─── Telefone ────────────────────────────────────────────────────────────────
-// O core transforma o modal em folha de tela cheia; aqui só o espaçamento e a
-// quebra do botão precisam acompanhar. A animação sai: o core já anima o
-// `top` da folha e as duas juntas dão um pulo duplo.
+// Sem a animação: o core já anima o `top` da folha e as duas juntas dão um pulo duplo.
 @media @phone {
   .Modal.RenameDiscussionModal,
   .Modal.TagDiscussionModal,

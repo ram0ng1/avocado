@@ -1,34 +1,17 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// Composer flutuante
-//
-// Só a casca muda; o miolo do compositor (avatar, cabeçalho, barra de
-// formatação embaixo, botões e seus hovers) segue o do Flarum:
-//  1. Uma pílula "Escreva uma resposta…" fica na base da tela em toda a
-//     discussão (.AvocadoReplyDock) e cede o lugar à placeholder do fim da
-//     lista quando ela aparece — que ganha o mesmo desenho de pílula.
-//  2. O compositor vira um cartão flutuante alinhado à coluna de posts, com a
-//     alça de arrastar visível; minimizado, vira a mesma pílula.
-//
-// Posição da coluna e visibilidade da pílula: js/src/forum/utils/composerDock.ts.
-//
-// Tudo depende da opção "Bolha de resposta flutuante" (classe
-// `avocado-reply-dock` no <html>): desligada, o compositor e a placeholder do
-// fim voltam ao desenho do core. A pílula fixa nem é montada nesse caso.
-// ─────────────────────────────────────────────────────────────────────────────
+// Compositor flutuante: só a casca muda. Uma pílula "Escreva uma resposta…"
+// fica na base da tela e cede lugar à placeholder do fim da lista; o
+// compositor vira um cartão alinhado à coluna de posts. Tudo depende de
+// `html.avocado-reply-dock`; sem ela vale o desenho do core.
 
 @composer-gap: 16px; // espelha DOCK_GAP em composerDock.ts
-// Os `min()`/`max()` de reserva vão escapados (~"…"): sem isso o LESS os
-// resolve na compilação (max(24px, calc(50% - 460px)) virava só 24px) e o
-// cartão sem coluna medida colava na esquerda em vez de centralizar.
+// `min()`/`max()` escapados (~"…"): sem isso o LESS os resolve na compilação e
+// o cartão sem coluna medida cola na esquerda.
 @composer-radius: 18px;
 @composer-pill-height: 52px;
 
-// Título da nova discussão sem cantos arredondados (o .FormControl dá o raio).
 .DiscussionComposer-title {
   border-radius: 0;
 }
-
-// ── Pílula (desenho comum à fixa e à do fim da lista) ────────────────────────
 
 .avocado-composer-pill() {
   display: flex;
@@ -41,7 +24,7 @@
   padding: 0 22px 0 10px;
   overflow: hidden;
   border: 1px solid var(--avocado-border-chip);
-  border-radius: var(--border-radius); // o mesmo dos botões (.Button), não cápsula
+  border-radius: var(--border-radius); // o mesmo dos botões, não cápsula
   background: var(--body-bg);
   color: var(--muted-color);
   font-size: 15px;
@@ -61,8 +44,6 @@
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 18%, transparent);
   }
 }
-
-// ── 1a. Pílula fixa ──────────────────────────────────────────────────────────
 
 #avocado-reply-dock {
   position: fixed;
@@ -85,8 +66,7 @@
   width: var(--avocado-composer-width, ~"min(920px, calc(100% - 30px))");
   margin-left: var(--avocado-composer-left, ~"max(15px, calc(50% - 460px))");
   border-color: transparent;
-  // Halo na cor de fundo da página (--body-bg: branco no claro, escuro no
-  // escuro): o conteúdo que passa por trás se apaga, como no Waterhole.
+  // Halo na cor do fundo: o conteúdo que passa por trás se apaga.
   --avocado-reply-dock-halo: 0 10px 24px 28px color-mix(in srgb, var(--body-bg) 88%, transparent);
   box-shadow:
     0 0 0 1px var(--avocado-border-subtle),
@@ -135,26 +115,19 @@
   }
 }
 
-// Desenho da placeholder e casca do compositor só com a opção ligada.
 html.avocado-reply-dock {
-  // ── 1b. Placeholder do fim da lista ──────────────────────────────────────────
-
   .PostStream > .PostStream-item:has(> .ReplyPlaceholder) {
     position: relative;
     margin-top: 32px;
-    // Espaço para a pílula pousar acima da base da tela, no mesmo lugar da fixa.
     padding-bottom: @composer-gap;
-    // A corrente da variante editorial é um background do PostStream inteiro
-    // (DiscussionEditorial.less) e seguia por baixo da pílula até o fim da
-    // página. O fundo opaco do item faz a linha terminar onde a pílula começa.
+    // A corrente da variante editorial é background do PostStream inteiro; o fundo
+    // opaco faz a linha terminar onde a pílula começa.
     background: var(--body-bg);
   }
 
   .PostStream > .PostStream-item > .ReplyPlaceholder {
     .avocado-composer-pill();
 
-    // O layout de post do core (coluna de avatar de 64px, 104px de altura) vira
-    // uma linha só: avatar pequeno + o convite.
     .Post-container {
       display: flex;
       align-items: center;
@@ -171,7 +144,6 @@ html.avocado-reply-dock {
       margin: 0;
       padding: 0;
     }
-    // Visitante: ícone no lugar do avatar (composerDock.ts › guestifyPlaceholder).
     .AvocadoReplyDock-guestIcon {
       display: block;
       width: 32px;
@@ -208,13 +180,11 @@ html.avocado-reply-dock {
     }
   }
 
-  // O divisor de 1px que o core põe entre itens não cabe acima da pílula.
   .PostStream > .PostStream-item:has(+ .PostStream-item > .ReplyPlaceholder)::after {
     display: none;
   }
 
-  // ── 2. Casca do compositor (tablet e acima) ──────────────────────────────────
-  // No celular o core abre o compositor em tela cheia, com o teclado — fica.
+  // No celular o core abre o compositor em tela cheia, com o teclado.
 
   @media @tablet-up {
     .App-composer .container {
@@ -223,9 +193,9 @@ html.avocado-reply-dock {
       padding: 0;
     }
 
-    // `.App .App-composer` ganha das margens fixas do core (.App--discussion …).
+    // `.App .App-composer` ganha das margens fixas do core.
     .App .App-composer .Composer:not(.fullScreen) {
-      // Coluna medida pelo composerDock.ts; sem coluna, cartão centralizado.
+      // Coluna medida pelo composerDock.ts; sem ela, cartão centralizado.
       width: var(--avocado-composer-width, ~"min(920px, calc(100% - 48px))");
       margin: 0 0 @composer-gap var(--avocado-composer-left, ~"max(24px, calc(50% - 460px))");
       border-radius: @composer-radius;
@@ -241,19 +211,16 @@ html.avocado-reply-dock {
       }
     }
 
-    // A camada de "enviando" do core tem cantos retos embaixo (e 14px em cima):
-    // por cima do cartão ela quadrava os cantos dele durante o envio.
+    // A camada de "enviando" do core tem cantos retos e quadrava os do cartão.
     .App .App-composer .Composer:not(.fullScreen) .ComposerBody-loading {
       border-radius: @composer-radius;
     }
 
-    // A barra de formatação encosta na base do cartão; no modo escuro ela tem
-    // fundo próprio, e os cantos retos dela escapavam da borda arredondada.
+    // No escuro a barra tem fundo próprio e os cantos retos escapavam da borda.
     .App .App-composer .Composer:not(.fullScreen) .TextEditor-controls {
       border-radius: 0 0 @composer-radius @composer-radius;
     }
 
-    // Alça de arrastar visível (o core já faz o arraste; só ganha o puxador).
     .Composer-handle {
       cursor: ns-resize;
 
@@ -270,12 +237,10 @@ html.avocado-reply-dock {
       }
     }
 
-    // Minimizado: a mesma pílula, no mesmo lugar do cartão.
     .App .App-composer .Composer.minimized {
       height: @composer-pill-height !important;
       border-radius: var(--border-radius);
-      // O core só esconde o editor (visibility), ele segue ocupando altura: o
-      // título vai no topo e o resto é cortado.
+      // O core só esconde o editor com visibility, e ele segue ocupando altura.
       overflow: hidden;
       box-shadow:
         0 0 0 1px var(--avocado-border-subtle),

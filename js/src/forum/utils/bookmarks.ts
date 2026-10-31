@@ -2,24 +2,19 @@ import app from 'flarum/forum/app';
 import { trans } from '../utils';
 
 /**
- * Toggle de bookmark (discussão salva) com UI otimista.
+ * Toggle de bookmark (discussão salva) com UI otimista. O tema fala com um
+ * provedor por vez:
  *
- * Existem dois provedores possíveis e o tema fala com um só por vez:
+ * - **fof/bookmarks**, quando ativo. O tema cede: a UI própria some (menu, nota,
+ *   lembrete, página "Salvos") e o botão do card grava no campo `bookmarked`
+ *   dela, que é writable; `Model.save()` faz o otimismo e o rollback. A tabela
+ *   `avocado_bookmarks` fica dormente e volta a valer se o fof sair.
+ * - **Avocado**, o sistema próprio (nota, lembrete, notificação). O atributo
+ *   read-only `avocadoBookmarked` vira localmente e o POST/DELETE vai ao
+ *   endpoint dedicado. Se falhar, desfaz e alerta: o erro nunca é engolido.
  *
- * - **fof/bookmarks**, quando a extensão está ativa. Ela é um sistema de
- *   bookmarks dedicado (discussões e posts), então o tema cede: a UI própria
- *   some (item de menu, nota, lembrete, página "Salvos") e o botão do card passa
- *   a gravar no campo `bookmarked` dela, que é writable — `Model.save()` já faz
- *   o otimismo e o rollback. Nada de dado do Avocado é apagado: a tabela
- *   `avocado_bookmarks` fica dormente e volta a valer se o fof for desativado.
- * - **Avocado**, o sistema próprio (nota + lembrete + notificação), em
- *   `avocado_bookmarks`. A discussão carrega o atributo read-only
- *   `avocadoBookmarked`; viramos ele localmente para resposta instantânea e
- *   POST/DELETE no endpoint dedicado. Se falhar, desfaz e alerta (CLAUDE.md
- *   §40.2) — nunca engole o erro.
- *
- * `pending` deduplica cliques concorrentes por id de discussão. Guarda só ids em
- * voo (transitório, não dado de usuário), então o Set no módulo é seguro.
+ * `pending` deduplica cliques concorrentes por discussão. Guarda só ids em voo,
+ * então o Set no módulo é seguro.
  */
 const pending = new Set<string>();
 
@@ -119,10 +114,9 @@ export function bookmarkRemindAt(discussion: any): Date | null {
 }
 
 /**
- * Persists note/reminder for the actor's bookmark (upsert — saves the
- * discussion when it wasn't saved yet). Mirrors the server response back into
- * the discussion model so cards/modals re-render with authoritative values.
- * Errors are re-thrown so the calling UI (modal) can keep its own state.
+ * Grava nota/lembrete do bookmark do ator (upsert: salva a discussão se ainda
+ * não estava salva) e espelha a resposta no model. Erros são relançados para o
+ * modal manter o próprio estado.
  */
 export function updateBookmark(discussion: any, payload: { note?: string | null; remindAt?: string | null }): Promise<void> {
   const id = String(discussion?.id?.() || '');

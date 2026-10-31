@@ -1,10 +1,7 @@
-// Ícone SVG de uma tag, dimensionado e alinhado como um glifo Font Awesome para
-// poder ocupar o lugar dele em qualquer ponto onde `tag.icon()` é renderizado.
-//
-// Renderizado pelo componente Icon do core leva o markup do SVG inline. Escrito
-// direto num atributo de classe (<i class={tag.icon()} />) é um elemento vazio,
-// pintado aqui a partir do data URI que o tema registra em `--tag-icon-svg` para
-// cada ícone (ver js/src/common/tagIconSvg.tsx).
+// Ícone SVG de tag dimensionado como um glifo Font Awesome, para ocupar o lugar
+// dele onde `tag.icon()` aparece. Via componente Icon vem como SVG inline; como
+// classe solta (<i class={tag.icon()} />) é um elemento vazio pintado a partir
+// de `--tag-icon-svg`.
 .TagIconSvg {
   display: inline-block;
   width: 1em;
@@ -13,10 +10,8 @@
   vertical-align: -0.125em;
   text-align: center;
 
-  // Tamanho por tag (`--tag-icon-scale`, vindo da classe `TagIconSvg--s<n>` que o
-  // tema injeta): muito SVG traz folga dentro do viewBox e sai miúdo ao lado de um
-  // glifo. É um `transform` no desenho, não na caixa — ela continua 1em, então
-  // pílulas, menus e botões em volta não mudam de tamanho quando o ícone cresce.
+  // A escala vai no desenho, não na caixa: ela segue 1em e o que está em volta
+  // não muda de tamanho.
   > svg {
     display: block;
     width: 100%;
@@ -26,10 +21,9 @@
     transform: scale(var(--tag-icon-scale, 1));
   }
 
-  // Monochrome: paint every explicit colour with the current text colour,
-  // leaving `none`/`transparent` alone so cut-outs and strokes-only shapes
-  // keep their meaning. (The sanitizer moves fill/stroke from styles onto
-  // attributes so these selectors can see them.)
+  // Monocromático: só as cores explícitas viram currentColor; `none`/`transparent`
+  // ficam, para não perder recortes. O sanitizer move fill/stroke para atributos
+  // justamente para estes seletores enxergarem.
   &--mono > svg {
     *:not([fill="none" i]):not([fill="transparent" i]) {
       fill: currentColor !important;
@@ -40,9 +34,8 @@
     }
   }
 
-  // Empty element: paint on a pseudo-element so the box has intrinsic size
-  // like a font glyph would, even where a theme forces `width: fit-content`
-  // on icons. Full colour as a background image...
+  // Pseudo-elemento dá à caixa tamanho intrínseco, como um glifo, mesmo onde o
+  // ícone recebe `width: fit-content`.
   &:empty::before {
     content: '';
     display: block;
@@ -52,7 +45,7 @@
     transform: scale(var(--tag-icon-scale, 1));
   }
 
-  // ...or, for monochrome, the current text colour seen through the SVG's shape.
+  // Monocromático: a cor do texto vista pela forma do SVG.
   &--mono:empty::before {
     background: currentColor;
     -webkit-mask: var(--tag-icon-svg) center / contain no-repeat;

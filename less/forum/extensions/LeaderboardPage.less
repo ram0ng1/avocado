@@ -1,31 +1,24 @@
-// ── Leaderboard Extension — Avocado Design System Override ──────────────────
-// Extension: huseyinfiliz/leaderboard
-// All selectors are scoped to .LeaderboardPage so specificity (0,2,0) beats
-// the extension's own CSS (0,1,0) regardless of load order in forum.css.
+// huseyinfiliz/leaderboard: tudo sob .LeaderboardPage (0,2,0) para ganhar do CSS
+// da extensão (0,1,0) independente da ordem.
 
-// ─── 1. Hero ─────────────────────────────────────────────────────────────────
-// The App.less safety net hides .Page-hero for all non-root IndexPages.
-// LeaderboardPage shares the IndexPage class, so we re-enable it explicitly.
+// O App.less esconde .Page-hero nas IndexPages que não são a raiz, e esta
+// página também é uma IndexPage.
 
 .LeaderboardPage .Page-hero {
   display: block !important;
 }
 
-// Reset .Hero base styles (margin/max-width/border-radius) so the hero
-// spans full-width like DiscussionHero.
 .LeaderboardPage .LeaderboardHero.Hero {
   margin: 0;
   max-width: 100%;
   border-radius: 0;
 }
 
-// Hero surface — matches DiscussionHero / AvocadoTagPage-hero pattern
 .LeaderboardPage .LeaderboardHero {
   position: relative;
   background: var(--primary-color);
   overflow: hidden;
 
-  // Diagonal depth overlay — identical to DiscussionHero::before
   &::before {
     content: '';
     position: absolute;
@@ -58,8 +51,6 @@
   }
 }
 
-// ─── 2. Filter pills ─────────────────────────────────────────────────────────
-
 .LeaderboardPage .LeaderboardPage-filterBtn {
   padding: 5px 14px;
   border-radius: @border-radius;
@@ -86,8 +77,6 @@
   }
 }
 
-// ─── 3. Refresh button ───────────────────────────────────────────────────────
-
 .LeaderboardPage .LeaderboardPage-refreshBtn {
   border: 1px solid var(--avocado-border-chip);
   background: transparent;
@@ -101,8 +90,6 @@
     color: var(--text-color);
   }
 }
-
-// ─── 4. Podium cards ─────────────────────────────────────────────────────────
 
 .LeaderboardPage .LeaderboardPodium-place {
   background: var(--body-bg);
@@ -126,8 +113,6 @@
   border-top-color: var(--avocado-border-subtle);
 }
 
-// ─── 5. Top contender cards ──────────────────────────────────────────────────
-
 .LeaderboardPage .LeaderboardContenders-card {
   background: var(--body-bg);
   border: 1px solid var(--avocado-border-subtle);
@@ -142,16 +127,12 @@
   }
 }
 
-// ─── 6. Section titles ───────────────────────────────────────────────────────
-
 .LeaderboardPage .LeaderboardContenders-title,
 .LeaderboardPage .LeaderboardHonorable-title {
   font-size: 15px;
   font-weight: 700;
   letter-spacing: -0.1px;
 }
-
-// ─── 7. Honorable mention rows ───────────────────────────────────────────────
 
 .LeaderboardPage .LeaderboardItem {
   background: var(--body-bg);
@@ -167,8 +148,6 @@
     box-shadow: none;
   }
 }
-
-// ─── 8. Skeleton shapes ──────────────────────────────────────────────────────
 
 .LeaderboardPage .LeaderboardSkeleton-badge,
 .LeaderboardPage .LeaderboardSkeleton-text,

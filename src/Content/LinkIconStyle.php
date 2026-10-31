@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Content;
@@ -12,21 +21,12 @@ use Psr\Http\Message\ServerRequestInterface;
 use Ramon\Avocado\Support\SvgIconSanitizer;
 
 /**
- * Entrega o ícone de link interno (admin → Logo) como variável CSS.
+ * Ícone de link interno como variável CSS, em data URI: `mask-image` com URL de
+ * outra origem exige CORS e quebraria com /assets numa CDN. Base64 não tem nada
+ * que escape de `url("…")` nem do <style>.
  *
- * O SVG vai embutido como data URI, e não como URL do asset: `mask-image` com
- * URL de outra origem exige CORS, e um fórum que serve /assets por CDN ficaria
- * sem ícone nenhum. Embutido também não pisca nem custa uma requisição. Base64
- * só tem caracteres seguros dentro de `url("…")`, então nada escapa do <style>.
- *
- * O atributo no <html> é o que liga as regras de forum/UrlLink.less — sem ele o
- * rótulo segue com o favicon, como no core.
- *
- * O <style> pronto fica no cache do Flarum, junto do caminho que o gerou: este
- * content roda em toda página, e sem o cache cada uma pagava exists() + get() no
- * disco e o parse do sanitizador. O upload grava o arquivo com nome novo
- * (sufixo aleatório) e o delete zera a setting, então o caminho já é a versão —
- * trocou o ícone, o caminho não bate e a próxima página refaz.
+ * O <style> fica no cache junto do caminho; todo upload grava um nome novo,
+ * então o caminho já serve de versão.
  */
 class LinkIconStyle
 {
@@ -54,8 +54,7 @@ class LinkIconStyle
             $uri = $this->buildUri($path);
 
             if ($uri === null) {
-                // Falha (arquivo sumiu, SVG recusado) não vai para o cache: a
-                // próxima página tenta de novo, como antes.
+                // Falha não vai para o cache: a próxima página tenta de novo.
                 return;
             }
 
@@ -74,8 +73,7 @@ class LinkIconStyle
             return null;
         }
 
-        // Sanitizado de novo na saída: o arquivo foi limpo no upload, mas o disco
-        // é compartilhado e esta é a última barreira antes de virar CSS.
+        // Sanitizado de novo: o disco é compartilhado e esta é a última barreira antes do CSS.
         $svg = SvgIconSanitizer::sanitize((string) $disk->get($path));
 
         if ($svg === null) {

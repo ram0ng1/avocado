@@ -1,23 +1,17 @@
-// ─── Página de uma versão do changelog ────────────────────────────────────────
-// Uma versão é a discussão de uma tag de produto. A página continua sendo a de
-// discussão — navegação lateral (responder, seguir, editar…), comentários e caixa
-// de resposta intactos. As alterações são leves, de propósito:
-//   1. o cabeçalho é o ReleaseHero, no lugar do hero de discussão;
-//   2. as notas (a 1ª publicação) usam a tipografia das notas do cartão do
-//      changelog, para a versão ler igual nos dois lugares.
-// `html.avocado-release` é a classe que o próprio cabeçalho põe enquanto existe.
+// Página de uma versão do changelog: continua sendo a página de discussão, só
+// com o ReleaseHero no lugar do hero e a tipografia das notas do cartão na 1ª
+// publicação. `html.avocado-release` é posta pelo próprio cabeçalho.
 
-// ── Cabeçalho ─────────────────────────────────────────────────────────────────
 .ReleaseHero {
   position: relative;
   overflow: hidden;
-  // Fundo de espera (a imagem ainda carregando): a primária do fórum, sob o véu escuro.
+  // Fundo enquanto a imagem carrega.
   background: var(--primary-color);
   background-size: cover;
   background-position: center;
   color: #fff;
 
-  // Imagem de capa: véu escuro para o título nunca depender da exposição da foto.
+  // Véu escuro para o título não depender da exposição da foto.
   &--image::before,
   &--gradient::before {
     content: '';
@@ -30,22 +24,18 @@
     background: linear-gradient(180deg, rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.62));
   }
 
-  // Degradê das cores escolhidas: brilho no canto e um véu leve para o texto branco
-  // aguentar até as cores claras (amarelo, ciano).
+  // O véu leve mantém o texto branco legível até em cores claras.
   &--gradient::before {
     background:
       radial-gradient(circle at 88% 8%, rgba(255, 255, 255, 0.24), transparent 55%),
       linear-gradient(rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0.16));
   }
 
-  // Sem imagem e sem cor escolhida: o padrão da tag — a cor dela, chapada, como o
-  // hero de discussão do tema (`--release-color` vem do ReleaseHero.tsx).
   &--tag {
     background: var(--release-color, var(--primary-color));
   }
 
-  // Tag clara (amarelo, ciano…): o texto e as pílulas viram escuros, a mesma regra
-  // de luminância do hero de discussão.
+  // Mesma regra de luminância do hero de discussão.
   &--lightTag {
     color: #202126;
 
@@ -65,7 +55,6 @@
     font-family: @font-sans;
   }
 
-  // Botões de imagem e de cor, no canto — herdam o desenho dos controles do hero de discussão.
   &-tools {
     position: absolute;
     top: 14px;
@@ -83,7 +72,6 @@
     flex-wrap: wrap;
     gap: 10px;
     margin-bottom: 22px;
-    // Deixa espaço para os botões do canto em telas estreitas.
     padding-right: 0;
   }
 
@@ -181,7 +169,6 @@
     }
   }
 
-  // O ícone do tipo, gigante e apagado, como na capa do cartão do changelog.
   &-icon {
     position: absolute;
     right: 2%;
@@ -195,7 +182,6 @@
   }
 }
 
-// Botão "Cor da capa" no estilo dos controles de imagem, com o painel à direita.
 .AvocadoChangelogField-heroBtn {
   .AvocadoChangelogField-swatch { width: 16px; height: 16px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5); }
 }
@@ -204,9 +190,7 @@
   .AvocadoChangelogField-pop { color: var(--home-title); }
 }
 
-// ── As notas: mesma tipografia das notas do cartão do changelog ──────────────
-// Só tipografia, só na 1ª publicação: nada é escondido nem reposicionado, e os
-// comentários abaixo continuam com o visual normal de post.
+// Só tipografia e só na 1ª publicação; os comentários seguem como post normal.
 html.avocado-release .PostStream-item[data-number="1"] .CommentPost .Post-body {
   font-size: 17px;
   line-height: 1.75;
@@ -216,7 +200,6 @@ html.avocado-release .PostStream-item[data-number="1"] .CommentPost .Post-body {
 
   p { margin: 0 0 14px; }
 
-  // Títulos viram rótulos de seção ("O que há de novo"), como o mês da linha do tempo.
   h1, h2, h3, h4 {
     margin: 30px 0 10px;
     padding-bottom: 8px;
@@ -236,7 +219,6 @@ html.avocado-release .PostStream-item[data-number="1"] .CommentPost .Post-body {
   hr { margin: 28px 0; border: 0; border-top: 1px solid var(--home-border); }
 }
 
-// ── Responsivo ────────────────────────────────────────────────────────────────
 @media @tablet {
   .ReleaseHero-title { font-size: 38px; }
 }

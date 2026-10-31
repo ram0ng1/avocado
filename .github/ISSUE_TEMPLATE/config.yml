@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and help
+    url: https://discuss.flarum.org/d/38940-avocado-theme
+    about: Ask how to configure or use the theme.
+  - name: Security vulnerability
+    url: https://github.com/ram0ng1/avocado/security/advisories/new
+    about: Report security problems privately.

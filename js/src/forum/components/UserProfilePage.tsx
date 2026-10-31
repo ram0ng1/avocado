@@ -19,8 +19,6 @@ const findBySlug = (slug: string): any => {
   return app.store.all('users').find((u: any) => (u.slug?.() || '').toLowerCase() === lowered) || null;
 };
 
-// ─── Base page ────────────────────────────────────────────────────────────────
-
 class AvocadoUserBase extends UserPage {
   protected userLoading = true;
   protected _user: any = null;
@@ -88,8 +86,6 @@ class AvocadoUserBase extends UserPage {
     );
   }
 }
-
-// ─── Posts page ───────────────────────────────────────────────────────────────
 
 export class AvocadoUserPostsPage extends AvocadoUserBase {
   private posts: any[] = [];
@@ -160,8 +156,6 @@ export class AvocadoUserPostsPage extends AvocadoUserBase {
     );
   }
 }
-
-// ─── Discussions page ─────────────────────────────────────────────────────────
 
 export class AvocadoUserDiscussionsPage extends AvocadoUserBase {
   private discussions: any[] = [];
@@ -244,8 +238,6 @@ export class AvocadoUserDiscussionsPage extends AvocadoUserBase {
   }
 }
 
-// ─── Likes page ───────────────────────────────────────────────────────────────
-
 export class AvocadoUserLikesPage extends AvocadoUserBase {
   private posts: any[] = [];
   private loading = false;
@@ -312,8 +304,6 @@ export class AvocadoUserLikesPage extends AvocadoUserBase {
     );
   }
 }
-
-// ─── Mentions page ────────────────────────────────────────────────────────────
 
 export class AvocadoUserMentionsPage extends AvocadoUserBase {
   private posts: any[] = [];

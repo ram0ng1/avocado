@@ -1,9 +1,6 @@
 /*
- * Layout primitives for the settings page. Both are POJO components (Mithril
- * requires a `view` method — arrow functions are React syntax). Cast to `any`
- * so TS treats them as valid JSX elements: Mithril's JSX intrinsic types insist
- * on a class- or function-component shape, but Mithril accepts any object with a
- * `view()` method at runtime.
+ * Componentes POJO: o Mithril só exige um objeto com `view()`, mas os tipos JSX
+ * pedem classe ou função, daí o cast para `any`.
  */
 
 // `disabled`: o card continua à vista, mas apagado e sem interação — para
@@ -29,7 +26,6 @@ export const AdminCard: any = {
   },
 };
 
-// Divider between groups of sub-settings.
 export const SubDivider: any = {
   view() {
     return <div className="AvocadoAdmin-subDivider" />;

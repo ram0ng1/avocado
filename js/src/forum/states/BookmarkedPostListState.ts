@@ -4,14 +4,10 @@ import type { PaginatedListRequestParams } from 'flarum/common/states/PaginatedL
 const PAGE_SIZE = 20;
 
 /**
- * Lista paginada dos posts marcados pelo ator, mais recentes primeiro. Só existe
- * no modo fof/bookmarks — é a extensão que marca posts; o sistema próprio do
- * tema é só de discussões.
- *
- * Espelha o BookmarkedPostListState do fof/bookmarks de propósito: a aba "Posts"
- * da página tem que trazer exatamente o que a página original dele traria. O
- * `filter.type: 'comment'` e o `sort: '-createdAt'` já vêm do PostListState do
- * core.
+ * Posts marcados pelo ator, mais recentes primeiro; só no modo fof/bookmarks (o
+ * sistema do tema é só de discussões). Espelha o BookmarkedPostListState do fof
+ * de propósito, para a aba "Posts" trazer o mesmo que a página dele. O
+ * `filter.type: 'comment'` e o `sort: '-createdAt'` já vêm do PostListState.
  */
 export default class BookmarkedPostListState extends PostListState {
   constructor() {

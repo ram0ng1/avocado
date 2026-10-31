@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Content;
@@ -9,16 +18,9 @@ use Flarum\Settings\SettingsRepositoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
- * Injects a minimal inline <style> with critical above-the-fold CSS.
- *
- * Goals:
- *  - Font-face declarations so text renders immediately in the correct typeface
- *    even before the main forum.css file finishes loading (eliminates FOUT).
- *  - Body/html resets that prevent CLS from the page background shifting.
- *  - App-header dimensions so the topbar space is reserved from the first frame.
- *
- * Keep this small (< 2 KB). Any style that can wait until forum.css loads
- * should stay there.
+ * CSS crítico inline: o forum.css do Flarum 2 carrega de forma assíncrona, então
+ * fontes, cabeçalho e logo precisam de regras já no primeiro quadro. Mantenha
+ * pequeno; o que pode esperar o forum.css fica nele.
  */
 class AddCriticalCss
 {
@@ -29,64 +31,45 @@ class AddCriticalCss
 
     public function __invoke(Document $document, ServerRequestInterface $request): void
     {
-        // Única declaração das @font-face do tema (o less/common/fonts.less saiu):
-        // mesma URL do preload do AddCriticalPreloads, ver ThemeFonts. A família
-        // é a escolhida no admin; o LESS a lê de --avocado-font-sans (@font-sans).
+        // Única declaração das @font-face do tema: mesma URL do preload (ThemeFonts).
         $fontFaces = $this->fonts->fontFaces();
         $fontStack = $this->fonts->stack();
 
-        // ── Logo size reservation ─────────────────────────────────────────────
-        // The theme's main CSS gates logo constraints behind
-        //   html[data-avocado-logo-custom="true"] { … }
-        // That attribute is set by JS, which runs AFTER the first paint.
-        // Because both core and extension CSS are loaded asynchronously, the
-        // logo renders unstyled (full/natural size) until CSS arrives → visible
-        // flicker / jump (the Flarum v2 async-stylesheet issue).
-        //
-        // Fix: replicate the logo constraints here, without the JS attribute
-        // selector, so they apply from the very first rendered frame.
+        // ── Tamanho do logo ───────────────────────────────────────────────────
+        // Repete as regras do logo sem o seletor de atributo: com o CSS assíncrono
+        // o logo apareceria no tamanho natural até o forum.css chegar.
         $logoEnabled = (bool) $this->settings->get('avocado.logo_enabled', false);
         $logoSvg     = trim((string) ($this->settings->get('avocado.logo_svg') ?? ''));
         $hasSvgLogo  = $logoEnabled && $logoSvg !== '';
 
         if ($hasSvgLogo) {
-            // SVG logo — JS will set explicit width/height from the viewBox, but
-            // we reserve 50 px height immediately so the header doesn't shift.
+            // O JS define o tamanho pelo viewBox; os 50px reservam o espaço até lá.
             $logoReservation = 'svg.Header-logo,svg.AvocadoLogoSvg{height:50px;width:auto;max-width:none;max-height:none;display:inline-block;vertical-align:middle;flex-shrink:0;overflow:visible}';
         } elseif ($logoEnabled) {
-            // Admin-uploaded PNG / fallback image logo.
             $logoReservation = 'img.Header-logo{height:35px;width:auto;max-width:200px;display:inline-block;vertical-align:middle}';
         } else {
-            // No custom logo — mirror Flarum core default so any admin-uploaded
-            // image or forum-name heading is constrained before the main CSS loads.
+            // Sem logo do tema: o mesmo limite do core.
             $logoReservation = '.Header-logo{max-height:30px;display:block}';
         }
 
-        // ── Header title flex alignment (custom logo only) ────────────────────
-        // App.less gates this behind html[data-avocado-logo-custom="true"] which is
-        // set by HideLogoFlash.php's inline <script>. That script runs before any
-        // render, so the attribute IS present at first paint — but the main CSS
-        // that targets it is async and arrives later. We replicate those rules here
-        // so the title flex layout is correct from the very first frame.
+        // ── Alinhamento do título (só com logo do tema) ───────────────────────
+        // O atributo já existe no primeiro paint (HideLogoFlash), mas a regra do
+        // App.less só chega com o CSS assíncrono.
         $logoTitleCss = $logoEnabled
             ? '.App-header .Header-title{display:flex!important;align-items:center!important;padding:5px 0}' .
               '#home-link.Header-logo{display:flex;align-items:center;justify-content:center;min-height:50px}'
             : '';
 
-        // ── Hero image size reservation ───────────────────────────────────────
-        // Reserve vertical space for the hero banner so CLS is zero.
-        // aspect-ratio gives proportional reservation across all viewport widths,
-        // while min-height provides a floor on mobile to avoid too-short banners.
+        // ── Espaço do hero ────────────────────────────────────────────────────
+        // Reservado para evitar CLS; o min-height impede um banner baixo demais no celular.
         $hasHero = !empty(trim((string) $this->settings->get('avocado.hero_image')));
         $heroReservation = $hasHero
             ? '.Hero--banner{aspect-ratio:3/1;min-height:280px;contain:layout style}@media(min-width:768px){.Hero--banner{min-height:400px}}'
             : '';
 
-        // ── Showcase grid mobile layout ───────────────────────────────────────
-        // On mobile the showcase grid is a horizontal scroll carousel (display:flex,
-        // overflow-x:auto). Before async CSS loads it renders as a plain block div
-        // and cards stack vertically, then jump to horizontal — same flash as the nav.
-        // Mirror the @phone rules from HomePage.less immediately.
+        // ── Showcase no celular ───────────────────────────────────────────────
+        // Carrossel horizontal desde o primeiro quadro: sem isto os cards empilham
+        // até o CSS chegar (as regras @phone do HomePage.less).
         $showcaseEnabled = (bool) $this->settings->get('avocado.showcase_enabled', false);
         $showcaseCss = $showcaseEnabled
             ? '@media(max-width:767px){' .
@@ -95,21 +78,13 @@ class AddCriticalCss
               '}'
             : '';
 
-        // ── Mobile nav controls ───────────────────────────────────────────────
-        // .AvocadoNav-helper wraps the IndexSidebar that provides the phone-header
-        // dropdown nav. Before the main CSS loads it renders as a visible block
-        // in the page content — the same async-stylesheet flash that affects the
-        // logo. We hide it immediately and ensure the absolutely-positioned phone
-        // controls (.App-primaryControl, .App-titleControl, .App-backControl) are
-        // placed correctly from the first frame so they never "jump" into view.
-        // Breakpoints mirror Flarum core: @phone ≤ 767 px, @tablet-up ≥ 768 px.
+        // ── Controles de navegação no celular ─────────────────────────────────
+        // Esconde o .AvocadoNav-helper e posiciona os controles do cabeçalho antes do
+        // CSS chegar, para não pularem na tela. Breakpoints do core: @phone ≤ 767px.
         $mobileNavCss =
-            // Collapse the nav helper on all viewports so it is invisible before
-            // main CSS arrives. On tablet+ the main CSS adds display:none later.
             '.AvocadoNav-helper{height:0;overflow:hidden}' .
             '@media(max-width:767px){' .
-                // Mirror Flarum core App.less phone rules so controls are
-                // positioned BEFORE forum.css / ramon-avocado.css arrive.
+                // Mesmas regras de celular do App.less do core.
                 '.App-primaryControl,.App-titleControl,.App-backControl{' .
                     'position:absolute!important;top:0!important;margin:0;' .
                     'z-index:1001}' .
@@ -118,23 +93,12 @@ class AddCriticalCss
                 '.App-backControl{left:0}' .
             '}';
 
-        // NOTE: `contain:layout` on `.App-header` is scoped to tablet-up (768px+).
-        // On phone the header is rendered INSIDE the `.App-drawer`, and `contain`
-        // makes the element a containing block for `position:fixed` descendants.
-        // Flarum's phone dropdowns are bottom sheets (`position:fixed;bottom:0;
-        // left:0;right:0`) — trapped inside the header box they collapse into a
-        // tiny panel anchored to the drawer's top-left instead of sliding up over
-        // the viewport. The header is also the drawer's stacking context there,
-        // which is what forced the `.App-titleControl` visibility workaround above.
+        // `contain:layout` no `.App-header` só do tablet para cima: no celular o
+        // cabeçalho fica dentro do `.App-drawer` e prenderia os dropdowns
+        // `position:fixed` (bottom sheets) dentro dele.
         //
-        // NOTE: `.App` MUST use `min-height:100vh`, never `height:100%`.
-        // Core's sticky-footer layout makes `.App` a flex column whose `.App-content`
-        // child has `flex:1`. With a definite `height` the `.App` box is capped to the
-        // viewport and tall page content overflows it — any <body>-level element placed
-        // after #app (e.g. the `modern-footer` extension's <footer id="modern-footer">,
-        // or core's raw `custom_footer`) then lands at the 100vh mark and is painted
-        // over by the overflowing content. `min-height` lets `.App` grow with content,
-        // mirroring core's real `.App` rule in forum.css.
+        // `.App` usa `min-height:100vh`, nunca `height:100%`: com altura fixa o
+        // conteúdo transborda e um rodapé depois do #app fica pintado por baixo dele.
         $css = <<<CSS
         {$fontFaces}
         :root{--avocado-font-sans:{$fontStack}}
@@ -151,7 +115,6 @@ class AddCriticalCss
         {$showcaseCss}
         CSS;
 
-        // Strip extra whitespace/newlines introduced by heredoc indentation
         $css = preg_replace('/\s*\n\s*/', '', trim($css));
 
         $document->head[] = '<style id="avocado-critical">' . $css . '</style>';

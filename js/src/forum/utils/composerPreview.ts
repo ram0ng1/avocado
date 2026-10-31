@@ -4,17 +4,12 @@ import TextEditor from 'flarum/common/components/TextEditor';
 import { trans } from '../utils';
 
 /**
- * Prévia dentro do compositor (opção do admin `avocado.composer_preview`).
- *
- * O compositor do core (responder, editar, nova discussão, mensagem) ganha o
- * mesmo botão de prévia do compositor da home: o olho troca o editor pelo post
- * formatado, no mesmo lugar. Em tela cheia o botão divide a tela — editor à
- * esquerda, prévia ao vivo à direita. Com isso a prévia que o core desenha no
- * fim da discussão enquanto se responde (a ReplyPlaceholder em modo
- * `CommentPost editing`) sai: a prévia passa a morar no compositor.
+ * Prévia dentro do compositor do core (`avocado.composer_preview`): o mesmo
+ * botão do compositor da home troca o editor pelo post formatado; em tela cheia
+ * divide a tela. A prévia que o core desenha no fim da discussão sai.
  *
  * Só o compositor do core (`attrs.composer === app.composer`): o da home tem a
- * sua prévia própria, e o chat não usa TextEditor com o app.composer.
+ * própria prévia e o chat não usa TextEditor com o app.composer.
  */
 
 const enabled = (): boolean => !!app.forum?.attribute('avocadoComposerPreview');
@@ -123,8 +118,8 @@ export default function installComposerPreview(): void {
         ? trans('ramon-avocado.forum.composer.hide_preview', 'Hide preview')
         : trans('ramon-avocado.forum.home.composer_preview', 'Preview');
 
-    // O `preview` do core só rola até a prévia no fim da discussão — a mesma
-    // função deste botão; os dois juntos eram dois olhos idênticos na barra.
+    // O `preview` do core só rola até a prévia no fim da discussão, a mesma função
+    // deste botão: os dois juntos seriam dois olhos idênticos na barra.
     if (items.has('preview')) items.remove('preview');
 
     items.add(
@@ -159,13 +154,9 @@ export default function installComposerPreview(): void {
     if (shown && Array.isArray(vnode.children)) vnode.children.splice(1, 0, m(PreviewPane as any));
   });
 
-  // A prévia no fim da discussão sai. Enquanto se responde a esta discussão a
-  // caixa do fim some (um "Escreva uma resposta…" em cima do compositor já
-  // aberto seria redundante); fechado o compositor, ela volta.
-  //
-  // Some só da vista: o botão continua lá, invisível, ocupando o mesmo espaço.
-  // Tirá-lo do fluxo encolhia a página no clique — e, com a rolagem no fim, o
-  // navegador a reajustava e o conteúdo descia de uma vez.
+  // A prévia no fim da discussão sai: enquanto se responde a esta discussão a
+  // caixa do fim some, e volta ao fechar o compositor. Some só da vista, ocupando
+  // o mesmo espaço: tirá-la do fluxo encolheria a página e o conteúdo pularia.
   override('flarum/forum/components/ReplyPlaceholder', 'view', function (this: any, original: () => any) {
     if (!enabled() || !(app.composer as any).composingReplyTo?.(this.attrs.discussion)) return original();
 

@@ -32,42 +32,30 @@ import UserControls from 'flarum/forum/utils/UserControls';
 import DiscussionHero from 'flarum/forum/components/DiscussionHero';
 import DiscussionPage from 'flarum/forum/components/DiscussionPage';
 import PageStructure from 'flarum/forum/components/PageStructure';
-// PostStream is code-split (lazy-loaded by DiscussionPage).
-// Do NOT import it statically — use the string-based extend/override so that
-// flarum.reg.onLoad() applies the patch after the module is loaded.
+// O PostStream é code-split: nada de import estático. O extend/override por
+// string deixa o flarum.reg.onLoad() aplicar o patch quando o módulo carrega.
 import { tagPageView } from './components/TagsPage';
 import HomePage from './components/HomePage';
 import normalizeRevManifest from './utils/revManifest';
-// O modal de lembrete dos salvos e a página do changelog viraram chunks lazy
-// (≈14 KB a menos no bundle de toda página). Antes eles iam no bundle principal
-// porque, no Windows, o chunk era pedido sem `?v=` e ficava preso em cache
-// "immutable" no CDN; o `normalizeRevManifest` (initializer abaixo) devolve o
-// `?v=<hash do conteúdo>` às URLs dos chunks, então um chunk alterado é uma URL nova.
+// O modal de lembrete e a página do changelog são chunks lazy. O
+// `normalizeRevManifest` (initializer abaixo) põe o `?v=<hash>` nas URLs dos
+// chunks; sem ele um chunk ficaria preso no cache "immutable" do CDN.
 const BookmarkModal = () => import('./components/BookmarkModal');
 const AvocadoChangelogPage = () => import('./components/ChangelogPage');
-// A página "Salvos" entra no bundle principal em vez de virar chunk: com o
-// fof/bookmarks ativo ela atende a rota dele, e o bundle dele usa ids numéricos
-// de webpack no `webpackChunkmodule_exports` compartilhado — a colisão de ids
-// entre runtimes que o webpack.config comenta ("s[t] is not a function") aparece
-// justamente ao carregar chunk nessa rota. Sem chunk, sem colisão.
+// A página "Salvos" fica no bundle principal: com o fof/bookmarks ativo ela
+// atende a rota dele, e carregar chunk nessa rota colide com os ids numéricos
+// do webpack no bundle do fof ("s[t] is not a function").
 import AvocadoBookmarksPage from './components/BookmarksPage';
 import BookmarkReminderNotification from './components/BookmarkReminderNotification';
 import { buildUserPhoneNav, buildHero, buildSidebar } from './components/UserProfileBuilders';
 
 // ─── Lazy route components ────────────────────────────────────────────────────
-// Flarum's DefaultResolver.onmatch expects either:
-//   a) component.prototype instanceof Component  → used directly as a class
-//   b) an async function () → Promise<{ default: Comp }>  → called and .default used
-// Pattern (b) is the "AsyncNewComponent" type in Flarum's typings.
-// autoChunkNameLoader (flarum-webpack-config) automatically injects
-// webpackChunkName comments so each import() becomes its own JS chunk
-// registered with flarum.reg.addChunkModule().
+// O DefaultResolver aceita uma função async que devolve `{ default: Comp }`. O
+// autoChunkNameLoader do flarum-webpack-config põe o webpackChunkName em cada import().
 
-// Sem `webpackPrefetch` de propósito: o loader da Flarum só substitui o carregamento
-// do chunk (`flarum.reg.loadChunk`), e o `<link rel="prefetch">` do webpack usaria a
-// URL do runtime (`/assets/forum/components/X.js`), que não existe — o chunk mora em
-// `/assets/js/ramon-avocado/forum/components/`. Além disso o prefetch somaria esses
-// bytes a todo primeiro acesso. Todos os chunks baixam só quando a rota é aberta.
+// Sem `webpackPrefetch` de propósito: o `<link rel="prefetch">` usaria a URL do
+// runtime do webpack, que não existe (o chunk mora em
+// `/assets/js/ramon-avocado/forum/components/`), e somaria bytes a todo acesso.
 
 const AllDiscussionsPage = () => import('./components/AllDiscussionsPage');
 const AvocadoTagPage = () => import('./components/TagPage');
@@ -75,15 +63,14 @@ const AvocadoTeamPage = () => import('./components/TeamPage');
 const AvocadoPostsSearchPage = () => import('./components/AvocadoPostsSearchPage');
 const AvocadoSearchPage = () => import('./components/AvocadoSearchPage');
 
-// UserProfilePage uses named exports — wrap each into { default: Comp } shape.
-// All four share the same webpack chunk so the module is only fetched once.
+// UserProfilePage tem exports nomeados: cada um vira `{ default: Comp }`. Os
+// quatro dividem o mesmo chunk.
 const AvocadoUserPostsPage = () => import('./components/UserProfilePage').then((m) => ({ default: m.AvocadoUserPostsPage }));
 const AvocadoUserDiscussionsPage = () => import('./components/UserProfilePage').then((m) => ({ default: m.AvocadoUserDiscussionsPage }));
 const AvocadoUserLikesPage = () => import('./components/UserProfilePage').then((m) => ({ default: m.AvocadoUserLikesPage }));
 const AvocadoUserMentionsPage = () => import('./components/UserProfilePage').then((m) => ({ default: m.AvocadoUserMentionsPage }));
 import AvocadoDiscussionStats from './components/AvocadoDiscussionStats';
 import Footer from 'flarum/forum/components/Footer';
-// FIX: utils centralises helpers that were duplicated in every component file
 import {
   trans,
   cssString,
@@ -142,23 +129,23 @@ import extractText from 'flarum/common/utils/extractText';
 
 // ─── Settings helpers ─────────────────────────────────────────────────────────
 
-// PHP side uses boolval in serializeToForum, so values arrive as true/false/null.
+// O PHP usa boolval no serializeToForum: chega true/false/null.
 const settingEnabled = (key, defaultValue = true) => {
   const val = app.forum?.attribute(key);
   if (val === null || val === undefined) return defaultValue;
   return !!val;
 };
 
-// Returns true when the URL has gambit filter params (e.g. filter[author]=ramon).
-// Mithril parses filter[key]=value into an object for m.route.param('filter').
+// A URL tem filtros de gambit (ex.: filter[author]=ramon)? O Mithril transforma
+// filter[key]=value num objeto em m.route.param('filter').
 const hasFilterParams = () => {
   const filter = m.route.param('filter');
   return filter !== null && filter !== undefined && typeof filter === 'object' && Object.keys(filter).length > 0;
 };
 
 const hasIndexFilters = () => {
-  // 'sort' is intentionally excluded so /?sort=latest still shows the custom home.
-  // 'filter' IS included: gambit-only searches (no text q) still show search results.
+  // 'sort' fica de fora para /?sort=latest continuar na home do tema; 'filter'
+  // entra porque busca só com gambit ainda mostra resultados.
   if (hasFilterParams()) return true;
   return ['q', 'tags', 'page'].some((name) => {
     const value = m.route.param(name);
@@ -169,12 +156,12 @@ const hasIndexFilters = () => {
 const hasSearchQuery = () => {
   const q = m.route.param('q');
   if (q !== null && q !== undefined && String(q).length > 0) return true;
-  // Gambit-only search: no text query but filter params present (e.g. author:ramon)
+  // Busca só com gambit: sem texto, mas com filtros (ex.: author:ramon).
   return hasFilterParams();
 };
 
-// customHomeEnabled: V2 homepage is active whenever V2 itself is on (and no filters active).
-// avocado.home_enabled no longer exists as a separate setting — it's unified with v2_enabled.
+// A home do tema segue o v2_enabled (não há setting própria) e sai de cena com
+// filtros ativos.
 const customHomeEnabled = () => settingEnabled('avocadoV2Enabled', true) && !hasIndexFilters();
 
 const setClassName = (vdom, className, enabled) => {
@@ -201,8 +188,8 @@ const getPostPermalink = (post) => {
 };
 
 // ─── Code block: language label + copy button ─────────────────────────────────
-// Nome curto para os apelidos mais comuns; o resto sai como foi escrito (o CSS
-// põe em maiúsculas). `null` = não é linguagem, a barra fica sem rótulo.
+// Os apelidos comuns ganham nome curto; o resto sai como foi escrito (o CSS põe
+// em maiúsculas). `null` = não é linguagem, a barra fica sem rótulo.
 const CODE_LANG_LABELS: Record<string, string | null> = {
   js: 'JS',
   javascript: 'JS',
@@ -227,12 +214,9 @@ const CODE_LANG_LABELS: Record<string, string | null> = {
 };
 
 /**
- * Linguagem DECLARADA no bloco (```python / [code=python]), ou null.
- *
- * O formatter só emite `language-x` quando o autor declarou; o hljs-loader, ao
- * adivinhar a linguagem de um bloco sem declaração, acrescenta `hljs` e DEPOIS
- * `language-<palpite>`. Por isso só vale a classe que vem antes de `hljs` —
- * rotular o palpite mostraria "SCSS" num trecho de Python.
+ * Linguagem declarada no bloco (```python / [code=python]), ou null. O
+ * hljs-loader, ao adivinhar, acrescenta `hljs` e depois `language-<palpite>`:
+ * só vale a classe que vem antes de `hljs`, senão Python sairia como "SCSS".
  */
 const declaredCodeLanguage = (code: Element | null): string | null => {
   if (!code) return null;
@@ -253,7 +237,6 @@ const declaredCodeLanguage = (code: Element | null): string | null => {
 const initCodeBlocks = (root: HTMLElement | null) => {
   if (!root) return;
   root.querySelectorAll<HTMLElement>('pre').forEach((pre) => {
-    // Only inject once
     if (pre.querySelector('.avocado-code-copy')) return;
 
     // Rótulo na barra do topo, via pre[data-code-lang]::before (mixin
@@ -293,13 +276,10 @@ const initCodeBlocks = (root: HTMLElement | null) => {
 };
 
 // ─── Fancybox gallery arrows (flectar/flarum-fancybox) ────────────────────────
-// A extensão monta o carrossel da galeria sem setas nem pontos: só a 1ª foto
-// aparece e nada indica que há mais. O carrossel já trata, por delegação no
-// próprio container, cliques em [data-carousel-go-prev/next] (e atualiza o
-// aria-disabled deles) e reescreve [data-carousel-page/pages] a cada troca —
-// então basta pôr os botões e o contador lá dentro. O
-// refreshContent dela roda dentro do oncreate/onupdate original do CommentPost,
-// antes destes hooks, por isso o carrossel já está pronto (.fancybox-ready).
+// A extensão monta o carrossel sem setas nem contador. Ele já trata, por
+// delegação, cliques em [data-carousel-go-prev/next] e reescreve
+// [data-carousel-page/pages]: basta pôr os botões lá dentro. Estes hooks rodam
+// depois do refreshContent dela, com o carrossel pronto (.fancybox-ready).
 const initGalleryNav = (root: HTMLElement | null) => {
   if (!root) return;
   root.querySelectorAll<HTMLElement>('.fancybox-gallery.fancybox-ready').forEach((gallery) => {
@@ -350,12 +330,12 @@ const initGalleryNav = (root: HTMLElement | null) => {
 };
 
 // ─── Reaction count: inject "1" badge when extension omits it ────────────────
-// fof/reactions only renders <span class="count"> when count > 1.
-// For count=1 we parse the aria-label and inject the count manually.
+// O fof/reactions só desenha <span class="count"> com count > 1; para 1 a
+// contagem sai do aria-label.
 const fixReactionCounts = (root: HTMLElement | null) => {
   if (!root) return;
   root.querySelectorAll<HTMLElement>('.Button-emoji-parent').forEach((btn) => {
-    if (btn.querySelector('.count')) return; // already has count
+    if (btn.querySelector('.count')) return;
     const label = btn.getAttribute('aria-label') || '';
     const match = label.match(/\((\d+)/);
     if (!match) return;
@@ -370,25 +350,21 @@ const fixReactionCounts = (root: HTMLElement | null) => {
 };
 
 // ─── Unreact button: replace generic SVG with the user's reacted emoji ───────
-// When user has reacted, the extension renders an unreact button with the same
-// smiley SVG as the react button. We replace it with the user's emoji from the
-// active count badge (which lives in Post-footer, sibling of Post-actions inside
-// the same Post-main).
+// Depois de reagir, o botão de desfazer usa o mesmo smiley do de reagir: troca
+// pelo emoji do selo ativo, que fica no Post-footer.
 const fixUnreactButton = (root: HTMLElement | null) => {
   if (!root) return;
   root.querySelectorAll<HTMLElement>('.Reactions').forEach((wrapper) => {
-    // Unreact state: .Reactions directly contains the button (no .Reactions--react wrapper)
+    // Reagido: o botão fica direto em .Reactions, sem o wrapper .Reactions--react.
     if (wrapper.querySelector('.Reactions--react')) return;
     const btn = wrapper.querySelector<HTMLElement>('.Reactions--ShowReactions');
     if (!btn || btn.dataset.emojiFixed) return;
 
-    // Find the active reaction badge in Post-main (may be in adjacent Post-footer)
     const postMain = wrapper.closest<HTMLElement>('.Post-main');
     if (!postMain) return;
     const activeBadge = postMain.querySelector<HTMLElement>('.Button-emoji-parent.active');
     if (!activeBadge) return;
 
-    // Clone the emoji element from the badge
     const emojiEl = activeBadge.querySelector<HTMLElement>('img.emoji, .emoji, .reaction-icon');
     if (!emojiEl) return;
 
@@ -396,7 +372,6 @@ const fixUnreactButton = (root: HTMLElement | null) => {
     if (!svgEl) return;
 
     const emojiClone = emojiEl.cloneNode(true) as HTMLElement;
-    // Ensure consistent sizing inside the button
     emojiClone.style.width = '18px';
     emojiClone.style.height = '18px';
     svgEl.replaceWith(emojiClone);
@@ -412,9 +387,8 @@ const syncUserOnline = (component) => {
   if (!root) return;
   const side = root.querySelector('.Post-side');
   if (!side) return;
-  // Roda a cada redraw (o "online" vence com o tempo, sem o model mudar), então
-  // só escreve no DOM quando o estado muda: remover e repor a classe todo redraw
-  // gerava mutação de atributo à toa em cada post visível.
+  // Roda a cada redraw (o "online" vence sem o model mudar), então só escreve no
+  // DOM quando o estado muda, sem mutar atributos à toa em cada post visível.
   const online = !!root.querySelector('.PostUser-name .UserOnline, .Post-header .UserOnline');
   if (side.classList.contains('Post-side--online') !== online) side.classList.toggle('Post-side--online', online);
 };
@@ -428,9 +402,8 @@ const isExternalLink = (link) => {
   }
 };
 
-// A link is "raw" when its visible text is just the URL itself (or empty). In
-// that case there's no descriptive context worth keeping, so the whole link is
-// swapped for the placeholder — otherwise we'd preserve an ugly bare URL.
+// Link "cru": o texto visível é a própria URL (ou vazio). Sem contexto a
+// preservar, o link inteiro vira o placeholder.
 const isRawUrlLink = (link) => {
   const text = (link.textContent || '').trim();
   if (!text) return true;
@@ -439,8 +412,7 @@ const isRawUrlLink = (link) => {
   return false;
 };
 
-// Build the lock-icon pill shown in place of (or alongside) a gated link.
-// data-avocado-gated prevents double-processing on onupdate redraws.
+// data-avocado-gated evita reprocessar nos redraws do onupdate.
 const buildGuestLinkPlaceholder = (label) => {
   const placeholder = document.createElement('span');
   placeholder.className = 'AvocadoGuestLink';
@@ -476,8 +448,8 @@ const gateGuestLinks = (component) => {
   const body = root.querySelector('.Post-body');
   if (!body) return;
 
-  // Only external links are replaced. Internal links (mentions, discussion links, etc.) are left untouched.
-  // Post-body HTML is the formatter output already rendered by core; safe to mutate directly.
+  // Só links externos são trocados. O HTML do post já é a saída do formatter
+  // renderizada pelo core, então pode ser alterado direto.
   const label = trans('ramon-avocado.forum.link_cta.placeholder', 'Login to view link');
 
   body.querySelectorAll('a[href]:not([data-avocado-gated])').forEach((link) => {
@@ -492,8 +464,8 @@ const gateGuestLinks = (component) => {
       return;
     }
 
-    // Preserve the original link's visible text/markup so the surrounding
-    // sentence still reads naturally, then append " (placeholder)" right after.
+    // Mantém o texto original do link, para a frase continuar legível, e põe o
+    // placeholder logo depois.
     while (link.firstChild) {
       parent.insertBefore(link.firstChild, link);
     }
@@ -505,13 +477,6 @@ const gateGuestLinks = (component) => {
 };
 
 // ─── Threads style: inject tagRow + title into the OP CommentPost ────────────
-// Mirrors Avocado-threadView-tagRow + Avocado-threadView-title from kit.css.
-// Structure after injection:
-//   .Post-header  (meta: author · time)
-//   .AvocadoThreads-tagRow  (tag pills — separate row)
-//   h2.AvocadoThreads-title  (discussion title)
-//   .Post-body    (full post content)
-//   .Post-footer  (stats bar)
 const initThreadsTitleBlock = (component) => {
   if (!settingEnabled('avocadoThreadsStyle', false)) return;
   const post = component.attrs?.post;
@@ -526,7 +491,6 @@ const initThreadsTitleBlock = (component) => {
   const postHeader = postMain?.querySelector<HTMLElement>('.Post-header');
   if (!postMain || !postHeader) return;
 
-  // ── Tag row (separate row below meta — matches .Avocado-threadView-tagRow) ──
   const tags = (discussion.tags?.() || []).filter(Boolean);
   const tagRow = document.createElement('div');
   tagRow.className = 'AvocadoThreads-tagRow';
@@ -558,12 +522,10 @@ const initThreadsTitleBlock = (component) => {
     tagRow.appendChild(pill);
   });
 
-  // ── Title (matches .Avocado-threadView-title: 32px/900) ──────────────────────
   const titleEl = document.createElement('h2');
   titleEl.className = 'AvocadoThreads-title';
   titleEl.textContent = discussion.title?.() || '';
 
-  // Insert: tagRow first, then title — both after Post-header
   postHeader.insertAdjacentElement('afterend', titleEl);
   postHeader.insertAdjacentElement('afterend', tagRow);
 
@@ -589,35 +551,19 @@ app.initializers.add('avocado-rev-manifest', normalizeRevManifest, 1000);
 app.initializers.add(
   'ramon-avocado',
   () => {
-    // ── 0a. Remove the server-rendered custom-footer copy ─────────────────────
-    // Flarum's blade emits the admin's custom footer TWICE worth of markup:
-    //   1. <footer class="App-footer" id="footer"></footer> inside #app — an
-    //      empty Mithril mount target (core's Footer.view() returns null);
-    //   2. {!! $forum['footerHtml'] !!} — the admin's `custom_footer` HTML,
-    //      printed RAW as a <body> child sitting between #app and #modal.
-    //      See vendor/flarum/core/views/frontend/{app,forum}.blade.php.
-    //
-    // The avocado theme renders that HTML inside the in-#app mount instead
-    // (block 25 below: the Footer.view override) so the layout stays inside
-    // #app and core's pane-aware `margin-left: var(--pane-width)` keeps working.
-    // The server-rendered body-level copy (#2) is therefore a duplicate and
-    // must be removed — otherwise the page shows two footers.
-    //
-    // The old `body > footer#footer` selector only matched when the admin
-    // happened to wrap their footer in exactly `<footer id="footer">`. Core
-    // does NOT wrap `custom_footer`, so any other markup (a <div>, plain text,
-    // a <footer> with a different id) left the duplicate in place. Instead we
-    // clear every <body> node between #app and #modal: that span is exactly
-    // the `custom_footer` output — head/foot Document injectors land in <head>
-    // or after the boot scripts, never here.
+    // ── Remove the server-rendered custom-footer copy ─────────────────────
+    // O blade do Flarum imprime o `custom_footer` do admin cru, como filho do <body>
+    // entre #app e #modal. O tema desenha esse HTML dentro do #app (override do
+    // Footer.view), então a cópia do servidor é duplicada e sai daqui. O core não
+    // embrulha o `custom_footer`, por isso limpa todo nó entre #app e #modal; os
+    // injetores de head/foot nunca caem nesse trecho.
     try {
       const appEl = document.getElementById('app');
       const modalEl = document.getElementById('modal');
       if (appEl && appEl.parentElement === document.body) {
         let node: ChildNode | null = appEl.nextSibling;
         while (node && node !== modalEl) {
-          // Safety net: if #modal is somehow absent, never walk into the boot
-          // scripts — stop before them rather than deleting the SPA payload.
+          // Sem #modal, para antes dos scripts do boot em vez de apagar o payload do SPA.
           if (!modalEl && /^(script|noscript)$/i.test(node.nodeName)) break;
           const next: ChildNode | null = node.nextSibling;
           document.body.removeChild(node);
@@ -625,11 +571,11 @@ app.initializers.add(
         }
       }
     } catch (_) {
-      /* defensive — never block boot */
+      /* nunca bloqueia o boot */
     }
 
-    // ── 0. Register custom routes ─────────────────────────────────────────────
-    // The /discussions page is always registered so direct links keep working.
+    // ── Register custom routes ─────────────────────────────────────────────
+    // /discussions é sempre registrada, para links diretos continuarem funcionando.
     app.routes['avocado-team'] = { path: '/team', component: AvocadoTeamPage };
     // Changelog: /changelog junta os produtos, /changelog/:product filtra um (slug da tag).
     app.routes['avocado-changelog'] = { path: '/changelog', component: AvocadoChangelogPage };
@@ -660,55 +606,44 @@ app.initializers.add(
       return target ? original(target.name, target.params) : original(name, params);
     });
     app.routes['avocado-discussions'] = { path: '/discussions', component: AllDiscussionsPage };
-    // Página "Salvos". Com o fof/bookmarks ativo quem registra a rota é ele
-    // (registrar as duas derrubava o boot do Flarum — FastRoute recusa dois GET
-    // no mesmo path, ver Support\BookmarksRoute); o tema então só troca o
-    // componente, para a lista sair em ThreadCard como no resto do fórum.
+    // Página "Salvos". Com o fof/bookmarks ativo a rota é dele (o FastRoute recusa
+    // dois GET no mesmo path e derrubaria o boot, ver Support\BookmarksRoute); o
+    // tema só troca o componente, para a lista sair em ThreadCard.
     app.routes[usesFofBookmarks() ? 'fof-bookmarks' : 'avocado-bookmarks'] = {
       path: BOOKMARKS_PATH,
       component: AvocadoBookmarksPage,
     };
-    // Replace Flarum's default PostsPage (/posts?q=) with our Avocado-styled version.
+    // No lugar do PostsPage do core (/posts?q=).
     app.routes['posts'] = { path: '/posts', component: AvocadoPostsSearchPage };
-    // Unified search page — Discussions / Posts / Users tabs.
     app.routes['avocado-search'] = { path: '/search', component: AvocadoSearchPage };
 
-    // Override the tags extension's individual tag route with our custom page.
     app.routes['tag'] = { path: '/t/:tags', component: AvocadoTagPage };
-    // User profile pages — standalone Avocado components
-    // 'user.posts' has the same path as 'user' and is processed after it by mapRoutes,
-    // so it overwrites 'user' in the mithril route map. Override both to ensure our
-    // component wins for /u/:username.
+    // 'user.posts' tem o mesmo path de 'user' e o mapRoutes o processa depois,
+    // sobrescrevendo 'user': troca os dois para o componente do tema valer em /u/:username.
     app.routes['user'] = { path: '/u/:username', component: AvocadoUserPostsPage };
     app.routes['user.posts'] = { path: '/u/:username', component: AvocadoUserPostsPage };
     app.routes['user.discussions'] = { path: '/u/:username/discussions', component: AvocadoUserDiscussionsPage };
     app.routes['user.likes'] = { path: '/u/:username/likes', component: AvocadoUserLikesPage };
     app.routes['user.mentions'] = { path: '/u/:username/mentions', component: AvocadoUserMentionsPage };
 
-    // ── 1. Theme class + logo override (needs app.forum — use beforeMount) ──────
-    // initialize() runs before store.pushPayload() and before app.forum is set.
-    // app.beforeMount() callbacks run after app.forum is set, before Mithril mounts.
+    // ── Theme class + logo override (needs app.forum — use beforeMount) ──────
+    // O initialize() roda antes do pushPayload e de app.forum existir; o
+    // beforeMount roda depois disso, antes do Mithril montar.
     app.beforeMount(() => {
-      // Preload eager removido — Lighthouse acusava ~537 KB de "JS não usado"
-      // porque os 4 chunks baixavam mesmo em rotas que nunca os consomem
-      // (home, /discussions, /tags). Agora todos carregam só na navegação
-      // (sem prefetch: ver o comentário junto das rotas lazy, no topo).
+      // Os chunks carregam só na navegação, sem preload: baixá-los no boot pesaria em
+      // rotas que nunca os usam (home, /discussions, /tags).
 
-      // Theme class on <html> — added whenever V2 is active
       document.documentElement.classList.add('avocado-theme');
 
-      // Detect mobile-tab extension and add class if present
+      // Classe para o CSS quando a extensão mobile-tab está ativa.
       if (app.extensions && app.extensions['android-com-pl/mobile-tab']) {
         document.documentElement.classList.add('has-mobile-tab');
       }
 
-      // Custom SVG logo override.
-      // PHP adds <style>#home-link{visibility:hidden}</style> to <head> so the
-      // forum title never flashes. Caminho rápido: com o viewBox já medido no
-      // admin, o HideLogoFlash embute o SVG e um script no <head> troca o
-      // conteúdo do #home-link ainda no parse — aqui só sobra conferir.
-      // Fallback (logo novo, ainda sem medida): busca o SVG, mede o recorte com
-      // getBBox (common/logoViewBox) e insere, como sempre foi.
+      // Logo SVG próprio. O PHP esconde o #home-link no <head> para o título não
+      // piscar. Com o viewBox já medido o HideLogoFlash embute o SVG ainda no parse e
+      // aqui só sobra conferir; no fallback (logo sem medida) busca, mede com getBBox
+      // (common/logoViewBox) e insere.
       if (settingEnabled('avocadoLogoEnabled', false)) {
         const logoSvgPath = app.forum.attribute('avocadoLogoSvg');
         const homeLink = document.getElementById('home-link');
@@ -736,10 +671,10 @@ app.initializers.add(
               const out = svgEl.cloneNode(true);
               if (tightViewBox) out.setAttribute('viewBox', tightViewBox);
 
-              // Compute explicit width so the SVG doesn't collapse in flex containers.
-              // height is fixed at 50px for better visibility; width = 50 * (viewBox-width / viewBox-height).
+              // Largura explícita para o SVG não colapsar em flex: altura fixa de 50px e
+              // largura proporcional ao viewBox.
               const LOGO_H = 50;
-              let logoW = LOGO_H; // fallback: square
+              let logoW = LOGO_H; // sem viewBox: quadrado
               if (tightViewBox) {
                 const vbParts = tightViewBox.split(' ');
                 const vbW = parseFloat(vbParts[2]);
@@ -762,7 +697,7 @@ app.initializers.add(
               restoreVisibility();
             })
             .catch(() => {
-              // Fallback: plain <img> (no getBBox cropping)
+              // Fallback: <img> simples, sem o recorte do getBBox.
               const img = document.createElement('img');
               img.src = logoUrl;
               img.alt = app.forum.attribute('title') || '';
@@ -775,21 +710,19 @@ app.initializers.add(
           restoreVisibility();
         }
       } else {
-        // No Avocado custom logo — PHP may have hidden #home-link because Flarum has
-        // a default logo image set. If so, reveal it once the <img> fires its load event.
-        // The <img> is created by Mithril AFTER mount, so we watch with MutationObserver.
+        // Sem logo próprio, o PHP pode ter escondido o #home-link por causa do logo
+        // padrão do Flarum: revela no load da <img>, que o Mithril cria depois do mount.
         const logoHide = document.getElementById('avocado-logo-hide');
         if (logoHide) {
           const homeLink = document.getElementById('home-link');
           const revealFn = () => {
-            // Desliga o observador também quando quem revela é o timeout: sem isso
-            // ele ficava vigiando o documento inteiro (subtree) para sempre quando
-            // a <img> não aparecia, rodando um querySelector a cada mutação.
+            // Desliga o observador também no timeout, senão ele vigiaria o documento
+            // inteiro para sempre quando a <img> não aparece.
             obs.disconnect();
             if (homeLink) homeLink.style.visibility = '';
             logoHide.remove();
           };
-          // Safety net: reveal after 2.5 s even if img never fires load/error
+          // Rede de segurança: revela depois de 2,5 s mesmo sem load/error.
           const tid = setTimeout(revealFn, 2500);
           const obs = new MutationObserver(() => {
             const img = document.querySelector<HTMLImageElement>('#home-link img.Header-logo');
@@ -808,7 +741,7 @@ app.initializers.add(
       }
     });
 
-    // ── 1b. Global Avatar override — person silhouette for users without a photo
+    // ── Global Avatar override — person silhouette for users without a photo
     override(Avatar.prototype, 'view', function (original, vnode) {
       if (!settingEnabled('avocadoCustomDefaultAvatar', true)) return original(vnode);
       const user = this.attrs?.user;
@@ -824,9 +757,9 @@ app.initializers.add(
       );
     });
 
-    // ── 2. UserPage (base for Security + Settings): Avocado layout ───────────
-    // UserSecurityPage and SettingsPage are code-split chunks; override their
-    // shared base (UserPage) which IS in the main bundle.
+    // ── UserPage (base for Security + Settings): Avocado layout ───────────
+    // UserSecurityPage e SettingsPage são chunks; o override vai na base comum
+    // (UserPage), que está no bundle principal.
     override(UserPage.prototype, 'view', function () {
       const user = this.user;
       const isEditable = user && (user.canEdit?.() || user === app.session.user);
@@ -845,7 +778,7 @@ app.initializers.add(
       );
     });
 
-    // ── 4. DiscussionHero: colored hero, white title, tag pills, state badges ────
+    // ── DiscussionHero: colored hero, white title, tag pills, state badges ────
     override(DiscussionHero.prototype, 'view', function (original, vnode) {
       const discussion = this.attrs.discussion;
       if (!discussion) return original(vnode);
@@ -855,21 +788,15 @@ app.initializers.add(
       const tagColor = firstTag?.color?.() || null;
       const color = tagColor || 'var(--primary-color)';
 
-      // Optional per-discussion hero image set at creation time when the
-      // selected tag was configured to ask for one. When present, the header
-      // shows it as background with a darkening overlay so the title/meta
-      // stay legible regardless of the photo's exposure.
+      // Imagem do hero opcional, enviada na criação quando a tag pede. Com ela o
+      // overlay escurece o fundo para título e meta continuarem legíveis.
       const discHeroUrl = getDiscussionHeroImageUrl(discussion);
 
-      // The discussion's tag may grant the owner/mod the right to attach,
-      // replace or remove the image. We only render the controls when:
-      //  - at least one of the discussion's tags is in the admin allow-list
-      //    (so this isn't a misplaced control on unrelated discussions); AND
-      //  - the actor has rename permission (matches the backend check).
+      // Os controles da imagem só aparecem com uma das tags na lista do admin e com
+      // permissão de renomear (a mesma checagem do backend).
       const canManageHero = tagsRequireHeroImage(tags) && canEditDiscussionHero(discussion);
 
-      // Avoid double-firing the upload while a request is in flight. Stored on
-      // the component instance so it survives redraws.
+      // Evita disparar o upload duas vezes; fica na instância para sobreviver aos redraws.
       const startHeroUpload = () => {
         if ((this as any)._heroBusy) return;
         const input = document.createElement('input');
@@ -924,7 +851,7 @@ app.initializers.add(
             }
           })
           .catch(() => {
-            /* keep the image, the next render will reflect actual state */
+            /* mantém a imagem; o próximo render reflete o estado real */
           })
           .finally(() => {
             (this as any)._heroBusy = false;
@@ -932,9 +859,8 @@ app.initializers.add(
           });
       };
 
-      // WCAG relative-luminance text contrast for hero. When the discussion
-      // has a background image, the LESS layer adds a darkening overlay so
-      // we always want white text regardless of tag color.
+      // Contraste do texto do hero pela luminância relativa (WCAG). Com imagem de
+      // fundo o LESS põe um overlay escuro e o texto é sempre branco.
       const heroTextColor = discHeroUrl
         ? '#ffffff'
         : tagColor && tagColor.startsWith('#') && tagColor.replace('#', '').length === 6
@@ -950,7 +876,7 @@ app.initializers.add(
       const postCount = replyCount + 1;
       const views = discussionViews(discussion);
 
-      // Avatars: author + lastPostedUser — O(1), avoids iterating the full store.
+      // Avatares: autor e último a postar, O(1), sem percorrer o store.
       const participantMap = new Map();
       const author = discussion.user?.();
       if (author?.id?.()) participantMap.set(author.id(), author);
@@ -960,8 +886,7 @@ app.initializers.add(
       }
       const participants = Array.from(participantMap.values());
 
-      // Participant count: prefer the API attribute (serialized by Flarum core),
-      // fall back to unique user IDs collected from loaded posts in the store.
+      // Participantes: o atributo da API e, sem ele, os ids únicos dos posts carregados.
       const apiCount = discussion.participantCount?.();
       const participantCount =
         typeof apiCount === 'number' && apiCount > 0
@@ -979,9 +904,8 @@ app.initializers.add(
 
       const MAX_PARTICIPANT_AVATARS = 6;
       const displayParticipants = participants.slice(0, MAX_PARTICIPANT_AVATARS);
-      // participants only contains author + lastPoster (≤2 users loaded client-side).
-      // Use the API participantCount as the authoritative total so "+N" reflects
-      // the real number of people who participated, not just loaded avatars.
+      // Só autor e último a postar estão carregados: o "+N" usa o participantCount da
+      // API, que é o total real.
       const extraParticipants =
         participantCount > displayParticipants.length
           ? participantCount - displayParticipants.length
@@ -1004,12 +928,9 @@ app.initializers.add(
       const isHidden = !!discussion.hiddenAt?.();
       const subscription = discussion.subscription?.();
 
-      // Decoration icon: secondary tag icon on hero right side
-      // Finds child tags (tags with parent) regardless of position
-      // Ignores parent tags, maintains original tag order
-      // Don't show any decoration icons on mobile (≤480px).
-      // Two icons need more horizontal space — only render them on desktop (>767px)
-      // to avoid the has-two-deco-icons padding-right compressing hero content on tablet.
+      // Ícones decorativos: os das tags filhas, na ordem original. Nenhum no celular
+      // (≤480px); o segundo só no desktop (>767px), para o padding de dois ícones não
+      // apertar o hero no tablet.
       const isMobile = typeof window !== 'undefined' && window.innerWidth <= 480;
       const isTwoIconScreen = typeof window !== 'undefined' && window.innerWidth > 767;
       const showDecorationIcon = !!app.forum.attribute('avocadoHeroDecorationIcon') && !isMobile;
@@ -1017,10 +938,8 @@ app.initializers.add(
       const opacityValue = decorationOpacity ? Math.min(Math.max(parseInt(decorationOpacity) / 100, 0), 1) : 0.15;
       let iconCount = parseInt(app.forum.attribute('avocadoHeroDecorationIconCount') || '1');
 
-      // Collect child tags (have parent)
       const childTags = tags.filter((t) => t.parent?.());
       const firstChildTag = childTags[0] || null;
-      // Second tag only on desktop-wide screens (> 767px) to prevent layout compression
       const secondChildTag = iconCount >= 2 && isTwoIconScreen ? childTags[1] || null : null;
 
       const decorationIconClass = firstChildTag?.icon?.() || null;
@@ -1106,14 +1025,10 @@ app.initializers.add(
           <div className="container">
             <div className={innerClass} style={decorationIconStyle}>
               {imageControls}
-              {/* Decoration icons wrapper — flexbox container for dynamic sizing */}
               {(showDecorationIcon && decorationIconClass) ||
               (showDecorationIcon && showDecoDivider) ||
               (showDecorationIcon && isTwoIconScreen && iconCount >= 2 && decorationIconClass2) ? (
-                // Sem ResizeObserver aqui: o que existia tinha callback vazio (só
-                // observava, nunca mexia no layout) — custo de observação sem efeito.
                 <div className="DiscussionHero-decorationsContainer">
-                  {/* Decoration icon: first child tag icon */}
                   {showDecorationIcon && decorationIconClass && (
                     <div
                       className="DiscussionHero-decorationIcon is-visible"
@@ -1122,13 +1037,11 @@ app.initializers.add(
                       <i className={decorationIconClass} aria-hidden="true" />
                     </div>
                   )}
-                  {/* Divider icon between decoration icons */}
                   {showDecorationIcon && showDecoDivider && (
                     <div className="DiscussionHero-decoSeparator" aria-hidden="true">
                       <i className={decoDividerIcon} />
                     </div>
                   )}
-                  {/* Decoration icon: second child tag icon (optional, desktop only) */}
                   {showDecorationIcon && isTwoIconScreen && iconCount >= 2 && decorationIconClass2 && (
                     <div
                       className="DiscussionHero-decorationIcon DiscussionHero-decorationIcon--second is-visible"
@@ -1139,7 +1052,6 @@ app.initializers.add(
                   )}
                 </div>
               ) : null}
-              {/* Nav row: back button + badges + tag pills */}
               <nav className="DiscussionHero-nav">
                 <button
                   className="DiscussionHero-back"
@@ -1230,10 +1142,8 @@ app.initializers.add(
                 </div>
               </nav>
 
-              {/* Title */}
               <h1 className="DiscussionHero-title">{title}</h1>
 
-              {/* Meta: participants + post count */}
               <div className="DiscussionHero-meta">
                 {participants.length > 0 && (
                   <div className="DiscussionHero-participants">
@@ -1282,13 +1192,12 @@ app.initializers.add(
       );
     });
 
-    // ── 5. DiscussionPage skeleton override ───────────────────────────────────
+    // ── DiscussionPage skeleton override ───────────────────────────────────
     override(DiscussionPage.prototype, 'view', function (original, vnode) {
       if (this.discussion) return original(vnode);
 
-      // Decoration icon skeleton — mirrors the exact same visibility rules as the real hero.
-      // Try to use the cached discussion (already in store when navigating from the list)
-      // to show the correct number of child-tag icons. Falls back to 1 icon on cache miss.
+      // Ícones decorativos do skeleton com as mesmas regras do hero real, pela
+      // discussão em cache (vindo da lista); sem cache, um ícone genérico.
       const _routeId = String(m.route.param('id') ?? '');
       const _numericId = _routeId && !isNaN(parseInt(_routeId)) ? String(parseInt(_routeId)) : null;
       const _cachedDisc = _numericId ? app.store.getById('discussions', _numericId) : null;
@@ -1298,7 +1207,6 @@ app.initializers.add(
       const _skelShowDeco = !!app.forum.attribute('avocadoHeroDecorationIcon') && !_skelMobile;
       const _skelIconCount = parseInt(app.forum.attribute('avocadoHeroDecorationIconCount') || '1');
 
-      // Determine icon presence + actual icon class from real child tags (mirrors DiscussionHero logic)
       let _skelHasFirstIcon = false;
       let _skelHasSecondIcon = false;
       let _skelFirstIconCls: string | null = null;
@@ -1312,7 +1220,6 @@ app.initializers.add(
           _skelFirstIconCls = _skelChildTags[0]?.icon?.() || null;
           _skelSecondIconCls = _skelHasSecondIcon ? _skelChildTags[1]?.icon?.() || null : null;
         } else {
-          // Cache miss (direct URL load) — safe assumption: 1 generic icon block
           _skelHasFirstIcon = true;
         }
       }
@@ -1320,10 +1227,9 @@ app.initializers.add(
       const _skelHasTwo = _skelHasFirstIcon && _skelHasSecondIcon;
       const _skelHasDivider = _skelHasTwo && !!app.forum.attribute('avocadoHeroDecoDivider');
 
-      // Versão do changelog: vindo da lista, a discussão já está no store com tudo o
-      // que o cabeçalho mostra (tags, versão, capa, autor). O skeleton usa o próprio
-      // ReleaseHero — sem os botões de edição — em vez do hero cinza de discussão, que
-      // tem outro desenho e fazia a página "trocar de cara" ao terminar de carregar.
+      // Versão do changelog: vindo da lista, a discussão já está no store com o que o
+      // cabeçalho mostra. O skeleton usa o próprio ReleaseHero, sem os botões de
+      // edição, para a página não trocar de cara ao terminar de carregar.
       const _skelTags = _cachedDisc ? (_cachedDisc.tags?.() || []).filter(Boolean) : [];
       const _skelRelease = !!_cachedDisc && tagsAreChangelogProducts(_skelTags);
       // Uma versão quase sempre é só as notas: nada de três posts-fantasma para uma.
@@ -1339,7 +1245,6 @@ app.initializers.add(
             ) : (
               <div className="AvocadoSkeleton-discussionHero">
                 <div className="container">
-                  {/* Mirrors .DiscussionHero-inner: position reference + centering + padding */}
                   <div className="AvocadoSkeleton-heroInner">
                     <div className="AvocadoSkeleton-nav">
                       <div className="AvocadoSkeleton-backBtn" />
@@ -1352,13 +1257,11 @@ app.initializers.add(
                         <div className="AvocadoSkeleton-stackItem" />
                         <div className="AvocadoSkeleton-stackItem" />
                         <div className="AvocadoSkeleton-stackItem" />
-                        {/* +more circle — mirrors DiscussionHero-participantsMore */}
                         <div className="AvocadoSkeleton-stackItem AvocadoSkeleton-stackItem--more" />
                       </div>
                       <div className="AvocadoSkeleton-metaChip AvocadoSkeleton-metaChip--md" />
                       <div className="AvocadoSkeleton-metaChip AvocadoSkeleton-metaChip--sm" />
                     </div>
-                    {/* Decoration icon skeleton — mirrors real icon shape when cached */}
                     {_skelShowDeco && _skelHasFirstIcon && (
                       <div className={`AvocadoSkeleton-decoContainer${_skelHasTwo ? ' is-two' : ''}${_skelHasDivider ? ' has-divider' : ''}`}>
                         <div className={`AvocadoSkeleton-decoIcon${_skelFirstIconCls ? ' AvocadoSkeleton-decoIcon--icon' : ''}`}>
@@ -1381,8 +1284,8 @@ app.initializers.add(
               </div>
             )}
             <div className="Page-container container">
-              {/* Sidebar FIRST (priority 100) — mirrors Flarum's containerItems() order.
-                  With flex-direction:row-reverse the first DOM child ends up on the RIGHT. */}
+              {/* Sidebar primeiro, como no containerItems() do Flarum: com row-reverse o
+                  primeiro filho fica à direita. */}
               {renderDiscussionNavSkeleton(!!app.session.user)}
               <div className="Page-content">
                 <div className="AvocadoSkeleton-stream">
@@ -1390,9 +1293,7 @@ app.initializers.add(
                     <div key={String(i)} className="AvocadoSkeleton-post">
                       <div className="AvocadoSkeleton-postAvatar" />
                       <div className="AvocadoSkeleton-postBody">
-                        {/* Desktop/tablet: username line above content */}
                         <div className="AvocadoSkeleton-line AvocadoSkeleton-line--sm AvocadoSkeleton-line--user" />
-                        {/* Mobile: inline avatar + username row (hidden on desktop via CSS) */}
                         <div className="AvocadoSkeleton-postHeader">
                           <div className="AvocadoSkeleton-postAvatarSm" />
                           <div className="AvocadoSkeleton-line AvocadoSkeleton-line--sm" />
@@ -1411,14 +1312,12 @@ app.initializers.add(
       );
     });
 
-    // ── 6. Auth modal panel injection via Mithril content() override ─────────────
-    // These modals are code-split chunks in Flarum 2.0 — static imports resolve to
-    // undefined at load time. Dynamic imports are required. We kick off the Promise
-    // at init so overrides are applied before the user can click "Log In".
+    // ── Auth modal panel injection via Mithril content() override ─────────────
+    // No Flarum 2 esses modais são chunks e o import estático resolve undefined. O
+    // import dinâmico começa no init para os overrides valerem antes do clique em "Entrar".
     const authPanelOverride = (iconCls) =>
       function authContent(original) {
-        // Admin can disable the custom side-panel design and fall back to
-        // Flarum's default login / sign up / forgot-password modal.
+        // O admin pode voltar ao modal padrão do Flarum.
         if (!settingEnabled('avocadoCustomAuthModal', true)) return original();
 
         const rawUrl = app.forum?.attribute('avocadoAuthImage') || app.forum?.attribute('avocadoHeroImage') || null;
@@ -1432,10 +1331,9 @@ app.initializers.add(
               className="AvocadoAuth-panel"
               style={heroUrl ? { backgroundImage: safeCssUrl(heroUrl), backgroundSize: 'cover', backgroundPosition: 'center top' } : {}}
               oncreate={(vnode) => {
-                // CSS :has() can lose to Flarum's inline max-width on .Modal-dialog.
-                // Use setProperty('…', 'important') so our inline style beats everything,
-                // including any Flarum JS-set inline style. Target both .Modal-dialog and
-                // .Modal as fallback (structure varies between Flarum 2.x builds).
+                // O :has() do CSS pode perder para o max-width inline do Flarum no .Modal-dialog:
+                // setProperty com 'important' vence. Vale também para .Modal, porque a estrutura
+                // varia entre builds do 2.x.
                 if (window.innerWidth >= 768) {
                   const targets = [vnode.dom.closest?.('.Modal-dialog'), vnode.dom.closest?.('.Modal')].filter(Boolean);
                   targets.forEach((el) => {
@@ -1452,10 +1350,8 @@ app.initializers.add(
         );
       };
 
-    // ExportRegistry.chunkUrl needs app.forum.attribute('assetsUrl') to build chunk
-    // URLs. app.forum is set during boot() AFTER initializers run, so we must defer
-    // the dynamic imports until the current synchronous boot stack is finished.
-    // setTimeout(fn, 0) guarantees we run in the next event-loop tick — after boot().
+    // O chunkUrl precisa de app.forum.attribute('assetsUrl'), e app.forum só existe
+    // depois dos initializers: o setTimeout(0) adia os imports para depois do boot().
     setTimeout(() => {
       Promise.all([
         flarum.reg.asyncModuleImport('flarum/forum/components/LogInModal'),
@@ -1469,15 +1365,15 @@ app.initializers.add(
           override(ForgotPasswordModal.prototype, 'content', authPanelOverride('fas fa-envelope'));
           LogInModal.prototype.__avocadoPanelPatched = true;
         })
-        .catch(() => {}); // graceful no-op if chunks unavailable
+        .catch(() => {}); // sem os chunks, não faz nada
     }, 0);
 
-    // ── 7b. HeaderSecondary auth buttons for guest users ──────────────────────
+    // ── HeaderSecondary auth buttons for guest users ──────────────────────
     extend(HeaderSecondary.prototype, 'items', function (items) {
       if (!settingEnabled('avocadoShowAuthButtons', false) || app.session.user) return;
 
-      // Flarum 2.0 ItemList uses setContent() — replace() does not exist.
-      // Keys: 'signUp' (capital U) and 'logIn'.
+      // O ItemList do Flarum 2 usa setContent(); replace() não existe. Chaves: 'signUp'
+      // (com U maiúsculo) e 'logIn'.
       if (items.has('signUp')) {
         items.setContent(
           'signUp',
@@ -1509,8 +1405,8 @@ app.initializers.add(
       }
     });
 
-    // ── 8b. IndexPage-newDiscussion: add aria-label (Flarum core renders it
-    // as icon-only on mobile without an accessible name) ─────────────────────
+    // ── IndexPage-newDiscussion: aria-label ───────────────────────────────────
+    // No celular o core desenha o botão só com ícone, sem nome acessível.
     extend(IndexPage.prototype, 'oncreate', function () {
       const btn = this.element?.querySelector('.IndexPage-newDiscussion');
       if (btn && !btn.getAttribute('aria-label')) {
@@ -1524,13 +1420,10 @@ app.initializers.add(
       }
     });
 
-    // ── 9. IndexPage oninit: redirect /?q=… to /search?q=… once per mount ──────
-    // Placed in oninit (fires once per component mount) instead of contentItems
-    // (fires on every Mithril redraw) to prevent multiple m.route.set calls
-    // accumulating via setTimeout and causing the search page refresh loop.
-    // Guard: skip when navigating back FROM a search-providing page so that
-    // "Back to Discussion List" (href /?q=…) and browser Back from the search
-    // page land on the real filtered IndexPage instead of looping back to search.
+    // ── IndexPage oninit: redirect /?q=… to /search?q=… once per mount ──────
+    // No oninit (uma vez por montagem), não no contentItems (a cada redraw), para não
+    // acumular m.route.set e entrar em loop. Pula quando se volta de uma página de
+    // busca, para o "voltar" cair no IndexPage filtrado em vez de voltar à busca.
     extend(IndexPage.prototype, 'oninit', function () {
       if (!customHomeEnabled() && hasSearchQuery()) {
         const prevRoute = app.previous?.get?.('routeName');
@@ -1540,17 +1433,12 @@ app.initializers.add(
       }
     });
 
-    // ── 9c. DiscussionComposer (modal flow used by TagPage) ────────────────────
-    // The core component is async-loaded by Flarum's chunk system, so a static
-    // import returns undefined at boot. `asyncModuleImport` would force-load
-    // the chunk during initializer time, which fails because `app.forum` is
-    // still undefined at that point (chunkUrl reads `app.forum.attribute`).
-    // `flarum.reg.onLoad` waits passively until the chunk loads on its own
-    // (i.e. when the user opens the composer), then patches the prototype.
-    // Adds an optional hero-image upload field below the title when one of
-    // the selected tags is in `avocadoHeroImageTags`; on submit the file is
-    // POSTed to /api/avocado/discussion-hero?discussionId=<id> and the user
-    // is routed to the new discussion.
+    // ── DiscussionComposer (modal flow used by TagPage) ────────────────────
+    // O componente vem num chunk: o import estático é undefined no boot, e o
+    // asyncModuleImport falharia porque app.forum ainda não existe. O
+    // flarum.reg.onLoad espera o chunk carregar sozinho e então aplica o patch.
+    // Com uma das tags em `avocadoHeroImageTags`, ganha o campo de imagem do hero,
+    // enviada para /api/avocado/discussion-hero depois de criar a discussão.
     flarum.reg.onLoad('core', 'forum/components/DiscussionComposer', (DiscussionComposer) => {
       extend(DiscussionComposer.prototype, 'oninit', function () {
         this._avocadoHeroFile = null;
@@ -1577,7 +1465,7 @@ app.initializers.add(
           this.attrs.placeholder = release
             ? trans('ramon-avocado.forum.changelog.composer_body_placeholder', 'Write the release notes…')
             : labels.body;
-          // O core guarda o texto já traduzido (extractText), não a chave — passar a chave mostrava a chave crua no botão.
+          // O core guarda o texto já traduzido (extractText): a chave apareceria crua no botão.
           this.attrs.submitLabel = release ? trans('ramon-avocado.forum.changelog.composer_submit', 'Publish release') : labels.submit;
         }
         return original(vnode);
@@ -1618,9 +1506,7 @@ app.initializers.add(
         const previewUrl = this._avocadoHeroPreview;
         const file = this._avocadoHeroFile;
 
-        // Minimal chip: a single 32px-tall control that drops cleanly into the
-        // composer header without disturbing layout. Toggles between an empty
-        // "pick" button and a chip with a thumbnail + filename + remove.
+        // Um chip de 32px que cabe no cabeçalho do compositor sem mexer no layout.
         const chip = previewUrl ? (
           <span className="AvocadoHome-composerHeroChip is-set" title={file?.name || ''}>
             <span
@@ -1675,7 +1561,7 @@ app.initializers.add(
             {chip}
             {changelog}
           </div>,
-          50 // between 'title' (100) and the editor
+          50 // entre 'title' (100) e o editor
         );
       });
 
@@ -1689,13 +1575,12 @@ app.initializers.add(
 
       override(DiscussionComposer.prototype, 'onsubmit', function (original) {
         const file = this._avocadoHeroFile;
-        // No image picked — preserve original behavior verbatim.
+        // Sem imagem: o fluxo original, sem mudanças.
         if (!file) {
           return original();
         }
 
-        // Replicate core's flow but intercept the success branch so we can
-        // upload the image before navigating to the new discussion.
+        // O fluxo do core, mas o sucesso envia a imagem antes de navegar para a discussão.
         this.loading = true;
         const data = this.data();
 
@@ -1720,7 +1605,7 @@ app.initializers.add(
                   )
                 );
               } catch {
-                /* alerts may be unavailable */
+                /* alertas podem não existir */
               }
             }
             this.composer.hide();
@@ -1730,7 +1615,7 @@ app.initializers.add(
       });
     });
 
-    // ── 9d. RenameDiscussionModal: versão e capa de uma entrada do changelog ────
+    // ── RenameDiscussionModal: versão e capa de uma entrada do changelog ────
     // Editar depois de publicar: quem pode renomear a discussão também acerta o
     // número da versão e escolhe entre imagem e banner na cor da tag (a imagem
     // em si é trocada nos controles do cabeçalho da discussão). Carregado sob
@@ -1817,7 +1702,7 @@ app.initializers.add(
       });
     });
 
-    // ── 9b. IndexPage contentItems: swap to HomePage ──────────────────────────
+    // ── IndexPage contentItems: swap to HomePage ──────────────────────────
     extend(IndexPage.prototype, 'contentItems', function (items) {
       if (customHomeEnabled()) {
         items.remove('discussionList');
@@ -1826,36 +1711,31 @@ app.initializers.add(
       }
     });
 
-    // ── 10. IndexPage view: setClassName for avocadoHome / avocadoSearch ──────
+    // ── IndexPage view: setClassName for avocadoHome / avocadoSearch ──────
     extend(IndexPage.prototype, 'view', function (vdom) {
       if (!vdom) return;
-      // IndexPage--avocadoRoot marks the REAL home/index page so PageStructure guards can
-      // distinguish it from extension pages that also carry 'IndexPage' in their className
-      // (e.g. LeaderboardPage uses className="IndexPage LeaderboardPage").
+      // IndexPage--avocadoRoot marca o IndexPage de verdade, para os guardas do
+      // PageStructure o distinguirem de páginas de extensão que também levam
+      // 'IndexPage' na classe (ex.: LeaderboardPage).
       setClassName(vdom, 'IndexPage--avocadoRoot', true);
       setClassName(vdom, 'IndexPage--avocadoHome', customHomeEnabled());
       setClassName(vdom, 'IndexPage--avocadoSearch', false);
     });
 
-    // ── 12. IndexSidebar preload + items + navItems ────────────────────────────
+    // ── IndexSidebar preload + items + navItems ────────────────────────────
     if (app.tagList?.load) {
       app.tagList.load(['children', 'parent']).catch(() => {});
     }
 
     // ── PageStructure: replace sidebar + strip hero for non-Discussion pages ──────
-    // sidebar() → always AvocadoNav-helper so there is no visible Page-sidebar anywhere.
-    //   On phone  : height:0 overflow:hidden — App-titleControl/App-primaryControl
-    //               escape via position:absolute to the phone header.
-    //   On tablet+: display:none — completely invisible.
-    // mainItems() → remove the 'hero' slot for extension standalone pages;
-    //   DiscussionPage keeps its custom hero; IndexPage handles WelcomeHero itself.
+    // sidebar() vira sempre o AvocadoNav-helper: no celular com altura 0 (os
+    // controles escapam para o cabeçalho por position:absolute), no tablet+
+    // display:none. mainItems() tira o 'hero' das páginas de extensão.
     override(PageStructure.prototype, 'sidebar', function (original) {
       if (this.attrs.className?.includes('DiscussionPage')) return original();
-      // As páginas do linkrobins/support trazem os próprios controles (o botão
-      // "Novo ticket" e os filtros de status) na sidebar. Aqui ela sai da coluna
-      // lateral e volta em providedContent() como barra horizontal — trocá-la
-      // pelo nav do tema, como acontece com as demais extensões, deixava a
-      // página sem nenhuma forma de abrir um ticket.
+      // As páginas do linkrobins/support trazem na sidebar os próprios controles
+      // ("Novo ticket", filtros de status). Ela volta em providedContent() como barra
+      // horizontal: trocada pelo nav do tema, não haveria como abrir um ticket.
       if (isSupportPage(this.attrs.className)) return null;
       // O índice do linkrobins/wiki, pelo mesmo motivo: o botão "Novo artigo" e
       // as categorias moram na sidebar dele (ver utils/wiki.tsx).
@@ -1868,35 +1748,30 @@ app.initializers.add(
     });
 
     // ── PageStructure hero suppression + extension page header ─────────────────
-    // Guard: extension pages are anything that is NOT DiscussionPage and NOT the
-    // real IndexPage (home). The real IndexPage always carries 'IndexPage--avocadoRoot'
-    // (stamped above). Extension pages that piggyback the 'IndexPage' class
-    // (e.g. LeaderboardPage uses className="IndexPage LeaderboardPage") do NOT have
-    // 'IndexPage--avocadoRoot', so they are correctly treated as extension pages.
+    // Página de extensão é tudo que não é DiscussionPage nem o IndexPage de verdade
+    // (marcado com 'IndexPage--avocadoRoot').
     const isExtensionPage = (cls) => !cls.includes('DiscussionPage') && !cls.includes('IndexPage--avocadoRoot');
     // A página de um ticket do linkrobins/support traz o próprio hero (o mesmo
     // da discussão, montado em utils/support.tsx) e por isso fica de fora das
     // duas camadas que apagam o hero das demais páginas de extensão.
     const keepsOwnHero = (cls) => isSupportTicketPage(cls);
 
-    // Layer 1: remove the 'hero' item from the layout list.
+    // Camada 1: tira o item 'hero' do layout.
     extend(PageStructure.prototype, 'mainItems', function (items) {
       const cls = this.attrs.className || '';
       if (isExtensionPage(cls) && !keepsOwnHero(cls)) items.remove('hero');
     });
 
-    // Layer 2: make providedHero() return null so that even if another extension's
-    // extend() re-adds the 'hero' item after ours, it renders nothing.
+    // Camada 2: providedHero() devolve null, para o 'hero' não renderizar nem quando
+    // outra extensão o põe de volta depois de nós.
     override(PageStructure.prototype, 'providedHero', function (original) {
       const cls = this.attrs.className || '';
       if (isExtensionPage(cls) && !keepsOwnHero(cls)) return null;
       return original();
     });
 
-    // Extension page header: replaces the hero with a title + back-to-home link
-    // injected at the top of .Page-content#main-content.
-    // app.title is set by each page's oncreate via app.setTitle(); it holds the
-    // page-specific title string (without the forum name suffix).
+    // Cabeçalho das páginas de extensão no lugar do hero: título e link para a home,
+    // no topo de .Page-content. app.title vem do app.setTitle() de cada página.
     override(PageStructure.prototype, 'providedContent', function (original) {
       const cls = this.attrs.className || '';
       if (!isExtensionPage(cls)) return original();
@@ -1941,14 +1816,11 @@ app.initializers.add(
       );
     });
 
-    // IndexSidebar.view: keep Flarum's IndexPage-nav/sideNav classes so core CSS
-    // (@expand-side-nav expand behaviour, phone absolute positioning) still applies.
-    // AvocadoExtensionNav is kept alongside so HomePage.less selectors still match.
-    // The extension's sideNav.less uses .IndexPage-nav.sideNav (higher specificity)
-    // to override Flarum core's sideNav styles with the avocado design.
-    // A className do vnode é preservada como no core: subclasses do IndexSidebar
-    // (o SupportIndexSidebar do linkrobins/support, por exemplo) herdam esta view
-    // e identificam a própria nav por ela.
+    // Mantém as classes IndexPage-nav/sideNav do Flarum para o CSS do core (expandir
+    // o nav, posição no celular) continuar valendo; AvocadoExtensionNav fica junto
+    // para os seletores do HomePage.less. A className do vnode é preservada como no
+    // core: subclasses do IndexSidebar (ex.: SupportIndexSidebar do
+    // linkrobins/support) herdam esta view e acham a própria nav por ela.
     override(IndexSidebar.prototype, 'view', function () {
       return (
         <nav className={classList('IndexPage-nav sideNav AvocadoExtensionNav', this.attrs.className)}>
@@ -1970,7 +1842,7 @@ app.initializers.add(
         items.remove('loading');
       }
 
-      // Add "Popular discussions" as the first nav item — links to the custom homepage.
+      // "Discussões populares" primeiro: leva à home do tema.
       if (!items.has('popularHome') && customHomeEnabled()) {
         items.add(
           'popularHome',
@@ -1981,7 +1853,7 @@ app.initializers.add(
         );
       }
 
-      // Replace the default "All Discussions" link (→ index) with our custom page.
+      // "Todas as discussões" aponta para a página do tema em vez do index.
       if (items.has('allDiscussions')) {
         items.remove('allDiscussions');
         items.add(
@@ -1993,7 +1865,7 @@ app.initializers.add(
         );
       }
 
-      // Add "Search" link — appears in the mobile nav drawer and drives the header title on /search.
+      // "Buscar": aparece no menu do celular e dá o título do cabeçalho em /search.
       if (!items.has('avocadoSearch')) {
         items.add(
           'avocadoSearch',
@@ -2004,8 +1876,8 @@ app.initializers.add(
         );
       }
 
-      // "Saved" — the bookmarks page, only for logged-in users (guests can't save).
-      // Com o fof/bookmarks ativo quem põe o item aqui é ele (addBookmarksNavItem).
+      // "Salvos", só para quem está logado (guest não salva). Com o fof/bookmarks ativo
+      // quem põe o item é ele (addBookmarksNavItem).
       if (app.session.user && avocadoBookmarksEnabled() && !items.has('avocadoBookmarks')) {
         items.add(
           'avocadoBookmarks',
@@ -2038,15 +1910,11 @@ app.initializers.add(
       }
     });
 
-    // ── 12b. Bookmark action in discussion controls ────────────────────────────
-    // Adds a "Save/Unsave" item to every discussion's controls dropdown — covers
-    // the discussion page header and the card dropdowns in one integration point.
-    // Gated on a logged-in actor; guests never see it.
-    // Priority is kept BELOW core's reply button (default 0) so the discussion
-    // page's SplitDropdown keeps "Reply" as the primary button and the save
-    // action stays inside the dropdown panel, never promoted to the main button.
-    // Com o fof/bookmarks ativo o item do dropdown é o dele (addDiscussionControls),
-    // então o tema não põe o seu — o ícone no card continua funcionando e grava lá.
+    // ── Bookmark action in discussion controls ────────────────────────────
+    // "Salvar" nos controles de toda discussão: cobre o cabeçalho da página e os
+    // dropdowns dos cards num ponto só. Prioridade abaixo do Responder (0), para o
+    // SplitDropdown manter "Responder" como botão principal. Com o fof/bookmarks
+    // ativo o item é o dele (addDiscussionControls).
     extend(DiscussionControls, 'userControls', function (items: any, discussion: any) {
       if (!app.session.user || !avocadoBookmarksEnabled()) return;
 
@@ -2072,14 +1940,11 @@ app.initializers.add(
       }
     });
 
-    // ── 12b-bis. Bookmark de post no menu ⋯ (fof/bookmarks) ───────────────────
-    // O Flarum 2 põe esse tipo de ação no dropdown do post, e é lá que o
-    // discuss.flarum.org mostra — o header do post no tema já carrega nome,
-    // badges e data, e um botão a mais ali fica solto. Quando o admin escolheu
-    // 'header'/'actions' na extensão, o CSS esconde o botão dela (a ordem em que
-    // os initializers rodam entre extensões não é garantida, então remover do
-    // ItemList seria uma corrida) e o item abaixo entra no lugar. Com 'menu' a
-    // extensão já põe o dela e o tema fica quieto, sem duplicar.
+    // ── Bookmark de post no menu ⋯ (fof/bookmarks) ───────────────────
+    // O Flarum 2 põe esse tipo de ação no dropdown do post. Com 'header'/'actions'
+    // escolhido na extensão, o CSS esconde o botão dela (remover do ItemList seria
+    // uma corrida: a ordem dos initializers entre extensões não é garantida) e o
+    // item abaixo entra no lugar. Com 'menu' a extensão já põe o dela.
     extend(PostControls, 'userControls', function (items: any, post: any) {
       if (!app.session.user || !usesFofBookmarks() || fofPostButtonInMenu()) return;
 
@@ -2103,11 +1968,10 @@ app.initializers.add(
       );
     });
 
-    // ── 12c. Bookmark reminder notification ────────────────────────────────────
-    // Backend type string (BookmarkReminderBlueprint::getType) and this key must
-    // match byte-for-byte, or the alert renders blank. The renderer stays
-    // registered even with the system disabled, so old alerts keep rendering;
-    // only the preferences-grid row is gated.
+    // ── Bookmark reminder notification ────────────────────────────────────
+    // O tipo do backend (BookmarkReminderBlueprint::getType) e esta chave precisam
+    // ser idênticos, ou o alerta sai em branco. O renderer fica registrado mesmo com
+    // o sistema desligado, para os alertas antigos; só a linha das preferências some.
     app.notificationComponents.avocadoBookmarkReminder = BookmarkReminderNotification;
 
     extend('flarum/forum/components/NotificationGrid', 'notificationTypes', function (items: any) {
@@ -2119,29 +1983,25 @@ app.initializers.add(
       });
     });
 
-    // ── 12d. User hover card on post authors ───────────────────────────────────
-    // Acopla o hover-card ao PRÓPRIO <h3 className="PostUser-name"> em vez de
-    // envolvê-lo. Envolver o h3 (ou seu <a> interno) num wrapper o tirava de
-    // "filho direto de .PostUser": quebrava nosso CSS (.PostUser-name > a) e
-    // extensões que localizam o nó via vnode.children.find(match('PostUser-name'))
-    // e então acessam header_node.children sem checar null — ex.: FoF Gamification
-    // (addUserInfo) → "Cannot read properties of undefined (reading 'children')".
-    // hoverCardAttrs() devolve {} quando o card está off, então isto vira no-op.
+    // ── User hover card on post authors ───────────────────────────────────
+    // Acopla o card ao próprio <h3 className="PostUser-name"> em vez de envolvê-lo:
+    // um wrapper o tiraria de "filho direto de .PostUser", quebrando o CSS e
+    // extensões que acham o nó por vnode (ex.: FoF Gamification, que lê .children
+    // sem checar null). hoverCardAttrs() devolve {} com o card desligado.
     extend('flarum/forum/components/PostUser', 'userViewItems', function (items: any, user: any) {
       if (!user || !items.has('postUser-name')) return;
 
       const name = items.get('postUser-name');
       if (name && name.attrs) Object.assign(name.attrs, hoverCardAttrs(user));
 
-      // 🎂 no dia do aniversário de conta (entre o nome e os badges).
+      // Selo no dia do aniversário de conta, entre o nome e os badges.
       items.add('avocadoCakeday', <CakedayBadge user={user} />, 95);
     });
 
-    // O avatar da coluna lateral abre o mesmo card, como no core (que escuta o
-    // hover em `.Post-avatar` além do nome). Com autor, o avatar vem dentro do
-    // Link para o perfil: os handlers vão nele, e o clique continua navegando.
-    // Registrado antes do §18b, que embrulha este item junto com os badges — o
-    // card fica ancorado na foto, não no bloco todo.
+    // O avatar da coluna lateral abre o mesmo card, como no core. Com autor, o avatar
+    // vem dentro do Link para o perfil: os handlers vão nele e o clique continua
+    // navegando. Registrado antes do wrapper de avatar e badges (sideItems, abaixo),
+    // para o card ancorar na foto e não no bloco todo.
     extend(CommentPost.prototype, 'sideItems', function (items: any) {
       const user = this.attrs.post.user?.();
       if (!user || !items.has('avatar')) return;
@@ -2158,12 +2018,10 @@ app.initializers.add(
       return original();
     });
 
-    // ── 12e. Typing indicator restyle (flarum/realtime) ────────────────────────
-    // O container padrão (.TypingUsersContainer) fica oculto via LESS e este
-    // item o substitui: pill com avatares dos digitadores + três pontos
-    // animados. Reusa o estado de digitação da discussão e as strings de
-    // tradução do próprio realtime. Sem ninguém digitando, o wrapper fica
-    // vazio mas presente (min-height no LESS) para não deslocar o layout.
+    // ── Typing indicator restyle (flarum/realtime) ────────────────────────
+    // O container padrão (.TypingUsersContainer) fica oculto pelo LESS e este item o
+    // substitui, com o estado de digitação e as traduções do próprio realtime. Sem
+    // ninguém digitando o wrapper fica vazio, mas presente, para não deslocar o layout.
     extend('flarum/forum/components/PostStream', 'endItems', function (items: any) {
       if (!this.discussion?.attribute('canViewWhoTypes')) return;
 
@@ -2246,11 +2104,11 @@ app.initializers.add(
       );
     });
 
-    // ── 13. WelcomeHero isHidden + view overrides ──────────────────────────────
+    // ── WelcomeHero isHidden + view overrides ──────────────────────────────
     override(WelcomeHero.prototype, 'isHidden', function (original) {
-      if (customHomeEnabled()) return true; // V2 home has its own banner
-      if (hasSearchQuery()) return true; // Search results have no hero
-      if (app.session.user) return true; // Logged-in users never see the banner
+      if (customHomeEnabled()) return true; // a home V2 tem o próprio banner
+      if (hasSearchQuery()) return true; // resultados de busca não têm hero
+      if (app.session.user) return true; // quem está logado nunca vê o banner
       if (app.forum?.attribute('avocadoHeroImage')) return false;
       return original();
     });
@@ -2295,21 +2153,18 @@ app.initializers.add(
       );
     });
 
-    // ── 14. TagsPage: completely replace view ────────────────────────────────
+    // ── TagsPage: completely replace view ────────────────────────────────
     // Os imports `ext:flarum/tags/...` chegam undefined com o flarum/tags desligado.
     if (TagsPage) override(TagsPage.prototype, 'view', tagPageView);
 
-    // ── 14b. DiscussionsSearchSource: point "see all" link to /search ─────────
-    // The default points to app.route('index', {q}) → /all?q=...
-    // We redirect that to the unified /search page.
+    // ── DiscussionsSearchSource: point "see all" link to /search ─────────
+    // O padrão aponta para app.route('index', {q}) (/all?q=…); leva para /search.
     flarum.reg
       .asyncModuleImport('flarum/forum/components/DiscussionsSearchSource')
       .then((DiscussionsSearchSource) => {
         extend(DiscussionsSearchSource.prototype, 'view', function (vnode) {
           if (!vnode || !Array.isArray(vnode)) return;
-          // Walk the vnode tree to update any href pointing to the index route.
-          // app.route('index') may be '/' (root install) or '/all' — match by comparing
-          // the path portion so both cases are handled.
+          // app.route('index') pode ser '/' ou '/all': compara só o caminho, para valer nos dois.
           const indexBasePath = app.route('index').split('?')[0];
           const patchNode = (node) => {
             if (!node || typeof node !== 'object') return;
@@ -2324,8 +2179,8 @@ app.initializers.add(
                 url.pathname = app.route('avocado-search');
                 node.attrs.href = url.pathname + url.search;
                 const q = url.searchParams.get('q') || '';
-                // Use replace:true when already on the search page to avoid accumulating
-                // empty /search entries in browser history that Back would land on.
+                // replace:true quando já está na busca, para o Voltar não cair em entradas
+                // /search vazias no histórico.
                 node.attrs.onclick = (e) => {
                   e.preventDefault();
                   const onSearch = app.current.get('routeName') === 'avocado-search';
@@ -2340,13 +2195,11 @@ app.initializers.add(
       })
       .catch(() => {});
 
-    // ── 14c. GlobalDiscussionsSearchSource: point "see all" link to /search ──────
-    // The SearchModal (v2 native search) uses GlobalDiscussionsSearchSource.fullPage()
-    // which links to /?q=… → IndexPage redirects to /search?q=… leaving an empty
-    // /search entry in browser history. Fix: navigate directly to /search?q=… and
-    // use replace:true when already on the search page (otherwise pushState).
-    // Using a <button> (not <a>) ensures SelectResult() falls through to button.click()
-    // so keyboard Enter navigation also picks up the replace logic.
+    // ── GlobalDiscussionsSearchSource: point "see all" link to /search ──────
+    // O fullPage() linka para /?q=…, e o redirecionamento do IndexPage deixaria uma
+    // entrada /search vazia no histórico: navega direto, com replace:true já na
+    // busca. Um <button>, e não <a>, faz o SelectResult() cair no button.click(),
+    // então o Enter do teclado também passa por aqui.
     flarum.reg
       .asyncModuleImport('flarum/forum/components/GlobalDiscussionsSearchSource')
       .then((GlobalDiscussionsSearchSource) => {
@@ -2371,16 +2224,11 @@ app.initializers.add(
       })
       .catch(() => {});
 
-    // ── 14d. SearchModal: Avocado spotlight UI (V2 search) ────────────────────
-    // The native v2 SearchModal (flarum/common/components/SearchModal) is the
-    // dialog opened when the user clicks the header search input.  We re-skin
-    // it as an Avocado spotlight panel: pill tabs with FA icons, an ESC kbd
-    // badge inside the input row, and a footer with arrow-key hints.
-    //
-    // Layout (CSS) lives in less/forum/SearchModal.less.  Here we only inject
-    // the extra DOM that mockup requires.  SearchModal is lazy-loaded by
-    // AbstractGlobalSearch.openSearchModal() — the string-based extend() defers
-    // until flarum.reg.onLoad fires for that module.
+    // ── SearchModal: Avocado spotlight UI (V2 search) ────────────────────
+    // O SearchModal nativo do v2 vira um painel spotlight: abas com ícones, ESC na
+    // linha do campo e rodapé com dicas de teclado. O layout fica em
+    // less/forum/SearchModal.less. O modal é lazy, e o extend() por string espera o
+    // flarum.reg.onLoad.
     {
       const TAB_ICONS: Record<string, string> = {
         discussions: 'fas fa-comments',
@@ -2406,9 +2254,7 @@ app.initializers.add(
         return null;
       };
 
-      // 1. tabItems — give each tab Button an FA icon.  The Button component
-      //    renders <Icon name={...} className="Button-icon"/> automatically
-      //    when its `icon` attr is a string.
+      // 1. tabItems: um ícone FA em cada aba (o Button desenha o ícone pelo attr `icon`).
       extend('flarum/common/components/SearchModal', 'tabItems', function (items) {
         if (!items || typeof items.has !== 'function') return;
         const sources = (this as any).sources || [];
@@ -2421,14 +2267,13 @@ app.initializers.add(
         });
       });
 
-      // 2. content — append ESC kbd to the input row, footer to the body.
-      //    Mithril memoises children arrays by reference, so we mutate in place
-      //    and guard against double-injection across redraws.
+      // 2. content: ESC na linha do campo e rodapé no corpo. O Mithril memoiza os
+      //    arrays de filhos por referência: altera no lugar e evita injetar duas vezes.
       extend('flarum/common/components/SearchModal', 'content', function (vnode) {
         if (!vnode || typeof vnode !== 'object') return;
         const self: any = this;
 
-        // Inject ESC button (acts as a real close button) inside .SearchModal-form
+        // O ESC é um botão de fechar de verdade, dentro de .SearchModal-form.
         const formRow = findVnode(vnode, (n) => hasClass(n, 'SearchModal-form'));
         if (formRow && Array.isArray(formRow.children)) {
           const already = formRow.children.some((c: any) => hasClass(c, 'Avocado-searchModal-kbd'));
@@ -2449,7 +2294,6 @@ app.initializers.add(
           }
         }
 
-        // Append footer to the modal body
         if (Array.isArray(vnode.children)) {
           const already = vnode.children.some((c: any) => hasClass(c, 'Avocado-searchModal-foot'));
           if (!already) {
@@ -2478,10 +2322,8 @@ app.initializers.add(
         }
       });
 
-      // 3. activeTabItems — when a search is in flight, replace the default
-      //    LoadingIndicator with skeleton placeholder rows so the layout doesn't
-      //    collapse to a single spinner.  Only fires when the user has typed —
-      //    empty query keeps the "start typing" empty state.
+      // 3. activeTabItems: com busca em andamento, linhas de skeleton no lugar do
+      //    LoadingIndicator, para o layout não encolher num spinner. Só com texto digitado.
       extend('flarum/common/components/SearchModal', 'activeTabItems', function (items) {
         if (!items || typeof items.has !== 'function') return;
         const self: any = this;
@@ -2512,20 +2354,16 @@ app.initializers.add(
         );
       });
 
-      // 4. clear — ESC inside the input is bound to KeyboardNavigatable.onCancel
-      //    which calls clear().  Core's clear just empties the query; the user
-      //    expects ESC to close the modal entirely (matches the kbd badge in
-      //    the input row).  We dismiss instead of clearing.
+      // 4. clear: o ESC no campo chama clear(), que só esvazia a busca; aqui ele fecha
+      //    o modal, como o selo ESC promete.
       override('flarum/common/components/SearchModal', 'clear', function (_orig) {
         const self: any = this;
         self.hide?.();
       });
 
-      // 5. setIndex — core's keyboard navigator scrolls $items.parent() into
-      //    view, but our scroll container is `.SearchModal-tabs-content` (the
-      //    Tabs body), not `.Dropdown-menu`. Without this override pressing ↑/↓
-      //    moves focus correctly but the focused row stays off-screen.  We
-      //    replicate core's algorithm against the right container.
+      // 5. setIndex: o navegador de teclado do core rola $items.parent(), mas aqui o
+      //    contêiner de rolagem é `.SearchModal-tabs-content`; sem isto ↑/↓ movem o
+      //    foco e a linha fica fora da tela. Mesmo algoritmo, no contêiner certo.
       override('flarum/common/components/SearchModal', 'setIndex', function (_orig, index: number, scrollToItem: boolean = false) {
         const self: any = this;
         const $items = self.selectableItems();
@@ -2562,19 +2400,17 @@ app.initializers.add(
       });
     }
 
-    // ── 15. GlobalSearch view override (V1 search) ────────────────────────────
-    // Off by default: `serializeToForum(..., 'boolval')` on the PHP side turns
-    // an unset setting into `false`, so the default here has to match or the
-    // two sides disagree about which control is on screen. The matching CSS is
-    // gated on html[data-avocado-search="v1"] (src/Content/SearchStyle.php) —
-    // core's V2 control is a button it sizes itself, and the V1 rules boxed it
-    // into a fixed 200px slot when they were left ungated.
+    // ── GlobalSearch view override (V1 search) ────────────────────────────
+    // Desligado por padrão: o `boolval` do serializeToForum transforma setting vazia
+    // em `false`, e o padrão daqui precisa bater. O CSS correspondente depende de
+    // html[data-avocado-search="v1"] (Content/SearchStyle.php), senão encaixotaria o
+    // botão do V2 num espaço fixo de 200px.
     override(GlobalSearch.prototype, 'view', function (original, ...args) {
       if (!settingEnabled('avocadoSearchV1', false)) return original.apply(this, args);
       return <Search state={this.searchState} />;
     });
 
-    // ── 16. Search view extend (V1 search icons + truncate) ───────────────────
+    // ── Search view extend (V1 search icons + truncate) ───────────────────
     extend(Search.prototype, 'view', function (vnode) {
       if (!settingEnabled('avocadoSearchV1', false)) return;
       if (!vnode || !Array.isArray(vnode.children)) return;
@@ -2630,9 +2466,8 @@ app.initializers.add(
       walkAndTruncate(vnode);
     });
 
-    // ── 17. DiscussionListItem elementAttrs (tag color + unread class) ─────────
+    // ── DiscussionListItem elementAttrs (tag color + unread class) ─────────
     extend(DiscussionListItem.prototype, 'elementAttrs', function (attrs) {
-      // FIX: call tags() once, not twice (was called once for the guard, once for the value)
       const firstTag = this.attrs.discussion.tags?.()?.[0];
       const color = firstTag?.color?.();
       if (color) attrs.style = { '--tag-color': iconColors(color).color, ...(attrs.style || {}) };
@@ -2641,29 +2476,20 @@ app.initializers.add(
       }
     });
 
-    // ── 18. CommentPost elementAttrs (fixedAvatar class) ──────────────────────
+    // ── CommentPost elementAttrs (fixedAvatar class) ──────────────────────
     extend(CommentPost.prototype, 'elementAttrs', function (attrs) {
       if (!settingEnabled('avocadoFixedAvatarEffect')) return;
       attrs.className = `${attrs.className || ''} CommentPost--fixedAvatar`;
     });
 
-    // ── 18a. Posição dos badges de grupo no post ──────────────────────────────
-    // O setting vira classes no <html>, e todo o desenho é CSS (ver
-    // forum/PostBadges.less — a cápsula sai de `content: attr(aria-label)`, sem
-    // reconstruir lista nenhuma). A classe vai na raiz, não no elemento da
-    // página: o valor é do fórum inteiro, não muda de rota para rota, e a raiz
-    // não é gerenciada pelo Mithril, então nenhum redraw pode apagá-la.
+    // ── Posição dos badges de grupo no post ──────────────────────────────
+    // O setting vira classes no <html> e o desenho é todo CSS (forum/PostBadges.less).
+    // Fica na raiz porque o valor é do fórum inteiro e nenhum redraw a apaga.
     //
-    // `--custom` é a chave geral: TODA regra de PostBadges.less pende dela, então
-    // o valor 'default' (desligado) sai sem classe nenhuma e o badge volta a ser
-    // o disco do core sobreposto ao avatar, que é o que o tema desenha em
-    // DiscussionPage.less. Desligar é o arquivo inteiro não valer, não um
-    // conjunto de regras desfazendo o outro.
-    //
-    // Das posições, só as fora do padrão ganham classe própria — 'inline' é o
-    // estado natural das regras, e para ela `--custom` basta. 'side_icons' leva
-    // as DUAS: `--side` traz a coluna larga e a troca de lista, `--side-icons` é
-    // só o modificador (fila em vez de pilha, disco em vez de cápsula).
+    // `--custom` é a chave geral: toda regra de PostBadges.less depende dela, então
+    // 'default' sai sem classe e o badge volta ao disco do core sobre o avatar. Só
+    // as posições fora do padrão ganham classe própria; 'side_icons' leva `--side`
+    // (coluna larga, troca de lista) e `--side-icons` (fila em vez de pilha).
     {
       const badgePosition = (): string => String(app.forum?.attribute('avocadoPostBadgePosition') || 'inline');
       const syncBadgePositionClass = () => {
@@ -2678,28 +2504,18 @@ app.initializers.add(
       app.beforeMount(syncBadgePositionClass);
     }
 
-    // ── 18b. CommentPost sideItems: wrap avatar + badges in position:relative div ─
-    // position:sticky does NOT create a containing block for position:absolute
-    // children. So we wrap both avatar and badges in a single div with
-    // position:relative, then absolutely-position the badge inside that wrapper.
-    // This guarantees the badge always overlaps the top corner of the avatar,
-    // regardless of where the sticky Post-side is on screen.
+    // ── CommentPost sideItems: wrap avatar + badges in position:relative div ─
+    // position:sticky não cria bloco de contenção para filhos absolutos: avatar e
+    // badges vão num div position:relative, e o badge fica sempre no canto da foto.
     //
-    // Duas coisas pedem este clone, e por motivos diferentes:
-    //   - o efeito de avatar fixo, para ancorar o badge no canto da foto;
-    //   - as posições "embaixo do avatar" (§18a), que precisam da lista DENTRO
-    //     do .Post-side — o <ul> do cabeçalho não tem como ser movido para lá
-    //     por CSS.
-    // Elas são independentes: dá para querer os badges na coluna sem o avatar
-    // fixo. Por isso o guarda testa as duas, e não só a primeira.
+    // O clone serve ao avatar fixo e às posições "embaixo do avatar", que precisam
+    // da lista dentro do .Post-side. São independentes, por isso o guarda testa as duas.
     extend(CommentPost.prototype, 'sideItems', function (items) {
       const badgesInSideColumn = ['side', 'side_icons'].includes(String(app.forum?.attribute('avocadoPostBadgePosition') || 'inline'));
       if (!settingEnabled('avocadoFixedAvatarEffect') && !badgesInSideColumn) return;
-      // linkrobins/badge-labels turns each badge into a labelled pill and lays the
-      // list out itself (below the avatar or beside the username). This clone is
-      // built from `user.badges()` directly, so it bypasses that patch entirely:
-      // rendering it would show the same badges a second time, unlabelled, inside
-      // a 64px box. The extension marks its presence with a class on <html>.
+      // O linkrobins/badge-labels desenha os badges como pílulas e posiciona a lista
+      // por conta própria. Este clone sai de `user.badges()` e passaria por fora disso,
+      // repetindo os badges. A extensão marca presença com uma classe no <html>.
       if (document.documentElement.classList.contains('lrBadgeLabels')) return;
       const user = this.attrs.post.user();
       if (!user) return;
@@ -2718,10 +2534,8 @@ app.initializers.add(
       );
     });
 
-    // A prévia ao vivo da resposta (o <article class="CommentPost editing"> da
-    // ReplyPlaceholder) é markup do core, não um CommentPost: o sideItems acima
-    // não passa por ela, e nas posições "embaixo do avatar" os badges ficavam no
-    // cabeçalho. Aqui ela ganha o mesmo wrapper + clone, e o CSS dos posts vale.
+    // A prévia ao vivo da resposta (CommentPost editing da ReplyPlaceholder) é markup
+    // do core e não passa pelo sideItems: ganha aqui o mesmo wrapper e clone.
     extend('flarum/forum/components/ReplyPlaceholder', 'view', function (vnode) {
       if (!['side', 'side_icons'].includes(String(app.forum?.attribute('avocadoPostBadgePosition') || 'inline'))) return;
       if (document.documentElement.classList.contains('lrBadgeLabels')) return;
@@ -2750,18 +2564,13 @@ app.initializers.add(
       ];
     });
 
-    // ── 19. CommentPost oncreate/onupdate (badges + duplicate avatar fix) ────────
-    // Avatar duplicate: CSS in DiscussionPage.less already hides .PostUser-name .Avatar
-    // via display:none !important — no JS removal needed (avatar.remove() caused removeChild
-    // errors because Mithril still tracked the removed nodes in its vdom).
+    // ── CommentPost oncreate/onupdate (badges + duplicate avatar fix) ────────
+    // O avatar duplicado é escondido pelo CSS (DiscussionPage.less): removê-lo pelo
+    // JS dá erro de removeChild, porque o Mithril ainda rastreia o nó. Pelo mesmo
+    // motivo os badges não são movidos: um clone fora do Mithril fica no Post-side.
     //
-    // Badges: instead of moving Mithril-managed nodes (which causes removeChild errors on
-    // redraw), we keep the original in place and maintain a non-Mithril clone in Post-side.
-    //
-    // ── CTA: inject after configured post position (guest-only, configurable 1-5) ─
-    // PostStream is code-split — use the string-based extend/override so that
-    // flarum.reg.onLoad() applies the patch when the module finally loads.
-    // This is the official pattern used by flarum/realtime (see TypingIndicator.tsx).
+    // CTA para guests depois do post configurado. O PostStream é code-split: o
+    // extend/override por string aplica o patch quando o módulo carrega.
     {
       // 1–5 = depois do post de mesmo número; 'end' = no fim da discussão.
       const getCtaPosition = (): number | 'end' => {
@@ -2810,17 +2619,14 @@ app.initializers.add(
 
       const ctaEnabled = () => settingEnabled('avocadoShowPostCta', false);
 
-      // Position 1: afterFirstPostItems — Flarum-native hook, fully Mithril-managed.
-      // The PostStream core wraps post #1 + these items in an m.fragment when items
-      // is non-empty. This is the idiomatic Flarum way to inject after the first post.
+      // Posição 1: afterFirstPostItems, o gancho do core depois do primeiro post.
       extend('flarum/forum/components/PostStream', 'afterFirstPostItems', function (items) {
         if (!ctaEnabled() || app.session.user) return;
         if (getCtaPosition() === 1) items.add('avocado-post-cta', renderCta(), 100);
       });
 
-      // Positions 2-5: extend view() and splice the CTA vnode after the N-th post.
-      // We use extend (not override) so we don't swallow other extensions' view patches.
-      // The mutation is safe because Mithril stores children by reference.
+      // Posições 2-5: extend (não override) no view(), para não engolir patches de
+      // outras extensões, inserindo o CTA depois do N-ésimo post.
       extend('flarum/forum/components/PostStream', 'view', function (rootVnode) {
         if (!ctaEnabled() || app.session.user) return;
 
@@ -2830,10 +2636,8 @@ app.initializers.add(
         const children = rootVnode?.children;
         if (!Array.isArray(children)) return;
 
-        // Walk children counting only COMMENT posts (data-type="comment").
-        // Event posts (stickied, locked, renamed…) carry a different data-type and
-        // must not advance the counter — the user's position setting refers to
-        // real comment posts only.
+        // Só posts de comentário contam: posts de evento (fixado, trancado, renomeado…)
+        // têm outro data-type e não avançam o contador.
         let count = 0;
         for (let i = 0; i < children.length; i++) {
           const attrs = children[i]?.attrs;
@@ -2854,14 +2658,11 @@ app.initializers.add(
       });
     }
 
-    // O onupdate do CommentPost roda a cada redraw da página (rolagem do
-    // PostStream, evento do realtime, alerta...) em TODOS os posts montados. As
-    // varreduras abaixo só têm o que fazer quando o HTML do post muda, e isso só
-    // acontece quando o model recebe dados novos (pushData troca `freshness` por
-    // um Date novo — mesmo truque do core para invalidar subárvores) ou quando o
-    // post entra/sai da edição ou do "revelar" de post oculto. Guardamos essa
-    // assinatura no componente e pulamos o resto quando nada mudou.
-    // Na edição a prévia se reescreve sozinha, então ali roda todo redraw, como antes.
+    // O onupdate roda a cada redraw da página em todos os posts montados, mas as
+    // varreduras abaixo só importam quando o HTML do post muda: dados novos no model
+    // (o pushData troca `freshness`, o truque do core), entrar/sair da edição ou
+    // revelar um post oculto. Essa assinatura fica no componente; na edição a prévia
+    // se reescreve sozinha, então ali roda todo redraw.
     const postDomChanged = (component): boolean => {
       const post = component.attrs?.post;
       const editing = !!component.isEditing?.();
@@ -2898,7 +2699,7 @@ app.initializers.add(
       enhancePost(this);
     });
 
-    // ── 20. CommentPost actionItems (share button) ────────────────────────────
+    // ── CommentPost actionItems (share button) ────────────────────────────
     extend(CommentPost.prototype, 'actionItems', function (items) {
       if (!settingEnabled('avocadoShowShare')) return;
       const post = this.attrs.post;
@@ -2930,7 +2731,7 @@ app.initializers.add(
       );
     });
 
-    // ── 21. PostEdited: show pencil icon instead of text ─────────────────────
+    // ── PostEdited: show pencil icon instead of text ─────────────────────
     override(PostEdited.prototype, 'view', function () {
       const post = this.attrs.post;
       const editedUser = post.editedUser?.();
@@ -2944,7 +2745,7 @@ app.initializers.add(
       );
     });
 
-    // ── 21b. DiscussionControls userControls (reply icon) ─────────────────────
+    // ── DiscussionControls userControls (reply icon) ─────────────────────
     extend(DiscussionControls, 'userControls', function (items) {
       if (!items.has('reply')) return;
       const reply = items.get('reply');
@@ -2953,7 +2754,7 @@ app.initializers.add(
       }
     });
 
-    // ── 22. CommentPost actionItems (like/reply icons) ────────────────────────
+    // ── CommentPost actionItems (like/reply icons) ────────────────────────
     extend(CommentPost.prototype, 'actionItems', function (items) {
       if (!settingEnabled('avocadoShowActionIcons')) return;
       if (items.has('like')) {
@@ -2973,19 +2774,17 @@ app.initializers.add(
       }
     });
 
-    // ── 19b. CommentPost headerItems: OP badge on post #1 ────────────────────
-    // headerItems() priorities: 'user'@100, 'meta'@0 — badge at 50 lands
-    // between username and timestamp in the Post-header flex row.
+    // ── CommentPost headerItems: OP badge on post #1 ────────────────────
+    // headerItems(): 'user'@100, 'meta'@0; o selo em 50 fica entre o nome e a hora.
     extend(CommentPost.prototype, 'headerItems', function (items) {
       const post = this.attrs?.post;
       if (post?.number?.() !== 1) return;
       items.add('avocado-op', <span className="AvocadoPost-opBadge">{trans('ramon-avocado.forum.post.op_badge', 'OP')}</span>, 50);
     });
 
-    // ── 19d. DiscussionPage oncreate/onupdate: threads class + "Back" label ────
-    // Using this.element.classList is more reliable than setClassName(vdom, ...)
-    // because vdom from view() may be a PageStructure component node whose
-    // className prop doesn't map directly to the rendered .Page.DiscussionPage div.
+    // ── DiscussionPage oncreate/onupdate: threads class + "Back" label ────
+    // this.element.classList em vez de setClassName: o vdom do view() pode ser o
+    // PageStructure, cuja className não vai direto para o div .Page.DiscussionPage.
     const syncThreadsClass = (el: HTMLElement) => {
       if (!el) return;
       const enabled = settingEnabled('avocadoThreadsStyle', false);
@@ -3002,20 +2801,18 @@ app.initializers.add(
       addThreadsBackLabel(this.element);
     });
 
-    // ── 19e. DiscussionPage sidebarItems: stats card ──────────────────────────
-    // 'controls'@100, 'scrubber'@-100 — stats at 0 sits between them.
+    // ── DiscussionPage sidebarItems: stats card ──────────────────────────
+    // 'controls'@100, 'scrubber'@-100: as estatísticas em 0 ficam no meio.
     extend(DiscussionPage.prototype, 'sidebarItems', function (items) {
       const discussion = this.discussion;
       if (!discussion) return;
       items.add('avocado-stats', <AvocadoDiscussionStats discussion={discussion} />, 0);
     });
 
-    // ── 23. TextEditor emoji dropdown: fix viewport positioning in AvocadoHome ─
-    // The emoji extension computes caret coords relative to the textarea and
-    // applies them as CSS top/left on a position:fixed element — so they land
-    // near (0,0) of the viewport. We add a second input listener that runs
-    // after the emoji extension's listener and re-positions using
-    // getBoundingClientRect() to obtain true viewport coordinates.
+    // ── TextEditor emoji dropdown: fix viewport positioning in AvocadoHome ─
+    // A extensão de emoji aplica coordenadas relativas ao textarea como top/left de
+    // um elemento position:fixed, e ele cai perto de (0,0). Um segundo listener,
+    // depois do dela, reposiciona com getBoundingClientRect().
     extend(TextEditor.prototype, 'buildEditorParams', function (params) {
       params.inputListeners.push(() => {
         if (!this.emojiDropdown?.active) return;
@@ -3037,16 +2834,14 @@ app.initializers.add(
         const caret = this.attrs.composer.editor.getCaretCoordinates?.(selection[0]);
         if (!caret) return;
 
-        // caret coords are relative to the textarea element; convert to viewport
         let vTop = textareaRect.top + caret.top + 15;
         let vLeft = textareaRect.left + caret.left;
 
-        // Flip above cursor when not enough room below
+        // Sem espaço abaixo, abre acima do cursor.
         if (vTop + dropdownH > window.innerHeight - 8) {
           vTop = textareaRect.top + caret.top - dropdownH - 15;
         }
 
-        // Clamp within viewport
         vTop = Math.max(4, Math.min(vTop, window.innerHeight - dropdownH - 4));
         vLeft = Math.max(4, Math.min(vLeft, window.innerWidth - dropdownW - 4));
 
@@ -3054,12 +2849,10 @@ app.initializers.add(
       });
     });
 
-    // ── 24. Protect ProseMirror from unsafe focus calls during drag events ─────
-    // When dragging showcase cards or other elements, ProseMirror may try to
-    // focus/blur the editor while it's being destroyed or not accessible.
-    // We wrap the editor's focus/blur methods with safety checks.
+    // ── Protect ProseMirror from unsafe focus calls during drag events ─────
+    // Arrastando cards, o ProseMirror pode tentar focar um editor destruído ou
+    // inacessível: focus/blur ganham uma checagem.
     extend(TextEditor.prototype, 'buildEditorParams', function (params) {
-      // Wrap the editor's focus method to handle undefined/destroyed editors
       const originalFocus = params.editor?.focus;
       if (originalFocus && typeof originalFocus === 'function') {
         params.editor.focus = function () {
@@ -3068,20 +2861,19 @@ app.initializers.add(
               return originalFocus.call(this);
             }
           } catch (e) {
-            // Silently ignore focus errors during drag or when editor is unmounted
+            // Ignora erros de foco durante o arraste ou com o editor desmontado.
             return;
           }
         };
       }
     });
 
-    // Suppress focus-related errors that occur during drag events
     const originalError = window.onerror;
     window.onerror = function (msg, url, lineNo, colNo, error) {
-      // Ignore "Cannot read properties of undefined (reading 'focus')" errors
-      // These occur during drag events when editors are being mounted/unmounted
+      // "Cannot read properties of undefined (reading 'focus')" acontece no arraste,
+      // com editores montando e desmontando.
       if (msg && msg.includes && msg.includes('Cannot read properties of undefined') && msg.includes('focus')) {
-        return true; // Suppress the error
+        return true;
       }
       if (typeof originalError === 'function') {
         return originalError(msg, url, lineNo, colNo, error);
@@ -3089,19 +2881,11 @@ app.initializers.add(
       return false;
     };
 
-    // ── 25. Footer — render admin's custom_footer inside the Mithril mount ───
-    // See bootstrap block 0a for the rationale (the server-rendered body-level
-    // copy of this same HTML is removed there, so this mount is the only one).
-    //
-    // Two transformations on the admin HTML:
-    //   1. <style> blocks are hoisted into <head>. They must be moved out of the
-    //      Mithril-managed subtree because m.trust + Mithril patching can re-insert
-    //      <style> nodes on every redraw, which causes the browser to re-evaluate
-    //      the CSS and triggers a full style recomputation. Hoisting once at boot
-    //      avoids that and guarantees the rules apply (head <style> is always live).
-    //   2. Children of any <footer> wrapper are promoted to the root, since the
-    //      Mithril mount itself is already <footer id="footer">. Avoids invalid
-    //      <footer><footer>…</footer></footer> nesting and duplicate ids.
+    // ── Footer — render admin's custom_footer inside the Mithril mount ───
+    // A cópia do servidor sai no bootstrap (acima), então esta é a única. O <style>
+    // do admin sobe para o <head>: dentro da árvore do Mithril o m.trust o
+    // reinseriria a cada redraw, forçando recálculo de estilo. Os filhos de um
+    // <footer> sobem para a raiz, porque o mount já é <footer id="footer">.
     let _avFooterContent: string | null = null;
     override(Footer.prototype, 'view', function () {
       // O rodapé do tema (admin › Aparência › Rodapé) ocupa o lugar do HTML
@@ -3109,17 +2893,15 @@ app.initializers.add(
       if (settingEnabled('avocadoFooterEnabled', false)) return m(AvocadoFooter);
 
       if (_avFooterContent === null) {
-        // Sanitize the admin-pasted HTML before parsing so on*= handlers and
-        // dangerous schemes are stripped before any inner walk runs. <style>
-        // blocks survive sanitization (the field's contract) and are still
-        // hoisted into <head> below.
+        // Sanitiza o HTML do admin antes do parse, tirando on*= e esquemas perigosos.
+        // <style> sobrevive (é o contrato do campo) e sobe para o <head> abaixo.
         const html = sanitizeAdminHtml(app.forum.attribute('footerHtml') as string);
         if (!html.trim()) {
           _avFooterContent = '';
         } else {
           const tmp = new DOMParser().parseFromString(html, 'text/html').body;
 
-          // Hoist <style> tags into <head>, deduped by content.
+          // Deduplicado pelo conteúdo.
           tmp.querySelectorAll('style').forEach((styleEl) => {
             const css = styleEl.textContent || '';
             const exists = [...document.head.querySelectorAll('style[data-avocado-footer]')].some((s) => s.textContent === css);
@@ -3132,7 +2914,6 @@ app.initializers.add(
             styleEl.parentNode?.removeChild(styleEl);
           });
 
-          // Promote any nested <footer>'s children to the root.
           tmp.querySelectorAll('footer').forEach((f) => {
             const parent = f.parentNode;
             if (!parent) return;
@@ -3147,31 +2928,25 @@ app.initializers.add(
     });
 
     // ── Guest link gating ─────────────────────────────────────────────────────
-    // When avocadoHideLinksForGuests is enabled, links inside post bodies are
-    // replaced with a lock-icon placeholder. Clicking opens the login modal.
+    // Com avocadoHideLinksForGuests, links no corpo dos posts viram um cadeado que
+    // abre o login.
 
-    // ── 26. MessagesPage: Avocado design integration ──────────────────────────
-    // MessagesPage lives in a lazy webpack chunk (chunk 301 of flarum-messages).
-    // At initializer time flarum.reg.get() returns undefined because the chunk
-    // hasn't loaded yet.  We intercept flarum.reg.add() so the override is
-    // applied the instant the chunk evaluates — whether that happens before or
-    // after this initializer runs.
+    // ── MessagesPage: Avocado design integration ──────────────────────────
+    // O MessagesPage vem num chunk lazy do flarum/messages: no initializer o
+    // flarum.reg.get() devolve undefined. Interceptar o flarum.reg.add() aplica o
+    // override assim que o chunk avalia, antes ou depois deste initializer.
 
     // ── Inline reply component ───────────────────────────────────────────────
-    // Uses Flarum's native TextEditor so the markdown toolbar (bold, italic,
-    // headings, code, lists, mentions, …) is wired in automatically — same
-    // editor surface as the discussion composer.
-    //
-    // Module-level tracker so the per-message Quote button (extended on
-    // flarum-messages's Message.actionItems below) can push a quote into the
-    // currently-mounted inline reply without prop drilling.
+    // Usa o TextEditor nativo para ter a barra de markdown do compositor. O
+    // rastreador no módulo deixa o botão Citar de cada mensagem mandar a citação
+    // para a resposta montada, sem prop drilling.
     let _currentInlineReply: any = null;
 
     class AvocadoInlineReply {
       oninit() {
         this.value = '';
         this.sending = false;
-        // Minimal composer proxy expected by TextEditor / its toolbar items.
+        // Proxy mínimo do compositor que o TextEditor e a barra esperam.
         this.composerProxy = {
           isVisible: () => true,
           fields: { content: () => this.value },
@@ -3207,8 +2982,7 @@ app.initializers.add(
           </div>
         );
       }
-      // Insert a Flarum-style BBCode quote at the top of the editor and focus
-      // the textarea. Used by the per-message Quote button.
+      // Citação BBCode no topo do editor, pelo botão Citar de cada mensagem.
       insertQuote(quotedText: string, authorName: string) {
         const cleanText = String(quotedText || '').trim();
         const cleanAuthor = String(authorName || '').trim() || 'user';
@@ -3216,16 +2990,14 @@ app.initializers.add(
         const next = block + (this.value || '');
         this.value = next;
         m.redraw();
-        // Sync the textarea: TextEditor reads `value` only on initial create,
-        // so external mutations need to be pushed through the DOM directly so
-        // BasicEditorDriver/onchange picks up the new content.
+        // O TextEditor só lê `value` na criação: mudanças externas vão direto no DOM para
+        // o BasicEditorDriver/onchange pegarem.
         setTimeout(() => {
           const ta = document.querySelector<HTMLTextAreaElement>('.AvocadoMessages-inlineReply .TextEditor-editor');
           if (!ta) return;
           ta.value = next;
           ta.dispatchEvent(new Event('input', { bubbles: true }));
           ta.focus();
-          // Place caret at end so user can immediately type their reply.
           try {
             ta.setSelectionRange(next.length, next.length);
           } catch (_) {}
@@ -3236,8 +3008,8 @@ app.initializers.add(
         if (!text || this.sending) return;
         this.sending = true;
         m.redraw();
-        // Use app.request directly to guarantee correct JSON:API relationship serialization.
-        // Model.save({ dialog }) does not reliably serialize Model instances as relationships.
+        // app.request direto: Model.save({ dialog }) não serializa bem models como
+        // relacionamentos do JSON:API.
         app
           .request({
             method: 'POST',
@@ -3258,13 +3030,12 @@ app.initializers.add(
             } catch (_) {}
             this.value = '';
             this.sending = false;
-            // Force the DOM textarea to clear too — TextEditor's BasicEditorDriver
-            // is the source of truth after mount, so resetting `this.value` alone
-            // won't empty the visible <textarea>.
+            // Limpa também o textarea do DOM: depois de montar quem manda é o
+            // BasicEditorDriver, e zerar `this.value` não basta.
             const ta = document.querySelector<HTMLTextAreaElement>('.AvocadoMessages-inlineReply .TextEditor-editor');
             if (ta) {
               ta.value = '';
-              ta.style.height = ''; // reset auto-grown height
+              ta.style.height = ''; // zera a altura do auto-grow
               ta.dispatchEvent(new Event('input', { bubbles: true }));
             }
             if (typeof onSent === 'function') onSent(response);
@@ -3301,17 +3072,15 @@ app.initializers.add(
     );
 
     // ── MessageStream override: skeleton + inline reply ───────────────────────
-    // Tracks the currently-mounted MessageStream instance so we can re-bind
-    // its realtime handler after the Pusher private channel becomes ready.
-    // (flarum/messages binds MESSAGE_CREATED_EVENT in oncreate, but the channel
-    // may not be set yet — this ensures the bind always happens.)
+    // Guarda o MessageStream montado para religar o handler de realtime quando o
+    // canal privado do Pusher fica pronto: o flarum/messages liga no oncreate, e o
+    // canal pode ainda não existir.
     let _currentStreamComponent = null;
 
     const applyMessageStreamOverride = (StreamClass) => {
       if (!StreamClass || StreamClass._avocadoStreamPatched) return;
       StreamClass._avocadoStreamPatched = true;
 
-      // Track the mounted instance so bindChannels() can re-bind after ready
       extend(StreamClass.prototype, 'oninit', function () {
         _currentStreamComponent = this;
       });
@@ -3319,7 +3088,6 @@ app.initializers.add(
         if (_currentStreamComponent === this) _currentStreamComponent = null;
       });
 
-      // Override view() to replace native LoadingIndicator with skeleton
       override(StreamClass.prototype, 'view', function (original) {
         if (this.attrs.state?.isLoading?.()) {
           return <div className="MessageStream">{renderStreamSkeleton()}</div>;
@@ -3343,14 +3111,13 @@ app.initializers.add(
               onSent={(response) => {
                 const state = this.attrs.state;
                 const dialog = this.attrs.dialog;
-                // Use state.push() to append the sent message without a full reload.
-                // Falls back to state.refresh() only if push is unavailable.
+                // state.push() acrescenta a mensagem sem recarregar; refresh() só sem o push.
                 try {
                   const msgId = response?.data?.id;
                   const msg = msgId ? app.store.getById('dialog-messages', msgId) : null;
                   if (msg && state.hasItems() && typeof state.push === 'function') {
                     state.push(msg);
-                    // Keep dialog.lastMessage in sync so sidebar shows latest message
+                    // Mantém dialog.lastMessage em dia, para a lateral mostrar a última mensagem.
                     if (dialog.data?.relationships?.lastMessage) {
                       dialog.data.relationships.lastMessage.data = { type: 'dialog-messages', id: msg.id() };
                     }
@@ -3373,9 +3140,8 @@ app.initializers.add(
           </div>
         );
 
-        // ReplyPlaceholder is lazy-loaded inside core MessageStream.oninit, so
-        // on the first render the 'reply' item is absent. Replace if present,
-        // otherwise append — guarantees the input box always renders.
+        // O ReplyPlaceholder é lazy no oninit do MessageStream, então no primeiro render
+        // o item 'reply' não existe: troca se existir, senão acrescenta.
         const idx = items.findIndex((i) => i && i.key === 'reply');
         if (idx >= 0) items[idx] = replyItem;
         else items.push(replyItem);
@@ -3388,8 +3154,8 @@ app.initializers.add(
       if (!MsgPage || MsgPage._avocadoOverridden) return;
       MsgPage._avocadoOverridden = true;
 
-      // Guard MessagesPage.onupdate — the extension reads this.element.querySelector(...)
-      // which crashes when element is not yet set (e.g. during skeleton render).
+      // O onupdate da extensão lê this.element.querySelector(...) e quebra antes de o
+      // elemento existir (ex.: no skeleton).
       if (typeof MsgPage.prototype.onupdate === 'function') {
         const _origOnUpdate = MsgPage.prototype.onupdate;
         MsgPage.prototype.onupdate = function (vnode) {
@@ -3400,9 +3166,8 @@ app.initializers.add(
         };
       }
 
-      // Patch Message component: add Post--byCurrentUser when the message is
-      // by the current user (the extension uses attrs.message, not attrs.post,
-      // so Flarum core never adds this class automatically).
+      // Post--byCurrentUser nas mensagens do próprio usuário: a extensão usa
+      // attrs.message, não attrs.post, e o core nunca põe a classe.
       const patchMessageClass = () => {
         try {
           const MessageClass = flarum.reg.get('flarum-messages', 'forum/components/Message');
@@ -3416,8 +3181,8 @@ app.initializers.add(
                   if (!classes.includes('Post--byCurrentUser')) classes.push('Post--byCurrentUser');
                 }
               }
-              // Messenger-style grouping: add Post--grouped when previous message
-              // is from the same user so we can hide the repeated avatar/name via CSS.
+              // Agrupamento estilo messenger: Post--grouped quando a mensagem anterior é do
+              // mesmo usuário, para o CSS esconder avatar e nome repetidos.
               const prevMsg = this.attrs.prevMessage;
               if (prevMsg && msg) {
                 const thisSender = String(msg.user?.()?.id?.() ?? msg.attribute?.('userId') ?? '');
@@ -3426,7 +3191,6 @@ app.initializers.add(
                   if (!classes.includes('Post--grouped')) classes.push('Post--grouped');
                 }
               }
-              // Mark deleted messages so CSS / view can render the placeholder.
               if (msg) {
                 const isDeleted = !!(msg.isHidden?.() || msg.attribute?.('isHidden') || msg.attribute?.('hiddenAt') || msg.attribute?.('deletedAt'));
                 const hasContent = !!(msg.contentHtml?.() || msg.attribute?.('content'));
@@ -3436,9 +3200,7 @@ app.initializers.add(
               }
             });
 
-            // Replace the body with a "mensagem apagada" placeholder when the
-            // message is deleted/hidden. We override the rendered content via
-            // the ItemList Flarum exposes for the message body.
+            // Mensagem apagada/oculta: o corpo vira o placeholder, pelo ItemList do corpo.
             extend(MessageClass.prototype, 'view', function (vdom) {
               const msg = this.attrs.message;
               if (!msg) return;
@@ -3446,7 +3208,6 @@ app.initializers.add(
               const hasContent = !!(msg.contentHtml?.() || msg.attribute?.('content'));
               if (!isDeleted && hasContent) return;
 
-              // Walk the vdom tree to find .Post-body and swap its children.
               const replace = (node: any): boolean => {
                 if (!node || typeof node !== 'object') return false;
                 if (Array.isArray(node)) {
@@ -3468,9 +3229,8 @@ app.initializers.add(
               replace(vdom);
             });
 
-            // Add a per-message "Quote" button that pushes a BBCode quote into
-            // the inline reply (uses Flarum's standard [quote=name]...[/quote]
-            // syntax so flarum-mentions / flarum-bbcode render it correctly).
+            // Botão Citar em cada mensagem, com o [quote=name]...[/quote] padrão do Flarum
+            // para o flarum-mentions/bbcode renderizarem certo.
             extend(MessageClass.prototype, 'actionItems', function (items) {
               const msg = this.attrs.message;
               if (!msg) return;
@@ -3484,9 +3244,7 @@ app.initializers.add(
                   icon="fas fa-reply"
                   onclick={() => {
                     const author = displayName(msg.user?.()) || msg.user?.()?.username?.() || '';
-                    // Prefer the raw markdown source so the quote round-trips
-                    // formatting; fall back to plaintext if the model only
-                    // exposes the rendered version.
+                    // O markdown cru preserva a formatação na citação; sem ele, o texto puro.
                     const content = msg.attribute?.('content') ?? msg.contentPlain?.() ?? '';
                     if (_currentInlineReply) {
                       _currentInlineReply.insertQuote(content, author);
@@ -3508,7 +3266,7 @@ app.initializers.add(
         } catch (_) {}
       };
 
-      // Module-level flag so it survives component remounts
+      // No módulo, para sobreviver à remontagem do componente.
       let _msgPageFullyLoaded = false;
 
       // ── Mobile: don't auto-select first dialog (let user pick) ────────────
@@ -3525,8 +3283,8 @@ app.initializers.add(
         }
         try {
           await _origInitDialog.call(this);
-          // If the dialog was found in store but users weren't included
-          // (e.g. fresh from MessageComposer POST), re-fetch with users.
+          // O diálogo pode estar no store sem os usuários (ex.: recém-criado pelo
+          // MessageComposer): busca de novo com eles.
           const dialog = this.selectedDialog?.();
           if (dialog && (!dialog.users() || dialog.users().length === 0)) {
             const fresh = await app.store.find('dialogs', dialog.id(), { include: 'users.groups' });
@@ -3544,14 +3302,12 @@ app.initializers.add(
       // ── Chat-switch skeleton (mimics discussion post skeleton) ──────────────
       const renderDialogSwitchSkeleton = () => (
         <div className="AvocadoMessages-skeleton-dialog">
-          {/* Fake header */}
           <div className="AvocadoMessages-skeleton-dialog-header">
             <div className="AvocadoMessages-skeleton-avatar" />
             <div className="AvocadoMessages-skeleton-dialog-header-info">
               <div className="AvocadoMessages-skeleton-line AvocadoMessages-skeleton-line--name" />
             </div>
           </div>
-          {/* Fake messages */}
           {[
             { out: false, w1: '55%', w2: '40%' },
             { out: true, w1: '45%', w2: null },
@@ -3589,7 +3345,6 @@ app.initializers.add(
 
       const renderMsgChatSkeleton = () => (
         <div className="AvocadoMessages-skeleton-chat">
-          {/* Received bubbles */}
           <div className="AvocadoMessages-skeleton-bubble AvocadoMessages-skeleton-bubble--in">
             <div className="AvocadoMessages-skeleton-avatar" />
             <div className="AvocadoMessages-skeleton-bubble-body">
@@ -3648,11 +3403,11 @@ app.initializers.add(
       override(MsgPage.prototype, 'view', function () {
         patchMessageClass();
 
-        // Show full skeleton only on very first load (before any dialog has been fetched)
+        // Skeleton inteiro só na primeira carga, antes de qualquer diálogo.
         const isLoading = app.dialogs.isLoading() && !_msgPageFullyLoaded;
 
-        // Show switch skeleton whenever the URL dialog ID doesn't match the
-        // currently loaded dialog — purely synchronous, no async flag needed.
+        // Skeleton de troca sempre que o id da URL difere do diálogo carregado; é
+        // síncrono, sem flag.
         const routeId = String(m.route.param('id') ?? '');
         const loadedId = String(this.selectedDialog?.()?.id?.() ?? '');
         const isSwitching = !isLoading && !!routeId && routeId !== loadedId;
@@ -3666,12 +3421,11 @@ app.initializers.add(
         const sidebarVnode = items.has('sidebar') ? items.get('sidebar') : null;
         const dialogVnode = items.has('dialog') ? items.get('dialog') : null;
 
-        // FORCE re-create of dialog component with a unique key tied to dialog ID
-        // This ensures MessageStream.oncreate() is called when dialog changes
+        // `key` atrelada ao id do diálogo força o Mithril a recriar o componente, e o
+        // MessageStream.oncreate() roda a cada troca.
         const dialogId = this.selectedDialog?.()?.id?.();
         const forceRecreatKey = isLoading ? 'loading' : isSwitching ? 'switching' : `dialog-${dialogId}`;
 
-        // Apply key to force Mithril to destroy and recreate the component
         if (dialogVnode && !isLoading && !isSwitching) {
           dialogVnode.key = forceRecreatKey;
         }
@@ -3685,8 +3439,7 @@ app.initializers.add(
             self.currentDialogId = null;
             const title = app.translator.trans('flarum-messages.forum.messages_page.title', {}, true);
             app.setTitle(title);
-            // Navigate to base messages route so the URL no longer has an id
-            // and initDialog won't re-load the previous conversation.
+            // Volta à rota base, para o initDialog não reabrir a conversa anterior.
             try {
               m.route.set(app.route('messages'));
             } catch (_) {
@@ -3719,7 +3472,7 @@ app.initializers.add(
       });
 
       // ── Guard and verify realtime listeners are active (fallback) ────────────
-      // If for some reason oncreate is not called, this ensures channels exist
+      // Garante os canais caso o oncreate não rode.
       extend(MsgPage.prototype, 'onupdate', function () {
         if (!app.websocket || !app.session.user) return;
         if (!app.websocket_channels) app.websocket_channels = {};
@@ -3734,35 +3487,30 @@ app.initializers.add(
       });
     };
 
-    // Case A: chunk already loaded (e.g. SSR or eager bundle)
+    // Caso A: o chunk já carregou.
     const MsgPageSync = flarum.reg.get('flarum-messages', 'forum/components/MessagesPage');
     if (MsgPageSync) {
       applyMessagesPageOverride(MsgPageSync);
     } else {
-      // Case B: lazy chunk — intercept flarum.reg.add() to catch the moment
-      // the chunk evaluates and registers the component.
+      // Caso B: chunk lazy; intercepta o flarum.reg.add() no momento em que ele
+      // registra o componente.
       const _origRegAdd = flarum.reg.add.bind(flarum.reg);
       flarum.reg.add = function (extId, compName, comp) {
         _origRegAdd(extId, compName, comp);
         if (extId === 'flarum-messages' && compName === 'forum/components/MessagesPage') {
           applyMessagesPageOverride(comp);
-          // Restore original so we don't intercept unrelated calls forever
+          // Restaura o original para não interceptar chamadas alheias para sempre.
           flarum.reg.add = _origRegAdd;
         }
       };
     }
 
-    // ── 25. Contadores do usuário sem websocket (fallback leve) ───────────────
-    // Com o flarum/realtime ativo NÃO há polling nenhum: as notificações chegam
-    // pelo canal private-user (o próprio realtime soma os contadores) e o Pusher
-    // reconecta sozinho — o core e as fof também não fazem polling. Antes, toda aba
-    // logada pedia GET /users/{id} completo + app.dialogs.load() a cada 30 s
-    // sempre que o socket não estava "connected" (inclusive enquanto conectava).
-    // Sem o realtime instalado fica só um fallback barato: aba visível, só os
-    // contadores (sparse fieldset, ~150 bytes em vez da ficha inteira), intervalo
-    // de 1 min que dobra até 5 min enquanto nada muda. A lista de conversas não é
-    // recarregada aqui: o DialogListState do flarum/messages já recarrega ao abrir
-    // quando `messageCount` mudou.
+    // ── Contadores do usuário sem websocket (fallback leve) ───────────────
+    // Com o flarum/realtime ativo não há polling: as notificações chegam pelo canal
+    // private-user e o Pusher reconecta sozinho. Sem ele fica um fallback barato:
+    // só com a aba visível, só os contadores (sparse fieldset), de 1 em 1 min,
+    // dobrando até 5 min enquanto nada muda. A lista de conversas fica com o
+    // DialogListState do flarum/messages, que recarrega quando `messageCount` muda.
     if (!realtimeAvailable()) {
       const MIN_MS = 60_000;
       const MAX_MS = 300_000;
@@ -3819,23 +3567,11 @@ app.initializers.add(
       }
     }
 
-    // ── 25b. flarum/realtime — custom event handlers ──────────────────────────
-    // Strategy: subscribe directly via app.websocket (Pusher instance) rather
-    // than going through RealtimeState callbacks.
-    //
-    // Why: RealtimeState.notifyPublicChannelReady is only called for guests;
-    // logged-in users only get notifyUserChannelReady. Subscribing directly
-    // avoids that asymmetry and works even if flarum/realtime's own boot
-    // sequence hasn't fired yet.
-    //
-    // Channels:
-    //   public            — public broadcasts (guests + fallback)
-    //   private-user={id} — per-user personalised payload (logged-in users)
-    //
-    // Events bound on both channels (SendTriggerJob dispatches to both):
-    //   likesMutation, discussionPinned
-    // Events bound on user channel only (SendDialogMessageJob → private only):
-    //   Flarum\Messages\DialogMessage\Event\Created/Updated
+    // ── flarum/realtime — custom event handlers ──────────────────────────
+    // Assina direto em app.websocket em vez dos callbacks do RealtimeState: o
+    // notifyPublicChannelReady só roda para guests, e assinar direto funciona mesmo
+    // antes do boot do flarum/realtime. Canais: `public` e `private-user={id}`.
+    // likesMutation e discussionPinned vêm nos dois; as mensagens só no privado.
     (() => {
       const EV_MSG_CREATED = 'Flarum\\Messages\\DialogMessage\\Event\\Created';
       const EV_MSG_UPDATED = 'Flarum\\Messages\\DialogMessage\\Event\\Updated';
@@ -3848,10 +3584,9 @@ app.initializers.add(
       };
 
       const onDialog = (data) => {
-        // Push the payload so the store is up-to-date.
-        // flarum/messages' own extendRealtime already calls state.push(message)
-        // and app.dialogs.refresh() — we must NOT call load/refresh again here
-        // or the stream will do a full reload (the "freeze" the user sees).
+        // Só atualiza o store: o extendRealtime do flarum/messages já chama
+        // state.push(message) e app.dialogs.refresh(), e um load/refresh aqui
+        // recarregaria o stream inteiro (o "congelamento").
         try {
           if (data) app.store.pushPayload(data);
         } catch (_) {}
@@ -3862,7 +3597,7 @@ app.initializers.add(
         try {
           if (!app.websocket) return false;
 
-          // Public channel — for guests and as fallback for logged-in users.
+          // Canal público: guests, e reserva para quem está logado.
           const pub = app.websocket.subscribe('public');
           if (!pub._avBound) {
             pub._avBound = true;
@@ -3870,7 +3605,7 @@ app.initializers.add(
             pub.bind('discussionPinned', onPayload);
           }
 
-          // Private user channel — personalised payload for logged-in users.
+          // Canal do usuário: payload personalizado para quem está logado.
           if (app.session?.user) {
             const priv = app.websocket.subscribe(`private-user=${app.session.user.id()}`);
             if (!priv._avBound) {
@@ -3880,10 +3615,8 @@ app.initializers.add(
               priv.bind(EV_MSG_CREATED, onDialog);
               priv.bind(EV_MSG_UPDATED, onDialog);
             }
-            // Re-bind flarum/messages' MessageStream handler now that the channel
-            // is confirmed ready. MessageStream.oncreate binds via optional chaining
-            // (app.websocket_channels?.user?.bind) — if the channel wasn't ready at
-            // mount time the bind silently did nothing. We fix that here.
+            // Religa o handler do MessageStream do flarum/messages com o canal pronto: o
+            // oncreate liga por optional chaining e, sem canal na montagem, não liga nada.
             try {
               const comp = _currentStreamComponent;
               if (comp && typeof comp.messageCreatedHandler === 'function') {
@@ -3893,7 +3626,7 @@ app.initializers.add(
             } catch (_) {}
           }
 
-          // Also notify RealtimeState so other flarum/realtime consumers work.
+          // Avisa também o RealtimeState, para os outros consumidores do flarum/realtime.
           const rs = flarum.reg.get('flarum-realtime', 'forum/RealtimeState');
           if (rs && !rs._avocadoNotified) {
             rs._avocadoNotified = true;
@@ -3909,8 +3642,7 @@ app.initializers.add(
         }
       };
 
-      // Sem o realtime não há socket para esperar (antes ficava 15 s testando
-      // app.websocket a cada 300 ms em toda página à toa).
+      // Sem o realtime não há socket para esperar.
       if (!realtimeAvailable()) return;
 
       // O realtime cria app.websocket num extend de Application.mount, que o boot
@@ -3930,29 +3662,22 @@ app.initializers.add(
       });
     })();
 
-    // ── 24. DiscussionListItem infoItems (excerpt) ────────────────────────────
+    // ── DiscussionListItem infoItems (excerpt) ────────────────────────────
     extend(DiscussionListItem.prototype, 'infoItems', function (items) {
       if (!items.has('excerpt')) {
         const firstPost = this.attrs.discussion.firstPost?.();
         if (firstPost) {
-          // FIX: null-guard on contentPlain() before passing to truncate
           const plain = firstPost.contentPlain?.() || '';
           if (plain) items.add('excerpt', <div>{truncate(plain, 175)}</div>, -100);
         }
       }
     });
 
-    // ── 25. Phone: no dropdown flash before the notifications page ────────────
-    // Core's HeaderDropdown.onclick() navigates to the full page (goToRoute)
-    // when the drawer is open, but the toggle button still carries Bootstrap's
-    // data-toggle="dropdown". Bootstrap's delegated handler on `document` fires
-    // right after this onclick, so the bottom-sheet panel slides in for a frame
-    // until Page.oninit → app.drawer.hide() tears the drawer down. The result is
-    // the "small panel flashes, then the full page opens" the user sees.
-    //
-    // Stopping propagation here keeps the event from reaching Bootstrap, so only
-    // the route change happens. Mithril binds onclick directly on the button, so
-    // it runs in the target phase — before the document-level handler.
+    // ── Phone: no dropdown flash before the notifications page ────────────
+    // Com o drawer aberto o HeaderDropdown.onclick() do core navega para a página
+    // inteira, mas o botão ainda tem o data-toggle="dropdown" do Bootstrap e o
+    // painel aparece por um quadro. Parar a propagação aqui (fase do alvo, antes do
+    // handler no document) deixa só a troca de rota.
     override(HeaderDropdown.prototype, 'onclick', function (original, e) {
       if (!app.drawer?.isOpen?.()) return original(e);
 
@@ -3962,20 +3687,19 @@ app.initializers.add(
     });
 
     // ── Colored integration ───────────────────────────────────────────────────
-    // Applies the first tag's color to the entire page (primary color, links,
-    // buttons, header) via CSS custom properties set on <body>.
-    // Ported from ramon/colored; LESS rules live in forum/colored.less.
+    // A cor da primeira tag vale para a página inteira, por variáveis CSS no
+    // <body>; as regras ficam em forum/colored.less.
 
     app.beforeMount(() => {
       const enabled = !!app.forum.attribute<boolean>('avocadoColoredEnabled');
       const borderStyle = enabled ? app.forum.attribute<string>('avocadoColoredBorderStyle') || 'none' : 'none';
       document.documentElement.setAttribute('data-avocado-colored-border', borderStyle);
-      // Colored header is driven by Flarum's own data-colored-header attribute (set by
-      // FrontendServiceProvider). No avocado attribute needed — see colored.less selector.
+      // O cabeçalho colorido segue o data-colored-header do próprio Flarum
+      // (FrontendServiceProvider); não precisa de atributo do tema.
     });
 
-    // DiscussionListItem: inject --item-tag-color for native Flarum list border rules
-    // + apply color on click so the discussion page opens pre-colored.
+    // --item-tag-color para as bordas nativas da lista, e a cor aplicada no clique
+    // para a discussão já abrir colorida.
     extend(DiscussionListItem.prototype, 'view', function (vdom) {
       const tags = sortTagsSafe((this.attrs.discussion?.tags?.() as any[]) || []);
       const color: string | null = tags.length ? (tags[0] as any).color?.() : null;
@@ -3991,8 +3715,7 @@ app.initializers.add(
       };
     });
 
-    // DiscussionHero: apply body-level color when entering a discussion,
-    // and clear it when leaving (color snaps via suppressTransitions in applyColor).
+    // Aplica a cor ao entrar na discussão e limpa ao sair (sem transição, ver applyColor).
     extend(DiscussionHero.prototype, 'oninit', function () {
       if (!app.forum.attribute<boolean>('avocadoColoredEnabled')) return;
       const tags = sortTagsSafe((this.attrs.discussion?.tags?.() as any[]) || []);
@@ -4011,16 +3734,11 @@ app.initializers.add(
 );
 
 // ─── fof/reactions: suppress "Your reaction was converted" warning ─────────────
-// The extension fires app.alerts.show({type:'warning'}, transString) after a
-// reaction is removed and the gamification/likes integration is active.
-// This alert breaks the seamless UX, so we intercept and silently drop it.
-//
-// O filtro fica só no app.alerts.show (chamado raramente). Antes o
-// app.translator.trans — a função mais quente do front, chamada centenas de
-// vezes por redraw — era embrulhado inteiro só para anular esta chave.
-// Reconhecemos o aviso pelo texto: a tradução crua da chave vira uma regex (os
-// placeholders ICU como {reaction} viram curinga) comparada com o texto do
-// alerta via extractText, que funciona tanto com string quanto com vnodes.
+// A extensão mostra esse aviso ao remover uma reação com gamification/likes, e
+// ele quebra a experiência. O filtro fica no app.alerts.show, chamado raramente,
+// e não no app.translator.trans, a função mais quente do front. O aviso é
+// reconhecido pelo texto: a tradução crua vira uma regex (placeholders ICU viram
+// curinga) comparada via extractText, que aceita string e vnodes.
 app.initializers.add(
   'avocado-suppress-reaction-converted-warning',
   () => {
@@ -4060,11 +3778,10 @@ app.initializers.add(
 
 // ── Botão "Responder" do flarum/mentions sem rejeição solta ───────────────────
 // O `reply()` do flarum/mentions encadeia `.then()` na ação de responder do core
-// e ninguém trata a rejeição. O core rejeita de propósito quando não há o que
-// abrir: visitante (abre o login e rejeita sem motivo) ou quem recusa descartar
-// a resposta já aberta. O login abre normalmente; só sobrava um
-// "Uncaught (in promise) undefined" no console. Prioridade baixa para rodar
-// depois do initializer do flarum/mentions, que é quem adiciona o botão.
+// sem tratar a rejeição, e o core rejeita de propósito quando não há o que abrir
+// (visitante, ou quem recusa descartar a resposta aberta). Sobraria um
+// "Uncaught (in promise)" no console. Prioridade baixa para rodar depois do
+// initializer do flarum/mentions.
 app.initializers.add(
   'avocado-mentions-reply-rejection',
   () => {

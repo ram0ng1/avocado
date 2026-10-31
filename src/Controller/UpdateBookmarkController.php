@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Controller;
@@ -13,20 +22,26 @@ use Flarum\User\Exception\PermissionDeniedException;
 use Illuminate\Support\Arr;
 use Laminas\Diactoros\Response\JsonResponse;
 use Psr\Http\Message\ResponseInterface;
+use Flarum\User\User;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Ramon\Avocado\Model\Bookmark;
 use Ramon\Avocado\Support\BookmarksSetting;
 
 /**
- * Define nota e/ou lembrete do bookmark do ator (upsert: salva a discussão se
- * ainda não estava salva). O par é sempre derivado do servidor (user_id = ator,
- * §7) e a discussão precisa ser visível ao ator (§5). Trocar o lembrete zera
- * `reminder_sent_at`, rearmando o envio pelo scheduler.
+ * Nota e/ou lembrete do bookmark do ator (upsert). O user_id vem do servidor e
+ * a discussão precisa ser visível ao ator. Trocar o lembrete zera
+ * `reminder_sent_at`, rearmando o envio.
  */
 class UpdateBookmarkController implements RequestHandlerInterface
 {
     public const NOTE_MAX_LENGTH = 1000;
+
+    /**
+     * Lembretes pendentes por usuário. O comando envia um lote por rodada, e
+     * sem teto um único usuário enchia a fila e atrasava os lembretes de todos.
+     */
+    public const MAX_PENDING_REMINDERS = 100;
 
     public function __construct(
         protected BookmarksSetting $bookmarks,
@@ -64,6 +79,10 @@ class UpdateBookmarkController implements RequestHandlerInterface
         }
 
         if (array_key_exists('remindAt', $body)) {
+            if ($remindAt !== null && ! $this->hasPendingReminder($bookmark) && $this->pendingReminders($actor) >= self::MAX_PENDING_REMINDERS) {
+                throw new ValidationException(['remindAt' => $this->translator->trans('ramon-avocado.api.too_many_reminders', ['max' => self::MAX_PENDING_REMINDERS])]);
+            }
+
             $bookmark->remind_at = $remindAt;
             $bookmark->reminder_sent_at = null;
         }
@@ -78,7 +97,7 @@ class UpdateBookmarkController implements RequestHandlerInterface
         ]);
     }
 
-    private function resolveDiscussion(array $body, ServerRequestInterface $request, $actor): Discussion
+    private function resolveDiscussion(array $body, ServerRequestInterface $request, User $actor): Discussion
     {
         $rawId = Arr::get($body, 'discussionId', Arr::get($request->getQueryParams(), 'discussionId'));
 
@@ -128,7 +147,9 @@ class UpdateBookmarkController implements RequestHandlerInterface
         }
 
         try {
-            $remindAt = Carbon::parse($raw);
+            // O Eloquent grava a data sem o fuso: sem converter, um horário com offset
+            // viraria outro instante no banco.
+            $remindAt = Carbon::parse($raw)->utc();
         } catch (\Throwable) {
             throw new ValidationException(['remindAt' => $this->translator->trans('ramon-avocado.api.invalid_reminder_date')]);
         }
@@ -141,5 +162,20 @@ class UpdateBookmarkController implements RequestHandlerInterface
         }
 
         return $remindAt;
+    }
+
+    /** Reagendar um lembrete que já está na fila não ocupa vaga nova. */
+    private function hasPendingReminder(Bookmark $bookmark): bool
+    {
+        return $bookmark->exists && $bookmark->remind_at !== null && $bookmark->reminder_sent_at === null;
+    }
+
+    private function pendingReminders(User $actor): int
+    {
+        return Bookmark::query()
+            ->where('user_id', $actor->id)
+            ->whereNotNull('remind_at')
+            ->whereNull('reminder_sent_at')
+            ->count();
     }
 }

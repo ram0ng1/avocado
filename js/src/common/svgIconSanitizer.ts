@@ -1,15 +1,13 @@
+import decodeCssEscapes from './cssEscapes';
+
 /**
- * Espelho, no navegador, de `Support\SvgIconSanitizer` (PHP) — as MESMAS
- * allowlists, mantidas em par. O servidor é quem sanitiza o que vai ao banco;
- * este lado existe porque o markup é embutido como HTML cru (trustedHtml):
+ * Espelho de `Support\SvgIconSanitizer` (PHP), com as mesmas allowlists. O
+ * servidor sanitiza o que vai ao banco; este lado cobre a prévia do arquivo
+ * recém-escolhido e linhas que não passaram pela API, porque o markup é
+ * embutido como HTML cru (trustedHtml).
  *
- *  - a pré-visualização do modal da tag mostra o ARQUIVO que o admin acabou de
- *    escolher, antes de qualquer ida ao servidor;
- *  - uma linha que não passou pela API (importada da extensão avulsa, escrita
- *    direto no banco) não teria sido sanitizada por ninguém.
- *
- * Só remove: não reescreve ids/classes nem move fill/stroke como o servidor faz
- * (isso é apresentação, não segurança). Devolve null quando não há SVG utilizável.
+ * Só remove, sem reescrever ids/classes como o servidor (isso é apresentação).
+ * Devolve null quando não sobra SVG utilizável.
  */
 export const MAX_SVG_BYTES = 102400;
 
@@ -82,11 +80,11 @@ const ALLOWED_ELEMENTS = new Set([
 // escaparia. Ficam só com o texto.
 const TEXT_ONLY_ELEMENTS = new Set(['title', 'desc']);
 
-const DANGEROUS_CSS = /@import|expression\s*\(|javascript:|behavior\s*:|-moz-binding|url\s*\(\s*["']?\s*[^#"'\s)]/i;
+const DANGEROUS_CSS = /@import|expression\s*\(|javascript:|behavior\s*:|-moz-binding|(?:url|image-set)\s*\(\s*["']?\s*[^#"'\s)]/i;
 const DANGEROUS_VALUE = /javascript:|data:text\/html|vbscript:/i;
 const SAFE_DATA_IMAGE = /^data:image\/(png|jpe?g|gif|webp);base64,[a-z0-9+/=\s]+$/i;
 
-const isDangerousCss = (css: string): boolean => css.includes('<') || DANGEROUS_CSS.test(css);
+const isDangerousCss = (css: string): boolean => css.includes('<') || DANGEROUS_CSS.test(decodeCssEscapes(css));
 
 const isSafeHref = (value: string): boolean => value === '' || value.startsWith('#') || SAFE_DATA_IMAGE.test(value);
 
@@ -118,7 +116,7 @@ function cleanAttributes(element: Element): void {
       name.startsWith('on') ||
       !ALLOWED_ATTRIBUTE_NS.includes(attr.namespaceURI) ||
       (attr.localName === 'href' && !isSafeHref(value)) ||
-      (name === 'style' && DANGEROUS_CSS.test(value)) ||
+      (name === 'style' && DANGEROUS_CSS.test(decodeCssEscapes(value))) ||
       (name !== 'style' && DANGEROUS_VALUE.test(value.replace(/\s+/g, '')));
 
     if (remove) element.removeAttributeNode(attr);

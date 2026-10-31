@@ -20,31 +20,18 @@ import {
 } from '../../utils';
 
 export interface PostCardAttrs extends ComponentAttrs {
-  /** The post model to render (comment post) */
   post: any;
-  /** Parent component reference for DiscussionControls context */
+  /** Componente pai, contexto dos DiscussionControls. */
   context: any;
-  /**
-   * Search query string — enables highlighted title and excerpt.
-   * When omitted the text is rendered plain/truncated.
-   */
+  /** Termo buscado: destaca título e trecho. */
   searchQuery?: string;
-  /**
-   * Show sticky/locked badges on the meta row.
-   * Default: true — set to false for search result contexts.
-   */
+  /** Selos de fixado/trancado na meta. Padrão true; false nos resultados de busca. */
   showBadges?: boolean;
 }
 
 /**
- * PostCard — shared card for rendering a user's comment inside a discussion.
- *
- * Used by:
- *  - UserProfilePage  (posts tab, likes tab, mentions tab)
- *  - AvocadoSearchPage (discussions/posts search results)
- *
- * Renders the same AvocadoHome-threadCard shell as ThreadCard but is
- * anchored to a **post** (not a discussion), linking to the post's position.
+ * Cartão de um post do usuário (perfil e busca): a mesma casca do ThreadCard,
+ * mas ancorada no post, com link para a posição dele.
  */
 export default class PostCard extends Component<PostCardAttrs> {
   view() {
@@ -80,10 +67,8 @@ export default class PostCard extends Component<PostCardAttrs> {
     return (
       <article key={id} className="AvocadoHome-threadCard">
         <div className="AvocadoHome-threadHead">
-          {/* Avatar */}
           <div className="AvocadoHome-avatarWrap">{user && <Avatar user={user} title={displayName(user)} />}</div>
 
-          {/* Main content */}
           <div className="AvocadoHome-threadMain">
             <div className="AvocadoHome-threadMeta">
               <a
@@ -98,7 +83,6 @@ export default class PostCard extends Component<PostCardAttrs> {
               </a>
               {timeLabel && <span className="AvocadoHome-threadTime">{timeLabel}</span>}
 
-              {/* Status badges — opt-in via showBadges prop */}
               {showBadges && isSticky && (
                 <Tooltip text={trans('ramon-avocado.forum.home.badge_sticky', 'Pinned')} position="top">
                   <span className="AvocadoHome-badge AvocadoHome-badge--sticky">
@@ -114,7 +98,6 @@ export default class PostCard extends Component<PostCardAttrs> {
                 </Tooltip>
               )}
 
-              {/* Tag pills (up to 2) */}
               {tags.slice(0, 2).map((tag: any) => (
                 <a
                   key={tag.id?.()}
@@ -132,16 +115,13 @@ export default class PostCard extends Component<PostCardAttrs> {
               ))}
             </div>
 
-            {/* Discussion title */}
             <a className="AvocadoHome-threadTitle" href={href} onclick={(e: Event) => navigate(e as MouseEvent, href)}>
               {titleNode}
             </a>
 
-            {/* Post excerpt */}
             {excerpt && <p className="AvocadoHome-threadExcerpt AvocadoUserPage-postExcerpt">{excerpt}</p>}
           </div>
 
-          {/* Actions: controls dropdown + view button */}
           <div className="AvocadoHome-threadActions">
             {controls.length > 0 && (
               <Dropdown
@@ -167,7 +147,6 @@ export default class PostCard extends Component<PostCardAttrs> {
           </div>
         </div>
 
-        {/* Stats: reply count */}
         <div className="AvocadoHome-threadStats">
           <span
             className="AvocadoHome-statBtn AvocadoHome-statBtn--replies"

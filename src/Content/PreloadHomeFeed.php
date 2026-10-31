@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Content;
@@ -11,17 +20,9 @@ use Flarum\Settings\SettingsRepositoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
- * Preloads the home discussion list into the boot payload as
- * `app.data.avocadoHomeFeed` — só quando a página da index não basta.
- *
- * A index entrega 20 discussões no boot e é delas que a lista da home sai. As
- * do showcase não entram na conta, então com 15 ou 20 itens configurados a
- * lista podia ficar curta e o front completava com um GET depois do 1º paint:
- * a lista crescia na frente do usuário. Ver docs/preload-sem-flash.md: dado
- * necessário no 1º paint tem que vir no payload do boot.
- *
- * Registrado globalmente em extend.php; o guard de rota e a conta abaixo
- * mantêm a consulta fora das outras páginas e das homes que não precisam dela.
+ * Completa a lista da home no payload do boot (`app.data.avocadoHomeFeed`) só
+ * quando as 20 discussões da index não bastam (as do showcase não contam); sem
+ * isso a lista cresceria na tela depois do primeiro paint.
  */
 class PreloadHomeFeed
 {
@@ -74,8 +75,6 @@ class PreloadHomeFeed
             return;
         }
 
-        // Vira app.data.avocadoHomeFeed no front, no formato que
-        // store.pushPayload() consome direto.
         $document->payload['avocadoHomeFeed'] = [
             'data'     => $doc['data'],
             'included' => $doc['included'] ?? [],
@@ -100,10 +99,7 @@ class PreloadHomeFeed
         if ($this->settings->get('avocado.home_feed_sort') === 'latest') {
             $params['sort'] = '-lastPostedAt';
         } elseif ($defaultIndexOrder) {
-            // Mesma ordem da index: as 20 primeiras já estão no apiDocument do
-            // boot, e o front junta as duas listas (HomeState › feedCandidates).
-            // Pedir só o que vem depois delas evita serializar de novo as 20
-            // linhas — o conjunto final é o mesmo.
+            // Mesma ordem da index, pulando as 20 que já estão no apiDocument do boot.
             $params['page'] = [
                 'offset' => self::INDEX_PAGE_SIZE,
                 'limit'  => $limit - self::INDEX_PAGE_SIZE,

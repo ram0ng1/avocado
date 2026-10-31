@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Middleware;
@@ -13,7 +22,7 @@ use Ramon\Avocado\Support\SupportEvents;
 
 /**
  * Guarda o ator do request da API para os ganchos de modelo que não recebem
- * request nenhum — hoje, a linha do tempo dos tickets do support. Entra depois
+ * request nenhum (a linha do tempo dos tickets do support). Entra depois
  * dos middlewares de autenticação do core, então o ator já está resolvido.
  */
 class RememberActor implements MiddlewareInterface

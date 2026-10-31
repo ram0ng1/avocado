@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Mede e compara o tamanho dos bundles JS da extensão (js/dist/**.js), raw e
 // gzip. Espelha o fluxo do compare-lhci.mjs: na PR compara contra a baseline
-// do master e gera um markdown com deltas 🟢/🔴. Report-only (não trava o CI).
+// do master e gera um markdown com os deltas. Report-only (não trava o CI).
 //
 // Uso:
 //   node bundle-size.mjs measure <distDir> <outJson>
@@ -64,7 +64,7 @@ if (cmd === 'compare') {
   const pr = JSON.parse(readFileSync(prPath, 'utf8'));
   const base = basePath && existsSync(basePath) ? JSON.parse(readFileSync(basePath, 'utf8')) : null;
 
-  // 🔴 = cresceu (pior), 🟢 = diminuiu (melhor). null base => sem delta.
+  // Crescer é pior, diminuir é melhor. Sem base, sem delta.
   const deltaCell = (prV, baseV) => {
     if (baseV == null) return '—';
     const d = prV - baseV;

@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Controller;
@@ -9,7 +18,7 @@ use Flarum\Foundation\ValidationException;
 use Flarum\Http\RequestUtil;
 use Flarum\Locale\TranslatorInterface;
 use Illuminate\Contracts\Filesystem\Factory;
-use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Contracts\Filesystem\Cloud;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Intervention\Image\ImageManager;
@@ -21,7 +30,7 @@ use Ramon\Avocado\Model\DiscussionHero;
 
 class UploadDiscussionHeroController implements RequestHandlerInterface
 {
-    protected Filesystem $uploadDir;
+    protected Cloud $uploadDir;
 
     public function __construct(
         protected ImageManager $imageManager,
@@ -31,10 +40,15 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
         $this->uploadDir = $filesystemFactory->disk('flarum-assets');
     }
 
-    /** Hero source images larger than this are rejected before the decoder runs. */
+    /** Recusado antes de o decodificador rodar. */
     private const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
-    /** MIME types accepted as hero-image source uploads. */
+    /**
+     * Teto em pixels, conferido no cabeçalho antes de decodificar: o GD aloca o
+     * bitmap fora do memory_limit, e um PNG de 1 MB pode declarar 20000×20000.
+     */
+    private const MAX_PIXELS = 40_000_000;
+
     private const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
     public function handle(ServerRequestInterface $request): ResponseInterface
@@ -49,19 +63,14 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
         }
 
         /** @var Discussion|null $discussion */
-        // Só discussões que o ator vê: sem isso um moderador com "renomear" global
-        // trocava a imagem de uma discussão oculta para ele, e a diferença entre
-        // 404 e 403 revelava quais IDs ocultos existem.
+        // Só discussões visíveis ao ator: senão a diferença entre 404 e 403 revelaria
+        // quais IDs ocultos existem.
         $discussion = Discussion::whereVisibleTo($actor)->find($discussionId);
         if (! $discussion) {
             throw new ValidationException(['discussionId' => $this->translator->trans('ramon-avocado.api.discussion_not_found')]);
         }
 
-        // Use a dedicated ability so the authorization rule is named for what
-        // it gates (hero-image upload) rather than piggy-backing on the
-        // unrelated "rename" permission. The policy currently delegates to
-        // rename — admins can override that later without touching this
-        // controller. See Ramon\Avocado\Access\DiscussionPolicy.
+        // Ability própria em vez de `rename`; ver Access\DiscussionPolicy.
         $actor->assertCan('uploadHeroImage', $discussion);
 
         $file = Arr::get($request->getUploadedFiles(), 'avocado-discussion-hero');
@@ -69,8 +78,7 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
             throw new ValidationException(['file' => $this->translator->trans('ramon-avocado.api.no_file_uploaded')]);
         }
 
-        // Size guard: hero source images are never multi-megabyte; reject before
-        // Intervention attempts to decode the bitmap into memory (OOM/DoS).
+        // Recusa antes de o Intervention decodificar o bitmap (OOM/DoS).
         $size = $file->getSize();
         if ($size === null || $size > self::MAX_UPLOAD_BYTES) {
             throw new ValidationException([
@@ -78,10 +86,7 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
             ]);
         }
 
-        // MIME guard: don't trust the client's Content-Type. Sniff on disk via
-        // finfo — mime_content_type() is a thin wrapper over the same database
-        // but is deprecated for new code and unavailable on PHP builds compiled
-        // without ext-fileinfo's CLI alias. Use the finfo API directly.
+        // O Content-Type do cliente não vale: o MIME é detectado no disco pelo finfo.
         $tmpPath = $file->getStream()->getMetadata('uri');
         $mime = '';
         if (is_string($tmpPath) && is_readable($tmpPath)) {
@@ -98,29 +103,40 @@ class UploadDiscussionHeroController implements RequestHandlerInterface
             throw new ValidationException(['file' => $this->translator->trans('ramon-avocado.api.unsupported_image_type')]);
         }
 
-        $encoded = $this->imageManager
+        $dimensions = @getimagesize($tmpPath);
+        if (! $dimensions || $dimensions[0] * $dimensions[1] > self::MAX_PIXELS) {
+            throw new ValidationException(['file' => $this->translator->trans('ramon-avocado.api.image_too_large')]);
+        }
+
+        // O hero é estático: decodificar todos os quadros de um GIF/WebP animado
+        // só custa memória (cada quadro vira um bitmap inteiro).
+        $encoded = ImageManager::withDriver($this->imageManager->driver()::class, decodeAnimation: false)
             ->read($tmpPath)
             ->scaleDown(width: 1600)
             ->toWebp(quality: 78);
 
-        /** @var DiscussionHero|null $hero */
-        $hero = $discussion->avocadoHero;
-
-        // Capture the previous image path BEFORE we save. Write the new file,
-        // point the DB row at it, and only THEN delete the previous file. If
-        // put()/save() fails between steps we leak an orphan file (cleanable)
-        // instead of losing the user's current hero image (unrecoverable).
-        $oldPath = $hero?->image_path;
-
         $filename = 'avocado-disc-hero-'.$discussion->id.'-'.Str::lower(Str::random(8)).'.webp';
-        $this->uploadDir->put($filename, $encoded);
+        $this->uploadDir->put($filename, $encoded->toString());
 
-        if ($hero === null) {
-            $hero = new DiscussionHero();
-            $hero->discussion_id = (int) $discussion->id;
-        }
-        $hero->image_path = $filename;
-        $hero->save();
+        // O lock na linha da discussão serializa uploads simultâneos: sem ele os dois
+        // criariam o hero (500 na PK) e um arquivo ficaria órfão. O antigo só sai
+        // depois que a linha aponta para o novo.
+        $oldPath = $discussion->getConnection()->transaction(function () use ($discussion, $filename) {
+            Discussion::query()->whereKey($discussion->id)->lockForUpdate()->value('id');
+
+            /** @var DiscussionHero|null $hero */
+            $hero = DiscussionHero::query()->find($discussion->id);
+            $oldPath = $hero?->image_path;
+
+            if ($hero === null) {
+                $hero = new DiscussionHero();
+                $hero->discussion_id = (int) $discussion->id;
+            }
+            $hero->image_path = $filename;
+            $hero->save();
+
+            return $oldPath;
+        });
 
         if ($oldPath && $oldPath !== $filename && $this->uploadDir->exists($oldPath)) {
             $this->uploadDir->delete($oldPath);

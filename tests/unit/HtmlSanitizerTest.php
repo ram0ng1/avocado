@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
-namespace Ramon\Avocado\Tests\Unit;
+namespace Ramon\Avocado\Tests\unit;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -10,12 +19,8 @@ use PHPUnit\Framework\TestCase;
 use Ramon\Avocado\Support\HtmlSanitizer;
 
 /**
- * The output of HtmlSanitizer::sanitize() ultimately reaches m.trust()/innerHTML
- * on the public site (custom hero HTML, loading-spinner HTML). These tests pin
- * the XSS-sink stripping so a refactor can't silently re-open it.
- *
- * Assertions use substring checks rather than exact-equality because DOMDocument
- * normalizes quoting/attribute order on serialization.
+ * A saída do HtmlSanitizer chega a m.trust()/innerHTML no site público.
+ * Asserções por substring: o DOMDocument normaliza aspas e ordem de atributos.
  */
 #[Group('security')]
 final class HtmlSanitizerTest extends TestCase
@@ -86,7 +91,7 @@ final class HtmlSanitizerTest extends TestCase
     {
         $out = HtmlSanitizer::sanitize('<a href="' . $href . '">click</a>');
 
-        // The <a> survives; only the dangerous href is dropped.
+        // O <a> fica; só o href perigoso sai.
         self::assertStringContainsString('click', $out);
         self::assertStringNotContainsString($href, $out);
     }
@@ -110,7 +115,7 @@ final class HtmlSanitizerTest extends TestCase
 
     public function test_data_image_src_is_preserved(): void
     {
-        // Only data:text/html is dangerous; data:image/* is a legitimate inline asset.
+        // Só data:text/html é perigoso; data:image/* é legítimo.
         $src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
         $out = HtmlSanitizer::sanitize('<img src="' . $src . '" alt="x">');
 
@@ -133,6 +138,10 @@ final class HtmlSanitizerTest extends TestCase
             'expression' => ['width:expression(alert(1))'],
             'import'     => ['@import url(https://evil.example/x.css)'],
             'javascript' => ['background:url(javascript:alert(1))'],
+            // O CSS resolve os escapes antes de reconhecer as palavras.
+            'escaped expression' => ['width:expr\\65ssion(alert(1))'],
+            'escaped import'     => ['@\\69mport url(https://evil.example/x.css)'],
+            'escaped javascript' => ['background:url(java\\73 cript:alert(1))'],
         ];
     }
 
@@ -166,8 +175,8 @@ final class HtmlSanitizerTest extends TestCase
     public static function mxssElements(): array
     {
         return [
-            // <noscript>/<template> bodies are re-parsed by the browser in a
-            // context DOMDocument doesn't replicate — the mutation-XSS vector.
+            // O navegador reparseia <noscript>/<template> num contexto que o DOMDocument
+            // não reproduz (mXSS).
             'noscript' => ['noscript', '<noscript><img src=x onerror=alert(1)></noscript>'],
             'template' => ['template', '<template><img src=x onerror=alert(1)></template>'],
         ];
@@ -175,8 +184,7 @@ final class HtmlSanitizerTest extends TestCase
 
     public function test_sanitization_is_idempotent(): void
     {
-        // The mXSS guard re-scrubs until output stabilizes; a second pass over an
-        // already-clean payload must be a no-op (no markup re-introduced/altered).
+        // Uma segunda passada sobre a saída limpa não pode mudar nada.
         $payloads = [
             '<p>Hello <strong>bold</strong></p>',
             '<a href="https://example.com">link</a>',
@@ -191,7 +199,7 @@ final class HtmlSanitizerTest extends TestCase
         }
     }
 
-    // ── Esquema ofuscado (auditoria de segurança) ───────────────────────────
+    // ── Esquema ofuscado ────────────────────────────────────────────────────
     // O navegador ignora tab/quebra de linha no meio de uma URL e controles no
     // começo: `java&#9;script:` roda como `javascript:`. O xlink:href não passa
     // pelo escape de URL do libxml, então a checagem precisa normalizar.

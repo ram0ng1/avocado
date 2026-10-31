@@ -4,9 +4,8 @@ import type { ComponentAttrs } from 'flarum/common/Component';
 import { displayName, navigate, safeRoute, userSlug } from '../../utils';
 
 export interface IOnlineUsersAttrs extends ComponentAttrs {
-  /** Optional className appended to the outer wrapper. */
   className?: string;
-  /** Maximum number of avatars to render before collapsing to a count. */
+  /** Máximo de avatares antes de virar contagem. */
   maxShown?: number;
 }
 
@@ -20,27 +19,15 @@ const FALLBACK_GRADIENTS = [
 ];
 
 /**
- * Reads the online-user payload injected server-side into <head> as
- * `window.__avocadoOnlineUsers` by Content\InjectOnlineUsers — the single
- * source of truth (it used to be duplicated as an `avocadoOnlineUsers` forum
- * API attribute, which ran the same users-table scan twice per page load).
- * Returns an empty array when the feature is off or the payload is missing.
+ * Payload que o Content\InjectOnlineUsers põe no <head> como
+ * `window.__avocadoOnlineUsers`: fonte única, para não varrer a tabela de
+ * usuários duas vezes por página. Vazio com o recurso desligado.
  */
 function getOnlineUsers(): any[] {
   const list = (window as any).__avocadoOnlineUsers;
   return Array.isArray(list) ? list : [];
 }
 
-/**
- * OnlineUsers — compact avatar row for currently-online members.
- *
- * Renders nothing when:
- *  - the `avocadoShowOnlineUsers` setting is off, or
- *  - the backend has not exposed an online-users list.
- *
- * Used by HomePage and AllDiscussionsPage. Both pages used to inline this
- * markup with subtly different render logic — kept in sync here.
- */
 export default class OnlineUsers<CustomAttrs extends IOnlineUsersAttrs = IOnlineUsersAttrs> extends Component<CustomAttrs> {
   view() {
     if (!app.forum?.attribute('avocadoShowOnlineUsers')) return null;
@@ -51,7 +38,7 @@ export default class OnlineUsers<CustomAttrs extends IOnlineUsersAttrs = IOnline
     const maxShown = this.attrs.maxShown ?? 6;
     const total = users.length;
     const shown = users.slice(0, maxShown);
-    // Backend may emit either Flarum models or plain `{ id, username, ... }` objects.
+    // O backend pode mandar models do Flarum ou objetos simples `{ id, username, … }`.
     const isPlain = shown[0] && typeof shown[0].username === 'string';
 
     const wrapperClass = ['AvocadoHome-onlineAvatars', this.attrs.className].filter(Boolean).join(' ');

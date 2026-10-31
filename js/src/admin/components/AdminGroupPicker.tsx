@@ -42,7 +42,7 @@ export default class AdminGroupPicker extends AdminComponent {
   view() {
     const { label, help } = this.attrs;
     const selected = this.getSelected().map(String);
-    // Filter out Guests (id=2) and Members (id=3) — show only named/custom groups
+    // Guests (2) e Members (3) ficam de fora: só grupos próprios.
     const groups = this.groups.filter((g) => g.id() !== '2' && g.id() !== '3');
 
     return (

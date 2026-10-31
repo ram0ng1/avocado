@@ -2,18 +2,11 @@ import app from 'flarum/forum/app';
 import { override } from 'flarum/common/extend';
 
 /**
- * Tela cheia do compositor do core com metamorfose (opção do admin
- * `avocado.composer_morph`) — o mesmo efeito da tela cheia do compositor da
- * home (FloatingInlineComposer): o cartão cresce do tamanho em que estava até
- * ocupar a tela, com o miolo entrando em cascata, e o inverso ao sair.
- *
- * O core troca de posição só com classe (a tela cheia aparece de uma vez). O
- * "antes" é lido no instante do clique — embrulhando fullScreen/exitFullScreen
- * do app.composer, antes do redraw — e o "depois" quando o Composer reage à
- * nova posição (animatePositionChange). Abrir, fechar e minimizar seguem do core.
- *
- * Fora no celular (o core já abre o compositor em tela cheia) e com "reduzir
- * movimento".
+ * Tela cheia do compositor do core com metamorfose (`avocado.composer_morph`),
+ * o mesmo efeito do FloatingInlineComposer. O core troca de posição só com
+ * classe: o "antes" é lido no clique, embrulhando fullScreen/exitFullScreen, e
+ * o "depois" quando o Composer reage (animatePositionChange). Fora no celular,
+ * onde o core já abre em tela cheia, e com "reduzir movimento".
  */
 
 const MORPH_MS = 460;

@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
-namespace Ramon\Avocado\Tests\Security;
+namespace Ramon\Avocado\Tests\unit\Security;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -12,14 +21,9 @@ use ReflectionClass;
 use ReflectionMethod;
 
 /**
- * §9.3 / §28 — CSS-context injection guard.
- *
- * CustomLoadingSpinner interpolates the admin `theme_primary_color` setting RAW
- * into a <style> block emitted in <head> on first paint. safeColor() is the
- * allowlist that stops a hostile/typo'd value from breaking out of the CSS
- * context (`</style><script>…`) or smuggling a scriptable CSS construct
- * (expression(), url(javascript:…)). Anything not matching the strict hex /
- * rgb()/rgba() shape must fall back to the default colour.
+ * `theme_primary_color` entra cru num <style> do <head>. safeColor() é a
+ * allowlist: fora do formato hex/rgb()/rgba() estrito, cai na cor padrão, sem
+ * `</style><script>` nem expression()/url(javascript:).
  */
 #[Group('security')]
 final class LoadingSpinnerColorTest extends TestCase

@@ -1,6 +1,4 @@
-// ─── User Profile Pages (/u/{username}, /settings, /u/{username}/*) ──────────
-
-// ── Page wrapper ──────────────────────────────────────────────────────────────
+// Páginas de perfil (/u/{username}, /settings e subpáginas).
 
 .AvocadoUserPage {
   min-height: 100vh;
@@ -9,15 +7,12 @@
   color: var(--home-title, #202126);
 }
 
-// ── Hero — social cover layout (capa + avatar sobreposto) ─────────────────────
-
 .AvocadoUserPage-hero {
   position: relative;
   background: var(--body-bg);
-  // NO overflow:hidden — AvatarEditor dropdown must escape the hero
+  // Sem overflow: hidden: o dropdown do AvatarEditor precisa escapar do hero.
 }
 
-// Capa: gradiente derivado da cor do usuário, ou imagem (forumaker/profile-cover).
 .AvocadoUserPage-cover {
   height: 200px;
   position: relative;
@@ -35,9 +30,7 @@
 .AvocadoUserPage-hero--hasCover .AvocadoUserPage-cover {
   background-image: var(--user-cover, none);
   background-size: cover;
-  // Vertical framing chosen in forumaker/profile-cover's editor, published as
-  // an inline var by buildHero (see coverPosition in forum/utils.ts). The
-  // fallback is the extension's own default, so nothing moves without it.
+  // Enquadramento do editor do forumaker/profile-cover; o fallback é o padrão da extensão.
   background-position: var(--user-cover-position, center);
   background-repeat: no-repeat;
 }
@@ -46,25 +39,20 @@
   position: relative;
   max-width: var(--home-max-width, 1320px);
   margin: 0 auto;
-  // padding-top afasta a faixa (nome/stats/ações) da capa.
   padding: 22px 24px 22px;
 }
 
-// Faixa horizontal estilo Facebook: avatar sobreposto à esquerda, identidade no
-// meio, ações à direita. Só o avatar sobe sobre a capa (margin-top negativo nele).
+// Só o avatar sobe sobre a capa (margin-top negativo nele).
 .AvocadoUserPage-hero-bar {
   display: flex;
   align-items: flex-end;
   gap: 20px;
 }
 
-// ── Avatar overlapping the cover ──────────────────────────────────────────────
-
 .AvocadoUserPage-hero-avatarWrap {
   flex-shrink: 0;
   width: 128px;
   height: 128px;
-  // Menos sobreposição na capa: o avatar desce e o nome ganha respiro.
   margin-top: -50px;
   border-radius: 50%;
   position: relative;
@@ -72,8 +60,7 @@
   background: var(--body-bg);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
 
-  // Non-editable Avatar (<img> or <span>)
-  // Specificity 0,2,0 beats Flarum's .Avatar 0,1,0 — no !important needed
+  // 0,2,0 ganha do .Avatar do core sem !important.
   > .Avatar {
     width: 118px;
     height: 118px;
@@ -85,7 +72,6 @@
     font-size: 44px;
   }
 
-  // AvatarEditor: <div class="AvatarEditor Dropdown"> containing Avatar + toggle + menu
   > .AvatarEditor {
     width: 118px;
     height: 118px;
@@ -100,7 +86,6 @@
       object-fit: cover;
     }
 
-    // Pencil overlay button — covers full circle, invisible until hover
     .Dropdown-toggle {
       position: absolute;
       inset: 0;
@@ -128,7 +113,6 @@
       i { position: relative; z-index: 1; }
     }
 
-    // Dropdown menu — escapes the avatar
     .Dropdown-menu {
       position: absolute;
       top: calc(100% + 10px);
@@ -163,23 +147,16 @@
   }
 }
 
-// Online: anel verde por fora da borda body-bg do wrap — mesmo indicador do
-// widget de online (separador body-bg + anel verde), agora uniforme no fórum.
 .AvocadoUserPage-hero-avatarWrap--online {
   box-shadow: 0 0 0 4px var(--avocado-online), 0 6px 18px rgba(0, 0, 0, 0.12);
 }
 
-// ── Hero info — nome + selo inline, @handle e stats embaixo (à direita do avatar) ─
-
 .AvocadoUserPage-hero-identity {
   flex: 1;
   min-width: 0;
-  // Sobe a identidade do fundo da faixa para alinhar com o terço inferior do avatar.
   padding-bottom: 8px;
 }
 
-// Linha do nome, como no X: os selos (verificado, grupos) têm a altura das
-// maiúsculas do nome e vêm colados nele, com o mesmo vão curto entre si.
 // Tamanho e vão em variável porque o celular os reduz junto com o nome.
 .AvocadoUserPage-hero-nameRow {
   --avocado-hero-seal: 24px; // ≈ 0.9em do nome
@@ -217,26 +194,20 @@
     padding: 0;
   }
 
-  // Chapado, como o selo de verificado ao lado (a sombra do core pesava o
-  // badge e o fazia parecer mais baixo).
+  // A sombra do core deixava o badge mais pesado que o selo ao lado.
   .Badge {
     box-shadow: none;
   }
 }
 
-// Largura, altura, raio e ícone do badge do core saem todos de --size. O
-// círculo é cheio até a borda e o selo de verificado tem respiro no próprio
-// desenho: 2px a menos e os dois ficam do mesmo tamanho a olho.
-// Com o linkrobins/badge-labels os badges viram pílulas com texto, e o tamanho é dele.
+// O selo de verificado tem respiro no desenho; 2px a menos e os dois parecem
+// do mesmo tamanho.
 html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
   --size: calc(var(--avocado-hero-seal) - 2px);
 }
 
-// O selo de verificado (ramon/verified) mora DENTRO do <h1>, para acompanhar a
-// última linha de um nome que quebra. A extensão o põe a 10px do nome, em
-// 0.8em e alinhado pela altura-x — menor e mais baixo que os badges ao lado,
-// que se centram na linha. Aqui ele entra na mesma medida e no mesmo eixo:
-// -0.1em assenta a caixa de 0.9em centrada nas maiúsculas do nome.
+// O selo do ramon/verified fica dentro do <h1> para acompanhar a última linha
+// de um nome que quebra. -0.1em centra a caixa de 0.9em nas maiúsculas.
 .AvocadoUserPage-hero-nameRow .AvocadoUserPage-hero-name {
   > .VerifiedBadge,
   > .VerifiedPopover-anchor {
@@ -250,7 +221,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
   }
 }
 
-// @handle sozinho, muted, abaixo do nome (padrão X).
 .AvocadoUserPage-hero-username {
   display: block;
   margin-top: 1px;
@@ -258,8 +228,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
   font-weight: 500;
   color: var(--home-muted, #8f9097);
 }
-
-// ── Stats meta row ────────────────────────────────────────────────────────────
 
 .AvocadoUserPage-hero-meta {
   display: flex;
@@ -282,11 +250,8 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
   time { color: var(--home-muted, #8f9097); }
 }
 
-// ── Controls button (now on light background) ─────────────────────────────────
-
 .AvocadoUserPage-hero-actions {
   flex-shrink: 0;
-  // Empurra para a extrema direita da faixa e alinha com a base (padrão FB).
   margin-left: auto;
   align-self: flex-end;
   padding-bottom: 8px;
@@ -304,8 +269,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
   &:hover { background: color-mix(in srgb, var(--primary-color) 10%, var(--avocado-surface-1)) !important; }
 }
 
-// ── Sticky horizontal nav tabs ─────────────────────────────────────────────────
-
 .AvocadoUserPage-nav {
   background: var(--body-bg);
   border-bottom: 1px solid var(--home-border, #eaeaf0);
@@ -315,8 +278,7 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
   width: 100%;
 }
 
-// ── Nav scroll arrows — shown when items overflow ──────────────────────────────
-// position: sticky acts as containing block for absolute children.
+// O sticky é containing block dos filhos absolutos.
 
 .AvocadoUserPage-navArrow {
   position: absolute;
@@ -355,9 +317,9 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
   }
 }
 
-// Back-to-home link — hidden on phone (phone uses the SelectDropdown nav)
+// No phone a navegação é o SelectDropdown.
 .AvocadoUserPage-homeLink {
-  display: none; // hidden by default, shown on tablet+
+  display: none;
 
   @media @tablet-up {
     display: inline-flex;
@@ -392,13 +354,11 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
 
   &::-webkit-scrollbar { display: none; }
 
-  // Each <li> from listItems() is transparent to the flex layout so that
-  // the inner LinkButton itself becomes the flex item.
+  // O <li> some do layout e o LinkButton vira o item flex.
   > li {
     display: contents;
   }
 
-  // Separator (<li class="Dropdown-separator">) → vertical divider line
   > li.Dropdown-separator {
     display: flex;
     align-self: center;
@@ -409,7 +369,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
     flex-shrink: 0;
   }
 
-  // ── Style native Flarum LinkButton as our horizontal nav tab ──────────────
   .LinkButton {
     display: inline-flex;
     align-items: center;
@@ -431,7 +390,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
 
     .Button-icon { font-size: 13px; margin: 0; }
 
-    // Badge wraps icon+label; flatten it for our inline flex layout
     .Button-label {
       display: inline-flex;
       align-items: center;
@@ -445,14 +403,12 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
       box-shadow: none;
     }
 
-    // Flarum sets active="true" attribute on <a> when route matches
     &[active="true"] {
       color: var(--primary-color);
       border-bottom-color: var(--primary-color);
       font-weight: 700;
     }
 
-    // Post/discussion count badge
     .Button-badge {
       font-size: 12px;
       font-weight: 700;
@@ -523,8 +479,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
   align-self: center;
 }
 
-// ── Body / Content area ────────────────────────────────────────────────────────
-
 .AvocadoUserPage-body {
   background: var(--body-bg);
   min-height: 60vh;
@@ -536,8 +490,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
   padding: 28px 20px 56px;
 }
 
-// ── Post card excerpt — styled to distinguish from discussion title ────────────
-
 .AvocadoUserPage-postExcerpt {
   font-size: 15px;
   color: #505158;
@@ -547,12 +499,9 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
   font-style: italic;
 }
 
-// ── Override native Flarum components within user pages ───────────────────────
-
 .AvocadoUserPage {
 
-  // Phone nav dropdown: reset Button overrides (button lives inside AvocadoUserPage in DOM
-  // but is visually positioned in the header — it should not look like a pill button)
+  // O botão está no DOM da página mas aparece no cabeçalho; não deve virar pílula.
   .AvocadoNav-helper .Dropdown-toggle {
     border-radius: 0 !important;
     background: none !important;
@@ -561,7 +510,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
     padding: 0 !important;
   }
 
-  // Inputs — .AvocadoUserPage .FormControl has 0,2,0 specificity vs Flarum's 0,1,0
   .FormControl {
     font-family: @font-sans;
     border-radius: 10px;
@@ -584,7 +532,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
     &::placeholder { color: var(--avocado-muted-placeholder); font-weight: 500; }
   }
 
-  // Switch toggle — .AvocadoUserPage .Switch has 0,2,0 specificity vs Flarum's 0,1,0
   .Switch {
     display: inline-flex;
     align-items: center;
@@ -627,7 +574,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
     }
   }
 
-  // Help text
   .helpText {
     font-size: 13px;
     color: var(--home-muted, #8f9097);
@@ -636,7 +582,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
     margin-top: 6px;
   }
 
-  // Alerts — .AvocadoUserPage .Alert has 0,2,0 vs Flarum's .Alert 0,1,0
   .Alert {
     border-radius: 10px;
     border: none;
@@ -649,7 +594,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
     &--success { background: rgba(34, 197, 94, 0.1);  color: #15803d; }
   }
 
-  // Notification preference grid
   .NotificationGrid {
     width: 100%;
     border-collapse: collapse;
@@ -682,7 +626,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
     tbody tr:last-child td { border-bottom: 1px solid #f4f4f7; }
   }
 
-  // Access tokens list
   .AccessTokensList {
     display: flex;
     flex-direction: column;
@@ -722,11 +665,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
 
 }
 
-// ─── Settings & Security pages ────────────────────────────────────────────────
-// Flat layout — no card/border on FieldSet. Sections separated by padding only.
-// Mirrors Flarum's native approach but with DM Sans, avocado colors, and pill buttons.
-
-// Top-level list: no markers, sections stacked with spacing
 .AvocadoUserPage .SettingsPage > ul,
 .AvocadoUserPage .UserSecurityPage > ul {
   list-style: none;
@@ -738,9 +676,7 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
   > li { list-style: none; }
 }
 
-// ── FieldSet: flat section (no card/border/bg) ────────────────────────────────
-// !important overrides Flarum core's .FieldSet and any theme dark-mode rules
-// that apply background/border from CSS variables.
+// !important para ganhar do .FieldSet do core e das regras de dark mode.
 .AvocadoUserPage .FieldSet {
   background: none !important;
   border: none !important;
@@ -750,7 +686,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
   overflow: visible;
   padding: 0;
 
-  // Section heading: bold, clear
   .FieldSet-label {
     display: block;
     margin-bottom: 16px;
@@ -765,18 +700,15 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
     text-transform: none;
   }
 
-  // Items: Flarum handles column vs row via FieldSet--col.
-  // We must NOT set flex-direction here — let Flarum core control it.
+  // Sem flex-direction: o core controla coluna/linha via FieldSet--col.
   .FieldSet-items {
     gap: 14px;
   }
 }
 
-// ── Settings & Security shared component styles ───────────────────────────────
 .AvocadoUserPage .SettingsPage,
 .AvocadoUserPage .UserSecurityPage {
 
-  // Buttons — pill style
   .Button {
     font-family: @font-sans;
     border-radius: 999px;
@@ -805,7 +737,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
     &-icon { margin-right: 6px; }
   }
 
-  // Switch toggle
   .Switch {
     font-size: 14px;
     font-weight: 500;
@@ -820,7 +751,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
     &.on .Switch-slider { background: var(--primary-color); }
   }
 
-  // Help text below toggles
   .helpText {
     font-size: 13px;
     color: var(--home-muted, #8f9097);
@@ -828,20 +758,12 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
     line-height: 1.5;
   }
 
-  // Controls row (security page button groups)
   .UserSecurityPage-controls {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
   }
 
-  // ThemeMode color scheme grid
-  // FieldSet--col makes .FieldSet-items flex-direction:row already (Flarum core).
-  // We only adjust the card size and typography.
-  // ThemeMode: only customise size, radius, and legend font.
-  // Border logic (inactive = var(--control-bg), active = var(--primary-color)) is
-  // handled entirely by Flarum core's ThemeMode.less — we must NOT override `border`
-  // here or we break the active-state specificity.
   .ThemeMode {
     max-width: 120px;
 
@@ -868,7 +790,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
     }
   }
 
-  // AccessTokensList — token and session rows
   .AccessTokensList {
     width: 100%;
     display: flex;
@@ -887,7 +808,7 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
     gap: 12px;
     padding: 12px 0;
     border-bottom: 1px solid var(--home-border, #eaeaf0);
-    background: transparent !important; // Flarum core sets background-color: var(--control-bg)
+    background: transparent !important; // o core aplica var(--control-bg)
     color: inherit;
 
     &:last-child { border-bottom: 0; }
@@ -949,19 +870,14 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
 }
 
 
-// ── Responsive: tablet ────────────────────────────────────────────────────────
-
 @media @tablet {
   .AvocadoUserPage-hero-inner    { padding: 18px 16px 22px; }
   .AvocadoUserPage-bodyInner     { padding: 22px 16px 48px; }
 }
 
-// ── Responsive: phone ─────────────────────────────────────────────────────────
-
 @media @phone {
   .AvocadoUserPage-cover         { height: 124px; }
   .AvocadoUserPage-hero-inner    { padding: 0 16px 18px; }
-  // No mobile a faixa empilha: avatar sobreposto, depois identidade e ações.
   .AvocadoUserPage-hero-bar {
     flex-direction: column;
     align-items: flex-start;
@@ -993,17 +909,13 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
   .AvocadoUserPage-metaItem      { font-size: 12.5px; }
   .AvocadoUserPage-hero-actions  { margin-left: 0; align-self: flex-start; padding-bottom: 0; }
 
-  // Nav tabs: compact
   .AvocadoUserPage-navItem,
   .AvocadoUserPage-navInner .LinkButton { padding: 0 12px; font-size: 13px; }
 
-  // Body
   .AvocadoUserPage-bodyInner     { padding: 16px 12px 40px; }
 }
 
-// ─── FoF User Bio — light hero integration ───────────────────────────────────
-// The bio now renders on the page background (below the cover), so text is dark
-// and links use the primary color.
+// FoF User Bio abaixo da capa, sobre o fundo da página.
 .AvocadoUserPage-hero-bio {
   margin-top: 12px;
   max-width: 600px;
@@ -1014,7 +926,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
     border-radius: 10px;
     transition: border-color var(--avocado-t-medium);
 
-    // Editable state — subtle dashed border on hover
     &.editable:not(.editing) {
       cursor: text;
       border-color: var(--home-border, #eaeaf0);
@@ -1025,7 +936,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
       }
     }
 
-    // Editing state
     &.editing {
       background: var(--avocado-surface-1);
       border-color: var(--home-border, #eaeaf0);
@@ -1047,14 +957,12 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
       }
     }
 
-    // Action buttons (Save / Cancel) while editing
     &-actions {
       margin-top: 8px;
       gap: 6px;
     }
   }
 
-  // Bio content — dark text on the page background
   .UserBio-content {
     padding: 4px 2px 1px;
     line-height: 1.6;
@@ -1079,7 +987,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
     }
   }
 
-  // Placeholder text ("Add a bio...")
   .UserBio-placeholder {
     color: var(--home-muted, #8f9097);
     font-size: 13px;
@@ -1087,7 +994,6 @@ html:not(.lrBadgeLabels) .AvocadoUserPage-hero-badges .Badge {
     padding: 4px 2px;
   }
 
-  // Scrollbar — subtle
   .UserBio-content::-webkit-scrollbar { width: 4px; }
   .UserBio-content::-webkit-scrollbar-thumb { background: var(--home-border, #eaeaf0); border-radius: 3px; }
 }

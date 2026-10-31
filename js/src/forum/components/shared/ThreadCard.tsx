@@ -41,30 +41,25 @@ import CakedayBadge from './CakedayBadge';
 const BookmarkModal = () => import('../BookmarkModal');
 
 export interface ThreadCardAttrs extends ComponentAttrs {
-  /** The discussion model to render */
   discussion: any;
-  /** Parent component reference for DiscussionControls context */
+  /** Componente pai, contexto dos DiscussionControls. */
   context: any;
-  /** Set of discussion IDs currently being liked (optimistic lock) */
+  /** Discussões com like em andamento (trava otimista). */
   likingIds: Set<string>;
-  /** Callback to toggle like on a discussion */
   onToggleLike: (discussion: any) => void;
-  /** IDs with a recent like update (triggers pop animation) */
+  /** Ids com like recente (dispara a animação). */
   updatedLikeIds?: Set<string>;
-  /** IDs of newly arrived discussions (highlights as new) */
+  /** Ids de discussões recém-chegadas, destacadas como novas. */
   newDiscIds?: Set<string>;
-  /** Tag to render as non-link (TagPage: skip linking the current tag) */
+  /** Tag desenhada sem link (na TagPage, a própria tag). */
   currentTag?: any;
-  /** Search query for title/excerpt highlighting */
+  /** Termo buscado, para destacar título e trecho. */
   searchQuery?: string;
-  /**
-   * Tag IDs to exclude from the pill row (e.g. showcase tags on HomePage).
-   * Falls back to showing all tags when omitted.
-   */
+  /** Tags fora da linha de pílulas (ex.: as da vitrine na home). */
   filterTagIds?: Set<string>;
   /**
-   * 'home' (default) — shows reply card + like/reply stat buttons
-   * 'search'         — shows highlighted excerpt + reply count footer, no like button
+   * 'home' (padrão): cartão de resposta e botões de like/resposta.
+   * 'search': trecho destacado e contagem de respostas, sem like.
    */
   variant?: 'home' | 'search';
   /** Show the bookmark note/reminder row under the excerpt (BookmarksPage). */
@@ -107,7 +102,6 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
     const isSearch = variant === 'search';
     const p = isSearch ? 'AvocadoSearch' : 'AvocadoHome';
 
-    // ── excerpt ──────────────────────────────────────────────────────────────
     const excerptRaw = isSearch
       ? (() => {
           try {
@@ -124,7 +118,6 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
 
     const titleNode = isSearch && searchQuery ? highlight(title, searchQuery) : title;
 
-    // ── controls dropdown ────────────────────────────────────────────────────
     const controls = DiscussionControls.controls(discussion, context).toArray();
     const controlsDropdown = controls.length ? (
       <Dropdown
@@ -137,11 +130,9 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
       </Dropdown>
     ) : null;
 
-    // ── bookmark button ───────────────────────────────────────────────────────
-    // Sistema do tema — não salvo: um clique salva; salvo: o clique abre o modal
-    // de nota/lembrete (remover vive dentro do modal e no dropdown de controles).
-    // Cedendo ao fof/bookmarks não há nota nem lembrete, então o botão vira um
-    // toggle puro que grava na extensão dele.
+    // Sistema do tema: não salvo, um clique salva; salvo, o clique abre o modal de
+    // nota/lembrete. Cedendo ao fof/bookmarks não há nota nem lembrete, e o botão
+    // vira um toggle que grava na extensão.
     const editsNoteAndReminder = avocadoBookmarksEnabled();
     const saved = isBookmarked(discussion);
     const bookmarkLabel =
@@ -157,8 +148,8 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
             onclick={(e: Event) => {
               e.stopPropagation();
               e.preventDefault();
-              // O Tooltip também dispara por focus: sem o blur ele ficava preso
-              // depois do clique, flutuando após o botão esconder (hover-only).
+              // O Tooltip também abre no focus: sem o blur ficaria preso depois do clique,
+              // flutuando quando o botão some (ele só aparece no hover).
               (e.currentTarget as HTMLElement | null)?.blur();
               if (saved && editsNoteAndReminder) {
                 app.modal.show(BookmarkModal, { discussion });
@@ -172,7 +163,6 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
         </Tooltip>
       ) : null;
 
-    // ── bookmark meta (BookmarksPage only) ────────────────────────────────────
     const metaVisible = showBookmarkMeta && saved && editsNoteAndReminder;
     const note = metaVisible ? bookmarkNote(discussion) : '';
     const remindAt = metaVisible ? bookmarkRemindAt(discussion) : null;
@@ -202,7 +192,6 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
         </button>
       ) : null;
 
-    // ── like state (home variant) ─────────────────────────────────────────────
     const { count: likes, liked: isLiked } = firstPostLikes(discussion);
     const views = discussionViews(discussion);
     const viewsLabel =
@@ -213,15 +202,14 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
           : trans('ramon-avocado.forum.home.view_count_plural', '{count} views', { count: formatViews(views) });
     const isLiking = likingIds.has(id);
 
-    // ── reply card (home variant, only when there are replies) ────────────────
     const replyCardNode =
       !isSearch && replies > 0
         ? (() => {
             const lastPoster = discussion.lastPostedUser?.();
             const lastPost = discussion.lastPost?.();
             if (!lastPoster && !lastPost) return null;
-            // `avocadoLastPostExcerpt` vem na própria discussão (as listas não
-            // incluem mais o post); o post do store fica de reserva.
+            // `avocadoLastPostExcerpt` vem na própria discussão, porque as listas não
+            // incluem o post; o post do store fica de reserva.
             const preview = truncate((discussion.attribute?.('avocadoLastPostExcerpt') || lastPost?.contentPlain?.() || '') as string, 100);
             const otherCount = replies - 1;
             const lastPostHref = (() => {
@@ -291,7 +279,6 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
         style={{ '--item-tag-color': primaryTagColor }}
       >
         <div className={`${p}-threadHead`}>
-          {/* Avatar */}
           <div className={isSearch ? `${p}-threadAvatar` : 'AvocadoHome-avatarWrap'}>
             {user && (
               <UserHoverCard user={user}>
@@ -312,7 +299,6 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
             )}
           </div>
 
-          {/* Main content */}
           <div className={`${p}-threadMain`}>
             <div className={`${p}-threadMeta`}>
               <UserHoverCard user={user}>
@@ -392,7 +378,6 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
 
             {bookmarkMeta}
 
-            {/* Search-mode footer: reply count */}
             {isSearch && (
               <div className={`${p}-threadFooter`}>
                 <span className={`${p}-threadReplies`}>
@@ -405,7 +390,6 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
             )}
           </div>
 
-          {/* Actions — search: bookmark + controls dropdown; home: bookmark + controls + reply */}
           {isSearch ? (
             <div className="AvocadoSearch-threadActions">
               {bookmarkBtn}
@@ -441,10 +425,8 @@ export default class ThreadCard extends Component<ThreadCardAttrs> {
           )}
         </div>
 
-        {/* Reply preview card */}
         {replyCardNode && <div className="AvocadoHome-threadReplyGroup">{replyCardNode}</div>}
 
-        {/* Like + reply stats (home variant only) */}
         {!isSearch && (
           <div className="AvocadoHome-threadStats">
             {'flarum-likes' in flarum.extensions && (

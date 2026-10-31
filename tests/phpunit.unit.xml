@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../vendor/phpunit/phpunit/phpunit.xsd"
+    bootstrap="../vendor/autoload.php"
+    backupGlobals="false"
+    cacheDirectory="../.phpunit.cache"
+    backupStaticProperties="false"
+    colors="true"
+    processIsolation="false"
+    stopOnFailure="false"
+    failOnRisky="true"
+    failOnWarning="true"
+>
+    <source>
+        <include>
+            <directory suffix=".php">../src/</directory>
+        </include>
+    </source>
+    <!-- Duas suítes: a CI mostra a paridade das traduções num passo próprio. -->
+    <testsuites>
+        <testsuite name="unit">
+            <directory suffix="Test.php">./unit</directory>
+            <exclude>./unit/LocaleParityTest.php</exclude>
+        </testsuite>
+        <testsuite name="locale">
+            <file>./unit/LocaleParityTest.php</file>
+        </testsuite>
+    </testsuites>
+    <php>
+        <!-- Bancos extras para os testes de migração (tests/unit/Migrations).
+             Vazio = só SQLite em memória. Formato:
+             host=..;port=..;username=..;password=..;database=avocado_test -->
+        <env name="AVOCADO_TEST_MYSQL" value=""/>
+        <env name="AVOCADO_TEST_MARIADB" value=""/>
+        <env name="AVOCADO_TEST_PGSQL" value=""/>
+    </php>
+</phpunit>

@@ -6,13 +6,9 @@ import { OTHER_NETWORK, OTHER_NETWORK_ICON, SOCIAL_NETWORKS, detectNetwork, netw
 import type { FooterLinkItem, FooterSocialItem } from '../../common/footerContent';
 
 /**
- * Listas editáveis do rodapé: links (rótulo + endereço) e redes sociais (rede +
- * link). Cada item é uma linha com os campos e os botões de mover e remover, e
- * um botão embaixo acrescenta outra — como a lista de links do fof/links, mas
- * no lugar, sem modal.
- *
- * A lista é gravada como JSON na própria opção. Enquanto ela nunca foi gravada
- * a lista mostra os `defaults` (o padrão do tema); a primeira edição grava.
+ * Listas editáveis do rodapé (links e redes sociais), gravadas como JSON na
+ * própria opção. Enquanto a opção nunca foi gravada a lista mostra os
+ * `defaults`; a primeira edição grava.
  */
 
 const SAVE_DELAY = 500;
@@ -56,7 +52,6 @@ abstract class FooterList<T> extends AdminComponent {
     this.commit([...this.items(), this.blank()]);
   }
 
-  /** Os três botões do fim da linha: subir, descer, remover. */
   protected rowButtons(index: number, total: number) {
     const button = (icon: string, label: string, onclick: () => void, disabled = false) => (
       <Button

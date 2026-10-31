@@ -1,14 +1,8 @@
-// Barra de controles de página de extensão: a sidebar que a extensão manda
-// para o PageStructure, deitada numa linha abaixo do cabeçalho (o tema não
-// desenha coluna lateral em página de extensão). O JS de cada extensão
-// embrulha a sidebar num elemento e o veste com este mixin — hoje o
-// .AvocadoSupport-toolbar (linkrobins/support) e o .AvocadoWiki-toolbar
-// (linkrobins/wiki).
+// A sidebar de páginas de extensão (support, wiki) deitada numa linha abaixo do
+// cabeçalho; o tema não desenha coluna lateral nessas páginas.
 .avocado-extension-toolbar() {
-  // Telefone: o core posiciona .App-primaryControl e .App-titleControl de forma
-  // absoluta no cabeçalho do aparelho (o "+" à direita, os filtros no centro),
-  // exatamente como faz na home. A barra em si não ocupa espaço — mesma
-  // mecânica do .AvocadoNav-helper.
+  // No telefone o core posiciona os controles de forma absoluta no cabeçalho,
+  // como na home; a barra não ocupa espaço.
   @media @phone {
     height: 0;
     overflow: hidden;
@@ -17,8 +11,7 @@
   @media @tablet-up {
     margin-bottom: 22px;
 
-    // Desfaz a coluna: o .sideNav do core tem largura fixa no desktop e vira
-    // uma faixa rolante com régua no tablet.
+    // O .sideNav do core tem largura fixa no desktop e vira faixa rolante no tablet.
     .IndexPage-nav.sideNav {
       width: auto;
       padding: 0;
@@ -47,15 +40,12 @@
       }
     }
 
-    // Os filtros ocupam a linha e empurram o botão primário para a direita.
     .IndexPage-nav.sideNav > ul > li.item-nav {
       flex: 1 1 auto;
       min-width: 0;
     }
 
-    // Filtros de status: o SelectDropdown já chega expandido no tablet+
-    // (Dropdown--expanded do core), então basta deitar a lista e vestir cada
-    // item como as abas da página "Salvos".
+    // O SelectDropdown já chega expandido no tablet+; basta deitar a lista.
     .IndexPage-nav.sideNav .Dropdown--select .Dropdown-menu {
       display: flex;
       align-items: center;
@@ -76,8 +66,7 @@
           font-weight: 600;
           text-decoration: none;
 
-          // O tema transforma o ícone da nav lateral numa bolinha de 28px; numa
-          // aba ele é só o ícone.
+          // O tema faz do ícone da nav uma bolinha de 28px; numa aba ele é só o ícone.
           .Button-icon:not(.TagIcon) {
             flex: 0 0 auto;
             width: auto;
@@ -119,9 +108,7 @@
         }
       }
 
-      // O separador (que só aparece quando o admin manda a navegação do fórum
-      // para as páginas do support) é uma régua de 1px de altura; deitado, vira
-      // o traço que divide os links do fórum dos filtros de status.
+      // O separador só aparece quando a navegação do fórum vai para o support.
       > .Dropdown-separator {
         width: 1px;
         height: 20px;
@@ -130,9 +117,7 @@
       }
     }
 
-    // "Novo ticket": o botão primário do fórum, no fim da linha. O core o deixa
-    // em bloco na coluna lateral (Button--block) e a extensão pede width:100%,
-    // duas regras que só fazem sentido enquanto ele é uma coluna.
+    // Button--block e width:100% só fazem sentido na coluna lateral.
     .IndexPage-nav.sideNav .App-primaryControl {
       margin: 0 0 0 auto;
       flex: 0 0 auto;

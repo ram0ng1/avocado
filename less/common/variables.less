@@ -1,19 +1,14 @@
-// Override core defaults
 @border-radius:                   14px;
 @screen-desktop-hd:               1200px;
 
-// Extension-specific static LESS variables
 @avocado-border-radius-a:         ~"43% 57% 68% 32% / 33% 50% 50% 67%";
 @avocado-border-radius-b:         ~"42% 58% 33% 67% / 57% 49% 51% 43%";
 @avocado-border-radius-c:         ~"58% 42% 68% 32% / 48% 73% 27% 52%";
 
 @avocado-box-shadow:              rgba(0, 0, 0, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;
 
-// ── Typography scale ─────────────────────────────────────────────────────────
-// A família do texto é escolhida no admin (Aparência → Fonte): o PHP
-// (Content\ThemeFonts) define --avocado-font-sans no CSS crítico inline. O
-// fallback do var() é a pilha padrão, para onde esse CSS não chega (admin).
-// Toda regra do tema usa @font-sans — não escrever a pilha por extenso.
+// A família vem do admin via --avocado-font-sans no CSS crítico; o fallback
+// vale onde ele não chega (admin). Use sempre @font-sans.
 @font-sans:    var(--avocado-font-sans, 'DM Sans Variable', 'DM Sans', "Segoe UI", sans-serif);
 @font-serif:   Georgia, "Times New Roman", serif;
 @font-mono:    ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
@@ -30,9 +25,7 @@
 @font-6xl:     44px;
 @font-7xl:     56px;
 
-// Extension-specific theme-sensitive CSS variables
 :root {
-  // ── Core theme tokens ────────────────────────────────────────────────────────
   --avocado-primary-bg:           lighten(@primary-color, 40%);
   --avocado-unapproved-bg:        #fdddc2;
   --text-on-dark:                 rgba(255, 255, 255, 0.92);
@@ -40,34 +33,28 @@
   --text-on-light:                rgba(0,   0,   0,   0.80);
   --text-on-light-muted:          rgba(0,   0,   0,   0.48);
 
-  // ── Brand palette (dark brand / button colors) ───────────────────────────────
-  --avocado-brand-dark:           #121317;       // brand logotype text
-  --avocado-btn-dark:             #0d0d10;       // dark CTA button bg
-  --avocado-btn-dark-hover:       #23252b;       // dark CTA button hover
+  --avocado-brand-dark:           #121317;       // texto do logotipo
+  --avocado-btn-dark:             #0d0d10;       // fundo do CTA escuro
+  --avocado-btn-dark-hover:       #23252b;       // hover do CTA escuro
 
-  // ── Online / presence ────────────────────────────────────────────────────────
-  --avocado-online:               #4ec46a;       // online indicator ring
-  --avocado-online-ring:          #fff;          // ring separator against card bg
+  --avocado-online:               #4ec46a;       // anel de online
+  --avocado-online-ring:          #fff;          // separador do anel contra o card
 
-  // ── Neutral surfaces (light mode) ────────────────────────────────────────────
-  --avocado-surface-1:            #f4f4f7;       // input / search background
-  --avocado-surface-2:            #f8f8fa;       // composer / post-input bg
-  --avocado-border-subtle:        #eaeaf0;       // default card borders
-  --avocado-border-soft:          #f0f0f4;       // topbar / divider borders
-  --avocado-border-chip:          #e7e7ed;       // chip / userChip border
+  --avocado-surface-1:            #f4f4f7;       // fundo de input / busca
+  --avocado-surface-2:            #f8f8fa;       // fundo do composer
+  --avocado-border-subtle:        #eaeaf0;       // borda padrão de card
+  --avocado-border-soft:          #f0f0f4;       // borda de topbar / divisor
+  --avocado-border-chip:          #e7e7ed;       // borda de chip
 
-  // ── Muted text (light mode) ───────────────────────────────────────────────────
-  --avocado-muted-icon:           #767680;       // icons, placeholders — #767680 = 4.54:1 on white (WCAG AA)
-  --avocado-muted-placeholder:    #b2b2bb;       // input placeholders
-  --avocado-muted-label:          #a0a0a8;       // post-input placeholder text
-  --avocado-text-dark:            #2a2b30;       // input text / primary content
+  --avocado-muted-icon:           #767680;       // ícones, placeholders — 4.54:1 sobre branco (WCAG AA)
+  --avocado-muted-placeholder:    #b2b2bb;       // placeholder de input
+  --avocado-muted-label:          #a0a0a8;       // placeholder do composer
+  --avocado-text-dark:            #2a2b30;       // texto principal
 
-  // ── Transitions ──────────────────────────────────────────────────────────────
   --avocado-t-fast:               0.15s ease;
   --avocado-t-normal:             0.16s ease;
   --avocado-t-medium:             0.2s ease;
 
-  // ── Z-index scale ────────────────────────────────────────────────────────────
   --avocado-z-post-side:          2;
   --avocado-z-sidebar:            10;
   --avocado-z-topbar:             60;
@@ -75,17 +62,14 @@
   --avocado-z-modal-backdrop:     500;
   --avocado-z-tooltip:            9999;
 
-  // ── Elevation / shadow scale ─────────────────────────────────────────────────
-  // subtle = repouso (card, chip)  ·  medium = flutuante (dropdown, popover)
-  // lifted = destacado (modal, drawer). Um elemento usa um nível, não um valor.
+  // subtle = repouso (card, chip) · medium = flutuante (dropdown, popover) ·
+  // lifted = destacado (modal, drawer).
   --shadow-subtle:                0 1px 6px rgba(0, 0, 0, 0.06);
   --shadow-medium:                0 8px 24px rgba(0, 0, 0, 0.12);
   --shadow-lifted:                0 12px 32px rgba(0, 0, 0, 0.18);
 
-  // ── Realce de sintaxe (highlight.js) ─────────────────────────────────────────
-  // Paleta GitHub clara. O hljs-loader do BBCode CODE injeta o tema "github"
-  // fixo, que fica ilegível sobre o <pre> escuro; estes tokens assumem as cores
-  // (ver forum/CodeHighlight.less) e trocam junto com o tema do fórum.
+  // O tema "github" que o hljs-loader injeta fica ilegível no <pre> escuro;
+  // estes tokens assumem as cores e trocam com o tema (CodeHighlight.less).
   --avocado-code-keyword:         #cf222e;       // keyword, doctag, template-tag
   --avocado-code-title:           #8250df;       // função, classe
   --avocado-code-constant:        #0550ae;       // número, literal, atributo, meta
@@ -104,7 +88,7 @@
   --avocado-primary-bg:           mix(@body-bg-dark, @primary-color, 90%);
   --avocado-unapproved-bg:        #1f1914;
 
-  // ── Dark-mode overrides for custom tokens ────────────────────────────────────
+  // Tokens no escuro
   --avocado-brand-dark:           #e8e9f2;
   --avocado-btn-dark:             rgba(255, 255, 255, 0.10);
   --avocado-btn-dark-hover:       rgba(255, 255, 255, 0.16);
@@ -119,15 +103,12 @@
   --avocado-muted-label:          var(--muted-color);
   --avocado-text-dark:            var(--text-color);
 
-  // ── Elevation no escuro ──────────────────────────────────────────────────────
-  // A escala clara é inutilizável sobre fundo escuro: alpha 0.06–0.18 sobre
-  // #1a1b21 não produz sombra visível. Sem estes valores não há como migrar as
-  // 35 sombras escritas à mão para os tokens — elas usam alpha 0.3–0.5.
+  // Alpha 0.06–0.18 não produz sombra visível sobre #1a1b21.
   --shadow-subtle:                0 1px 6px rgba(0, 0, 0, 0.30);
   --shadow-medium:                0 8px 24px rgba(0, 0, 0, 0.40);
   --shadow-lifted:                0 12px 32px rgba(0, 0, 0, 0.50);
 
-  // ── Realce de sintaxe no escuro (paleta GitHub escura) ───────────────────────
+  // Realce de sintaxe no escuro
   --avocado-code-keyword:         #ff7b72;
   --avocado-code-title:           #d2a8ff;
   --avocado-code-constant:        #79c0ff;

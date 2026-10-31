@@ -39,14 +39,8 @@ const TABS = ['discussions', 'posts', 'users'] as const;
 type Tab = (typeof TABS)[number];
 
 /**
- * AvocadoSearchPage — unified search route at `/search?q=…`.
- *
- * Coordinates three tabs:
- *  - **discussions** (DiscussionListState)
- *  - **posts** (PostListState)
- *  - **users** (manual paginated fetch — no core state class for users)
- *
- * Renders an empty hero with featured tags when the query is missing.
+ * Busca unificada em `/search?q=…`: discussões (DiscussionListState), posts
+ * (PostListState) e usuários, buscados à mão porque o core não tem state para eles.
  */
 export default class AvocadoSearchPage extends Page {
   static providesInitialSearch = true;
@@ -88,8 +82,6 @@ export default class AvocadoSearchPage extends Page {
     app.setTitleCount(0);
   }
 
-  // ── Tab orchestration ───────────────────────────────────────────────────────
-
   private switchTab(tab: Tab) {
     if (tab === this.activeTab) return;
     this.activeTab = tab;
@@ -108,8 +100,6 @@ export default class AvocadoSearchPage extends Page {
       this.usersState.load(params.q || '', page);
     }
   }
-
-  // ── View ────────────────────────────────────────────────────────────────────
 
   view() {
     const canSearchUsers = !!app.forum.attribute('canSearchUsers');
@@ -153,8 +143,6 @@ export default class AvocadoSearchPage extends Page {
     );
   }
 
-  // ── Tab buttons ────────────────────────────────────────────────────────────
-
   private renderTab(t: Tab, active: Tab) {
     const icon = t === 'discussions' ? 'far fa-comments' : t === 'posts' ? 'far fa-file-alt' : 'fas fa-users';
     const label =
@@ -177,8 +165,6 @@ export default class AvocadoSearchPage extends Page {
       </button>
     );
   }
-
-  // ── Sort dropdown ──────────────────────────────────────────────────────────
 
   private renderSortDropdown() {
     const tab = this.activeTab;
@@ -217,8 +203,6 @@ export default class AvocadoSearchPage extends Page {
       />
     );
   }
-
-  // ── Search bar ─────────────────────────────────────────────────────────────
 
   private renderSearchBar(hero = false) {
     const submit = () => {
@@ -272,8 +256,6 @@ export default class AvocadoSearchPage extends Page {
       </div>
     );
   }
-
-  // ── Empty state hero ───────────────────────────────────────────────────────
 
   private renderEmptyState() {
     const tags = (app.store.all('tags') as any[]).filter((t) => t?.id?.() && !t.parent?.()).slice(0, 8);
@@ -351,8 +333,6 @@ export default class AvocadoSearchPage extends Page {
       </a>
     );
   }
-
-  // ── Tab content ────────────────────────────────────────────────────────────
 
   private renderDiscussionsTab() {
     const state = this.discussionsState;
@@ -483,8 +463,6 @@ export default class AvocadoSearchPage extends Page {
       </div>
     );
   }
-
-  // ── User card + skeleton ───────────────────────────────────────────────────
 
   private renderUserCard(user: any) {
     const username = (user.username?.() || '') as string;

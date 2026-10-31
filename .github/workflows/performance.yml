@@ -1,8 +1,8 @@
 name: Performance Benchmark
 
 # Mede o tempo dos 3 primeiros carregamentos (/, /tags, /all) em um Flarum
-# de teste com a extensao instalada. Em PR, compara contra a baseline do
-# ultimo push em master.
+# de teste com a extensão instalada. Em PR, compara contra a baseline do
+# último push em master.
 on:
   pull_request:
     branches:
@@ -12,7 +12,7 @@ on:
       - master
   workflow_dispatch:
 
-# §35.13 C1 — default-deny do GITHUB_TOKEN.
+# Nega tudo ao GITHUB_TOKEN por padrão; cada job declara o que precisa.
 permissions: {}
 
 concurrency:
@@ -44,7 +44,7 @@ jobs:
           --health-retries 10
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25  # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2  # v2.22.2
         with:
           egress-policy: audit
 
@@ -62,7 +62,7 @@ jobs:
           extensions: bcmath, ctype, curl, dom, fileinfo, gd, intl, mbstring, mysqlnd, openssl, pdo, pdo_mysql, tokenizer, xml, zip
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020  # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
         with:
           node-version: 20
           cache: 'npm'
@@ -201,7 +201,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020  # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
         with:
           node-version: 20
 
@@ -211,10 +211,10 @@ jobs:
           name: lhci-pr-${{ github.event.pull_request.number }}
           path: pr-results
 
-      # Cross-workflow-run: baixa o ultimo artifact 'lhci-master' do
-      # ultimo run com sucesso do performance.yml no branch master.
+      # Entre workflows: o último artefato 'lhci-master' do último run com
+      # sucesso do performance.yml em master.
       - name: Baixar baseline do master
-        uses: dawidd6/action-download-artifact@b6e2e70617bc3265edd6dab6c906732b2f1ae151  # v21
+        uses: dawidd6/action-download-artifact@eab87c9830c39eff17e5a6eadb20bfb4bc880477  # v27
         with:
           workflow: performance.yml
           workflow_conclusion: success

@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Support;
@@ -13,29 +22,18 @@ use Throwable;
 /**
  * Linha do tempo dos tickets do linkrobins/support.
  *
- * A extensão troca o status de um ticket em dois caminhos — a barra da equipe
- * (PATCH no ticket) e o gancho de resposta (uma resposta de staff move o ticket
- * para "aguardando resposta", uma do dono para "aberto") — e em nenhum deles
- * guarda histórico: só notifica. O tema observa o evento `updated` do modelo da
- * extensão, que cobre os dois caminhos de uma vez, e grava a mudança com o ator
- * do request (lembrado pelo Middleware\RememberActor, já que um evento de
- * modelo não sabe quem está logado).
- *
- * Singleton (AvocadoServiceProvider): o middleware grava o ator e o gancho do
- * modelo o lê na mesma instância. A checagem da tabela segue a regra do
- * BookmarksSchema (ver SchemaInspector): código novo pelo composer chega antes
- * do `flarum migrate`, e nessa janela gravar ou ler a tabela derrubaria a
- * página do ticket.
+ * A extensão muda o status por dois caminhos e não guarda histórico. O evento
+ * `updated` do modelo cobre os dois; o ator vem do Middleware\RememberActor,
+ * porque um evento de modelo não sabe quem está logado. Singleton, para os dois
+ * lados verem a mesma instância.
  */
 final class SupportEvents
 {
     public const EXTENSION_ID = 'linkrobins-support';
 
     /**
-     * Nomes das classes da extensão como string de propósito: o tema não
-     * depende do pacote, então um `::class` não teria o que resolver. O PHPStan
-     * não consegue provar que são class-string (a extensão não está no vendor
-     * do tema) e as duas linhas do extend.php ficam em ignoreErrors.
+     * Como string: o tema não depende do pacote. Por isso o PHPStan não as prova
+     * como class-string, e o extend.php tem duas linhas em ignoreErrors.
      */
     public const TICKET_MODEL = 'LinkRobins\Support\SupportTicket';
 
@@ -76,9 +74,7 @@ final class SupportEvents
     }
 
     /**
-     * Gancho do evento `updated` do SupportTicket: só o status interessa, e só
-     * quando ele de fato mudou. Nunca deixa uma falha própria subir — a
-     * gravação do ticket já aconteceu e não pode ser desfeita por um log.
+     * Nunca deixa uma falha própria subir: o ticket já foi gravado.
      */
     public function onTicketUpdated(Model $ticket): void
     {

@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Api;
@@ -11,21 +20,12 @@ use Ramon\Avocado\Model\ChangelogEntry;
 use Ramon\Avocado\Support\ChangelogSchema;
 
 /**
- * Os dois atributos de uma versão do changelog na discussão:
+ * Versão e capa de uma entrada do changelog. Grava quem pode criar ou renomear
+ * a discussão, como o `title` do core.
  *
- *  - `changelogVersion` — o número ("v2.4.0", "2.0.0-beta.1"), texto livre curto;
- *  - `changelogCover`   — `color` pede o banner na cor da tag; sem valor a capa
- *    é a imagem do hero da discussão (se houver).
- *
- * Quem grava é quem pode criar a discussão ou renomeá-la — a mesma regra do
- * `title` no core —, e o valor só existe enquanto a tabela do tema existir
- * (ChangelogSchema). A leitura vem da relação `avocadoChangelog`, que o endpoint
- * carrega em lote (extend.php). Sem ela carregada — a discussão vindo como
- * `included` de outro endpoint (`/api/posts`, notificações…) — os campos ficam
- * FORA da resposta em vez de sair nulos: um `null` ali sobrescrevia no store do
- * front o valor bom que o Show/Index tinha acabado de entregar (a capa só
- * aparecia ao recarregar a página), e buscar a linha custaria uma consulta por
- * discussão.
+ * Sem a relação carregada (discussão `included` em outro endpoint) os campos
+ * ficam fora da resposta: um `null` sobrescreveria no store do front o valor
+ * que o Show/Index acabou de entregar.
  */
 class ChangelogFields
 {

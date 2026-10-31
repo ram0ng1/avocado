@@ -1,22 +1,12 @@
 /**
- * Compatibilidade com a extensão linkrobins/support.
+ * Compatibilidade com o linkrobins/support.
  *
- * As três páginas dela (lista de tickets, novo ticket e ticket) montam o
- * PageStructure com uma sidebar própria — e é nessa sidebar que moram o botão
- * "Novo ticket" (App-primaryControl) e os filtros de status. O tema troca a
- * sidebar de toda página de extensão pelo AvocadoNav-helper, que é
- * `display:none` no tablet+, então os dois sumiam da tela: sobrava a lista de
- * tickets sem nenhuma forma de abrir um.
- *
- * A saída aqui é reaproveitar a sidebar da própria extensão — o vnode que ela
- * passa em `attrs.sidebar` — e remontá-la como barra horizontal logo abaixo do
- * cabeçalho da página (ver Support.less). Os componentes continuam sendo os
- * dela, então permissão, rótulo, rota e estado ativo seguem sendo problema da
- * extensão; o tema só decide onde a barra aparece e com que cara.
- *
- * No telefone nada disso importa: o core posiciona `.App-primaryControl` e
- * `.App-titleControl` de forma absoluta no cabeçalho do aparelho, exatamente
- * como faz na home, e a barra fica com altura zero.
+ * As três páginas dela montam o PageStructure com uma sidebar própria, onde
+ * ficam o botão "Novo ticket" e os filtros de status. O tema troca a sidebar das
+ * páginas de extensão pelo AvocadoNav-helper (invisível no tablet+), então a
+ * sidebar da extensão é remontada como barra horizontal abaixo do cabeçalho
+ * (Support.less). Os componentes continuam os dela; o tema só decide onde e com
+ * que cara. No celular o core já põe os controles no cabeçalho.
  */
 import type Mithril from 'mithril';
 import app from 'flarum/forum/app';
@@ -49,13 +39,9 @@ export function isSupportPage(className?: string | null): boolean {
 }
 
 /**
- * A sidebar da extensão, embrulhada para virar a barra de controles da página.
- *
- * Recebe a instância do PageStructure porque é lá que vivem a className e o
- * `attrs.sidebar` passados pela página do support. Devolve null em qualquer
- * outra página, e também quando a página não mandou sidebar nenhuma — a
- * extensão sempre manda, mas uma versão futura pode deixar de mandar e isso
- * não pode derrubar o render.
+ * A sidebar da extensão, embrulhada como barra de controles da página. Null em
+ * outras páginas e quando a página não mandou sidebar: uma versão futura pode
+ * deixar de mandar, e isso não pode derrubar o render.
  */
 export function supportToolbar(page: any): Mithril.Children {
   if (!isSupportPage(page?.attrs?.className)) return null;
@@ -77,15 +63,10 @@ function supportModule(path: string): any {
 }
 
 // ── Novo ticket pelo composer ────────────────────────────────────────────────
-// A extensão abre um ticket em duas telas: /support/new pede a categoria, depois
-// o assunto, e só então solta o composer do Flarum. No tema o botão "Novo
-// ticket" abre o composer direto, com a categoria e o assunto no cabeçalho dele
-// — é onde o fórum escreve qualquer outra coisa.
-//
-// Tudo o que decide o resultado continua sendo da extensão: as categorias vêm
-// da API dela, o corpo é o composer dela (com os editores que o fórum tiver) e
-// a criação passa pelo mesmo createTicket, que grava ticket e primeira mensagem
-// numa transação só.
+// A extensão abre um ticket em duas telas (categoria, assunto) antes do
+// composer. No tema o botão abre o composer direto, com categoria e assunto no
+// cabeçalho. Categorias, corpo e criação (createTicket, numa transação)
+// continuam sendo da extensão.
 
 const newTicket: { subject: string; categoryId: string; categories: any[]; loading: boolean } = {
   subject: '',
@@ -173,11 +154,9 @@ function newTicketHeaderItems(tr: any): any[] {
       content: (
         <div className="AvocadoSupport-composerCategoryRow" style={tint}>
           {!newTicket.categories.length ? (
-            // Sem categorias ainda: um chip do tamanho do que vem aí, com o
-            // mesmo brilho dos demais esqueletos. Escrever "carregando…" e
-            // trocar por "Escolha uma categoria" seria o flash que se quer
-            // evitar; um rótulo que muda sozinho também confunde o leitor de
-            // tela, por isso o espaço reservado é aria-hidden.
+            // Sem categorias ainda: um chip-esqueleto do tamanho do real, em vez de
+            // um "carregando…" que trocaria de texto. aria-hidden, para o leitor
+            // de tela não ouvir um rótulo mudando sozinho.
             <span className="AvocadoSupport-composerCategory--loading" aria-hidden="true" />
           ) : (
             <SelectDropdown

@@ -1,16 +1,7 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// Modal "Editar tags" do tema (js/src/forum/components/TagsModal.tsx)
-//
-// O seletor de tags do compositor da home aberto num diálogo: as tags
-// escolhidas como os mesmos chips do gatilho, a busca e a lista do dropdown
-// logo abaixo (as classes .AvocadoHome-tagPicker* vêm de HomePage.less) e as
-// ações no rodapé. Aqui só o que muda por estar num modal: a lista deixa de ser
-// um dropdown flutuante e passa a ser o corpo do diálogo.
-// ─────────────────────────────────────────────────────────────────────────────
+// Reaproveita as classes .AvocadoHome-tagPicker* (HomePage.less); aqui só o
+// que muda por estar num modal.
 
-// O fundo escurecido com blur é o mesmo dos modais da discussão: a regra
-// `body.avocado-backdrop--dim .Modal-backdrop` mora em DiscussionModals.less e a
-// classe vem de js/src/forum/utils/modalBackdrop.ts (antes era um body:has()).
+// O backdrop com blur vem de `body.avocado-backdrop--dim` (DiscussionModals.less).
 
 .Modal.AvocadoTagsModal {
   max-width: 480px;
@@ -63,7 +54,6 @@
     background: transparent;
   }
 
-  // Nome da discussão, discreto, sob o título.
   .AvocadoTagsModal-discussion {
     margin: 0 0 12px;
     padding-right: 24px;
@@ -74,7 +64,6 @@
     text-overflow: ellipsis;
   }
 
-  // Escolhidas: os chips do gatilho do seletor da home.
   .AvocadoTagsModal-selected {
     display: flex;
     flex-wrap: wrap;
@@ -89,7 +78,7 @@
     color: var(--muted-color);
   }
 
-  // O dropdown do seletor vira o corpo do modal: sem flutuar, sem moldura.
+  // O dropdown vira o corpo do modal: sem flutuar, sem moldura.
   .AvocadoHome-tagPickerDropdown {
     position: static;
     min-width: 0;
@@ -115,7 +104,6 @@
     scrollbar-width: thin;
   }
 
-  // Num modal há espaço: a descrição pode ir até a metade da linha.
   .AvocadoHome-tagPickerItem-desc {
     max-width: 50%;
   }
@@ -130,7 +118,6 @@
     cursor: pointer;
   }
 
-  // Ações: o par Cancelar / Salvar, à direita.
   .AvocadoTagsModal-actions {
     display: flex;
     justify-content: flex-end;

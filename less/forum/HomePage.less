@@ -16,13 +16,6 @@
     display: none;
   }
 
-  // On phone: collapse the sidebar so the nav list doesn't show in normal flow,
-  // but allow absolutely-positioned App-titleControl / App-primaryControl to escape
-  // to the phone header.
-  //
-  // Safe to use overflow:hidden here because Flarum's Dropdown-menu on phone uses
-
-  // Hide toolbar and discussion list when custom home is active
   .Page-toolbar,
   .IndexPage-toolbar,
   .IndexPage-list {
@@ -47,7 +40,7 @@
 :root {
   --home-max-width: 1320px;
   --home-border: #eaeaf0;
-  --home-muted: #6b6b72; // was #8f9097 — bumped to 4.6:1 ratio on white (WCAG AA)
+  --home-muted: #6b6b72; // 4.6:1 sobre branco (WCAG AA)
   --home-title: #202126;
   --home-shadow: 0 10px 24px rgba(22, 22, 33, 0.05);
 }
@@ -158,7 +151,7 @@
   border-radius: 999px;
 }
 
-// Force Flarum's .Avatar to fill our fixed-size containers
+// O .Avatar do core precisa preencher os contêineres de tamanho fixo.
 .AvocadoHome-avatarWrap,
 .AvocadoHome-replyCard-avatar,
 .AvocadoHome-composer-avatar {
@@ -168,8 +161,6 @@
   }
 }
 
-// ─── Online avatars ───────────────────────────────────────────────────────────
-
 .AvocadoHome-sectionHead-right {
   display: flex;
   align-items: center;
@@ -177,7 +168,6 @@
   flex-shrink: 0;
 }
 
-// New-content dot in the section header — always visible including on phone
 .AvocadoHome-sectionDot {
   width: 9px;
   height: 9px;
@@ -206,15 +196,14 @@
   flex-shrink: 0;
   text-decoration: none;
   display: block;
-  // overflow must stay visible so the ::after dot renders outside the circle
+  // overflow visível para o ponto ::after sair do círculo.
 
   &:first-child { margin-left: 0; }
 
-  // Green ring — canonical online indicator (shared mixin, single source).
-  // box-shadow avoids the overflow/clipping issue of ::after.
+  // box-shadow em vez de ::after evita o corte por overflow.
   .avocado-online-ring(2px);
 
-  // Clip the avatar image to the circle without overflow:hidden on the anchor
+  // Recorta a imagem sem overflow: hidden no link.
   > img {
     width: 100% !important;
     height: 100% !important;
@@ -225,7 +214,6 @@
     object-fit: cover;
   }
 
-  // Flarum Avatar component fallback
   > .Avatar {
     width: 100% !important;
     height: 100% !important;
@@ -248,7 +236,6 @@
   white-space: nowrap;
 }
 
-// Standalone block (AllDiscussions page) — adds spacing from adjacent sections
 .AvocadoDiscussions-onlineBlock {
   margin-bottom: 18px;
 }
@@ -278,8 +265,8 @@
   }
 }
 
-// Recolhido enquanto o cartão flutuante está aberto (FloatingInlineComposer):
-// fica no DOM, sem altura, para o cartão medir a coluna e voltar para ele.
+// Recolhido enquanto o cartão flutuante está aberto: fica no DOM, sem altura,
+// para o cartão medir a coluna e voltar para ele.
 .AvocadoHome-postInput.is-away {
   height: 0;
   min-height: 0;
@@ -316,7 +303,7 @@
   gap: 6px;
   height: 36px;
   padding: 0 16px;
-  border-radius: 999px; // pílula, como os demais botões do tema (e o "Responder" da discussão)
+  border-radius: 999px; // pílula, como o "Responder" da discussão
   border: none;
   background: var(--primary-color);
   color: #fff;
@@ -329,8 +316,6 @@
   &:hover { opacity: 0.88; }
 }
 
-// ─── Extension nav bar ────────────────────────────────────────────────────────
-
 .AvocadoHomeNav {
   display: flex;
   align-items: center;
@@ -339,13 +324,10 @@
   flex-wrap: wrap;
   margin-top: 18px;
   margin-bottom: 22px;
-  padding-bottom: 8px; // room for the active ::after indicator
+  padding-bottom: 8px; // espaço para o indicador ::after
 
-  // When used inline (same row as a heading), reset vertical margins. Items are
-  // kept on a single row: OverflowNav measures them and pushes whatever does not
-  // fit into the "more" dropdown, so the pills can never spill out of the header.
-  // No overflow clipping here: the "more" dropdown menu is absolutely positioned
-  // inside this nav and would be cut off. Fitting is JS-side (OverflowNav).
+  // Itens numa linha só: o OverflowNav mede e manda o que não cabe para o
+  // "mais". Sem overflow clipping, que cortaria o dropdown absoluto.
   &--inline {
     margin: 0 !important;
     padding-bottom: 0 !important;
@@ -355,7 +337,6 @@
     min-width: 0;
   }
 
-  // Each LinkButton / TagLinkButton rendered as a pill
   > .Button,
   > .LinkButton,
   > .TagLinkButton,
@@ -383,7 +364,6 @@
     .Button-label { display: flex; }
     .Button-caret { display: none; }
 
-    // Active dot-indicator below the pill
     &::after {
       content: '';
       position: absolute;
@@ -403,7 +383,7 @@
       text-decoration: none !important;
     }
 
-    // Flarum LinkButton renders active state as active="true" attribute (not .active class)
+    // O LinkButton do Flarum marca active="true", não .active.
     &[active="true"] {
       background: color-mix(in srgb, var(--primary-color) 10%, transparent) !important;
       color: var(--primary-color) !important;
@@ -413,14 +393,13 @@
     }
   }
 
-  // Overflow menu — holds the items that don't fit on the header row
   > .AvocadoHomeNav-more {
     display: inline-flex;
     align-items: center;
     flex-shrink: 0;
 
     > .Dropdown-toggle {
-      // Caret points down when closed, up when open (icon swapped in OverflowNav)
+      // O ícone é trocado pelo OverflowNav.
       .Button-caret {
         display: inline-flex;
         margin-left: 2px;
@@ -428,14 +407,14 @@
         opacity: 0.75;
       }
 
-      // Never show a focus ring for a mouse-driven open; keyboard focus keeps it.
+      // Sem anel de foco ao abrir com o mouse; o foco por teclado mantém.
       &:focus:not(:focus-visible) {
         outline: none !important;
         box-shadow: none !important;
       }
     }
 
-    // Hovering the pill opens the menu, so mirror the open state on the pill
+    // O hover na pílula abre o menu, então ela espelha o estado aberto.
     &.is-open > .Dropdown-toggle {
       background: color-mix(in srgb, var(--primary-color) 10%, transparent) !important;
       color: var(--primary-color) !important;
@@ -450,8 +429,7 @@
       background: var(--body-bg);
       box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
 
-      // Bridge the gap under the pill: without it, crossing from the button to
-      // the menu leaves the container and the hover-close timer fires.
+      // Ponte sob a pílula: sem ela, ir do botão ao menu dispara o timer de fechar.
       &::before {
         content: '';
         position: absolute;
@@ -484,10 +462,10 @@
     }
   }
 
-  // Suppress separators (added by Tags extension between tag groups)
+  // Separadores que o flarum/tags põe entre grupos.
   > li.Dropdown-separator { display: none !important; }
 
-  // Mobile: hidden — the native phone nav (drawer + primaryControl escape) handles navigation
+  // No phone a navegação nativa (drawer) assume.
   @media @phone {
     display: none;
   }
@@ -528,22 +506,20 @@
     min-width: 0;
   }
 
-  // With an inline nav the heading takes only what it needs and the nav owns the
-  // rest of the row — a fixed width the pill-fitting maths can rely on.
+  // Largura fixa para a conta de encaixe das pílulas.
   &--withNav h2 {
     flex: 0 1 auto;
-    max-width: 70%; // a very long custom heading must still leave room for the nav
+    max-width: 70%; // um título longo ainda deixa espaço para a nav
     white-space: nowrap;
     text-overflow: ellipsis;
 
-    // `clip` rather than `hidden`: the heading is line-height:1, so a hidden box
-    // shaves the descenders off ("Categorias"). The margin lets them paint out.
+    // `clip` em vez de `hidden`: com line-height 1, `hidden` corta as
+    // descendentes. A margem deixa que elas pintem fora.
     overflow: clip;
     overflow-clip-margin: 0.3em;
   }
 }
 
-// Inline MENU nav — sits on the same row as the section h2
 .AvocadoHome-sectionHead-nav {
   display: flex;
   align-items: center;
@@ -551,7 +527,7 @@
   flex: 1 1 0;
   min-width: 0;
 
-  // First paint renders every item so OverflowNav can measure it; hide that pass.
+  // O primeiro paint renderiza tudo para o OverflowNav medir.
   &.is-measuring { visibility: hidden; }
 }
 
@@ -629,9 +605,8 @@
 
     &.fa-kit {
       padding: 0 !important;
-      // Fix the <i> to the same size it occupies after the font loads.
-      // Without this, the ::before glyph expands the <i> when the font arrives,
-      // growing the container and causing the visible resize flash.
+      // Fixa o <i> no tamanho final: sem isso o glifo o expande quando a fonte
+      // chega e o contêiner pisca.
       width: 1.1em;
       height: 1.1em;
       line-height: 1.1em;
@@ -678,8 +653,6 @@
   }
 }
 
-// ── Featured category card ────────────────────────────────────────────────────
-
 .AvocadoHome-categoryCard--featured {
   position: relative;
 }
@@ -698,8 +671,6 @@
     display: block;
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 .AvocadoHome-categoryCard--all {
   justify-content: space-between;
@@ -720,7 +691,6 @@
   border: 1px solid var(--home-border);
   border-radius: 21px;
   padding: 16px;
-// background: var(--control-bg);
 }
 
 .AvocadoHome-threadHead {
@@ -730,20 +700,17 @@
 }
 
 .AvocadoHome-avatarWrap {
-  position: relative; // anchor for .AvocadoHome-unreadBadge
+  position: relative; // âncora do .AvocadoHome-unreadBadge
   width: 42px;
   height: 42px;
   border-radius: 999px;
   flex-shrink: 0;
   text-decoration: none;
-  // overflow stays visible so the unread badge isn't clipped — the .Avatar
-  // child already provides its own rounding/clipping for the image.
+  // overflow visível para não cortar o badge; o .Avatar já recorta a imagem.
 }
 
-// ── Unread badge — overlays the avatar's top-left corner ─────────────────────
-// Counter pill in the theme primary colour by default; switches to the per-card
-// tag colour only when the admin "Discussion card border style" is enabled
-// (same toggle that drives .AvocadoHome-threadCard--unread tinting).
+// Na cor primária; vira a cor da tag só com a borda colorida de card ligada
+// no admin.
 .AvocadoHome-unreadBadge {
   position: absolute;
   top: -4px;
@@ -759,7 +726,7 @@
   font-weight: 800;
   line-height: 18px;
   text-align: center;
-  // Halo against the card so it pops over the avatar edge regardless of background.
+  // Halo na cor do card para destacar sobre a borda do avatar.
   box-shadow: 0 0 0 2px var(--card-bg, #fff);
   pointer-events: auto;
   cursor: default;
@@ -778,7 +745,7 @@
 .AvocadoHome-threadMeta {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;  // allow tags to wrap if they exceed the card width
+  flex-wrap: wrap;
   gap: 6px;
   min-width: 0;
 }
@@ -824,8 +791,6 @@
   .avocado-line-clamp(2);
 }
 
-// ─── Thread card: actions (controls ⋮ + reply btn) ───────────────────────────
-// Wrapper keeps the two buttons vertically centered relative to each other
 .AvocadoHome-threadActions {
   display: flex;
   align-items: center;
@@ -853,7 +818,6 @@
   }
 }
 
-// ─── Thread card: controls dropdown (three-dot) ───────────────────────────────
 .AvocadoHome-threadControls {
   opacity: 0;
   transition: opacity var(--avocado-t-fast);
@@ -892,7 +856,6 @@
   }
 }
 
-// ─── Badge: discussão trancada ────────────────────────────────────────────────
 .AvocadoHome-badge--locked {
   background: rgba(239, 68, 68, 0.12);
   color: #ef4444;
@@ -921,9 +884,6 @@
   50%       { opacity: 0.5; transform: scale(0.75); }
 }
 
-// ─── Thread card: WebSocket animation states ───────────────────────────────
-
-// Brand-new discussion inserted from "X new discussions" button
 @keyframes AvocadoCard-new {
   from { opacity: 0; transform: translateY(-10px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -985,7 +945,6 @@
     }
   }
 
-  // Contador de visualizações (discussion-views): informativo, não é botão.
   &--views {
     cursor: default;
 
@@ -994,7 +953,6 @@
     }
   }
 
-  // ── Like pop animation (fires when a new like arrives via WebSocket) ───────
   &--pop {
     .fa-thumbs-up {
       animation: AvocadoStatBtn-pop 0.45s ease-out;
@@ -1050,14 +1008,12 @@
   font-weight: 700;
 }
 
-// ── Responsive: large screens (below 1100px) ──────────────────────────────────
 @media (max-width: 1099px) {
   .AvocadoHome-section > h2,
   .AvocadoHome-sectionHead h2 { font-size: 33px; }
   .AvocadoHome-threadTitle    { font-size: 22px; }
 }
 
-// ── Responsive: tablet (768px – 991px) ────────────────────────────────────────
 @media @tablet {
   .AvocadoHome-topbar {
     height: auto;
@@ -1078,7 +1034,6 @@
   .AvocadoHome-threadTitle { font-size: 20px; }
 }
 
-// ── Responsive: phone (≤ 767px) ───────────────────────────────────────────────
 @media @phone {
   .AvocadoHome-topbar {
     height: auto;
@@ -1105,7 +1060,6 @@
   .AvocadoHome-categoryCard       { min-height: 72px; }
   .AvocadoHome-heroBanner         { min-height: 0; border-radius: 14px; }
 
-  // On phone: overlay becomes a flow element so content drives banner height.
   .AvocadoHome-heroBannerOverlay {
     position: relative !important;
     inset: unset !important;
@@ -1115,20 +1069,17 @@
     padding: 0 !important;
   }
 
-  // Phone: overlay is content-driven, so this padding is the real top/bottom
-  // gap — keep icon and CTA clear of the border-radius with room to breathe.
+  // No phone o overlay segue o conteúdo; este padding é o espaço real.
   .AvocadoHome-heroBannerContent {
     padding: 36px 20px 36px !important;
   }
 
-  // Reply button: icon-only on phone
   .AvocadoHome-replyBtn {
     font-size: 0;
     padding: 0 10px;
     i { font-size: 14px; }
   }
 
-  // Thread meta: allow tags to wrap to a second line instead of overflowing
   .AvocadoHome-threadMain {
     overflow: hidden;
   }
@@ -1141,7 +1092,6 @@
     flex-shrink: 0;
   }
 
-  // On phone: show +N badge, hide tags 3 and 4
   .AvocadoHome-tagMore {
     display: inline-flex;
   }
@@ -1150,7 +1100,6 @@
   }
 }
 
-// ─── Author name alias (JS uses threadAuthor) ────────────────────────────────
 .AvocadoHome-threadAuthor {
   color: var(--home-title);
   text-decoration: none;
@@ -1158,10 +1107,8 @@
   font-size: 14px;
 }
 
-// ─── Unread indicator — bolder title + faint tint, no border, no author tint ─
-// Uses --avocado-unread-color, which defaults to the theme's --primary-color
-// and only switches to the discussion's tag colour when the admin enables
-// "Discussion card border style" (data-avocado-colored-border != "none").
+// --avocado-unread-color é a primária, e só vira a cor da tag com a borda
+// colorida de card ligada (data-avocado-colored-border != "none").
 .AvocadoHome-threadCard--unread {
   --avocado-unread-color: var(--primary-color);
 
@@ -1173,14 +1120,11 @@
   }
 }
 
-// When the colored-border admin setting is on, follow the per-card tag colour
-// (matches the existing border tinting behaviour).
 [data-avocado-colored-border="left"] .AvocadoHome-threadCard--unread,
 [data-avocado-colored-border="full"] .AvocadoHome-threadCard--unread {
   --avocado-unread-color: var(--item-tag-color, var(--primary-color));
 }
 
-// ─── Badges (pinned, following) — unread is now .AvocadoHome-unreadBadge ─────
 .AvocadoHome-badge {
   display: inline-flex;
   align-items: center;
@@ -1197,7 +1141,6 @@
   &--ignoring  { background: rgba(107, 114, 128, 0.12); color: #6b7280; }
 }
 
-// Selos de extensões (Discussion.badges()) no mesmo tamanho dos selos acima.
 .AvocadoHome-extBadges {
   display: inline-flex;
   align-items: center;
@@ -1211,9 +1154,8 @@
   }
 }
 
-// ─── Tag overflow badge (+N) — phone only ────────────────────────────────────
 .AvocadoHome-tagMore {
-  display: none; // hidden on desktop; shown on phone via @media below
+  display: none;
   align-items: center;
   padding: 2px 7px;
   border-radius: 999px;
@@ -1224,7 +1166,6 @@
   flex-shrink: 0;
 }
 
-// ─── Tag pills on thread cards ────────────────────────────────────────────────
 .AvocadoHome-tagPill {
   display: inline-flex;
   align-items: center;
@@ -1255,7 +1196,7 @@
     flex-shrink: 0;
   }
 
-  // Reset global .fa-kit padding (App.less applies 0 10px globally)
+  // O App.less aplica 0 10px no .fa-kit globalmente.
   .fa-kit {
     padding: 0 !important;
   }
@@ -1267,7 +1208,6 @@
     flex-shrink: 0;
   }
 
-  // Imagens: escalam proporcionalmente dentro da pill
   img {
     display: block;
     flex-shrink: 0;
@@ -1278,7 +1218,6 @@
   }
 }
 
-// ─── Reply card ───────────────────────────────────────────────────────────────
 .AvocadoHome-replyCard {
   display: flex;
   flex-direction: column;
@@ -1290,7 +1229,7 @@
   align-items: center;
   gap: 8px;
   padding: 5px 8px;
-  min-height: 44px; // WCAG 2.5.5 touch target
+  min-height: 44px; // alvo de toque WCAG 2.5.5
   border-radius: 10px;
   text-decoration: none;
   color: inherit;
@@ -1342,8 +1281,8 @@
 .AvocadoHome-replyCard-seeMore {
   display: flex;
   align-items: center;
-  min-height: 44px; // WCAG 2.5.5 touch target
-  padding: 8px 8px; // aligns with avatar left edge
+  min-height: 44px; // alvo de toque WCAG 2.5.5
+  padding: 8px 8px;
   font-size: 12px;
   font-weight: 700;
   color: var(--muted-color);
@@ -1357,19 +1296,15 @@
 }
 
 
-// ─── Hero banner ──────────────────────────────────────────────────────────────
-// ─── Guest hero banner ────────────────────────────────────────────────────────
 .AvocadoHome-heroBanner {
   width: 100%;
-  // Content is vertically centered inside the (absolute, inset:0) overlay, so
-  // the visible gap above the icon and below the CTA is driven by the banner's
-  // own height, not by the content padding. Give it enough room to breathe.
+  // O conteúdo é centralizado no overlay absoluto, então o respiro vem da
+  // altura do banner, não do padding.
   min-height: 320px;
   position: relative;
   border-radius: 20px;
   overflow: hidden;
   margin-bottom: 22px;
-  // Base: solid primary color (no image)
   background: var(--primary-color);
 }
 
@@ -1380,10 +1315,8 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  // Depth gradient over the primary color
   background: linear-gradient(135deg, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.02) 60%, rgba(255,255,255,0.04) 100%);
 
-  // Decorative blobs
   &::before {
     content: '';
     position: absolute;
@@ -1409,10 +1342,8 @@
   }
 }
 
-// When there is a hero image: primary-color tint covers the full banner.
-// Why on the banner (not the overlay): on phone the overlay becomes
-// position:relative and content-driven, so an overlay-bound tint can leave a
-// thin strip of the image exposed at the bottom of the banner.
+// Tinta no banner, não no overlay: no phone o overlay segue o conteúdo e
+// deixaria uma faixa da imagem exposta.
 .AvocadoHome-heroBanner--hasImage {
   &::before {
     content: '';
@@ -1432,20 +1363,11 @@
   }
 }
 
-// When admin-supplied custom HTML is used, the overlay keeps its flex
-// centering (so the admin's card stays centered in the banner regardless of
-// its max-width) but drops the dark depth gradient and decorative blobs that
-// would bleed over the admin's own background / shadow. The admin's inline
-// <style> may also override .AvocadoHome-heroBannerOverlay rules; the styles
-// below are scoped to the modifier so they don't fight nested overlays the
-// admin may have pasted in.
+// HTML customizado do admin: mantém a centralização, sem o degradê e os
+// blobs que vazariam sobre o fundo dele.
 .AvocadoHome-heroBanner--customHtml {
-  // Let the banner grow with the custom content. The default overlay is
-  // position:absolute (inset:0), which does not contribute to the banner's
-  // height — so a `min-height: 0` plus an absolute overlay collapses the
-  // banner to 0 and overflow:hidden clips the admin's card. Lifting every
-  // overlay (including any nested ones the admin pastes by mistake) back
-  // into the flow makes the banner size itself to the admin's markup.
+  // O overlay padrão é absoluto e não dá altura ao banner; trazendo todos
+  // (inclusive os aninhados por engano) ao fluxo, o banner mede o markup do admin.
   min-height: 0;
 
   .AvocadoHome-heroBannerOverlay {
@@ -1497,7 +1419,6 @@
   line-height: 1.5;
 }
 
-// ─── Guest CTA (inside hero) ──────────────────────────────────────────────────
 .AvocadoHome-guestCTA {
   display: flex;
   justify-content: center;
@@ -1534,7 +1455,6 @@
   font-weight: 500;
 }
 
-// ─── Post input inner + actions ───────────────────────────────────────────────
 .AvocadoHome-postInput-inner {
   display: flex;
   align-items: center;
@@ -1543,17 +1463,16 @@
 }
 
 
-// ─── Inline composer ──────────────────────────────────────────────────────────
 .AvocadoHome-composer {
   border: 2px solid var(--primary-color);
   border-radius: 18px;
   background: #fff;
   margin-bottom: 22px;
-  // No overflow:hidden — allows tag picker dropdown to escape the container
+  // Sem overflow: hidden: o dropdown do seletor de tags precisa escapar.
 }
 
-// Os quadros em que o editor ainda monta a barra: o cartão já está no DOM (para
-// ser medido inteiro) mas não aparece nem ocupa espaço.
+// Enquanto o editor monta a barra, o cartão fica no DOM para ser medido,
+// sem aparecer nem ocupar espaço.
 .AvocadoComposerDock.is-preparing {
   height: 0;
   margin: 0;
@@ -1561,8 +1480,6 @@
   visibility: hidden;
 }
 
-// ── No lugar do campo, com efeito (FloatingInlineComposer, placement inline) ─
-// O cartão é o do modo padrão (borda primária etc.); só ganha a entrada.
 .AvocadoComposerDock--inline {
   margin-bottom: 22px;
 
@@ -1571,12 +1488,9 @@
   }
 }
 
-// ── Cartão flutuante (FloatingInlineComposer) ────────────────────────────────
-// O compositor fica na base da tela, alinhado ao campo "Tell everyone…" que o
-// abriu, como o compositor de resposta na discussão (Composer.less): o campo
-// voa até lá e vira o cartão, e o espaço dele na página se fecha. Borda
-// como a do .Composer do core: contorno discreto em repouso e o anel de 2px na
-// cor primária quando está em uso (o `.active` do core vira `:focus-within`).
+// O cartão fica na base da tela alinhado ao campo que o abriu, como o
+// compositor de resposta. Anel primário em uso (o `.active` do core vira
+// `:focus-within`).
 
 .AvocadoComposerDock--floating {
   position: fixed;
@@ -1584,7 +1498,6 @@
   bottom: 16px;
   z-index: var(--zindex-composer);
   width: var(--avocado-dock-width, ~"min(920px, calc(100% - 32px))");
-  // Entrada e saída: FloatingInlineComposer.tsx (o campo vira o cartão).
 
   html.has-mobile-tab & {
     @media @phone {
@@ -1607,13 +1520,12 @@
     }
   }
 
-  // Preso na base, o seletor de tags abre para cima.
   .AvocadoHome-tagPickerDropdown {
     top: auto;
     bottom: calc(100% + 6px);
   }
 
-  // Altura do editor (e da prévia, que toma o lugar dele) vem da alça.
+  // A altura do editor (e da prévia) vem da alça.
   .AvocadoHome-composerBody .TextEditor-editor,
   .AvocadoHome-composerBody.is-preview .AvocadoHome-composerPreviewArea {
     height: var(--avocado-dock-editor-h, 140px);
@@ -1623,8 +1535,6 @@
     resize: none;
   }
 
-  // Alça de arrastar, como a .Composer-handle do core: faixa no topo do cartão
-  // com o puxador no meio.
   .AvocadoComposerDock-handle {
     position: absolute;
     top: 0;
@@ -1663,8 +1573,7 @@
     }
   }
 
-  // Puxado além do mínimo: o cartão se arredonda e esmaece, avisando que ao
-  // soltar vira bolha.
+  // Puxado além do mínimo: avisa que ao soltar vira bolha.
   &.will-minimize .AvocadoHome-composer {
     border-radius: 28px;
     opacity: 0.88;
@@ -1673,9 +1582,8 @@
       opacity var(--avocado-t-normal);
   }
 
-  // ── Bolha (cartão minimizado) ──────────────────────────────────────────────
-  // A mesma pílula da "Escreva uma resposta…" da discussão (Composer.less), na
-  // largura do cartão. O cartão fica montado, escondido, com o que foi escrito.
+  // A mesma pílula de resposta da discussão. O cartão fica montado,
+  // escondido, com o que foi escrito.
   &.is-minimized {
     .AvocadoHome-composer,
     .AvocadoComposerDock-handle {
@@ -1737,13 +1645,11 @@
     box-shadow: none !important;
   }
 
-  // Editor textarea
   .TextEditor-editor {
     min-height: 140px;
     padding: 12px 16px !important;
   }
 
-  // Toolbar row — single line, preview button first, Close+Post injected on right
   ul.TextEditor-controls {
     display: flex !important;
     flex-wrap: nowrap !important;
@@ -1770,17 +1676,14 @@
       display: none !important;
     }
 
-    // Separator after preview button
     li.item-avocadoPreview {
       margin-right: 4px !important;
       padding-right: 4px !important;
       border-right: 1px solid #e7e7ed;
     }
 
-    // Spacer pushes Close + Post to right
     li.item-avocadoSpacer { flex: 1 !important; }
 
-    // Close + Post buttons in toolbar (and fof/drafts' save button before them)
     li.item-avocadoDraft,
     li.item-avocadoClose,
     li.item-avocadoPost {
@@ -1789,8 +1692,7 @@
     }
   }
 
-  // Emoji autocomplete: position:fixed lets JS use viewport coordinates directly.
-  // The JS patch in index.js repositions it just above the toolbar.
+  // fixed para o JS posicionar em coordenadas da viewport, logo acima da barra.
   .EmojiDropdown {
     position: fixed !important;
     z-index: 1000 !important;
@@ -1799,7 +1701,6 @@
   }
 
 
-  // Preview mode: preview area on top, toolbar (with only our buttons) pinned below
   &.is-preview {
     .TextEditor {
       order: 2;
@@ -1824,14 +1725,12 @@
     }
   }
 
-  // Preview area
   .AvocadoHome-composerPreviewArea {
     display: none;
     background: var(--body-bg, #fff);
     overflow-y: auto;
     border-bottom: 1px solid #f0f0f4;
 
-    // Reset Flarum post chrome — keep only content rendering
     article.CommentPost,
     .Post-container {
       margin: 0 !important;
@@ -1853,8 +1752,6 @@
 }
 
 .AvocadoHome-composerPreviewBtn {
-  // Inherits Button Button--icon Button--link styles from Flarum
-  // Only override active state
   &.is-active {
     color: var(--primary-color) !important;
   }
@@ -1875,10 +1772,7 @@
   gap: 6px;
 }
 
-// ─── Hero image chip (composer) ───────────────────────────────────────────────
-// Single-line, 32px tall — sits flush with the rest of the composer chrome
-// without altering vertical rhythm. Shown only when one of the selected tags
-// is configured (in admin) to request a hero image.
+// Só aparece quando uma tag escolhida pede imagem de hero (admin).
 .AvocadoHome-composerHeroChipRow {
   padding: 8px 16px;
   border-bottom: 1px solid #f0f0f4;
@@ -1921,7 +1815,7 @@
     i { color: var(--primary-color); }
   }
 
-  // The hidden file input fills the chip so the entire pill is the click target.
+  // O input escondido cobre o chip, que vira o alvo inteiro do clique.
   input[type="file"] {
     position: absolute;
     inset: 0;
@@ -1931,7 +1825,6 @@
     cursor: pointer;
   }
 
-  // ── Active state: a thumbnail-led chip with a remove button ────────────
   &.is-set {
     cursor: default;
     padding-left: 4px;
@@ -1976,9 +1869,8 @@
   }
 }
 
-// Modal variant (core DiscussionComposer) lives inside ComposerBody-header
-// (an existing <ul>), so flatten the row paddings/borders to inherit the
-// composer's spacing instead of stacking our own.
+// No compositor do core a linha fica dentro do ComposerBody-header e herda
+// o espaçamento dele.
 .AvocadoHome-composerHeroChipRow--modal {
   padding: 0;
   border-bottom: none;
@@ -2000,11 +1892,10 @@
   }
 }
 
-// ─── Tag picker ───────────────────────────────────────────────────────────────
 .AvocadoHome-tagPicker {
   position: relative;
   flex-shrink: 1;
-  flex-grow: 1;       // ocupa o espaço disponível no row do composer
+  flex-grow: 1;
   min-width: 0;
 }
 
@@ -2014,9 +1905,9 @@
   flex-wrap: wrap;
   gap: 6px;
   min-height: 34px;
-  max-width: 100%;        // nunca ultrapassa o container
+  max-width: 100%;
   padding: 5px 12px;
-  border-radius: 999px;   // pill quando vazio; continua arredondado ao crescer
+  border-radius: 999px;
   border: 1px solid #e6e6eb;
   background: #f8f8fa;
   color: #60616c;
@@ -2027,7 +1918,7 @@
   box-sizing: border-box;
   text-align: left;
 
-  // Quando tem chips (mais de 2 filhos: ícone + chip(s) + chevron) muda para rounded-rect
+  // Com chips (mais de 2 filhos: ícone + chips + seta) vira retângulo arredondado.
   &:has(.AvocadoHome-tagChip) {
     border-radius: 16px;
   }
@@ -2042,7 +1933,7 @@
 .AvocadoHome-tagPickerChevron {
   font-size: 10px;
   color: #9b9ca6;
-  margin-left: auto;   // empurra para o canto direito mesmo com multi-linha
+  margin-left: auto;
   align-self: center;
   flex-shrink: 0;
 }
@@ -2085,7 +1976,6 @@
   overflow-y: auto;
 }
 
-// ── Search bar ────────────────────────────────────────────────────────────────
 .AvocadoHome-tagPickerSearch {
   display: flex;
   align-items: center;
@@ -2113,7 +2003,6 @@
   }
 }
 
-// ── Tag list ──────────────────────────────────────────────────────────────────
 .AvocadoHome-tagPickerList {
   list-style: none;
   margin: 0;
@@ -2135,7 +2024,6 @@
   &:hover { background: #f4f4f7; }
   &.is-selected { background: color-mix(in srgb, var(--primary-color) 10%, transparent); }
 
-  // Child (secondary) tags are indented
   &.is-child {
     padding-left: 26px;
 
@@ -2147,7 +2035,7 @@
     }
   }
 
-  // Tags that cannot be selected due to limits
+  // Bloqueadas pelos limites de seleção.
   &.is-disabled {
     opacity: 0.4;
     cursor: not-allowed;
@@ -2158,8 +2046,8 @@
   width: 26px;
   height: 26px;
   border-radius: 8px;
-  // Fallback quando a tag não tem cor customizada — sem isto, o inline
-  // `background: ''` deixaria o ícone branco invisível no tema claro.
+  // Sem cor customizada, o `background: ''` inline deixaria o ícone branco
+  // invisível no tema claro.
   background: var(--primary-color);
   color: #fff;
   display: inline-flex;
@@ -2202,7 +2090,6 @@
   text-align: center;
 }
 
-// ── Bypass requirements toggle (admins) ───────────────────────────────────────
 .AvocadoHome-tagPickerBypass {
   display: flex;
   align-items: center;
@@ -2218,8 +2105,6 @@
     cursor: pointer;
   }
 }
-
-// ─── All Discussions Page ─────────────────────────────────────────────────────
 
 .AvocadoDiscussions {
   max-width: var(--home-max-width);
@@ -2249,8 +2134,6 @@
   align-items: center;
   gap: 12px;
 }
-
-// ── Sort dropdown ─────────────────────────────────────────────────────────────
 
 .AvocadoDiscussions-sortWrap {
   position: relative;
@@ -2326,8 +2209,6 @@
   color: #3f88f6;
 }
 
-// ── Home link ─────────────────────────────────────────────────────────────────
-
 .AvocadoDiscussions-homeLink,
 .AvocadoExtensionPage-homeLink {
   display: inline-flex;
@@ -2341,17 +2222,14 @@
 
   i { font-size: 12px; }
 
-  // Nas páginas do tema a regra global de links (App.less) já anula qualquer
-  // sublinhado, então o `underline` que ficava aqui só aparecia nas páginas de
-  // extensão — o mesmo link com dois hovers diferentes. O realce é a opacidade.
+  // A regra global de links do App.less já zera o sublinhado nas páginas do
+  // tema; o realce é por opacidade para valer igual nas de extensão.
   &:hover, &:focus {
     color: var(--primary-color);
     text-decoration: none;
     opacity: 0.72;
   }
 }
-
-// ── Load more ─────────────────────────────────────────────────────────────────
 
 .AvocadoDiscussions-loadMore {
   display: flex;
@@ -2377,8 +2255,6 @@
   }
 }
 
-// ── Empty state ───────────────────────────────────────────────────────────────
-
 .AvocadoDiscussions-empty {
   text-align: center;
   padding: 40px 20px;
@@ -2387,16 +2263,12 @@
   font-weight: 500;
 }
 
-// ── Mobile/tablet navigation helper ───────────────────────────────────────────
-// IndexSidebar rendered inside standalone pages (AllDiscussionsPage, AvocadoTagPage).
-// On phone:      container is collapsed (h=0, overflow hidden) but the absolutely-
-//                positioned App-titleControl escapes to the phone header.
-// On tablet+:    hidden entirely — our pages have their own horizontal tab nav.
-// NOTE: @desktop-up = 992px+, @tablet-up = 768px+. Must use @tablet-up so the
-//       nav does not leak inline at 768-991px (the tablet gap).
+// Sidebar das páginas avulsas: colapsada no phone (o App-titleControl escapa
+// para o cabeçalho) e oculta do tablet para cima. @tablet-up, não @desktop-up,
+// para não vazar entre 768 e 991px.
 
-// Strip list markers from the AvocadoExtensionNav ul — the li.App-primaryControl
-// escapes via position:absolute on phone and its ::marker would otherwise be visible.
+// O li.App-primaryControl escapa por position: absolute no phone e o
+// ::marker ficaria visível.
 .AvocadoExtensionNav > ul {
   list-style: none;
   margin: 0;
@@ -2405,10 +2277,7 @@
   > li { list-style: none; }
 }
 
-// ─── Extension page header (inside .Page-content) ────────────────────────────
-// Injected at the top of providedContent() for all non-DiscussionPage/IndexPage.
-// Matches the layout of .AvocadoDiscussions-header: title on the left, back link
-// on the right. app.title supplies the page name (set by each page's oncreate).
+// Injetado no topo do providedContent() das páginas de extensão.
 
 .AvocadoExtensionPage-header {
   display: flex;
@@ -2428,9 +2297,7 @@
   line-height: 1.2;
 }
 
-// Mesmo link de voltar das páginas do tema (.AvocadoDiscussions-homeLink, logo
-// acima): o bloco abaixo só acrescenta o seletor da página de extensão, para os
-// dois não poderem divergir.
+// Mesmo link de voltar das páginas do tema, para os dois não divergirem.
 .AvocadoExtensionPage-homeLink {
   flex-shrink: 0;
 }
@@ -2445,18 +2312,16 @@
   }
 }
 
-// ── Showcase Grid ─────────────────────────────────────────────────────────────
-
 .AvocadoHome-section--showcase {
   margin-bottom: 8px;
 }
 
 .AvocadoHome-showcaseGrid {
-  // Dynamic columns: 1 item = full width, 2 = halves, 5 = fifths, etc.
+  // 1 item = largura toda, 2 = metades, 5 = quintos…
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  grid-auto-rows: minmax(300px, auto); // minimum height for cards
-  align-items: stretch; // all cells in a row match tallest card
+  grid-auto-rows: minmax(300px, auto);
+  align-items: stretch;
   gap: 12px;
 
   @media @phone {
@@ -2470,12 +2335,9 @@
   }
 }
 
-// ── Card ──────────────────────────────────────────────────────────────────────
-// portrait card: image at top, badges absolutely anchored on article
-
 .AvocadoHome-showcaseCard {
-  position: relative; // anchor for badges — NO overflow:hidden so tooltip is never clipped
-  height: 100%;       // stretch to fill grid row height → all cards same size
+  position: relative; // sem overflow: hidden, para o tooltip não ser cortado
+  height: 100%;
 
   @media @phone {
     flex: 0 0 72vw;
@@ -2485,7 +2347,6 @@
   }
 }
 
-// Badge — top-left, absolute above image
 .AvocadoHome-showcaseCard-badges {
   position: absolute;
   top: 10px;
@@ -2499,7 +2360,6 @@
   .AvocadoHome-badge--following { background: #ffffff; }
 }
 
-// Tag pills — top-right
 .AvocadoHome-showcaseCard-topTags {
   position: absolute;
   top: 10px;
@@ -2511,18 +2371,16 @@
   gap: 4px;
 }
 
-// Tippy tooltip — force above all card layers
 .AvocadoHome-showcaseCard [data-tippy-root],
 .AvocadoHome-showcaseCard .tippy-box {
   z-index: var(--avocado-z-tooltip) !important;
 }
 
-// The <a> IS the card — border, bg, radius all here
 .AvocadoHome-showcaseCard-link {
   display: flex;
   flex-direction: column;
   position: relative;
-  height: 100%;      // fills the article which fills the grid row
+  height: 100%;
   border-radius: 16px;
   border: 1px solid var(--home-border);
   background: #ffffff;
@@ -2540,15 +2398,13 @@
   }
 }
 
-// ── Cover image — absolute, top, fades to card bg at bottom ──────────────────
-
 .AvocadoHome-showcaseCard-img {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   width: 100%;
-  height: 150px; // fixed — matches padding-top on link
+  height: 150px; // casa com o padding-top do link
   object-fit: cover;
   display: block;
   z-index: 0;
@@ -2560,12 +2416,12 @@
 
   .AvocadoHome-showcaseCard-link:hover & { opacity: 0.72; }
 
-  // While waiting for IntersectionObserver to assign src: reserve space,
-  // suppress the broken-image icon, show a shimmer placeholder.
+  // Até o IntersectionObserver definir o src: reserva o espaço, sem o ícone de
+  // imagem quebrada.
   &:not([src]) {
     opacity: 0;
     background: var(--avocado-surface-1);
-    // mask must be removed or the shimmer below won't show through
+    // Sem remover a máscara o shimmer não aparece.
     -webkit-mask-image: none;
     mask-image: none;
   }
@@ -2590,18 +2446,15 @@
 }
 
 
-// ── Content — sits above image via z-index + padding-top on link ──────────────
-
 .AvocadoHome-showcaseCard-body {
   position: relative;
   z-index: 1;
-  flex: 1; // fills remaining height inside the flex link
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-// Date
 .AvocadoHome-showcaseCard-date {
   display: block;
   font-size: 12px;
@@ -2610,7 +2463,6 @@
   margin-bottom: 1px;
 }
 
-// Title row: title text + arrow svg
 .AvocadoHome-showcaseCard-titleRow {
   display: flex;
   align-items: flex-start;
@@ -2633,7 +2485,6 @@
   .AvocadoHome-showcaseCard-link:hover & { color: var(--primary-color); }
 }
 
-// Arrow — animated on hover (line slides in)
 .AvocadoHome-showcaseCard-arrow {
   flex-shrink: 0;
   margin-top: 2px;
@@ -2661,7 +2512,6 @@
   }
 }
 
-// Excerpt
 .AvocadoHome-showcaseCard-excerpt {
   font-size: 13px;
   font-weight: 400;
@@ -2675,7 +2525,6 @@
   overflow: hidden;
 }
 
-// Author row — always pinned to bottom via margin-top: auto
 .AvocadoHome-showcaseCard-author {
   display: flex;
   align-items: center;
@@ -2701,7 +2550,6 @@
   text-overflow: ellipsis;
 }
 
-// Tags row
 .AvocadoHome-showcaseCard-tags {
   display: flex;
   flex-wrap: wrap;
@@ -2709,26 +2557,22 @@
   margin-top: 6px;
 }
 
-// ── Full image variant ───────────────────────────────────────────────────────
-// Image covers 100% of card. Text sits on a subtle bottom gradient scrim.
-
 .AvocadoHome-showcaseCard--full {
   grid-row: span 1;
-  min-height: 300px; // ensure grid row resolves a definite height for abs-positioned children
+  min-height: 300px; // altura definida para os filhos absolutos
 
   .AvocadoHome-showcaseCard-link {
     padding: 0;
     display: block;
-    background: #e6e6eb; // light fallback when no image
+    background: #e6e6eb;
     height: 100%;
-    min-height: 300px; // safety net: height:100% may not resolve in all grid/browser contexts
+    min-height: 300px; // height: 100% nem sempre resolve no grid
 
     &::before { display: none; }
 
     &:hover .AvocadoHome-showcaseCard-img { opacity: 0.65; }
   }
 
-  // Image covers entire card — muted opacity similar to compact mode
   .AvocadoHome-showcaseCard-img {
     position: absolute;
     inset: 0;
@@ -2756,7 +2600,7 @@
 
   .AvocadoHome-showcaseCard-colorOverlay { display: none; }
 
-  // Body: scrim uses primary tag color via --card-accent (set from JS)
+  // --card-accent vem do JS.
   .AvocadoHome-showcaseCard-body {
     position: absolute;
     bottom: 0;
@@ -2767,7 +2611,6 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-    // color-mix() blends --card-accent with transparent to get rgba-like stops
     background: linear-gradient(to top,
       color-mix(in srgb, var(--card-accent, #000000) 92%, transparent) 0%,
       color-mix(in srgb, var(--card-accent, #000000) 72%, transparent) 32%,
@@ -2777,7 +2620,6 @@
     border-radius: 0 0 16px 16px;
   }
 
-  // White text — no text-shadow
   .AvocadoHome-showcaseCard-title {
     color: #fff;
     font-size: 15px;
@@ -2813,20 +2655,16 @@
     scroll-snap-align: start;
     grid-row: auto;
     height: auto;
-    min-height: 0; // reset 300px desktop min-height
+    min-height: 0;
 
     .AvocadoHome-showcaseCard-link { height: 300px; min-height: 300px; }
   }
 }
 
-// ── Hide native "More…" tag nav link inside AvocadoHome ───────────────────────
 .AvocadoHome .AvocadoExtensionNav .sideNav-more,
 .AvocadoHome .AvocadoExtensionNav li.item-more {
   display: none !important;
 }
-
-// ── Controles e tela cheia do cartão (FloatingInlineComposer) ────────────────
-// Minimizar, tela cheia e fechar no canto, como os `.Composer-controls` do core.
 
 .AvocadoComposerDock {
   position: relative;
@@ -2843,23 +2681,20 @@
     list-style: none;
   }
 
-  // O título não passa por baixo dos botões.
   .AvocadoHome-composer-header {
     padding-right: 128px;
   }
 
-  // Com o botão de salvar rascunho (fof/drafts) há um botão a mais no canto.
   &.has-draft .AvocadoHome-composer-header {
     padding-right: 168px;
   }
 }
 
-// `position: fixed` do cartão flutuante ganha do `relative` acima.
+// O `fixed` do cartão flutuante ganha do `relative` acima.
 .AvocadoComposerDock--floating {
   position: fixed;
 }
 
-// Tela cheia: o cartão ocupa a tela; editor e prévia lado a lado.
 .AvocadoComposerDock.is-fullscreen {
   position: fixed;
   inset: 0;
@@ -2887,14 +2722,13 @@
       flex-direction: column;
       min-height: 0;
     }
-    // O editor ocupa a altura toda (a área clicável também, não só o texto).
     .TextEditor-editorContainer {
       display: flex;
       flex-direction: column;
       flex: 1;
       min-height: 0;
     }
-    // Extensões embrulham o editor (menções, emoji): os invólucros esticam junto.
+    // Extensões embrulham o editor (menções, emoji); os invólucros esticam junto.
     .TextEditor-editorContainer div:has(.TextEditor-editor) {
       display: flex;
       flex-direction: column;
@@ -2932,7 +2766,6 @@
   }
 }
 
-// A página não rola por trás da tela cheia.
 html.avocado-composer-fullscreen {
   overflow: hidden;
 }

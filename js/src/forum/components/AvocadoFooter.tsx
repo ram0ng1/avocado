@@ -14,16 +14,8 @@ import {
 import type { FooterLinkItem, FooterSocialItem } from '../../common/footerContent';
 
 /**
- * Rodapé do tema (admin › Rodapé).
- *
- * Simples de propósito: um bloco estreito e centralizado no fim da página, com
- * uma linha fina em cima e texto discreto — o texto livre, a navegação, os
- * contatos, as redes e o copyright, cada um na sua linha. Sem painel, sem
- * efeito, sem estado: é tudo `view`.
- *
- * Tudo o que aparece é o que está nos campos do admin. Um campo nunca gravado
- * vale o padrão (common/footerContent) — o mesmo que o admin mostra preenchido
- * — e um campo esvaziado é uma linha que não existe.
+ * Rodapé do tema, sem estado: é tudo `view`. Campo nunca gravado vale o padrão
+ * (common/footerContent); campo esvaziado é uma linha que não existe.
  */
 
 interface FooterLink {

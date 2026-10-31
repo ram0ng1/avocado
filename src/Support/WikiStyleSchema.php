@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Support;
@@ -7,20 +16,15 @@ namespace Ramon\Avocado\Support;
 /**
  * A tabela `avocado_wiki_article_styles` existe neste banco?
  *
- * Pelo mesmo motivo do ChangelogSchema: o tema chega por `composer update` e a
- * tabela só nasce no `php flarum migrate` seguinte. Nessa janela o eager-load
- * de `avocadoStyle` nos artigos do wiki derrubaria o índice e cada artigo com
- * "Base table or view not found". Sem a tabela, a escolha de design só fica
- * fora do ar (campo oculto e não gravável) e todo artigo usa o padrão.
+ * Mesmo motivo do BookmarksSchema: antes do `migrate` o eager-load derrubaria
+ * as páginas do wiki. Sem a tabela todo artigo usa o design padrão.
  */
 final class WikiStyleSchema
 {
     public const TABLE = 'avocado_wiki_article_styles';
 
     /**
-     * Classes do linkrobins/wiki, por nome: a extensão é opcional para o tema e
-     * não está no composer dele (nem no CI), então o extend.php não pode citá-las
-     * com `::class` — mesmo arranjo do SupportEvents::TICKET_MODEL.
+     * Por nome: o linkrobins/wiki é opcional e não está no composer do tema.
      */
     public const ARTICLE_MODEL = 'LinkRobins\Wiki\WikiArticle';
 

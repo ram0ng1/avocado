@@ -94,11 +94,9 @@ export class CoverPicker extends Component<CoverPickerAttrs> {
   };
 
   /**
-   * Os ouvintes globais só existem com o painel aberto. Antes ficavam presos o
-   * tempo todo em que o chip estava montado — inclusive um scroll em captura e não
-   * passivo, que rodava a cada rolagem de qualquer elemento da página.
-   * (Ligados no clique que abre: o próprio clique já passou da fase de captura do
-   * document, então não chega no onDocumentClick e não fecha o painel na hora.)
+   * Os ouvintes globais só existem com o painel aberto: um deles é um scroll em
+   * captura e não passivo. São ligados no clique que abre, que já passou da
+   * captura do document e por isso não fecha o painel na hora.
    */
   private listening = false;
 
@@ -135,15 +133,12 @@ export class CoverPicker extends Component<CoverPickerAttrs> {
   };
 
   /**
-   * Põe o painel no lugar. Absoluto ele era cortado pelo `overflow: hidden` do
-   * cabeçalho da versão e pela borda do compositor; `fixed` escapa dos dois e é
-   * mantido dentro da janela: abre por baixo do botão e, se não couber, por cima,
-   * com rolagem própria quando nenhum dos lados comporta o painel todo.
+   * Posiciona o painel com `fixed`, que escapa do `overflow: hidden` do cabeçalho
+   * da versão e da borda do compositor, mantendo-o dentro da janela.
    *
-   * Feito no DOM (oncreate/onupdate do painel, resize e scroll), não no vnode: é
-   * preciso medir o painel, e um ancestral com `transform` — o modal do Flarum —
-   * vira o bloco de referência do `fixed`; a diferença entre onde o painel deveria
-   * estar e onde caiu corrige isso sem saber quem é o ancestral.
+   * Feito no DOM porque é preciso medir o painel, e um ancestral com `transform`
+   * (o modal do Flarum) vira o bloco de referência do `fixed`: a diferença entre o
+   * lugar esperado e o real corrige isso.
    */
   private place = () => {
     const pop = this.element?.querySelector<HTMLElement>('.AvocadoChangelogField-pop');

@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Controller;
@@ -13,16 +22,16 @@ use Flarum\User\Exception\PermissionDeniedException;
 use Illuminate\Support\Arr;
 use Laminas\Diactoros\Response\JsonResponse;
 use Psr\Http\Message\ResponseInterface;
+use Flarum\User\User;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Ramon\Avocado\Model\Bookmark;
 use Ramon\Avocado\Support\BookmarksSetting;
 
 /**
- * Salva uma discussão para o ator. O par é sempre derivado do servidor
- * (user_id = ator, §7) e a discussão precisa ser visível ao ator (§5) — não dá
- * para salvar o que não se pode ver. insertOrIgnore torna o POST idempotente:
- * o índice único absorve cliques repetidos/corridas sem estourar (§62).
+ * Salva uma discussão para o ator. O user_id vem sempre do servidor e a
+ * discussão precisa ser visível ao ator. insertOrIgnore deixa o POST
+ * idempotente: o índice único absorve cliques repetidos e corridas.
  */
 class CreateBookmarkController implements RequestHandlerInterface
 {
@@ -55,7 +64,7 @@ class CreateBookmarkController implements RequestHandlerInterface
         ]);
     }
 
-    private function resolveDiscussion(ServerRequestInterface $request, $actor): Discussion
+    private function resolveDiscussion(ServerRequestInterface $request, User $actor): Discussion
     {
         $body = (array) ($request->getParsedBody() ?? []);
         $rawId = Arr::get($body, 'discussionId', Arr::get($request->getQueryParams(), 'discussionId'));

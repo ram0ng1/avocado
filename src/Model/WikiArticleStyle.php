@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Model;
@@ -8,12 +17,8 @@ use Flarum\Database\AbstractModel;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Tabela companheira 1:1 com os artigos do linkrobins/wiki: o design que o
- * autor escolheu para o artigo na tela de criação/edição do wiki.
- *
- * O design padrão não ocupa linha — escolher "Padrão" de novo apaga a que
- * existia (ver `write`). Sem relação de volta para o artigo: o model dele é de
- * outra extensão, que o tema não exige.
+ * Design de um artigo do linkrobins/wiki (companheira 1:1). O padrão não ocupa
+ * linha. Sem relação de volta: o model do artigo é de uma extensão opcional.
  *
  * @property int $article_id
  * @property string $style

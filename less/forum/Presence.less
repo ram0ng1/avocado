@@ -1,8 +1,5 @@
-// ─── Presence — "N lendo agora" no meta do hero da discussão ──────────────────
-//
-// Herda a tipografia do .DiscussionHero-metaItem; aqui ficam só o dot pulsante
-// e a fileira de avatares sobrepostos. Cores via currentColor/tokens do tema —
-// o hero colorido (texto branco) e o dark mode funcionam sem caso especial.
+// "N lendo agora" no meta do hero. Cores via currentColor/tokens para valer
+// no hero colorido e no dark mode sem caso especial.
 
 .AvocadoPresence {
   display: inline-flex;
@@ -55,19 +52,14 @@
   }
 }
 
-// ─── Typing indicator — substitui o container padrão do flarum/realtime ──────
-//
-// O item nativo (.TypingUsersContainer, com "No one is typing" permanente) é
-// ocultado e o AvocadoTyping assume: pill que só aparece com alguém digitando,
-// avatares sobrepostos e três pontos com bounce escalonado.
+// Substitui o container do flarum/realtime, que mostra "No one is typing"
+// o tempo todo.
 
 .PostStream .TypingUsersContainer {
   display: none !important;
 }
 
-// O recuo (--avocado-typing-indent) vem do JS: é a distância até a coluna de
-// texto do último post, para a pílula nascer onde a resposta vai aparecer e a
-// linha do tempo passar livre à esquerda dela.
+// O recuo vem do JS: alinha a pílula à coluna de texto do último post.
 .AvocadoTyping {
   min-height: 36px;
   display: flex;
@@ -177,7 +169,6 @@
   }
 }
 
-// ─── Cakeday — 🎂 no aniversário de conta ─────────────────────────────────────
 .AvocadoCakeday {
   display: inline-flex;
   align-items: center;

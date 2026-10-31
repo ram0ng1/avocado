@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Controller;
@@ -13,12 +22,8 @@ use Psr\Http\Message\UploadedFileInterface;
 use Ramon\Avocado\Support\SvgIconSanitizer;
 
 /**
- * Ícone que substitui o favicon no rótulo de link interno (`[ícone] #123`).
- *
- * Passa pelo SvgIconSanitizer (allowlist, o mesmo dos ícones de tag) e não pelo
- * sanitizador do logo: é um ícone de uma cor, desenhado como máscara, e o
- * arquivo fica servido no domínio do fórum — aberto direto pela URL, um SVG com
- * script rodaria aqui.
+ * Ícone do rótulo de link interno. Usa o SvgIconSanitizer (allowlist): o
+ * arquivo é servido no domínio do fórum, e aberto pela URL um SVG com script rodaria.
  */
 class UploadLinkIconSvgController extends UploadImageController
 {

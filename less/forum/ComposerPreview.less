@@ -1,11 +1,5 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// Prévia dentro do compositor (js/src/forum/utils/composerPreview.ts)
-//
-// O TextEditor do compositor vira uma grade: o editor e a prévia dividem a
-// mesma célula (botão ligado: a prévia cobre o editor, que segue ocupando a
-// altura que o compositor deu a ele) ou ficam lado a lado (tela cheia). A
-// barra de controles ocupa a linha de baixo, de ponta a ponta.
-// ─────────────────────────────────────────────────────────────────────────────
+// O editor e a prévia dividem a mesma célula da grade (a prévia cobre o editor,
+// que mantém a altura) ou ficam lado a lado em tela cheia.
 
 .TextEditor.AvocadoPreviewable.is-previewing,
 .TextEditor.AvocadoPreviewable.is-split {
@@ -15,7 +9,7 @@
 
   > .TextEditor-editorContainer,
   > .AvocadoComposerPreview {
-    // Linha e coluna separadas, sem "/": o LESS faz a divisão (1 / 2 → .5).
+    // Sem "/": o LESS faria a divisão (1 / 2 → .5).
     grid-row: 1;
     grid-column: 1;
     min-width: 0;
@@ -27,7 +21,7 @@
   }
 }
 
-// A prévia não mede a célula: quem dá a altura é o editor (`contain: size`).
+// A altura vem do editor, não da prévia.
 .AvocadoComposerPreview {
   contain: size;
   overflow-y: auto;
@@ -36,8 +30,6 @@
   word-wrap: break-word;
 }
 
-// Botão ligado: a prévia no lugar do editor, e os botões de formatação saem
-// (não há o que formatar na prévia) — como no compositor da home.
 .TextEditor.AvocadoPreviewable.is-previewing {
   > .TextEditor-editorContainer {
     visibility: hidden;
@@ -47,8 +39,7 @@
   }
 }
 
-// Tela cheia: editor | prévia, com uma linha entre os dois. Mesma
-// especificidade da grade acima, que vem antes e perde.
+// Mesma especificidade da grade acima, que vem antes e perde.
 .TextEditor.AvocadoPreviewable.is-split {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   column-gap: 24px;
@@ -60,13 +51,12 @@
   }
 }
 
-// O core limita o conteúdo da tela cheia a 900px; dividida, ela usa a largura.
+// O core limita a tela cheia a 900px; dividida, ela usa a largura toda.
 .Composer.fullScreen .Composer-content:has(.TextEditor.is-split) {
   max-width: 1600px;
 }
 
-// A caixa "Escreva uma resposta…" do fim da discussão, enquanto se responde:
-// fora da vista (e do foco e do clique), mas ainda ocupando o lugar dela.
+// Some da vista, do foco e do clique, mas mantém o lugar enquanto se responde.
 .ReplyPlaceholder.ReplyPlaceholder--composing {
   visibility: hidden;
 }

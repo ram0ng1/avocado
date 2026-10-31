@@ -6,21 +6,13 @@ import { changelogProducts, entryProduct, entryTypes, entryVersion, dayLabel } f
 import { resolveCover } from '../../utils/cover';
 
 /**
- * O cabeçalho da página de uma versão do changelog — no lugar do hero de
- * discussão, que fala de "posts" e "participantes". Mostra de onde a versão veio
- * (voltar ao changelog, produto, tipos), o número, a data, o título e o autor,
- * sobre a capa que a versão escolheu: a imagem ou o degradê das cores. Sem
- * nenhuma das duas o cabeçalho volta ao padrão da tag — a cor dela, chapada, com
- * o texto claro ou escuro conforme a luminância, como o hero de discussão do tema.
+ * Cabeçalho da página de uma versão do changelog, no lugar do hero de discussão,
+ * que fala de "posts" e "participantes". Fica sobre a capa da versão (imagem ou
+ * degradê); sem capa volta ao padrão da tag, como o hero de discussão do tema. O
+ * resto da página continua o da discussão, por isso não há menu de ações próprio.
  *
- * É a única coisa que muda na página: a navegação lateral (responder, seguir,
- * editar…), os comentários e a caixa de resposta continuam os da discussão — por
- * isso o cabeçalho não tem menu de ações próprio.
- *
- * `imageControls` são os botões de trocar/remover a imagem que o hero de
- * discussão já monta (só para quem pode renomear). Com `loading` o cabeçalho é o
- * do skeleton da página: os mesmos dados (já estão no store quando se vem da lista
- * do changelog), sem os botões de edição.
+ * `imageControls` são os botões de imagem que o hero de discussão já monta. Com
+ * `loading` é o cabeçalho do skeleton: os mesmos dados, sem botões de edição.
  */
 export const renderReleaseHero = (discussion: any, tags: any[], imageControls: any, loading = false) => {
   const product = entryProduct(discussion, changelogProducts());

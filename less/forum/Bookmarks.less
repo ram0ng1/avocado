@@ -1,13 +1,7 @@
-// ─── Bookmarks (saved discussions) ───────────────────────────────────────────
-//
-// The /salvos page reuses the .AvocadoDiscussions layout, so this file only adds
-// the bookmark toggle button (on ThreadCards), the search-variant actions row,
-// the page title icon and the guest prompt. Colours are theme variables, so
-// dark mode is handled by Flarum's [data-theme^=dark] token switch.
+// A página /salvos reusa o layout .AvocadoDiscussions; aqui ficam só os
+// controles específicos de bookmark.
 
-// ── Toggle button on cards ────────────────────────────────────────────────────
-// Hidden until the card is hovered, mirroring .AvocadoHome-threadControls.
-// Stays visible on keyboard focus and on touch devices (no hover to reveal it).
+// Só aparece no hover, mas fica visível no foco e em telas de toque.
 .AvocadoThreadCard-bookmarkBtn {
   display: inline-flex;
   align-items: center;
@@ -49,7 +43,6 @@
   }
 }
 
-// ── Search-variant actions row (bookmark + controls dropdown) ────────────────
 .AvocadoSearch-threadActions {
   display: flex;
   align-items: center;
@@ -58,7 +51,6 @@
   align-self: flex-start;
 }
 
-// ── Note/reminder meta row (BookmarksPage cards) ──────────────────────────────
 .AvocadoBookmark-meta {
   display: flex;
   align-items: center;
@@ -89,15 +81,11 @@
   white-space: nowrap;
 }
 
-// ── Note/reminder modal ───────────────────────────────────────────────────────// ── Modal de bookmark ─────────────────────────────────────────────────────────
-// A casca (superfície, header, botão de fechar, sombra, backdrop) vem de
-// DiscussionModals.less, onde `.Modal.AvocadoBookmarkModal` entra na mesma
-// regra do Rename e do Editar tags. Aqui fica só o miolo do formulário, na
-// mesma linguagem: campo sem caixa, fio embaixo, ação compacta à direita.
+// A casca do modal vem de DiscussionModals.less; aqui só o formulário.
 .AvocadoBookmarkModal {
   @danger: #dc2626;
 
-  // 375px do .Modal--small espremem a linha de data + hora do lembrete.
+  // Os 375px do .Modal--small espremem a linha de data e hora.
   &.Modal {
     max-width: 420px;
   }
@@ -121,7 +109,6 @@
     margin-bottom: 18px;
   }
 
-  // Mesmo campo do Rename e do modal de tags — mixin em DiscussionModals.less.
   .FormControl {
     .avocado-modal-field();
     height: 40px;
@@ -138,9 +125,8 @@
     line-height: 1.5;
   }
 
-  // Data + hora do lembrete personalizado. A hora é montada com selects nossos
-  // (não `datetime-local`) para que 12h/24h seja escolha do fórum e não do
-  // navegador — ver js/src/forum/utils/clock.ts.
+  // Hora em selects próprios, não `datetime-local`, para 12h/24h ser escolha do
+  // fórum e não do navegador.
   &-when {
     display: flex;
     flex-direction: row;
@@ -189,8 +175,7 @@
     }
   }
 
-  // `.Form-group` é uma coluna flex no resto da pilha, então a direção precisa
-  // ser declarada ou os dois botões empilham.
+  // `.Form-group` é coluna flex; sem a direção os botões empilham.
   &-actions {
     display: flex;
     flex-direction: row;
@@ -201,8 +186,6 @@
     margin-bottom: 0;
   }
 
-  // O mesmo botão dos outros modais (DiscussionModals.less): geometria do
-  // "Responder", raio do tema.
   &-save,
   &-cancel,
   &-remove {
@@ -213,13 +196,11 @@
     font-size: @font-sm;
   }
 
-  // A ação primária deixa de atravessar o modal: compacta, à direita.
   &-save {
     flex: 0 0 auto;
   }
 
-  // Ghost. Mexemos nas custom properties que o core lê em vez de sobrescrever
-  // `background`/`color` na marra — é o que dispensa o `!important` daqui.
+  // Via custom properties que o core lê, dispensando !important.
   &-cancel {
     flex: 0 0 auto;
     --button-bg: transparent;
@@ -234,8 +215,7 @@
     }
   }
 
-  // Ação destrutiva, mantida longe do Save por um fio — misclique aqui apaga
-  // o bookmark sem confirmação.
+  // Separada do Salvar: o clique apaga o bookmark sem confirmação.
   &-danger {
     display: flex;
     justify-content: flex-start;
@@ -265,14 +245,12 @@
   }
 }
 
-// ── Page title icon ───────────────────────────────────────────────────────────
 .AvocadoBookmarks-titleIcon {
   font-size: 0.78em;
   margin-right: 9px;
   color: var(--primary-color);
 }
 
-// ── Guest prompt (logged-out visitor hits /salvos directly) ──────────────────
 .AvocadoBookmarks-guest {
   display: flex;
   flex-direction: column;

@@ -4,19 +4,14 @@ import Avatar from 'flarum/common/components/Avatar';
 import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
 
 /**
- * Composer flutuante (Composer.less): o compositor nativo vira um cartão
+ * Compositor flutuante (Composer.less): o compositor nativo vira um cartão
  * alinhado à coluna de posts, e uma pílula "Escreva uma resposta…" fica na base
- * da tela em TODA a discussão, como no Waterhole.
+ * da tela em toda a discussão.
  *
- * Por que uma pílula própria e não só a ReplyPlaceholder do core: o PostStream
- * só desenha a placeholder quando o FIM da discussão está carregado, então numa
- * discussão longa ela só existia depois de rolar muito. A pílula fica no
- * .App-composer (fixa, fora do stream) e some quando a placeholder do fim entra
- * na tela — ali a resposta "pousa" no fim da lista.
- *
- * Só posição e estado ficam aqui — o visual é CSS. Nada muda no fluxo do
- * Flarum: minimizar, tela cheia, fechar, arrastar a alça e a prévia ao vivo
- * continuam sendo os do core, e o clique na pílula é a mesma ação de responder.
+ * Pílula própria porque o PostStream só desenha a ReplyPlaceholder com o fim da
+ * discussão carregado. Ela fica no .App-composer e some quando a placeholder do
+ * fim entra na tela. Só posição e estado ficam aqui; o visual é CSS e o fluxo
+ * (minimizar, tela cheia, fechar, alça, prévia) continua o do core.
  */
 
 /** Distância da pílula até a base da tela; espelha @composer-gap no Composer.less. */
@@ -33,13 +28,10 @@ const dockEnabled = (): boolean => !!app.forum?.attribute('avocadoReplyDockEnabl
 let endPlaceholderVisible = false;
 
 /**
- * Alinha o cartão e a pílula à coluna de posts quando há uma na tela.
- *
- * O layout do tema não é o do core (as margens fixas de 220px/205px do
- * Composer.less do Flarum deixavam o cartão torto), e a coluna muda com a
- * largura da tela, a nav lateral e o painel fixado — por isso medir em vez de
- * espelhar breakpoints. Sem coluna nenhuma (perfil, configurações) as variáveis
- * saem e o CSS centraliza o cartão.
+ * Alinha o cartão e a pílula à coluna de posts, quando há uma. Mede em vez de
+ * espelhar breakpoints: a coluna muda com a largura, a nav lateral e o painel
+ * fixado, e as margens fixas do Composer.less do core não servem ao layout do
+ * tema. Sem coluna (perfil, configurações) o CSS centraliza o cartão.
  */
 const syncColumn = (): void => {
   const host = document.querySelector<HTMLElement>('.App-composer');
@@ -76,13 +68,10 @@ const guestLabel = () => app.translator.trans('ramon-avocado.forum.composer.gues
 const guestIcon = () => m('i.icon.far.fa-comment.AvocadoReplyDock-guestIcon', { 'aria-hidden': 'true' });
 
 /**
- * Visitante: troca, na placeholder do fim da lista, o avatar e o convite pelo
- * ícone e pelo texto de entrar — a mesma pílula da fixa, para a troca entre as
- * duas não mudar o texto no meio da rolagem.
- *
- * Feito no DOM depois do render, não no vnode: um `extend` em `view` chegava
- * tarde demais na cadeia (outra extensão envolve a mesma view) e não pegava.
- * O Mithril não volta a mexer nesses nós enquanto o vnode deles não muda.
+ * Visitante: troca, na placeholder do fim, o avatar e o convite pelo ícone e o
+ * texto de entrar, iguais aos da pílula fixa. Feito no DOM depois do render: um
+ * `extend` em `view` chega tarde na cadeia (outra extensão envolve a mesma
+ * view). O Mithril não mexe nesses nós enquanto o vnode deles não muda.
  */
 const guestifyPlaceholder = (el: Element | null): void => {
   if (!dockEnabled() || app.session.user || !el || el.tagName !== 'BUTTON') return;
@@ -164,13 +153,10 @@ export default function installComposerDock(): void {
 
   window.addEventListener('resize', scheduleSync, { passive: true });
 
-  // Responder abre o compositor onde a pessoa está. A ação do core, com
-  // `goToLast`, carrega o fim da discussão e rola até lá — para mostrar a prévia
-  // ao vivo que ele desenha depois do último post. Com o cartão flutuando por
-  // cima da página, ou com a prévia morando no compositor, isso só faz perder o
-  // ponto da leitura. Vale para todo mundo que chama a ação: a pílula fixa, a
-  // do fim da lista e o botão "Responder" da lateral — como o "Responder" de um
-  // post (flarum/mentions), que já não rolava.
+  // Responder abre o compositor onde a pessoa está. Com `goToLast` a ação do core
+  // carrega o fim da discussão e rola até lá para mostrar a prévia ao vivo; com o
+  // cartão flutuando, ou a prévia no compositor, isso só faz perder o ponto da
+  // leitura. Vale para todo mundo que chama a ação.
   override(DiscussionControls, 'replyAction', function (original, goToLast, forceRefresh) {
     const inPlace = dockEnabled() || !!app.forum?.attribute('avocadoComposerPreview');
     return original(inPlace ? false : goToLast, forceRefresh);

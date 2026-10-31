@@ -10,13 +10,11 @@ import { changelogChips } from './ChangelogFields';
 import { renderPostPreview } from '../../utils/composerPreview';
 
 export interface IInlineComposerAttrs extends ComponentAttrs {
-  /** The user authoring the discussion (drives the avatar + permission checks). */
+  /** Autor da discussão (avatar e permissões). */
   user: any;
-  /** Optional pre-existing state instance. A fresh one is created when omitted. */
+  /** Estado já existente; sem ele, cria um novo. */
   state?: InlineComposerState;
-  /** Called when the user closes the composer (cancel button). */
   onClose: () => void;
-  /** Called after a successful submission with the saved Discussion. */
   onSubmitted?: (discussion: any) => void;
   /**
    * O botão de salvar rascunho fica com quem embrulha o compositor
@@ -57,17 +55,9 @@ export function renderDraftButton(state: InlineComposerState, className = 'Butto
 }
 
 /**
- * InlineComposer — the always-visible "tell everyone what you're working on"
- * composer used by HomePage and AllDiscussionsPage.
- *
- * Owns:
- *  - An `InlineComposerState` (fields, tags, preview/submit flags).
- *  - A `TagPicker` component for tag selection.
- *  - A `ComposerTextEditor` (TextEditor subclass) with preview/close/submit
- *    buttons added via `controlItems()` — no DOM mutation.
- *  - A live s9e preview that re-renders on every redraw (no setInterval).
- *
- * Re-uses the existing `.AvocadoHome-composer*` CSS so visuals don't shift.
+ * Compositor de nova discussão da home e de /discussions. Os botões entram pelo
+ * `controlItems()` do ComposerTextEditor, sem mexer no DOM, e a prévia do s9e é
+ * refeita no onupdate.
  */
 export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = IInlineComposerAttrs> extends Component<
   CustomAttrs,
@@ -86,7 +76,6 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
   oncreate(vnode: any) {
     super.oncreate(vnode);
 
-    // Close the tag picker when the user clicks outside it.
     this.outsideClickHandler = (e: Event) => {
       if (!this.state.tagPickerOpen) return;
       if (!(e.target as HTMLElement).closest?.('.AvocadoHome-tagPicker')) {
@@ -97,7 +86,6 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
     };
     document.addEventListener('click', this.outsideClickHandler);
 
-    // Auto-focus the title input on mount.
     setTimeout(() => {
       const el = vnode.dom.querySelector('.AvocadoHome-composerTitle') as HTMLInputElement | null;
       el?.focus();
@@ -173,10 +161,8 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
     );
   }
 
-  // ── Hero image field (minimal chip) ────────────────────────────────────
-  // Sits as a single inline button that toggles between "Imagem do hero" and
-  // a chip showing the picked file's thumbnail + filename + remove (×).
-  // Stays one row tall (32px) so it never breaks the composer's layout.
+  // Imagem do hero num chip de uma linha só (32px), para não quebrar o layout do
+  // compositor.
 
   private renderHeroImageField() {
     const state = this.state;
@@ -244,8 +230,6 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
     );
   }
 
-  // ── Toolbar buttons ────────────────────────────────────────────────────
-
   private renderPreviewButton() {
     const isPreview = this.state.preview;
     const label = isPreview ? trans('ramon-avocado.forum.home.composer_edit', 'Edit') : trans('ramon-avocado.forum.home.composer_preview', 'Preview');
@@ -293,8 +277,6 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
     );
   }
 
-  // ── Submission ─────────────────────────────────────────────────────────
-
   private submit(): void {
     this.state
       .submit()
@@ -303,23 +285,18 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
         this.attrs.onClose();
       })
       .catch(() => {
-        // Errors already left state in a consistent shape; nothing else to do.
+        // O erro já deixou o estado consistente.
       });
   }
 
-  // ── Live preview ───────────────────────────────────────────────────────
-
   /**
-   * Rerender the s9e preview when content or visibility changes.
-   *
-   * Mithril fires `onupdate` after every redraw, so polling is unnecessary —
-   * we cache the last-rendered body and only re-invoke s9e when the body
-   * actually changed (or when preview just toggled on).
+   * O onupdate roda a cada redraw: a prévia do s9e só é refeita quando o corpo muda
+   * ou a prévia acaba de abrir.
    */
   private renderPreview(dom: HTMLElement): void {
     const isPreview = this.state.preview;
 
-    // Reset cache when leaving preview mode so re-entering fully redraws.
+    // Sair da prévia zera o cache, para a volta redesenhar tudo.
     if (!isPreview) {
       this.lastPreviewedContent = undefined;
       this.wasPreviewActive = false;

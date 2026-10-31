@@ -1,9 +1,19 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Api;
 
+use Flarum\Api\Context;
 use Flarum\Api\Schema;
 use Flarum\Database\AbstractModel;
 use Illuminate\Database\Eloquent\Model;
@@ -11,16 +21,9 @@ use Ramon\Avocado\Model\WikiArticleStyle;
 use Ramon\Avocado\Support\WikiStyleSchema;
 
 /**
- * `avocadoWikiStyle` nos artigos do linkrobins/wiki: o design da página do
- * artigo, escolhido pelo autor na tela de criação/edição do wiki
- * (`default` = layout da extensão vestido pelo tema; `manual` = manual de
- * referência, ver less/forum/extensions/Wiki.less).
- *
- * Quem grava é quem passa pelos endpoints de criar/editar do próprio wiki — a
- * extensão já checa `createArticle`/`update` neles. A leitura vem da relação
- * `avocadoStyle`, que os endpoints carregam em lote (extend.php). Sem ela
- * carregada o campo fica FORA da resposta em vez de sair nulo, pelo mesmo
- * motivo do ChangelogFields: um `null` sobrescreveria no store o valor bom.
+ * Design do artigo do linkrobins/wiki. A permissão de escrita já é checada
+ * pelos endpoints do wiki. Sem a relação carregada o campo fica fora da
+ * resposta: um `null` sobrescreveria no store o valor bom.
  */
 class WikiArticleFields
 {
@@ -39,7 +42,10 @@ class WikiArticleFields
         return [
             Schema\Str::make('avocadoWikiStyle')
                 ->visible($visible)
-                ->writable(fn (): bool => $this->schema->available())
+                // A mesma regra dos campos do próprio wiki: quem cria o artigo, ou
+                // quem pode editá-lo (os endpoints já exigem isso; aqui fica explícito).
+                ->writable(fn (Model $article, Context $context): bool => $this->schema->available()
+                    && ($context->creating() || $context->getActor()->can('update', $article)))
                 ->regex('/^(?:'.implode('|', WikiArticleStyle::STYLES).')$/')
                 ->get(static function (Model $article): string {
                     $entry = $article->relationLoaded('avocadoStyle') ? $article->getRelation('avocadoStyle') : null;

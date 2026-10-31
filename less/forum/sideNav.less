@@ -1,12 +1,6 @@
-// ─── sideNav: Avocado design system overrides ────────────────────────────────
-// Selectors use .IndexPage-nav.sideNav (two-class = higher specificity than
-// Flarum core's single-class .sideNav) to win without blanket !important spam.
-// Works on all three viewports:
-//   @expand-side-nav (tablet+): dropdown expanded into a flat list
-//   @tablet:                    horizontal scrolling tab bar
-//   @phone:                     collapsed – App-titleControl escapes via
-//                               position:absolute to the phone header bar
-// ---------------------------------------------------------------------------
+// Dois seletores de classe (.IndexPage-nav.sideNav) ganham do .sideNav do core
+// sem !important. No tablet vira faixa rolante; no phone o App-titleControl
+// escapa por position: absolute para o cabeçalho.
 
 .sideNavOffset, .sideNav > ul {
   margin-top: 0;
@@ -16,15 +10,12 @@
   padding-top: 0;
 }
 
-// Remove nav wrapper margin injected by some widgets
+// Alguns widgets injetam margem no wrapper.
 .sideNav .item-nav > div {
   margin: 0;
   padding: 0;
 }
 
-// ─── Expanded (tablet-up / @expand-side-nav) ─────────────────────────────────
-// Override Flarum core @expand-side-nav styles (background:none, padding-left:0,
-// muted-color text) with avocado pill-icon design.
 @media @expand-side-nav {
   .IndexPage-nav.sideNav .Dropdown--select .Dropdown-menu {
     padding: 0;
@@ -46,7 +37,6 @@
         color: var(--text-color);
         font-weight: normal;
 
-        // Non-tag icon: circular background pill
         .Button-icon:not(.TagIcon) {
           flex: 0 0 var(--icon-size);
           width: var(--icon-size);
@@ -63,7 +53,6 @@
           transition: background-color var(--avocado-t-fast);
         }
 
-        // Tag icon: use the tag colour as background
         .TagIcon.Button-icon {
           flex: 0 0 var(--icon-size);
           width: var(--icon-size);
@@ -78,7 +67,7 @@
           transition: background-color var(--avocado-t-fast);
         }
 
-        // fa-kit SVG icons: override App.less !important rules to fit 28px container
+        // Sobrepõe o !important do App.less para caber no contêiner de 28px.
         .Button-icon.fa-kit {
           width: var(--icon-size) !important;
           height: var(--icon-size) !important;
@@ -86,8 +75,7 @@
           padding: 0 !important;
         }
 
-        // fa-kit with custom tag color: light-tinted background (matches iconColors 12% on TagsPage)
-        // text-colored already sets color: var(--color), so the icon appears in the tag color
+        // Mesmo tom de 12% do iconColors da TagsPage.
         .Button-icon.fa-kit.text-colored {
           background: color-mix(in srgb, var(--color) 12%, transparent) !important;
         }
@@ -131,7 +119,6 @@
   }
 }
 
-// ─── Desktop (992px+) ────────────────────────────────────────────────────────
 @media @desktop-up {
   .IndexPage-nav.sideNav .Dropdown--select .Dropdown-menu > li {
     width: 100%;
@@ -144,7 +131,6 @@
   }
 }
 
-// ─── Tablet (768–991px): horizontal tab bar ──────────────────────────────────
 @media @tablet {
   .IndexPage-nav.sideNav {
     padding: 8px 0;
@@ -165,22 +151,14 @@
   }
 }
 
-// ─── Phone (≤767px) ──────────────────────────────────────────────────────────
-// On phone the entire nav collapses inside .AvocadoNav-helper (h:0 overflow:hidden).
-// The .App-titleControl (SelectDropdown) and .App-primaryControl (new discussion)
-// escape via position:absolute and appear in the phone header bar.
-//
-// When the user taps the centred title, Flarum opens the dropdown as a bottom-
-// sheet (position:fixed, slides up from bottom). We style those list items to
-// match the avocado design (circular icon backgrounds, avocado hover/active).
+// No phone a nav colapsa dentro do .AvocadoNav-helper (altura 0); os controles
+// saem por position: absolute e a lista abre como bottom sheet.
 @media @phone {
-  // Bottom-sheet container: round top corners + reduce core's generous bottom padding
   .IndexPage-nav.sideNav .Dropdown--select .Dropdown-menu {
     border-radius: 18px 18px 0 0;
     padding-bottom: 12px;
   }
 
-  // Bottom-sheet nav items: override Flarum core phone Dropdown styles
   .IndexPage-nav.sideNav .Dropdown--select .Dropdown-menu > li {
     > a,
     > button,
@@ -223,7 +201,7 @@
         margin: 0;
       }
 
-      // fa-kit SVG icons: override App.less !important rules to fit 28px container
+      // Sobrepõe o !important do App.less para caber no contêiner de 28px.
       .Button-icon.fa-kit {
         width: var(--icon-size) !important;
         height: var(--icon-size) !important;
@@ -231,7 +209,6 @@
         padding: 0 !important;
       }
 
-      // fa-kit with custom tag color: light-tinted background (matches iconColors 12% on TagsPage)
       .Button-icon.fa-kit.text-colored {
         background: color-mix(in srgb, var(--color) 12%, transparent) !important;
       }
@@ -247,7 +224,6 @@
       }
     }
 
-    // Active item: primary-tinted background + primary text colour
     &.active {
       > a, > button {
         &, &:hover {
@@ -262,7 +238,6 @@
     }
   }
 
-  // Centred nav title control (SelectDropdown toggle)
   .IndexPage-nav.sideNav .item-nav > .App-titleControl {
     width: 200px;
     left: 50%;

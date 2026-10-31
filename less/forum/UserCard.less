@@ -1,11 +1,5 @@
-// ─── User hover card (Discourse-style mini profile) ──────────────────────────
-//
-// The floating wrap is position:fixed (computed from the trigger rect in JS)
-// so it is never clipped by thread-card overflow. Its transparent padding is
-// the hover "bridge": crossing from trigger to card never leaves hover range,
-// so the card can't get stuck open (a global mousemove watcher backs it up).
-// Colours come from theme tokens; dark mode is handled by Flarum's
-// [data-theme^=dark] switch.
+// O wrap é fixed (posição calculada no JS) para não ser cortado pelo overflow
+// dos cards. O padding transparente é a "ponte" do hover entre gatilho e card.
 
 .AvocadoUserCard-trigger {
   display: inline-flex;
@@ -14,9 +8,8 @@
 
 .AvocadoUserCard-wrap {
   position: fixed;
-  // Acima do header/dropdowns do tema (≤1000) e do popover nativo; abaixo dos
-  // modais do Flarum (1040+) e dos tooltips (1070) — um tooltip disparado por
-  // um badge DENTRO do card precisa renderizar por cima dele.
+  // Acima do header (≤1000), abaixo dos modais (1040+) e dos tooltips (1070):
+  // um tooltip disparado de dentro do card precisa ficar por cima dele.
   z-index: 1030;
   padding-top: 10px;
 
@@ -27,10 +20,8 @@
   }
 }
 
-// overflow VISÍVEL de propósito: tooltips/popovers disparados por elementos
-// de dentro do card (selo verificado, badges) precisam escapar dele — com
-// hidden eles saíam cortados nas bordas. O arredondamento do topo é feito no
-// próprio banner.
+// overflow visível: tooltips de dentro do card precisam escapar dele. O topo
+// arredondado fica no próprio banner.
 .AvocadoUserCard {
   position: relative; // âncora da seta de baixo
   width: 330px;
@@ -63,16 +54,9 @@
   background-position: center;
 }
 
-// ── Seta ─────────────────────────────────────────────────────────────────────
-// Aponta para o avatar ou o nome de onde o card saiu; a posição horizontal vem
-// do JS (--avocado-usercard-arrow, medida a partir da borda esquerda do card).
-// Ocupa o vão transparente do wrap (10px), então não muda onde o card abre.
-//
-// Card embaixo do gatilho: a seta sai do banner. É uma cópia do próprio banner
-// (mesmo tamanho e mesmo fundo — o degradê da cor primária, ou a capa do
-// usuário), deslocada 9px para cima e recortada num triângulo: o que aparece é
-// a faixa do banner logo abaixo da seta, então a emenda não tem degrau de cor.
-// Ela cobre a borda de 1px do card, que senão riscaria a base.
+// A posição horizontal da seta vem do JS e ela ocupa o vão transparente do
+// wrap. Com o card abaixo do gatilho, a seta é uma cópia do banner deslocada e
+// recortada em triângulo, para a emenda não ter degrau de cor.
 .AvocadoUserCard-banner::before {
   // O banner começa depois da borda do card.
   --arrow-x: calc(var(--avocado-usercard-arrow, 26px) - 1px);
@@ -86,8 +70,7 @@
   pointer-events: none;
 }
 
-// Card em cima do gatilho: a seta sai da base, que é o fundo do card com a
-// borda dele — um quadrado girado, metade para fora.
+// Card acima do gatilho: a seta é um quadrado girado com o fundo e a borda do card.
 .AvocadoUserCard-wrap--above {
   .AvocadoUserCard-banner::before {
     display: none;
@@ -112,9 +95,7 @@
   padding: 0 16px 16px;
 }
 
-// Layout empilhado (estilo X/Discourse): avatar sobrepõe o banner, o bloco de
-// nome vem ABAIXO dele — sem alinhamento lado-a-lado para não brigar com a
-// altura do avatar.
+// Avatar sobre o banner e nome abaixo, para não brigar com a altura do avatar.
 .AvocadoUserCard-head {
   display: block;
   margin-top: -30px;
@@ -134,8 +115,6 @@
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14);
   }
 
-  // Online: green ring around the white-bordered avatar — same indicator as the
-  // online-avatars widget and post avatars, so "online" reads uniformly.
   &--online .Avatar {
     box-shadow: 0 0 0 3px var(--avocado-online), 0 2px 10px rgba(0, 0, 0, 0.14);
   }
@@ -149,11 +128,8 @@
   margin-top: 8px;
 }
 
-// Linha do nome, como no X: os selos (verificado, aniversário, grupos) têm a
-// altura do texto do nome e vêm colados nele, com o mesmo vão curto entre si.
-// A fonte fica na LINHA, não só no link: é dela que o selo de verificado tira
-// o tamanho (ele é dimensionado em `em`), e aqui o contexto era o texto de
-// 13px do card — o selo saía menor que o nome ao lado.
+// A fonte fica na linha, não só no link: o selo de verificado é dimensionado
+// em `em` e sairia menor que o nome.
 .AvocadoUserCard-nameRow {
   --avocado-usercard-seal: 20px; // ≈ 1.2em do nome
   display: flex;
@@ -163,7 +139,6 @@
   font-size: 16.5px;
 }
 
-// Só o nome encolhe (com reticências); os selos nunca são cortados.
 .AvocadoUserCard-displayName {
   min-width: 0;
   font-size: inherit;
@@ -179,8 +154,7 @@
   }
 }
 
-// O selo de verificado traz margem própria (pensada para post headers) — e a
-// âncora do popover que o embrulha, outra. Aqui quem espaça é o gap da linha.
+// O selo e a âncora do popover trazem margens próprias; aqui o gap espaça.
 .AvocadoUserCard-verified,
 .AvocadoUserCard-nameRow .VerifiedBadge,
 .AvocadoUserCard-nameRow .VerifiedPopover-anchor {
@@ -224,10 +198,8 @@
   }
 }
 
-// Badges de grupo na linha do nome: do tamanho do selo de verificado, no mesmo
-// vão. Sem `badges--packed` (que SOBREPÕE os badges de propósito). O <li> vira
-// flex para o badge não herdar a folga de linha de um inline — era 1px de
-// desalinhamento em relação ao selo ao lado.
+// Sem `badges--packed`, que sobrepõe os badges. O <li> flex evita 1px de
+// desalinhamento com o selo ao lado.
 .AvocadoUserCard-badges {
   display: inline-flex;
   align-items: center;
@@ -242,9 +214,8 @@
     margin: 0;
   }
 
-  // Largura, altura, raio e ícone do badge do core saem todos de --size. O
-  // círculo é cheio até a borda e o selo de verificado tem respiro no próprio
-  // desenho: 2px a menos e os dois ficam do mesmo tamanho a olho.
+  // O selo de verificado tem respiro no desenho; 2px a menos e os dois parecem
+  // do mesmo tamanho.
   .Badge {
     --size: calc(var(--avocado-usercard-seal) - 2px);
     box-shadow: none;
@@ -257,15 +228,13 @@
   line-height: 1.5;
   color: var(--text-color);
 
-  // Limita a altura para o card não crescer com bios longas (~5 linhas).
   display: -webkit-box;
   -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-// Bio renderizada em HTML (fof/user-bio): normaliza os blocos vindos do s9e
-// para caberem no card sem margens/tamanhos herdados do tema base.
+// Normaliza os blocos do s9e (fof/user-bio) para caberem no card.
 .AvocadoUserCard-bio--html {
   p {
     margin: 0 0 4px;
@@ -286,7 +255,6 @@
 
   img,
   :is(h1, h2, h3, h4, h5, h6) {
-    // Imagens/headings numa bio de card empurrariam o layout; mantém contido.
     max-width: 100%;
     font-size: inherit;
     margin: 0;
@@ -302,9 +270,7 @@
   background: var(--avocado-surface-1, rgba(0, 0, 0, 0.035));
 }
 
-// Cada coluna parte da largura do próprio conteúdo e divide a sobra por igual:
-// em terços fixos a data ("out. de 2015") não cabia e quebrava em duas linhas,
-// desalinhando o rótulo dela dos outros dois.
+// Em terços fixos a data não cabia e quebrava em duas linhas.
 .AvocadoUserCard-stat {
   flex: 1 1 auto;
   display: flex;

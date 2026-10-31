@@ -1,14 +1,7 @@
 /**
- * UserProfileBuilders — statically imported by index.tsx.
- *
- * Contains ONLY the render helpers (buildHero, buildSidebar, buildUserPhoneNav)
- * that are called inside the UserPage extend() override registered at app boot.
- * Keeping these separate prevents the heavy AvocadoUser*Page classes from
- * being pulled into the main bundle via the static import in index.tsx.
- *
- * The page components (AvocadoUserPostsPage etc.) live in UserProfilePage.tsx
- * and are loaded lazily via dynamic import() only when the user navigates to
- * a profile route.
+ * Só os helpers de render chamados no override do UserPage registrado no boot.
+ * Ficam separados para o import estático do index.tsx não puxar as páginas de
+ * perfil, que vêm por import() dinâmico (UserProfilePage.tsx).
  */
 import app from 'flarum/forum/app';
 import extractText from 'flarum/common/utils/extractText';
@@ -20,8 +13,6 @@ import SelectDropdown from 'flarum/common/components/SelectDropdown';
 import humanTime from 'flarum/common/helpers/humanTime';
 import { coverPosition, formatDate, safeCssUrl, trans } from '../utils';
 import { bone, BONE_FILL } from './Skeletons';
-
-// ─── Scrollable nav ───────────────────────────────────────────────────────────
 
 class ScrollableNav {
   private _el: Element | null = null;
@@ -130,8 +121,6 @@ class ScrollableNav {
   }
 }
 
-// ─── Shared: hero ─────────────────────────────────────────────────────────────
-
 /** O componente de bio do fof/user-bio, se a extensão estiver ativa. */
 const userBioComponent = (): any => {
   try {
@@ -143,10 +132,8 @@ const userBioComponent = (): any => {
 
 export function buildHero(user: any, isEditable: boolean, controls: any[] = []) {
   if (!user) {
-    // A mesma marcação do hero de verdade (abaixo), com ossos no lugar do
-    // texto: avatar, nome, @handle, meta e o botão de controles ficam onde vão
-    // estar, em qualquer largura. Bio e selos não entram — não dá para saber se
-    // o usuário tem antes de ele carregar.
+    // A marcação do hero real, com ossos no lugar do texto. Bio e selos ficam de
+    // fora: não dá para saber se existem antes de carregar.
     return (
       <div className="AvocadoUserPage-hero AvocadoUserPage-hero--skeleton" aria-hidden="true">
         <div className="AvocadoUserPage-cover" />
@@ -204,10 +191,8 @@ export function buildHero(user: any, isEditable: boolean, controls: any[] = []) 
 
   const joinLabel = joinTime ? formatDate(new Date(joinTime as string), { day: 'numeric', month: 'short', year: 'numeric' }) : null;
 
-  // forumaker/profile-cover compat — a extensão estende UserCard.prototype.view,
-  // mas o Avocado renderiza um hero próprio (não usa UserCard aqui). Lemos
-  // user.cover() diretamente; se a extensão não estiver instalada o método
-  // não existe e o optional-call retorna undefined. safeCssUrl rejeita
+  // forumaker/profile-cover estende o UserCard, que este hero substitui: a capa
+  // sai de user.cover() direto (undefined sem a extensão). safeCssUrl recusa
   // protocolos perigosos (data:, javascript:).
   const coverUrl = user.cover?.();
   const coverCss = coverUrl ? safeCssUrl(coverUrl) : null;
@@ -216,9 +201,8 @@ export function buildHero(user: any, isEditable: boolean, controls: any[] = []) 
   const heroStyle: Record<string, string> = { '--user-color': color };
   if (hasCover) {
     heroStyle['--user-cover'] = coverCss as string;
-    // Same reason as the cover URL itself: the extension applies the framing to
-    // core's .UserCard, which this hero replaces. Without this the slider in the
-    // cover editor moved nothing on the profile page.
+    // Pelo mesmo motivo o enquadramento da capa é aplicado aqui: a extensão só o
+    // aplica no .UserCard do core.
     heroStyle['--user-cover-position'] = coverPosition(user);
   }
 
@@ -232,9 +216,6 @@ export function buildHero(user: any, isEditable: boolean, controls: any[] = []) 
       </div>
     ) : null;
 
-  // Layout estilo Facebook: capa larga, avatar grande sobreposto à esquerda,
-  // identidade (nome + @handle + stats) à direita, ações na extrema direita —
-  // tudo numa faixa horizontal; a bio fica abaixo, em largura cheia.
   return (
     <div className={'AvocadoUserPage-hero' + (hasCover ? ' AvocadoUserPage-hero--hasCover' : '')} style={heroStyle}>
       <div className="AvocadoUserPage-cover" />
@@ -291,8 +272,6 @@ export function buildHero(user: any, isEditable: boolean, controls: any[] = []) 
     </div>
   );
 }
-
-// ─── Shared nav builders ──────────────────────────────────────────────────────
 
 /** Larguras dos rótulos das abas no esqueleto (posts, discussões, curtidas, menções…). */
 const NAV_BONES = ['96px', '124px', '78px', '88px', '92px'];

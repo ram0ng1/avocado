@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Content;
@@ -10,15 +19,9 @@ use Psr\Http\Message\ServerRequestInterface;
 use Ramon\Avocado\Support\ChangelogProducts;
 
 /**
- * Preloads the first page of the changelog into the boot payload as
- * `app.data.avocadoChangelog`.
- *
- * O changelog é uma lista inteira de cards; sem o preload a página nascia com
- * skeleton, buscava as tags, buscava as versões e só então pintava. Dado
- * necessário no 1º paint tem que vir no payload do boot (docs/preload-sem-flash.md).
- *
- * Registrado globalmente em extend.php (Extend\Frontend roda o content em toda
- * página do fórum); o guard de rota abaixo mantém as consultas fora das outras.
+ * Primeira página do changelog no payload do boot (`app.data.avocadoChangelog`),
+ * para a página não nascer em skeleton. O content roda em toda página; o guard
+ * de rota mantém as consultas fora das outras.
  */
 class PreloadChangelog
 {
@@ -29,9 +32,8 @@ class PreloadChangelog
     private const PAGE_LIMIT = 12;
 
     /**
-     * Espelha o include do ChangelogState. Sem firstPost: o card lê o resumo do
-     * atributo `avocadoExcerpt` e as notas buscam o post sob demanda pelo
-     * linkage, então o post incluído só custava o render do s9e.
+     * Espelha o include do ChangelogState. Sem firstPost: o card lê `avocadoExcerpt`,
+     * e incluir o post só custaria o render do s9e.
      */
     private const INCLUDES = 'user,tags';
 
@@ -79,8 +81,7 @@ class PreloadChangelog
             return;
         }
 
-        // Vira app.data.avocadoChangelog no front; cada documento entra no store
-        // por store.pushPayload(). `product` diz para qual rota o preload vale.
+        // `product` diz para qual rota o preload vale.
         $document->payload['avocadoChangelog'] = [
             'product'     => is_string($product) ? $product : null,
             'tags'        => $this->document($tags),

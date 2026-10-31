@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Ramon\Avocado\Content;
@@ -12,18 +21,9 @@ use Flarum\Settings\SettingsRepositoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
- * Preloads the showcase rail into the boot payload as `app.data.avocadoShowcase`.
- *
- * Sem isso o trilho só podia sair do que o feed da home por acaso tivesse no
- * store (a 1ª página do /discussions, que não conhece as discussões mais
- * antigas da tag) ou de um GET assíncrono por tag — os dois caminhos pintam
- * DEPOIS do primeiro paint, e o segundo trocava a grade de 1 card para 5 na
- * frente do usuário. Ver docs/preload-sem-flash.md: dado necessário no 1º paint
- * tem que vir no payload do boot.
- *
- * Registrado globalmente em extend.php (Extend\Frontend roda o content em toda
- * página do fórum); o guard de rota abaixo é o que mantém a consulta fora das
- * outras páginas.
+ * Trilho do showcase no payload do boot (`app.data.avocadoShowcase`): buscado
+ * depois, a grade mudaria na frente do usuário. O content roda em toda página;
+ * o guard de rota mantém a consulta fora das outras.
  */
 class PreloadShowcase
 {
@@ -34,10 +34,8 @@ class PreloadShowcase
     private const ROUTES = ['default', 'index'];
 
     /**
-     * Espelha o SHOWCASE_INCLUDE do HomeState. Sem firstPost/lastPost: o card
-     * lê resumo, capa, curtidas e a última resposta de atributos da discussão
-     * (Api\DiscussionFields / DiscussionLikeFields), e incluir os posts fazia o
-     * s9e renderizar dois posts inteiros por card a cada carga da home.
+     * Espelha o SHOWCASE_INCLUDE do HomeState. Sem posts: o card lê tudo de
+     * atributos da discussão, e incluí-los custaria dois renders do s9e por card.
      */
     private const INCLUDES = 'user,lastPostedUser,tags';
 
@@ -76,8 +74,6 @@ class PreloadShowcase
             return;
         }
 
-        // Vira app.data.avocadoShowcase no front, no formato que
-        // store.pushPayload() consome direto.
         $document->payload['avocadoShowcase'] = [
             'data'     => $doc['data'],
             'included' => $doc['included'] ?? [],
@@ -85,12 +81,8 @@ class PreloadShowcase
     }
 
     /**
-     * Slugs das tags configuradas.
-     *
-     * O filtro `tag` da API resolve por slug através do slug driver ativo — o
-     * padrão (Utf8SlugDriver) casa pela coluna `slug`, e o id_with_slug pelo id
-     * à frente do hífen. Gerar o slug pelo SlugManager mantém os dois corretos
-     * sem hardcode de formato.
+     * O filtro `tag` resolve pelo slug driver ativo; gerar pelo SlugManager funciona
+     * com qualquer driver.
      *
      * @return list<string>
      */

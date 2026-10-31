@@ -1,14 +1,22 @@
 <?php
 
+/*
+ * This file is part of ramon/avocado.
+ *
+ * Copyright (c) 2026 Ramon.
+ *
+ * For the full copyright and license information, please view the LICENSE.md
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\Builder;
 
 /*
- * `cover` nasceu com 16 caracteres, o bastante para "color". Agora guarda também
- * `tags:12,15,18` e `preset:sunset`, então cabe 64. Idempotente: em instalações
- * novas a tabela já nasce com 64 e este `change()` é um no-op.
+ * `cover` passa a guardar `tags:12,15,18` e `preset:sunset`, que não cabem em 16.
+ * Idempotente: em instalações novas a coluna já nasce com 64.
  */
 return [
     'up' => function (Builder $schema) {

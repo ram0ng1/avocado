@@ -31,17 +31,12 @@ class InvalidReminderError extends Error {
 }
 
 /**
- * Editor de bookmark no estilo Discourse: uma nota mais um lembrete opcional.
- * Os presets viram um instante ISO no cliente; "personalizado" abre um campo de
- * data e um seletor de hora/minuto. Salvar é um upsert (PATCH
- * /avocado/bookmark), então o modal também serve para salvar uma discussão que
- * ainda não estava salva.
+ * Editor de bookmark no estilo Discourse: uma nota e um lembrete opcional.
+ * Salvar é um upsert (PATCH /avocado/bookmark), então serve também para salvar
+ * uma discussão que ainda não estava salva.
  *
- * O horário NÃO usa mais `datetime-local`: o input nativo desenha a hora no
- * formato do navegador e não aceita ordem — quem estava em en-US ficava preso
- * em A.M./P.M. Com selects próprios o formato é o que o tema resolve
- * (utils/clock), então 24h passa a ser possível sem trocar o idioma do
- * navegador.
+ * A hora usa selects próprios em vez de `datetime-local`: o input nativo segue o
+ * formato do navegador (en-US fica preso em AM/PM) e ignoraria utils/clock.
  */
 export default class BookmarkModal extends Modal<any> {
   private note = '';
