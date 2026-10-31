@@ -15,11 +15,9 @@ export interface AvocadoDiscussionStatsAttrs extends ComponentAttrs {
 }
 
 /**
- * AvocadoDiscussionStats — compact stats card injected between the Reply
- * button (@100) and the Scrubber/Timeline (@-100) in the DiscussionPage sidebar.
- *
- * Shows: views (michaelbelgium/flarum-discussion-views), replies, and
- * first-post likes (flarum/likes).
+ * Estatísticas na lateral da discussão, entre Responder (@100) e o Scrubber
+ * (@-100): visualizações (michaelbelgium/flarum-discussion-views), respostas e
+ * likes do primeiro post (flarum/likes).
  */
 export default class AvocadoDiscussionStats extends Component<AvocadoDiscussionStatsAttrs> {
   view() {

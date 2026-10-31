@@ -19,11 +19,8 @@ const findTagBySlug = (slug: string): any =>
   app.store.all('tags').find((t: any) => t.slug?.().localeCompare(slug, undefined, { sensitivity: 'base' }) === 0) || null;
 
 /**
- * AvocadoTagPage — list of discussions filtered by a single tag.
- *
- * Uses `DiscussionFeedState` for pagination + realtime queue, then layers a
- * tag-aware filter on top of the realtime handlers so only events for
- * discussions in the current tag affect this view.
+ * Discussões de uma tag. Os handlers de realtime do `DiscussionFeedState` ganham
+ * um filtro para só reagir a discussões desta tag.
  */
 export default class AvocadoTagPage extends Page {
   private tag: any = null;
@@ -65,7 +62,6 @@ export default class AvocadoTagPage extends Page {
 
   private bindRealtime() {
     this.unbindRealtime = bindDiscussionFeedRealtime({
-      // Only react to broadcasts whose discussion belongs to the current tag.
       filter: (disc: any) => {
         const tagId = String(this.tag?.id?.() || '');
         if (!tagId) return false;
@@ -81,8 +77,6 @@ export default class AvocadoTagPage extends Page {
       },
     });
   }
-
-  // ── Data loading ────────────────────────────────────────────────────────────
 
   private loadTag(slug: string) {
     if (!slug) return;
@@ -113,7 +107,6 @@ export default class AvocadoTagPage extends Page {
       });
   }
 
-  /** Build (or reset) the feed state filtered to the current tag's slug. */
   private initFeed() {
     if (!this.tag) return;
     this.feedState = new DiscussionFeedState({
@@ -122,8 +115,6 @@ export default class AvocadoTagPage extends Page {
     } as any);
     this.feedState.refresh();
   }
-
-  // ── View ────────────────────────────────────────────────────────────────────
 
   view() {
     app.currentTag?.(true);
@@ -262,8 +253,6 @@ export default class AvocadoTagPage extends Page {
       </div>
     );
   }
-
-  // ── View helpers ────────────────────────────────────────────────────────────
 
   private renderLoading() {
     return (

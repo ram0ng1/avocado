@@ -42,7 +42,7 @@ import { needsCoreComposer, openCoreDiscussionComposer } from '../utils/coreComp
 import FloatingInlineComposer, { composerPlacement } from './shared/FloatingInlineComposer';
 import OverflowNav from './shared/OverflowNav';
 
-/** Hex → "r,g,b" string, used by inline rgba() styles in showcase cards. */
+/** Hex → "r,g,b", para os rgba() inline dos cards da vitrine. */
 const hexToRgbTriplet = (hex: string | null | undefined): string => {
   const h = (hex || '').replace('#', '');
   if (h.length !== 6) return '0,0,0';
@@ -50,23 +50,14 @@ const hexToRgbTriplet = (hex: string | null | undefined): string => {
 };
 
 /**
- * HomePage — the Avocado home dashboard.
- *
- * Layout:
- *  1. Hero banner (guests only).
- *  2. Inline composer trigger + composer.
- *  3. Categories grid (top-level tags).
- *  4. Showcase slider (configurable tag-based highlight).
- *  5. Popular / Following thread stack.
- *
- * Data lives in `HomeState` (popular/latest/showcase, fetch + cache);
- * the page itself only reads from it and renders.
+ * Home do tema. Os dados (populares, recentes, vitrine) ficam no `HomeState`;
+ * a página só lê e desenha.
  */
 export default class HomePage extends Component<ComponentAttrs, HomeState> {
   state!: HomeState;
 
-  // Per-card transient UI state — kept on the page rather than in HomeState
-  // because they're driven by user interactions and realtime echoes.
+  // Estado efêmero por card fica na página, não no HomeState: vem de interação
+  // e de ecos do realtime.
   private likingIds = new Set<string>();
   private composerOpen = false;
   private updatedLikeIds = new Set<string>();
@@ -81,7 +72,7 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
 
     this.state = new HomeState();
 
-    // Preload tags in parallel — does NOT block the showcase fetch.
+    // Pré-carrega as tags em paralelo, sem segurar a busca da vitrine.
     this.state.loadTags();
 
     this.state.loadShowcase();
@@ -100,17 +91,15 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
         if (!id) return;
         const sid = String(id);
 
-        // Drop the memoized feed so the next render reflects the change.
+        // Descarta o feed memoizado para o próximo render refletir a mudança.
         this.state.invalidate();
 
         if (kind === 'post') {
-          // Section-level highlight ("something happened in this section").
           this.sectionHasNew = true;
           setTimeout(() => {
             this.sectionHasNew = false;
             m.redraw();
           }, 5000);
-          // Per-thread highlight, fades on the same window.
           this.newDiscIds.add(sid);
           setTimeout(() => {
             this.newDiscIds.delete(sid);
@@ -126,8 +115,6 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
     this.unbindRealtime?.();
     this.unbindRealtime = null;
   }
-
-  // ── Composer ────────────────────────────────────────────────────────────────
 
   private openComposer() {
     if (!app.session.user) {
@@ -150,8 +137,6 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
       m.redraw();
     });
   }
-
-  // ── View ────────────────────────────────────────────────────────────────────
 
   view() {
     const user = app.session.user;
@@ -199,8 +184,6 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
     );
   }
 
-  // ── Hero banner (guests) ────────────────────────────────────────────────────
-
   private renderHeroBanner() {
     const heroImage = app.forum?.attribute<string>('avocadoHeroImage');
     const heroUrl = heroImage ? resolveAssetUrl(heroImage) : null;
@@ -211,14 +194,9 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
     const customEnabled = !!app.forum?.attribute('avocadoCustomHeroEnabled');
     const customHtml = sanitizeAdminHtml(app.forum?.attribute('avocadoCustomHeroHtml') as string);
 
-    // Custom HTML replaces everything inside the overlay — the admin's markup
-    // becomes a direct child of .AvocadoHome-heroBannerOverlay so it can define
-    // its own .AvocadoHome-heroBannerContent (and anything else) without being
-    // nested inside an extra wrapper. The hero banner wrapper, background image
-    // and overlay still stay so all hero settings keep working. Admin-pasted
-    // HTML follows Flarum's "admin == HTML" convention but is scrubbed via
-    // sanitizeAdminHtml to keep an admin-account compromise from becoming
-    // guest-visible XSS.
+    // O HTML do admin substitui tudo dentro do overlay, como filho direto, para
+    // poder definir o próprio .AvocadoHome-heroBannerContent. Passa por
+    // sanitizeAdminHtml para uma conta de admin comprometida não virar XSS para guests.
     const innerContent =
       customEnabled && customHtml ? (
         trustedHtml(customHtml)
@@ -279,8 +257,6 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
     );
   }
 
-  // ── Composer trigger ────────────────────────────────────────────────────────
-
   private renderComposerTrigger(user: any) {
     return (
       <div className="AvocadoHome-postInput" onclick={() => this.openComposer()}>
@@ -304,8 +280,6 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
       </div>
     );
   }
-
-  // ── Categories section ──────────────────────────────────────────────────────
 
   private renderCategoriesSection() {
     const categories = this.sortedCategories();
@@ -399,8 +373,8 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
   }
 
   /**
-   * Render an inline nav (categories section header) by re-using IndexSidebar's
-   * navItems and stripping items the home already represents (tags, popular).
+   * Nav do cabeçalho das categorias: os navItems do IndexSidebar sem o que a home
+   * já mostra (tags, populares).
    */
   private renderInlineNav() {
     let itemList;
@@ -429,8 +403,6 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
 
     return <OverflowNav items={items} navLabel={extractText(app.translator.trans('ramon-avocado.forum.home.nav_label'))} />;
   }
-
-  // ── Showcase slider ─────────────────────────────────────────────────────────
 
   private renderShowcaseSlider() {
     if (!app.forum?.attribute('avocadoShowcaseEnabled')) return null;
@@ -488,13 +460,9 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
     const otherTags = allTags.filter((t: any) => !showcaseTagIds.has(String(t.id?.())));
     const primaryTag = allTags.find((t: any) => showcaseTagIds.has(String(t.id?.()))) || allTags[0] || null;
     const tagColor = primaryTag?.color?.() || null;
-    // Image priority: discussion's own hero image (uploaded at creation when
-    // the tag asked for one) → first inline image from the post → tag-color
-    // gradient (handled by `noImgBg` below).
-    //
-    // `avocadoFirstImageUrl` vem no payload da discussão e por isso já existe no
-    // primeiro paint; `extractFirstImage` continua atrás dele para o caso de o
-    // post estar no store e o campo não (payload de uma versão anterior).
+    // Imagem: a do hero da discussão → a primeira do post → gradiente da tag
+    // (`noImgBg`). `avocadoFirstImageUrl` vem no payload e já existe no primeiro
+    // paint; `extractFirstImage` cobre o post no store com um payload antigo, sem o campo.
     const imageUrl = getDiscussionHeroImageUrl(discussion) || discussion.attribute?.('avocadoFirstImageUrl') || this.extractFirstImage(firstPost);
     const excerpt = postPreview(discussion, 140);
 
@@ -599,8 +567,7 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
 
   private renderShowcaseImage(imageUrl: string | null, title: string, isFirst: boolean, primaryTag: any, tagColor: string | null, noImgBg: string) {
     if (imageUrl) {
-      // First card eager-loads with high priority; subsequent cards use an
-      // IntersectionObserver to defer the request until they enter the viewport.
+      // O primeiro card carrega com prioridade alta; os outros esperam entrar na tela.
       if (isFirst) {
         return (
           <img className="AvocadoHome-showcaseCard-img" src={imageUrl} alt={title} width="400" height="150" loading="eager" fetchpriority="high" />
@@ -635,11 +602,8 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
   }
 
   /**
-   * Heuristic: extract the first non-icon-sized image from a post's content.
-   *
-   * Tries the rendered HTML first (`contentHtml`), filters out tiny icons
-   * (<=32×32), and falls back to scanning the raw markdown for a Markdown image
-   * or bare image URL.
+   * Primeira imagem de um post que não seja ícone (<=32×32): do `contentHtml` e,
+   * sem ela, do markdown cru.
    */
   private extractFirstImage(post: any): string | null {
     if (!post) return null;
@@ -652,8 +616,7 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
 
     if (html && typeof html === 'string') {
       try {
-        // DOMParser instead of innerHTML: isolated document context, no script
-        // execution risk, and makes intent explicit to security scanners.
+        // DOMParser em vez de innerHTML: documento isolado, sem execução de script.
         const doc = new DOMParser().parseFromString(html, 'text/html');
         const imgs = doc.querySelectorAll('img[src]');
         for (const img of imgs as any) {
@@ -665,7 +628,7 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
           return src;
         }
       } catch {
-        /* malformed HTML — fall through to the markdown scan */
+        /* HTML malformado: segue para o markdown */
       }
     }
 
@@ -678,8 +641,6 @@ export default class HomePage extends Component<ComponentAttrs, HomeState> {
     }
     return null;
   }
-
-  // ── Popular / Following section ─────────────────────────────────────────────
 
   private renderPopularSection(popular: any[], isFollowingPage: boolean) {
     const heading = isFollowingPage

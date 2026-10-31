@@ -12,12 +12,7 @@ import { POST_SEARCH_SORT, getSortLabel } from '../utils/sortOptions';
 
 import SortDropdown, { SortOption } from './shared/SortDropdown';
 
-/**
- * AvocadoPostsSearchPage — list view for `/posts?q=…`.
- *
- * Wraps Flarum's `PostListState` with a custom card layout, the shared
- * sort dropdown and the search-query highlight helper.
- */
+/** Lista de `/posts?q=…` sobre o `PostListState` do Flarum. */
 export default class AvocadoPostsSearchPage extends Page {
   static providesInitialSearch = true;
 
@@ -95,8 +90,6 @@ export default class AvocadoPostsSearchPage extends Page {
       </div>
     );
   }
-
-  // ── Subviews ────────────────────────────────────────────────────────────────
 
   private renderTitle() {
     const params = (app.search as any).state.params();

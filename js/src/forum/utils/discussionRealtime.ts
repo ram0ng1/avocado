@@ -8,32 +8,27 @@ import { apiInclude } from '../utils';
 const INCLUDE = (): string => apiInclude('user', 'firstPost', 'lastPostedUser', 'tags');
 
 export interface DiscussionFeedHandlers {
-  /** Returns true when the broadcast should affect the calling feed. */
+  /** True quando o evento afeta este feed. */
   filter?: (discussion: any) => boolean;
-  /** Set tracking like-actions the user originated, to skip self-echo animations. */
+  /** Likes que o próprio usuário fez, para pular a animação do eco. */
   selfActionIds?: Set<string>;
-  /** Map of liked-discussion IDs that should pop briefly after a remote like. */
+  /** Discussões com like remoto recente, que pulsam por um instante. */
   updatedLikeIds?: Set<string>;
-  /** Map of pending realtime discussions waiting for the user to flush them. */
+  /** Discussões do realtime esperando o usuário trazê-las pelo banner. */
   pendingDiscs?: Map<string, any>;
-  /** Currently rendered list — used to detect "is this an existing item?". */
+  /** Lista desenhada agora, para saber se o item já existe. */
   currentItems?: () => any[];
-  /** Increment when a fetch fails; the WS banner falls back to a generic count. */
+  /** Conta fetches que falharam; o banner cai num número genérico. */
   onFetchFailure?: () => void;
-  /** Called after store hydration to allow the consumer to reorder/re-render. */
+  /** Chamado depois de hidratar o store, para o consumidor reordenar/redesenhar. */
   onHydrated?: (discussion: any, originalEvent: 'post' | 'like' | 'pin' | 'remove') => void;
 }
 
 /**
- * Bind the canonical Avocado realtime handlers (post/like/pin/remove) for a
- * discussion-list feed. Each handler:
- *
- *  1. Resolves the broadcast payload into a Discussion model via the store.
- *  2. Optionally drops events that don't apply to this feed (`filter`).
- *  3. Refetches with the includes the cards need (user/firstPost/tags).
- *  4. Updates the supplied tracking sets and triggers the consumer hook.
- *
- * Returns the unbind function from `bindRealtime` — call it from `onremove`.
+ * Liga os handlers de realtime (post/like/pin/remove) de um feed de discussões:
+ * cada um resolve o payload no store, descarta o que não vale para o feed
+ * (`filter`), refaz o fetch com as relações dos cards e atualiza os sets.
+ * Devolve o unbind do `bindRealtime`, para chamar no `onremove`.
  */
 export function bindDiscussionFeedRealtime(handlers: DiscussionFeedHandlers): () => void {
   const { filter = () => true, selfActionIds, updatedLikeIds, pendingDiscs, currentItems = () => [], onFetchFailure, onHydrated } = handlers;
@@ -104,8 +99,8 @@ export function bindDiscussionFeedRealtime(handlers: DiscussionFeedHandlers): ()
       const id = disc?.id?.();
       if (!id || !filter(disc)) return;
 
-      // Only refetch if this discussion is currently rendered or pending —
-      // avoids wasted requests when a moderator hides a post elsewhere.
+      // Só refaz o fetch se a discussão está desenhada ou pendente: evita requests à
+      // toa quando um moderador oculta um post em outro lugar.
       const isVisible = currentItems().some((x) => String(x.id?.() || '') === String(id)) || !!pendingDiscs?.has(String(id));
       if (!isVisible) return;
 

@@ -10,11 +10,8 @@ import ThreadCard from './shared/ThreadCard';
 import SortDropdown, { SortOption } from './shared/SortDropdown';
 
 /**
- * AvocadoDiscussionsSearchPage
- *
- * Injected into IndexPage.contentItems when `?q=` is present. Reads from
- * `app.discussions` (DiscussionListState already populated by IndexPage),
- * and renders a unified ThreadCard list with the shared sort dropdown.
+ * Entra em IndexPage.contentItems quando há `?q=`. Lê de `app.discussions`,
+ * que o IndexPage já preenche.
  */
 export default class AvocadoDiscussionsSearchPage extends Component<ComponentAttrs> {
   private likingIds = new Set<string>();

@@ -8,10 +8,7 @@ export interface WsUpdateBannerAttrs extends ComponentAttrs {
   onFlush: () => void;
 }
 
-/**
- * WsUpdateBanner — "N new discussions" pill shown when WebSocket events arrive.
- * Used by AllDiscussionsPage and TagPage.
- */
+/** Pílula "N novas discussões" quando chegam eventos do WebSocket. */
 export default class WsUpdateBanner extends Component<WsUpdateBannerAttrs> {
   view() {
     const { pendingCount, onFlush } = this.attrs;

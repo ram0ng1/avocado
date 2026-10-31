@@ -7,49 +7,41 @@ import type Mithril from 'mithril';
 import { trans } from '../../utils';
 
 export interface OverflowNavAttrs extends ComponentAttrs {
-  /** Nav items (LinkButton vnodes from an ItemList). */
+  /** LinkButtons de um ItemList. */
   items: Mithril.Children[];
-  /** aria-label for the <nav> landmark. */
   navLabel?: string;
 }
 
-/** Extra slack kept free so a sub-pixel rounding error can't push a pill out. */
+/** Folga para um arredondamento de subpixel não empurrar uma pílula para fora. */
 const SAFETY = 4;
 
-/** Grace period before a hover-opened menu closes, so crossing the gap is forgiving. */
+/** Espera antes de fechar o menu aberto por hover, para dar tempo de cruzar o vão. */
 const HOVER_CLOSE_DELAY = 180;
 
 /**
- * OverflowNav — a single-row pill nav that never overflows its header.
- *
- * Forums with many extensions (user directory, private conversations, polls…)
- * push more items into IndexSidebar's nav than the section header can hold. We
- * measure each pill once, then render only the ones that fit in the space left
- * over by the heading and collapse the rest into a "More" dropdown.
- *
- * The first paint is a measuring pass: every item is rendered inline (hidden via
- * `is-measuring`) so the DOM can be read, after which a redraw settles the split.
+ * Nav de pílulas numa linha só: com muitas extensões, os itens do IndexSidebar
+ * não cabem no cabeçalho. Mede cada pílula uma vez, mostra as que cabem e põe o
+ * resto num dropdown "Mais". O primeiro paint é a medição (`is-measuring`).
  */
 export default class OverflowNav extends Component<OverflowNavAttrs> {
-  /** Measured width of each item, by index. Empty until the measuring pass runs. */
   private widths: number[] = [];
   private moreWidth = 0;
   private gap = 6;
-  /** How many items are shown inline; -1 while a measuring pass is pending. */
+  /** Quantos itens ficam visíveis; -1 enquanto a medição está pendente. */
   private visible = -1;
 
   private navEl: HTMLElement | null = null;
   private ro: ResizeObserver | null = null;
   private onWindowResize: (() => void) | null = null;
 
-  /** Whether the "more" menu is open — drives the caret direction. */
+  /** Menu "mais" aberto: define a direção da seta. */
   private moreOpen = false;
   private hoverCloseTimer: number | null = null;
 
   view(vnode: Mithril.Vnode<OverflowNavAttrs, this>) {
     const items = this.attrs.items || [];
 
-    // The item set can change after boot (login, late-registering extension).
+    // Os itens mudam depois do boot (login, extensão que registra tarde).
     if (this.widths.length && this.widths.length !== items.length) this.reset();
 
     const measuring = this.visible < 0;
@@ -95,7 +87,7 @@ export default class OverflowNav extends Component<OverflowNavAttrs> {
 
     this.bindMoreMenu(container);
 
-    // Pill widths shift once the webfont swaps in — re-measure from scratch.
+    // A largura das pílulas muda quando a webfont carrega: mede de novo.
     (document as any).fonts?.ready?.then(() => {
       this.reset();
       m.redraw();
@@ -103,11 +95,9 @@ export default class OverflowNav extends Component<OverflowNavAttrs> {
   }
 
   /**
-   * Open the "more" menu on hover (pointer devices only — touch still taps) and
-   * keep `moreOpen` in sync with Bootstrap so the caret can point the right way.
-   *
-   * Bound on the wrapper with delegation, because the dropdown itself is created
-   * and destroyed as the viewport changes how many pills fit.
+   * Abre o menu "mais" no hover (só ponteiro; toque continua no clique) e mantém
+   * `moreOpen` em sincronia com o Bootstrap. Delegado no wrapper porque o dropdown
+   * é recriado conforme cabem mais ou menos pílulas.
    */
   private bindMoreMenu(container: HTMLElement) {
     const $container = $(container);
@@ -146,9 +136,8 @@ export default class OverflowNav extends Component<OverflowNavAttrs> {
     // @ts-ignore — Bootstrap's jQuery plugin has no bundled types.
     $(toggle).dropdown('toggle');
 
-    // Bootstrap focuses the toggle, and a script-driven focus makes the browser
-    // paint its :focus-visible ring — an outline nobody asked for by hovering.
-    // Only the hover path reaches this, so click/keyboard keep their focus ring.
+    // O Bootstrap foca o toggle, e o foco por script pinta o anel :focus-visible.
+    // Só o hover chega aqui; clique e teclado mantêm o anel.
     toggle.blur();
   }
 
@@ -160,7 +149,7 @@ export default class OverflowNav extends Component<OverflowNavAttrs> {
   }
 
   onupdate() {
-    // A measuring pass was queued by view() (first paint, or the item set changed).
+    // Medição agendada pelo view() (primeiro paint, ou os itens mudaram).
     if (this.visible < 0) this.settle();
   }
 
@@ -173,8 +162,8 @@ export default class OverflowNav extends Component<OverflowNavAttrs> {
   }
 
   private onResize() {
-    // Never measured successfully (mounted on a phone, where the nav is
-    // display:none) — the layout just changed, so try again.
+    // Nunca medido (montado no celular, onde o nav é display:none): o layout mudou,
+    // tenta de novo.
     if (!this.widths.length) {
       this.reset();
       m.redraw();
@@ -190,23 +179,23 @@ export default class OverflowNav extends Component<OverflowNavAttrs> {
     this.visible = -1;
   }
 
-  /** Read the rendered pills, work out the split, and repaint out of the measuring state. */
+  /** Lê as pílulas desenhadas, calcula a divisão e sai do estado de medição. */
   private settle() {
     if (!this.measure()) {
-      // Not measurable (no DOM, or the nav is hidden on phone). Render everything,
-      // as before; onResize() starts a fresh pass once the nav is laid out again.
+      // Sem medida (sem DOM, ou nav escondido no celular): mostra tudo, e o onResize()
+      // recomeça quando o nav voltar ao layout.
       this.visible = Number.MAX_SAFE_INTEGER;
       m.redraw();
       return;
     }
 
     this.fit();
-    // `visible` must end up >= 0 or the next onupdate would settle again, forever.
+    // `visible` precisa terminar >= 0, ou o próximo onupdate recalcularia para sempre.
     if (this.visible < 0) this.visible = this.widths.length;
     m.redraw();
   }
 
-  /** Read every pill's width off the DOM. Returns false when there's nothing to read. */
+  /** Lê a largura de cada pílula no DOM; false quando não há o que ler. */
   private measure(): boolean {
     const nav = this.navEl;
     if (!nav || !nav.getClientRects().length) return false;
@@ -225,13 +214,13 @@ export default class OverflowNav extends Component<OverflowNavAttrs> {
     return widths.length > 0;
   }
 
-  /** Recompute how many pills fit. Returns true when the count changed. */
+  /** Recalcula quantas pílulas cabem; true quando o número mudou. */
   private fit(): boolean {
     const nav = this.navEl;
     if (!nav || !this.widths.length) return false;
 
-    // The nav is `flex: 1 1 0`, so its width is the space the heading left over —
-    // it does not depend on how many pills we render, which keeps this stable.
+    // O nav é `flex: 1 1 0`: a largura é o que o título deixou e não depende de
+    // quantas pílulas desenhamos, o que mantém o cálculo estável.
     const available = nav.clientWidth - SAFETY;
     const natural = this.widths.reduce((sum, w) => sum + w, 0) + this.gap * (this.widths.length - 1);
 

@@ -4,20 +4,15 @@ import Avatar from 'flarum/common/components/Avatar';
 import trustedHtml from '../../common/trustedHtml';
 
 /**
- * "↳ Em resposta a [avatar] Nome", como no Waterhole — no post, na prévia e no
- * compositor.
+ * "↳ Em resposta a [avatar] Nome" no post, na prévia e no compositor
+ * (`avocado.reply_to_header`).
  *
- * O Flarum não grava o "pai" de um post: responder a um post só insere a
- * menção `@"Nome"#p123` no COMEÇO do texto. É essa menção de abertura que vira
- * "Em resposta a" — e sai do texto, para não aparecer duas vezes:
- *  - no post publicado, a linha entra entre o cabeçalho e o corpo;
- *  - no compositor, a menção sai da textarea e vira um chip no cabeçalho
- *    ("↩ [avatar] Nome ×"); ao enviar ela volta para o começo do texto, então
- *    o conteúdo salvo é o mesmo de sempre e desligar a opção não muda nada;
- *  - na prévia ao vivo, a mesma linha do post publicado.
- *
- * Uma menção no meio do texto, menção a usuário e citação (blockquote) ficam
- * como sempre foram. Ligado pelo admin (aba Discussões, `avocado.reply_to_header`).
+ * O Flarum não grava o "pai" de um post: responder só insere a menção
+ * `@"Nome"#p123` no começo do texto. É essa menção de abertura que vira a
+ * linha, e ela sai do texto para não aparecer duas vezes. No compositor vira um
+ * chip e volta ao começo do texto ao enviar, então o conteúdo salvo é o de
+ * sempre e desligar a opção não muda nada. Menções no meio do texto e citações
+ * ficam como sempre.
  */
 
 interface ReplyParent {
@@ -131,7 +126,7 @@ const goToParent = (e: MouseEvent, parent: ReplyParent): void => {
   else if (href) window.location.href = href;
 };
 
-/** Seta "↳" (corner-down-right), o mesmo desenho do Waterhole. */
+/** Seta "↳" (corner-down-right). */
 const cornerIcon = () =>
   m(
     'svg.AvocadoReplyTo-icon',
@@ -198,13 +193,10 @@ const absorbLeadingMention = (body: any): void => {
   const raw = match[0];
   composer.fields.avocadoReplyTo = { id: match[2], name: match[1].replace(/\\(.)/g, '$1'), href: '', raw } as ComposerReply;
 
-  // O texto "original" é o que o fechar compara para perguntar se descarta. O
-  // flarum/mentions grava a menção nele ao abrir uma resposta vazia, e a edição
-  // grava o post inteiro; sem tirar dali também, fechar sem escrever nada
-  // perguntaria se quer descartar.
-  // Vale no estado do compositor (`composer.body.attrs`, onde o
-  // flarum/mentions grava e de onde os attrs do componente são recriados a cada
-  // render) e na cópia que o componente já tem.
+  // O texto "original" é o que o fechar compara para perguntar se descarta; o
+  // flarum/mentions grava a menção nele, e sem tirá-la dali fechar sem escrever
+  // perguntaria se quer descartar. Vale no estado do compositor
+  // (`composer.body.attrs`) e na cópia que o componente já tem.
   for (const attrs of [composer.body?.attrs, body.attrs]) {
     const original = attrs?.originalContent;
     if (typeof original === 'string' && original.startsWith(raw)) attrs.originalContent = original.slice(raw.length);
@@ -280,11 +272,9 @@ const installComposerBody = (Body: any): void => {
 
 /**
  * A prévia da resposta é o `<article>` da ReplyPlaceholder. A linha entra num
- * contêiner próprio, montado com m.render, no topo do `.Post-body` dela — o
- * único filho Mithril ali é a ComposerPostPreview, que desenha o próprio HTML.
- * Inserir direto no `.Post-main` (lista que o Mithril reordena) quebrava o
- * render dele; e um `extend` na view da placeholder não pegava (outra extensão
- * envolve a mesma view).
+ * contêiner próprio, montado com m.render, no topo do `.Post-body`: inserir no
+ * `.Post-main`, que o Mithril reordena, quebraria o render, e um `extend` na
+ * view da placeholder não pega (outra extensão envolve a mesma view).
  */
 const syncPreviewLine = (el: Element | null): void => {
   if (!el || el.tagName !== 'ARTICLE') return;

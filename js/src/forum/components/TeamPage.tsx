@@ -26,13 +26,9 @@ export default class TeamPage extends Page {
   }
 
   /**
-   * Reads the boot payload injected by Content\PreloadTeamMembers.
-   *
-   * Runs from oninit, before the first view(), so when the preload is present
-   * the page paints straight to the member grid — the skeleton never appears.
-   * Returns false when there is nothing to read (preload disabled, empty, or
-   * the API call failed server-side), in which case load() does its normal
-   * async fetch.
+   * Lê o payload do boot (Content\PreloadTeamMembers) no oninit, antes do
+   * primeiro view(), para a página pintar direto com os membros. Devolve false
+   * sem preload, e load() faz o fetch normal.
    */
   private hydrateFromBoot(): boolean {
     try {
@@ -125,10 +121,8 @@ export default class TeamPage extends Page {
 
     const name = displayName(user);
     const isOnline = user.isOnline?.();
-    // fof/user-bio parses and sanitizes the markdown server-side (s9e) and
-    // exposes the result as `bioHtml`; mirror its own <UserBio> and render that
-    // instead of the raw source. `bio` (plain text) is the fallback for when
-    // formatting is disabled or the extension isn't installed.
+    // O fof/user-bio sanitiza o markdown no servidor (s9e) e expõe `bioHtml`; `bio`
+    // em texto puro é o fallback sem formatação ou sem a extensão.
     const bioHtml = user.bioHtml?.();
     const bio = user.bio?.();
     const discussions = user.discussionCount?.() ?? 0;
@@ -151,9 +145,8 @@ export default class TeamPage extends Page {
 
         {role &&
           (() => {
-            // Validate the admin-set group color before interpolating it into the
-            // style attribute — an invalid/crafted value falls back to no inline
-            // background instead of injecting extra CSS declarations.
+            // Cor do grupo validada antes de entrar no style: valor inválido fica sem fundo
+            // em vez de injetar declarações de CSS.
             const roleColor = safeCssColor(role.color?.());
             return (
               <span className="AvocadoTeamPage-card-role" style={roleColor ? `background:${roleColor};color:#fff` : undefined}>

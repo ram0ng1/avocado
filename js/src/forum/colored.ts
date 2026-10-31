@@ -1,16 +1,11 @@
-// ─── Colored utilities ────────────────────────────────────────────────────────
-// Applies a tag color to the entire page via CSS custom properties on <body>.
-// Integrated from ramon/colored extension — JS sets two vars:
-//   --colored-color    → the tag's hex/rgb color
-//   --colored-contrast → 'var(--text-on-dark)' or 'var(--text-on-light)'
-// LESS in forum/colored.less consumes these vars.
+// Aplica a cor da tag à página inteira por variáveis CSS no <body>
+// (`--colored-color` e `--colored-contrast`), lidas em forum/colored.less.
 
 import isDark from 'flarum/common/utils/isDark';
 
 let lastAppliedColor: string | null | undefined = undefined;
 
-// Suppress CSS transitions for 2 frames so color vars snap instantly
-// (prevents accent-color, header-bg, etc. from visibly animating on navigation).
+// Sem transições por 2 frames, para as cores trocarem de uma vez ao navegar.
 function suppressTransitions(): void {
   document.documentElement.classList.add('colored--instant');
   requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.remove('colored--instant')));

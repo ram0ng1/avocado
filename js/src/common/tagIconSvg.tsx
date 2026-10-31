@@ -9,26 +9,17 @@ import sanitizeSvgIcon from './svgIconSanitizer';
 import trustedHtml from './trustedHtml';
 
 /**
- * Ícone SVG nas tags — absorvido da extensão `ramon/tag-icon-svg`.
- *
- * Uma tag com SVG responde por `tag.icon()` com uma string de classe, no mesmo
- * formato de um ícone Font Awesome (`fas fa-bolt`):
+ * Ícone SVG nas tags. Uma tag com SVG responde em `tag.icon()` com uma string de
+ * classe no formato de um ícone Font Awesome:
  *
  *     TagIconSvg TagIconSvg--mono TagIconSvg-<hash> [TagIconSvg--s150]
  *
- * (`--s150` = tamanho de 150%; só aparece quando a tag pede algo diferente de 100%.)
+ * O componente Icon do core é sobrescrito para embutir o SVG; quem escreve a
+ * string direto num `className` recebe um elemento vazio, pintado por uma
+ * stylesheet injetada (máscara CSS ou imagem de fundo).
  *
- * Duas coisas a renderizam:
- *  - o componente Icon do core (usado pelo `tagIcon` do flarum/tags, `Button
- *    icon=`, …) é sobrescrito para embutir o markup do SVG;
- *  - código que escreve a string direto num atributo de classe
- *    (`<i className={tag.icon()} />`) recebe um elemento vazio, pintado por uma
- *    stylesheet injetada em runtime como máscara CSS (monocromático) ou imagem
- *    de fundo (colorido).
- *
- * Nada disso vale sem o switch (`avocado.tag_icon_svg_enabled`) — ver
- * `tagIconSvgActive`. Com a extensão avulsa ativa o servidor nem serializa o
- * flag e o tema não instala nada.
+ * Nada disso vale sem o switch (`tagIconSvgActive`). Com a extensão avulsa ativa
+ * o servidor nem serializa o flag e o tema não instala nada.
  */
 export const ICON_PREFIX = 'TagIconSvg';
 
@@ -129,15 +120,11 @@ function scaleClass(scale: number): string | null {
 }
 
 /**
- * Registra um SVG e devolve a string de classe que o renderiza — ou null quando
- * ele não sobrevive à sanitização (quem chama cai no ícone Font Awesome).
+ * Registra um SVG e devolve a string de classe que o renderiza, ou null quando
+ * ele não sobrevive à sanitização (quem chama cai no Font Awesome).
  *
- * É AQUI que o markup é sanitizado no navegador, uma vez por SVG: tudo o que o
- * tema embute sai deste registro, venha da API (já limpo pelo servidor) ou do
- * arquivo que o admin acabou de escolher no modal (ainda cru). Ver svgIconSanitizer.
- *
- * `scale` é o tamanho em % do glifo (ver TagIconSvg.less: só o desenho cresce, a
- * caixa continua 1em).
+ * Todo markup que o tema embute passa por aqui, venha da API ou de um arquivo
+ * ainda cru escolhido no modal. `scale` é o tamanho em % do glifo.
  */
 export function svgIconName(svg: string, mono = true, scale: number = ICON_SCALE_DEFAULT): string | null {
   const key = hash(svg);

@@ -217,13 +217,12 @@ function svgField(this: Modal): Mithril.Children {
 }
 
 /**
- * Campo de SVG no modal "Editar tag" do flarum/tags. Só age com o switch do tema
- * ligado (`tagIconSvgActive`): desligado, o modal fica exatamente como o core o desenha
- * e o payload de salvar não leva `iconSvg`, que o servidor recusaria.
+ * Campo de SVG no modal "Editar tag" do flarum/tags. Com o switch desligado
+ * (`tagIconSvgActive`) o modal fica como o core desenha e o payload não leva
+ * `iconSvg`, que o servidor recusaria.
  *
- * O SVG entra só por arquivo (escolhido ou arrastado): não há campo para colar
- * código. O servidor sanitiza de qualquer jeito, mas um textarea de 100 KB de
- * markup no meio de um modal de tag é ruído para quem só quer trocar o ícone.
+ * O SVG entra só por arquivo: um textarea de 100 KB de markup num modal de tag
+ * só atrapalha quem quer trocar o ícone.
  */
 export default function extendEditTagModal() {
   extend(EditTagModal.prototype, 'oninit', function (this: EditTagModal) {

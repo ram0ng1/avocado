@@ -8,54 +8,38 @@ import type Mithril from 'mithril';
 type Children = Mithril.Children;
 
 export interface IComposerTextEditorAttrs {
-  /** Standard TextEditor attrs (forwarded). */
   composer: any;
   value: string;
   placeholder?: string;
   onchange?: (value: string) => void;
   onsubmit?: () => void;
 
-  /** Preview-toggle button rendered on the **left** of the toolbar. */
+  /** Botão de prévia, à esquerda da barra. */
   previewControl?: Children;
-  /** Save-draft button (fof/drafts) rendered on the right, before close. */
+  /** Salvar rascunho (fof/drafts), à direita, antes de fechar. */
   draftControl?: Children;
-  /** Cancel/close button rendered on the right (before submit). */
+  /** Fechar, à direita, antes de enviar. */
   closeControl?: Children;
-  /** Primary submit button rendered on the **far right** of the toolbar. */
+  /** Enviar, no extremo direito. */
   submitControl?: Children;
 }
 
 /**
- * TextEditor subclass that exposes slots for Avocado's inline composer.
+ * TextEditor com espaços para os botões do compositor do tema: entram em
+ * `controlItems()` e o `view()` os intercala com a barra de markdown, que o core
+ * desenha fora da lista. Prioridade positiva fica antes da barra; o `submit` do
+ * core (prioridade 0) fica depois e o CSS o esconde.
  *
- * Replaces the previous `injectToolbarButtons` DOM-mutation hack: instead of
- * mutating the rendered `<ul.TextEditor-controls>` after Mithril mounts it,
- * we override `controlItems()` to register our buttons via the priority-sorted
- * `ItemList`, then override `view()` to interleave them with the static
- * `<li class="TextEditor-toolbar">` that core renders outside the list.
- *
- * Final layout (DOM order = visual order = tab order):
- *  ┌────────────────────────────────────────────────────────────────────────┐
- *  │ [preview] │ ⟨core toolbar: B/I/H/…⟩ │ ⟨core submit, hidden⟩ │ [spacer] [draft] [close] [post] │
- *  └────────────────────────────────────────────────────────────────────────────────┘
- *
- * Items with positive priority render BEFORE the markdown toolbar; items with
- * non-positive priority render AFTER. Core's own `submit` item (priority 0)
- * lands after the toolbar — it's hidden via CSS (`li.App-primaryControl`).
- *
- * ItemList keys are kept in camelCase (`avocadoPreview`, `avocadoSpacer`,
- * `avocadoDraft`, `avocadoClose`, `avocadoPost`) so the rendered `<li class="item-…">` matches
- * the existing selectors in `less/forum/HomePage.less`.
+ * As chaves em camelCase (`avocadoPreview`, …) casam com os seletores
+ * `item-…` de `less/forum/HomePage.less`.
  */
 export default class ComposerTextEditor extends TextEditor {
   oncreate(vnode: any) {
     super.oncreate(vnode);
 
-    // fof/upload: a galeria "My media" insere o arquivo escolhido em
-    // `app.composer.editor` (o compositor do core), não no editor de onde ela
-    // foi aberta — daqui o arquivo não chegava a lugar nenhum. O upload direto
-    // usa o editor da própria barra e funciona. No clique, o editor deste
-    // compositor é emprestado ao do core enquanto houver modal aberto.
+    // fof/upload: a galeria "My media" insere em `app.composer.editor` (o do core),
+    // não no editor que a abriu. No clique, este editor é emprestado ao core
+    // enquanto houver modal aberto.
     this.element.addEventListener(
       'click',
       (e: Event) => {

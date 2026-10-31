@@ -1,13 +1,9 @@
 import type Mithril from 'mithril';
 
 /**
- * Ponto único de m.trust do bundle. Só recebe HTML que JÁ passou por
- * sanitização: sanitizeAdminHtml (hero/footer de admin), HTML renderizado e
- * sanitizado no servidor pelo s9e (ex.: `bioHtml` do fof/user-bio, o
- * `contentHtml` de um post no changelog), sanitizeSvgIcon (ícone SVG de tag —
- * espelho do SvgIconSanitizer do servidor), ou constante do próprio bundle
- * (SVGs do SpinnerPicker). Centralizar aqui deixa
- * a auditoria com um único sink para revisar.
+ * Único m.trust do bundle, para a revisão de segurança ter um só ponto. Só
+ * recebe HTML já sanitizado: sanitizeAdminHtml, HTML do s9e vindo do servidor
+ * (`bioHtml`, `contentHtml`), sanitizeSvgIcon ou constantes do próprio bundle.
  */
 const mithrilTrust = m.trust;
 

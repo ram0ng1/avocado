@@ -54,13 +54,9 @@ let measuredLogoPath: string | null = null;
 
 /**
  * Mede o viewBox recortado do logo e grava junto do caminho do arquivo
- * (common/logoViewBox). Com a medida gravada o servidor embute o logo pronto e o
- * header aparece no primeiro paint; sem ela o fórum mede sozinho em toda página.
- *
- * Roda quando o painel do tema monta ou redesenha (em qualquer aba): o upload
- * recarrega a página do admin, então cobre o logo novo e também o que já
- * existia antes desta versão. Falha é
- * silenciosa — o fórum continua no fallback, que é o comportamento antigo.
+ * (common/logoViewBox), para o servidor embutir o logo pronto no primeiro paint.
+ * Roda a cada montagem do painel: o upload recarrega o admin. Falha é
+ * silenciosa, e o fórum continua medindo sozinho.
  */
 function ensureLogoViewBox(): void {
   if (!getBool('avocado.logo_enabled')) return;
@@ -143,9 +139,8 @@ const CARDS: CardDef[] = [
         )}
 
         <SubDivider />
-        {/* Ícone de link interno: fica fora do toggle do logo — vale com ou sem
-            logo próprio. Desenhado como máscara na cor do link, então segue o
-            colored accents (o favicon tem cor própria e quebrava isso). */}
+        {/* Fora do toggle do logo: vale com ou sem logo próprio. É uma máscara na cor
+            do link, para seguir o colored accents. */}
         <div className="Form-group">
           <label className="AvocadoAdmin-label">{trans('ramon-avocado.admin.settings.link_icon_svg_label', 'Internal link icon (SVG)')}</label>
           <UploadImageButton
@@ -174,8 +169,7 @@ const CARDS: CardDef[] = [
         {getBool('avocado.custom_loading_spinner') && <div className="AvocadoAdmin-subGroup">{m(SpinnerPicker)}</div>}
 
         <SubDivider />
-        {/* Avatar padrão: é identidade visual, e não assunto da home — por isso
-            mora aqui, junto do logo. */}
+        {/* Identidade visual, não assunto da home: por isso fica junto do logo. */}
         <AdminToggle
           settingKey="avocado.custom_default_avatar"
           label={trans('ramon-avocado.admin.settings.custom_default_avatar_label', 'Use custom default avatar')}
@@ -264,8 +258,8 @@ const CARDS: CardDef[] = [
     ),
   },
   {
-    // Absorvido da extensão `ramon/tag-icon-svg`. Com ela ativa o tema cede: o
-    // switch fica inerte e o campo do modal é o dela.
+    // Com a extensão `ramon/tag-icon-svg` ativa o tema cede: o switch fica inerte e
+    // o campo do modal é o dela.
     group: 'appearance',
     icon: 'fas fa-bezier-curve',
     title: () => trans('ramon-avocado.admin.settings.section_tag_icon_svg', 'Tag icons (SVG)'),
@@ -355,7 +349,6 @@ const CARDS: CardDef[] = [
             )}
           />
 
-          {/* All showcase settings — only visible when enabled */}
           {getBool('avocado.showcase_enabled') && (
             <div className="AvocadoAdmin-subGroup">
               <AdminTagPicker
@@ -500,7 +493,6 @@ const CARDS: CardDef[] = [
 
         <SubDivider />
 
-        {/* Custom hero HTML — replaces the inner content of the hero banner when enabled */}
         <AdminToggle
           settingKey="avocado.custom_hero_enabled"
           label={trans('ramon-avocado.admin.settings.custom_hero_enabled_label', 'Use custom hero content (HTML)')}
@@ -566,14 +558,9 @@ const CARDS: CardDef[] = [
     ),
   },
   {
-    // Which treatment the discussion page draws. "Editorial" is the variant
-    // ported from the dfs theme: a wider reading column plus a conversation
-    // spine — a hairline threading down the avatar column that turns every
-    // avatar into a node and every time gap into a labelled station. The header
-    // is NOT touched; it stays the theme's own in both. Desktop only, so phone
-    // and tablet keep today's page. The CSS is gated by an attribute written on
-    // <html> before the first paint (Content\DiscussionStyle) so switching never
-    // flashes the other style.
+    // "Editorial": coluna de leitura mais larga e uma linha ligando os avatares;
+    // o cabeçalho não muda. Só no desktop. O CSS depende de um atributo gravado no
+    // <html> antes do primeiro paint (Content\DiscussionStyle), para a troca não piscar.
     group: 'discussions',
     icon: 'fas fa-comments',
     title: () => trans('ramon-avocado.admin.settings.section_discussion', 'Discussion page'),
@@ -713,11 +700,9 @@ const CARDS: CardDef[] = [
     ),
   },
   {
-    // Picks which tags trigger an "upload an image" prompt in the composer.
-    // Each discussion stores its own image (column added by the migration), and
-    // it's rendered as the discussion hero background + as the first showcase
-    // image. The setting is a JSON array of tag IDs (same shape as featured_tags)
-    // and is read on the forum side via `app.forum.attribute('avocadoHeroImageTags')`.
+    // Tags que pedem uma imagem no compositor. A imagem vira o fundo do hero da
+    // discussão e a primeira da vitrine. Mesmo formato de featured_tags (array JSON
+    // de ids), lido no fórum por `avocadoHeroImageTags`.
     group: 'discussions',
     icon: 'fas fa-image',
     title: () => trans('ramon-avocado.admin.settings.section_hero_image_tags', 'Hero image on discussions'),
@@ -981,8 +966,8 @@ const CARDS: CardDef[] = [
     ),
   },
   {
-    // O que só o visitante (guest) enxerga ou sofre: chamadas para entrar, botões
-    // no cabeçalho, links bloqueados. Estavam espalhados entre a home e os posts.
+    // O que só o visitante (guest) enxerga: chamadas para entrar, botões no
+    // cabeçalho, links bloqueados.
     group: 'access',
     icon: 'fas fa-user-slash',
     title: () => trans('ramon-avocado.admin.settings.section_guests', 'Guests'),
@@ -1013,7 +998,6 @@ const CARDS: CardDef[] = [
 
         <SubDivider />
 
-        {/* Guest post CTA */}
         <AdminToggle
           settingKey="avocado.show_post_cta"
           label={trans('ramon-avocado.admin.settings.show_post_cta_label', 'Show a Join CTA inside discussions for guests')}
@@ -1070,10 +1054,8 @@ const CARDS: CardDef[] = [
   },
 
   // ── Rodapé ─────────────────────────────────────────────────────────────────
-  // (footerOff, mais abaixo: com o rodapé desligado os cards de conteúdo ficam
-  // apagados — não há o que configurar num rodapé que não aparece.)
-  // Uma aba só dele: o rodapé tem conteúdo próprio (texto, links, contatos), e
-  // dentro de Aparência virava um cartão do tamanho de uma página.
+  // Aba própria: o rodapé tem conteúdo próprio (texto, links, contatos). Com ele
+  // desligado (footerOff) os cards de conteúdo ficam apagados.
   {
     group: 'footer',
     icon: 'fas fa-shoe-prints',

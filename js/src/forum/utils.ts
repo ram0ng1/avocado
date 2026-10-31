@@ -1,6 +1,3 @@
-/**
- * Shared utilities for ramon/avocado forum components.
- */
 import app from 'flarum/forum/app';
 import { truncate as coreTruncate } from 'flarum/common/utils/string';
 import coreHighlight from 'flarum/common/helpers/highlight';
@@ -12,15 +9,11 @@ import formatNumber from 'flarum/common/utils/formatNumber';
 // ─── Translation helper ────────────────────────────────────────────────────────
 
 export const trans = (key: string, fallback: string, params: Record<string, any> = {}): string => {
-  // Flarum 2.x's Translator.trans(id, params) returns a NestedStringArray
-  // (Mithril children) when the key is found. Passing `extract: true` forces
-  // a plain string back; without it, `typeof out === 'string'` would always
-  // be false for resolved translations and we'd permanently fall back to the
-  // English literal, breaking locale switching.
+  // `extract: true` faz o trans devolver string em vez de NestedStringArray; sem
+  // isso toda tradução cairia no fallback inglês.
   const out = app.translator?.trans(key, params, true);
   if (typeof out === 'string' && out !== key) return out;
-  // Interpolate {placeholders} into the fallback when the translation key is missing,
-  // so callers don't see literal `{count}` in the UI.
+  // Interpola {placeholders} no fallback, para não aparecer `{count}` cru.
   return Object.entries(params).reduce<string>((s, [k, v]) => s.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v)), fallback);
 };
 
@@ -90,7 +83,7 @@ export const iconColors = (hex: string | null | undefined, bgAlpha = 0.12): { bg
   color: hex || '#3f88f6',
 });
 
-// Ensures a hex color meets WCAG AA (4.5:1) contrast ratio against white.
+// Garante contraste WCAG AA (4.5:1) contra branco.
 const wcagDarkenForWhite = (hex: string): string => {
   if (!hex || hex.length < 6) return hex;
   const h = hex.replace('#', '');
@@ -121,9 +114,7 @@ export const tagPillStyle = (hex: string | null | undefined, alpha = 0.1): Recor
 export const displayName = (user: any): string => user?.displayName?.() || user?.username?.() || '';
 
 // ─── Relative time label ──────────────────────────────────────────────────────
-// Delegates to Flarum's core humanTime helper so the output follows the
-// active locale (e.g. "há 5 minutos" in pt-BR, "5 minutes ago" in en, etc.)
-// and matches the rest of the forum's time formatting.
+// Usa o humanTime do core, para seguir o idioma ativo e o resto do fórum.
 import humanTime from 'flarum/common/utils/humanTime';
 
 export const formatTimeLabel = (dateValue: Date | string | null | undefined): string => {
@@ -164,11 +155,10 @@ export const highlight = (text: string, query: string, maxLength = 0): any =>
 
 export const postPreview = (discussion: any, max = 150): string => {
   try {
-    // `avocadoExcerpt` vem no próprio payload da discussão (Api\DiscussionFields),
-    // então existe já no primeiro paint — inclusive no boot, onde o Index da
-    // série 2.0 RC manda apenas o *linkage* do firstPost e não o post. Ler o
-    // post do store só como fallback evita que o texto TROQUE quando o post
-    // chega depois (o card ficaria piscando).
+    // `avocadoExcerpt` vem no payload da discussão (Api\DiscussionFields) e existe
+    // já no primeiro paint, inclusive no boot, onde o Index manda só o linkage do
+    // firstPost. O post do store é só fallback, para o texto não trocar quando o
+    // post chega depois.
     const excerpt = (discussion.attribute?.('avocadoExcerpt') || '') as string;
     if (excerpt) return truncate(excerpt, max);
 
@@ -246,47 +236,34 @@ export const resolveAssetUrl = (assetPath: string | null | undefined): string | 
 export const safeCssUrl = (url: string | null | undefined): string => {
   if (!url) return 'none';
   const trimmed = String(url).trim();
-  // Defense-in-depth: only http(s), absolute paths, or `./...`/`../...` relatives.
-  // `data:`, `javascript:`, `file:` etc. are rejected even though current callers
-  // only feed admin-validated URLs.
+  // Defesa em profundidade: só http(s), caminhos absolutos ou relativos
+  // `./`/`../`; `data:`, `javascript:`, `file:` etc. são recusados.
   if (!/^(https?:\/\/|\/[^/]|\.\.?\/)/i.test(trimmed)) return 'none';
   const escaped = trimmed.replace(/[\\()'";]/g, '');
   return `url('${escaped}')`;
 };
 
-// forumaker/profile-cover lets the user pick how a cover is framed vertically —
-// a 0–100 percentage it stores on the model and applies to core's .UserCard as
-// `background-position: center {n}%`. The Avocado surfaces render their own
-// cover elements, so they have to read the value themselves or the choice has
-// no effect anywhere in the theme.
-//
-// Returns the ready-made `background-position` value. 50% (dead centre) is both
-// the extension's own default and the fallback when it is not installed, so a
-// forum without it keeps exactly the centred framing it had before.
+// O forumaker/profile-cover guarda o enquadramento vertical da capa (0–100%) e
+// só o aplica no .UserCard do core; as superfícies do tema desenham a própria
+// capa e precisam ler o valor. 50% é o padrão da extensão e o fallback sem ela.
 export const coverPosition = (user: any): string => {
   const raw = Number(user?.cover_position?.() ?? user?.attribute?.('cover_position') ?? 50);
-  // Number.isFinite, not a truthiness check: 0 is a legitimate position (top).
+  // Number.isFinite, não truthiness: 0 é uma posição válida (topo).
   const pct = Number.isFinite(raw) ? Math.min(100, Math.max(0, raw)) : 50;
   return `center ${pct}%`;
 };
 
 // ─── Admin-HTML sanitizer ─────────────────────────────────────────────────────
-// Defense-in-depth scrub for admin-pasted HTML (custom hero, footer, …) before
-// core renders it as markup. Removes <script>, <iframe>, etc.; strips
-// on*=, javascript:/vbscript:/data:text/html in href/src; neutralizes inline
-// styles using expression()/@import. Not a full allow-list — relies on the
-// "admin == HTML" Flarum convention but ensures admin-account compromise does
-// not become guest-visible XSS.
-// <noscript>/<template> re-parse in a different parser context than DOMParser
-// exposes — a classic mutation-XSS vector — and have no use in an admin paste
-// field, so they are dropped outright. <style> is intentionally NOT stripped:
-// the footer field legitimately ships animation CSS that gets hoisted into
-// <head>. Instead its body is scrubbed (see SANITIZE_DANGER_CSS) and the node
-// dropped only when it carries an injection/exfil sink.
-// SVG <foreignObject> and the SMIL animation elements go too: an <animate
-// attributeName="href" values="javascript:…"> rewrites a link at runtime, past
-// any attribute check. Selectors for SVG elements are case-sensitive, hence the
-// camelCase names.
+// Defesa em profundidade para o HTML colado pelo admin (hero, rodapé…): segue a
+// convenção "admin == HTML" do Flarum, mas impede que uma conta de admin
+// comprometida vire XSS para visitantes. Não é uma allowlist completa.
+//
+// <noscript>/<template> são reinterpretados em outro contexto de parser (vetor
+// clássico de mXSS) e saem inteiros. <style> fica, porque o rodapé leva CSS de
+// animação: o corpo é filtrado (SANITIZE_DANGER_CSS) e o nó só sai com um sink
+// de injeção/exfiltração. <foreignObject> e as animações SMIL também saem: um
+// <animate attributeName="href" values="javascript:…"> reescreve um link em
+// runtime. Seletores de SVG diferenciam maiúsculas, daí o camelCase.
 const SANITIZE_STRIP_ELS = [
   'script',
   'iframe',
@@ -306,16 +283,16 @@ const SANITIZE_STRIP_ELS = [
 ];
 const SANITIZE_URL_ATTRS = ['href', 'src', 'action', 'formaction', 'xlink:href', 'srcset', 'background', 'poster'];
 const SANITIZE_DANGER_SCHEME = /^\s*(?:javascript|vbscript|data:text\/html)/i;
-// The browser drops tab/newline anywhere in a URL and trims leading controls, so
-// `java&#9;script:` runs as `javascript:` — test the scheme it will actually see.
+// O navegador ignora tab/newline em qualquer ponto da URL e corta controles no
+// início: `java&#9;script:` roda como `javascript:`. Testa o esquema que ele vê.
 const isDangerousUrl = (value: string): boolean => SANITIZE_DANGER_SCHEME.test(value.replace(/[\u0000-\u0020\u007F]+/g, ''));
 const SANITIZE_DANGER_STYLE = /expression\s*\(|javascript:|vbscript:|@import/i;
-// <style> body sinks reaching every visitor as page CSS: @import (remote/data:
-// fetch = exfil + injection), expression()/behavior/-moz-binding (legacy script
-// execution), script schemes, and url(data:) payloads.
+// Sinks no corpo de <style>, que vira CSS para todo visitante: @import (fetch
+// remoto = exfiltração e injeção), expression()/behavior/-moz-binding (execução
+// de script legada), esquemas de script e payloads url(data:).
 const SANITIZE_DANGER_CSS = /@import|expression\s*\(|behavior\s*:|-moz-binding|javascript\s*:|vbscript\s*:|url\(\s*["']?\s*data\s*:/i;
-// Clean markup converges after the first (normalizing) pass; the cap stops a
-// pathological input from looping forever.
+// Markup limpo converge depois da primeira passada; o teto impede que uma
+// entrada patológica entre em loop.
 const SANITIZE_MAX_PASSES = 5;
 
 const sanitizeAdminHtmlOnce = (raw: string): string => {
@@ -328,8 +305,8 @@ const sanitizeAdminHtmlOnce = (raw: string): string => {
   const root = doc.getElementById('__avs_root__');
   if (!root) return '';
 
-  // Drop comment nodes — conditional comments / `<!-- --><script>` are an mXSS
-  // vector and carry no rendered content the admin needs here.
+  // Comentários saem: comentários condicionais e `<!-- --><script>` são vetor de
+  // mXSS e não têm conteúdo renderizado.
   const walker = doc.createTreeWalker(root, NodeFilter.SHOW_COMMENT);
   const comments: Node[] = [];
   while (walker.nextNode()) comments.push(walker.currentNode);
@@ -337,15 +314,15 @@ const sanitizeAdminHtmlOnce = (raw: string): string => {
 
   root.querySelectorAll(SANITIZE_STRIP_ELS.join(',')).forEach((el) => el.remove());
 
-  // Keep clean stylesheets, drop ones carrying a CSS sink.
+  // Folhas de estilo limpas ficam; as que levam um sink de CSS saem.
   root.querySelectorAll('style').forEach((el) => {
     const css = (el.textContent || '').replace(/\/\*[\s\S]*?\*\//g, '');
     if (SANITIZE_DANGER_CSS.test(decodeCssEscapes(css))) el.remove();
   });
 
   root.querySelectorAll('*').forEach((el) => {
-    // Array.from instead of spread — `NamedNodeMap` lacks Symbol.iterator under
-    // older TS lib targets. Snapshot is needed because removeAttribute mutates.
+    // Array.from em vez de spread: `NamedNodeMap` não tem Symbol.iterator em libs
+    // antigas do TS. A cópia é necessária porque removeAttribute altera o mapa.
     Array.from(el.attributes).forEach((attr) => {
       const name = attr.name.toLowerCase();
       if (name.startsWith('on')) {
@@ -369,9 +346,8 @@ export const sanitizeAdminHtml = (html: string | null | undefined): string => {
   let current = (html ?? '').toString().trim();
   if (!current) return '';
 
-  // mXSS defense-in-depth: re-run the scrub until the serialized output stops
-  // changing, so markup that only turns dangerous after a parse→serialize round
-  // trip (DOMParser vs. browser re-parse) is caught on the next pass.
+  // Defesa contra mXSS: repete a limpeza até a saída serializada parar de mudar,
+  // pegando markup que só fica perigoso depois de um parse→serialize.
   for (let i = 0; i < SANITIZE_MAX_PASSES; i++) {
     const next = sanitizeAdminHtmlOnce(current);
     if (next === current) return next;
@@ -381,10 +357,9 @@ export const sanitizeAdminHtml = (html: string | null | undefined): string => {
 };
 
 // ─── Safe CSS color ───────────────────────────────────────────────────────────
-// Accept only `#rgb`/`#rgba`/`#rrggbb`/`#rrggbbaa` hex or `rgb()/rgba()` with
-// numeric args. Anything else (e.g. a group color hand-edited to break out of a
-// style attribute and inject extra declarations) returns null so the caller can
-// omit the declaration entirely. Mirrors the PHP `safeColor()` allowlist.
+// Só hex `#rgb`/`#rgba`/`#rrggbb`/`#rrggbbaa` ou `rgb()/rgba()` numérico. O resto
+// (ex.: cor de grupo editada para sair do style e injetar declarações) dá null e
+// a declaração some. Espelha a allowlist `safeColor()` do PHP.
 export const safeCssColor = (raw: string | null | undefined): string | null => {
   const v = (raw ?? '').toString().trim();
   if (!v) return null;
@@ -418,7 +393,7 @@ export const navigate = (e: Event, href: string): void => {
 
 const TAG_IDS_MAX_BYTES = 4096;
 
-/** Parse an admin-controlled JSON array of tag-id strings, with size cap. */
+/** Lê um array JSON de ids de tag vindo do admin, com limite de tamanho. */
 const parseTagIdSet = (raw: unknown): Set<string> => {
   if (typeof raw !== 'string' || raw.length === 0) return new Set();
   if (raw.length > TAG_IDS_MAX_BYTES) return new Set();
@@ -434,13 +409,9 @@ const parseTagIdSet = (raw: unknown): Set<string> => {
 export const getFeaturedTagIds = (): Set<string> => parseTagIdSet(app.forum?.attribute('avocadoFeaturedTags'));
 
 // ─── Tags requiring hero image at creation ────────────────────────────────────
-// Set of tag IDs the admin marked as "asks for a hero image" — when one of
-// these tags is selected in the composer, the user gets an upload field for
-// the discussion's hero image.
-//
-// Os produtos do changelog entram na conta sozinhos: cada versão pode levar uma
-// capa, e exigir que o admin repita as mesmas tags nos dois settings seria só
-// uma segunda chance de esquecer uma.
+// Tags que pedem imagem do hero no compositor. Os produtos do changelog entram
+// sozinhos: cada versão pode ter capa, e repetir as tags nos dois settings seria
+// só mais uma chance de esquecer uma.
 export const getHeroImageTagIds = (): Set<string> => {
   const ids = parseTagIdSet(app.forum?.attribute('avocadoHeroImageTags'));
   if (app.forum?.attribute('avocadoChangelogEnabled')) {
@@ -478,7 +449,7 @@ export const changelogAttributes = (version: string, cover: string | null, hasIm
   return attrs;
 };
 
-// Resolve the hero image URL stored on a discussion (if any).
+// URL da imagem do hero da discussão, se houver.
 export const getDiscussionHeroImageUrl = (discussion: any): string | null => {
   if (!discussion) return null;
   const url = discussion.attribute?.('heroImageUrl') || discussion.data?.attributes?.heroImageUrl || null;
@@ -487,8 +458,7 @@ export const getDiscussionHeroImageUrl = (discussion: any): string | null => {
   return path ? resolveAssetUrl(String(path)) : null;
 };
 
-// True when at least one of the given tags is configured (in admin) to ask
-// for a hero image when a discussion is being created with that tag.
+// Alguma das tags pede imagem do hero na criação?
 export const tagsRequireHeroImage = (tags: any[] | null | undefined): boolean => {
   if (!Array.isArray(tags) || tags.length === 0) return false;
   const wanted = getHeroImageTagIds();
@@ -496,9 +466,8 @@ export const tagsRequireHeroImage = (tags: any[] | null | undefined): boolean =>
   return tags.some((t) => wanted.has(String(t?.id?.() ?? '')));
 };
 
-// POST a single image file to /api/avocado/discussion-hero?discussionId=<id>.
-// Resolves with the JSON body returned by the server (`{ heroImagePath, heroImageUrl }`)
-// so callers can update the discussion model in-place.
+// Envia uma imagem para /api/avocado/discussion-hero?discussionId=<id> e devolve
+// o JSON do servidor (`{ heroImagePath, heroImageUrl }`) para atualizar o model.
 export const uploadDiscussionHeroImage = async (
   discussionId: string | number,
   file: File
@@ -518,7 +487,6 @@ export const uploadDiscussionHeroImage = async (
   };
 };
 
-// DELETE the discussion's hero image. Resolves once the server clears it.
 export const deleteDiscussionHeroImage = async (discussionId: string | number): Promise<void> => {
   const apiUrl = String(app.forum?.attribute('apiUrl') || '/api').replace(/\/+$/, '');
   await app.request({
@@ -527,9 +495,8 @@ export const deleteDiscussionHeroImage = async (discussionId: string | number): 
   });
 };
 
-// True when the actor is allowed to set/remove the hero image of a discussion.
-// Mirrors the backend permission check (`can('rename', $discussion)`), so the
-// controls only appear for the OP and moderators.
+// Mesma checagem do backend (`can('rename', $discussion)`): os controles só
+// aparecem para o autor e os moderadores.
 export const canEditDiscussionHero = (discussion: any): boolean => {
   if (!discussion) return false;
   if (typeof discussion.canRename === 'function') {

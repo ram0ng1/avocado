@@ -4,11 +4,8 @@ import type User from 'flarum/common/models/User';
 const PAGE_SIZE = 20;
 
 /**
- * State for the "users" tab of the unified search page.
- *
- * Avocado doesn't reuse `flarum/forum/states/UserListState` here because
- * the tab is a thin wrapper around `app.store.find('users', { filter: { q } })`
- * with manual pagination — no sort modes, no gambits.
+ * Aba "usuários" da busca. Não usa o UserListState do core: é só um
+ * `app.store.find('users', { filter: { q } })` com paginação manual.
  */
 export default class UserSearchState {
   users: User[] = [];
@@ -16,13 +13,10 @@ export default class UserSearchState {
   hasMore = false;
   page = 1;
 
-  /** Last query the state was loaded with — used to short-circuit repeated calls. */
+  /** Última busca carregada, para não repetir a mesma chamada. */
   private lastQuery = '';
 
-  /**
-   * Load the first page of results for `q`. Empty queries reset the list.
-   * Returns the same promise so callers can chain `.then()` for tests.
-   */
+  /** Carrega a primeira página de `q`; busca vazia zera a lista. */
   load(q: string, page = 1): Promise<void> {
     if (!q) {
       this.users = [];
@@ -54,13 +48,12 @@ export default class UserSearchState {
       });
   }
 
-  /** Load the next page using the most-recent query. */
   loadNext(): Promise<void> {
     if (!this.lastQuery) return Promise.resolve();
     return this.load(this.lastQuery, this.page + 1);
   }
 
-  /** True while a fetch is in flight and no items have been received yet. */
+  /** Buscando, e ainda sem nenhum item. */
   isInitialLoading(): boolean {
     return this.loading && this.users.length === 0;
   }
