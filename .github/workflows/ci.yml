@@ -180,13 +180,14 @@ jobs:
       - name: Resolver dependências (composer update)
         run: composer update --no-interaction --no-progress --prefer-stable --no-scripts
 
-      # `@engine` filtra pelo nome do data set.
+      # `@engine` filtra pelo nome do data set; vazio ou pulado é falha (banco
+      # fora do ar ou filtro errado não pode passar em silêncio).
       - name: Migração do hero
         env:
           ENGINE_ENV: ${{ matrix.env-name }}
           ENGINE_DSN: ${{ matrix.dsn }}
           ENGINE: ${{ matrix.engine }}
-        run: env "$ENGINE_ENV=$ENGINE_DSN" vendor/bin/phpunit -c tests/phpunit.unit.xml --testsuite unit --filter "@$ENGINE"
+        run: env "$ENGINE_ENV=$ENGINE_DSN" vendor/bin/phpunit -c tests/phpunit.unit.xml --testsuite unit --filter "@$ENGINE" --fail-on-empty-test-suite --fail-on-skipped
 
   js:
     name: JS (formatação, tipos, lint, build)
