@@ -4,6 +4,7 @@
 import app from 'flarum/forum/app';
 import { truncate as coreTruncate } from 'flarum/common/utils/string';
 import coreHighlight from 'flarum/common/helpers/highlight';
+import escapeRegExp from 'flarum/common/utils/escapeRegExp';
 import abbreviateNumber from 'flarum/common/utils/abbreviateNumber';
 import formatNumber from 'flarum/common/utils/formatNumber';
 
@@ -153,8 +154,10 @@ export const truncate = (str: string | null | undefined, max = 150): string => (
 
 // ─── Search highlight ─────────────────────────────────────────────────────────
 
+// O core monta um RegExp com a frase: a busca vem da URL, então escapa como a
+// lista de discussões do core faz (senão `?q=(` derruba a página).
 export const highlight = (text: string, query: string, maxLength = 0): any =>
-  text ? coreHighlight(text, query || undefined, maxLength || undefined) : '';
+  text ? coreHighlight(text, query ? escapeRegExp(query) : undefined, maxLength || undefined) : '';
 
 // ─── Discussion first-post excerpt ────────────────────────────────────────────
 
