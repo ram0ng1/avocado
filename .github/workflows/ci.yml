@@ -1,64 +1,41 @@
 name: CI
 
+# O que é só do tema: PHP (testes, lint, PHPStan, auditoria) numa matriz de
+# versões e do flarum/core, migrações em MySQL/PostgreSQL, JS (Prettier,
+# TypeScript, ESLint, build) e paridade das traduções. A integração com
+# flarum/testing roda no backend.yml.
 on:
   push:
     branches:
       - master
   pull_request:
   workflow_dispatch:
-  # Segunda 05:00 UTC: roda a CI mesmo sem push. Como os jobs resolvem as
-  # dependências com `composer update`, o agendamento testa automaticamente
-  # contra a versão mais nova do flarum/core e detecta quebras trazidas por
-  # novas versões do Flarum antes que cheguem a você.
+  # Segunda 05:00 UTC: roda mesmo sem push. Como as dependências vêm de
+  # `composer update`, isso testa contra o flarum/core mais novo e pega
+  # quebras de uma versão nova do Flarum antes de chegarem ao fórum.
   schedule:
     - cron: '0 5 * * 1'
 
-# Default-deny do GITHUB_TOKEN (CLAUDE.md §35.13 C1). Jobs declaram o
-# que precisam.
+# Nega tudo ao GITHUB_TOKEN por padrão; cada job declara o que precisa.
 permissions: {}
 
-# Evita corridas redundantes no mesmo PR/branch.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  # Valida o composer.json as-committed (antes de qualquer mutacao por
-  # matriz). --strict reprova constraints exatas; por isso este passo
-  # tem que rodar fora da matriz que pin a flarum/core em 2.x-dev.
+  # Valida o composer.json como está no repositório (antes de a matriz mexer
+  # na versão do core).
   composer-validate:
     name: composer validate (--strict)
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      # 🟡 §35.13/I3 — egress em `audit` (fase 1: registra os destinos, não
-      # bloqueia). A allowed-endpoints abaixo é a lista candidata para quando
-      # promover a `block` — antes, revise o resumo do harden-runner do run e
-      # ajuste-a aos destinos reais.
       - name: Harden runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25  # v2
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2  # v2
         with:
           egress-policy: audit
-          allowed-endpoints: >
-            api.github.com:443
-            github.com:443
-            codeload.github.com:443
-            objects.githubusercontent.com:443
-            release-assets.githubusercontent.com:443
-            raw.githubusercontent.com:443
-            packagist.org:443
-            repo.packagist.org:443
-            getcomposer.org:443
-            registry.npmjs.org:443
-            nodejs.org:443
-            ppa.launchpadcontent.net:443
-            ppa.launchpadcontent.net:80
-            keyserver.ubuntu.com:443
-            azure.archive.ubuntu.com:80
-            esm.ubuntu.com:443
-            motd.ubuntu.com:443
-            pecl.php.net:443
 
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -71,10 +48,7 @@ jobs:
           tools: composer:v2
 
       - name: Validar composer.json
-        # O composer.json NÃO tem campo "version": a versão dos releases é
-        # derivada das tags git (ver release-management.yml). --no-check-publish
-        # evita falso-positivo de requisitos de publicação; demais warnings
-        # continuam fatais.
+        # Sem campo "version": as versões vêm das tags do git.
         run: composer validate --strict --no-check-publish
 
   php:
@@ -85,16 +59,76 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # flarum/core 2.x requer php ^8.3 — 8.2 ficou de fora. 8.5 incluído
-        # (testado localmente); o composer update usa --ignore-platform-req=php+
-        # para o caso de uma dependência ainda não declarar suporte a 8.5.
+        # O flarum/core 2.x exige PHP ^8.3. O fórum de desenvolvimento roda 8.5.
         php: ['8.3', '8.4', '8.5']
-        # §35.13 I5 — testa contra a versão estável E a HEAD do core.
+        # A versão estável E a ponta do core.
         flarum-core:
           - '^2.0.0'
           - '2.x-dev'
-    # Service containers para a suíte de integração cross-engine. Sem eles, os
-    # data sets mysql/pgsql do DiscussionHeroTest apenas pulam (sqlite sempre roda).
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2  # v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962  # v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, mbstring, fileinfo, gd, pdo_sqlite
+          coverage: none
+          tools: composer:v2
+
+      - name: Fixar o flarum/core desta célula
+        run: composer require --no-update "flarum/core:${{ matrix.flarum-core }}"
+
+      - name: Resolver dependências (composer update)
+        # --ignore-platform-req=php+ ignora só o limite SUPERIOR de PHP (para a
+        # célula 8.5, se alguma dependência ainda não declarar suporte).
+        run: composer update --no-interaction --no-progress --prefer-stable --no-scripts --ignore-platform-req=php+
+
+      - name: Testes unitários (carregador de recursos)
+        run: vendor/bin/phpunit -c tests/phpunit.unit.xml --testsuite unit
+
+      - name: Lint PHP (php -l)
+        run: |
+          set -euo pipefail
+          mapfile -d '' files < <(find src migrations extend.php tests -name '*.php' -print0 2>/dev/null)
+          [ "${#files[@]}" -gt 0 ] || { echo "Nenhum arquivo PHP encontrado"; exit 1; }
+          printf '%s\0' "${files[@]}" | xargs -0 -n1 -P4 php -l
+
+      - name: composer audit
+        run: composer audit --no-dev --format=plain
+
+      # PHPStan nível 6 com a extensão do Flarum (flarum/phpstan), sem
+      # baseline: o mesmo padrão do core e da FoF.
+      - name: PHPStan
+        if: matrix.php == '8.3' && matrix.flarum-core == '^2.0.0'
+        run: composer analyse:phpstan
+
+  # A migração do hero move dados entre tabelas: roda contra cada banco de
+  # verdade (tests/unit/Migrations), em tabelas próprias.
+  migrations:
+    name: Migrações × ${{ matrix.engine }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - engine: mysql
+            env-name: AVOCADO_TEST_MYSQL
+            dsn: host=127.0.0.1;port=3306;username=root;password=root;database=avocado_test
+          - engine: mariadb
+            env-name: AVOCADO_TEST_MARIADB
+            dsn: host=127.0.0.1;port=3307;username=root;password=root;database=avocado_test
+          - engine: pgsql
+            env-name: AVOCADO_TEST_PGSQL
+            dsn: host=127.0.0.1;port=5432;username=postgres;password=postgres;database=avocado_test
     services:
       mysql:
         image: mysql:8
@@ -105,6 +139,16 @@ jobs:
           - 3306:3306
         options: >-
           --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: avocado_test
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
           --health-interval=10s --health-timeout=5s --health-retries=10
       postgres:
         image: postgres:16
@@ -117,136 +161,48 @@ jobs:
           --health-cmd="pg_isready -U postgres"
           --health-interval=10s --health-timeout=5s --health-retries=10
     steps:
-      # 🟡 §35.13/I3 — egress em `audit` (fase 1: registra os destinos, não
-      # bloqueia). A allowed-endpoints abaixo é a lista candidata para quando
-      # promover a `block` — antes, revise o resumo do harden-runner do run e
-      # ajuste-a aos destinos reais.
       - name: Harden runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25  # v2
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2  # v2
         with:
           egress-policy: audit
-          allowed-endpoints: >
-            api.github.com:443
-            github.com:443
-            codeload.github.com:443
-            objects.githubusercontent.com:443
-            release-assets.githubusercontent.com:443
-            raw.githubusercontent.com:443
-            packagist.org:443
-            repo.packagist.org:443
-            getcomposer.org:443
-            registry.npmjs.org:443
-            nodejs.org:443
-            ppa.launchpadcontent.net:443
-            ppa.launchpadcontent.net:80
-            keyserver.ubuntu.com:443
-            azure.archive.ubuntu.com:80
-            esm.ubuntu.com:443
-            motd.ubuntu.com:443
-            pecl.php.net:443
 
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
-      - name: Setup PHP ${{ matrix.php }}
+      - name: Setup PHP
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962  # v2
         with:
-          php-version: ${{ matrix.php }}
-          # sqlite/mysql/pgsql = suíte de integração cross-engine; dom/mbstring/fileinfo = sanitizers + uploads.
-          extensions: dom, mbstring, fileinfo, pdo_sqlite, sqlite3, pdo_mysql, pdo_pgsql
+          php-version: '8.3'
+          extensions: dom, mbstring, fileinfo, pdo_sqlite, pdo_mysql, pdo_pgsql
           coverage: none
           tools: composer:v2
 
-      - name: Pin flarum/core para a célula da matriz
-        run: composer require --no-update "flarum/core:${{ matrix.flarum-core }}"
-
       - name: Resolver dependências (composer update)
-        # --ignore-platform-req=php+ ignora apenas o LIMITE SUPERIOR de PHP (para
-        # a célula 8.5, caso uma dependência ainda não declare suporte); não
-        # mascara extensões faltantes nem o limite inferior.
-        run: composer update --no-interaction --no-progress --prefer-stable --no-scripts --ignore-platform-req=php+
+        run: composer update --no-interaction --no-progress --prefer-stable --no-scripts
 
-      # Suítes rodam em steps separados para aparecerem como linhas distintas na
-      # UI do Actions (Unit / Locale parity / Integration cross-engine).
-      - name: Unit tests (sanitizers, policy, CSS-injection)
-        run: vendor/bin/phpunit --testsuite unit
-
-      # Um step por engine → 3 linhas distintas na UI do Actions. Usamos a sintaxe
-      # de data set do PHPUnit (--filter '#nome'): o bare `--filter sqlite` casa o
-      # nome do método/conjunto no PHPUnit 11 mas NÃO no 13 (que então reporta
-      # "No tests executed" e sai com código 1). O prefixo '#' filtra pelo nome do
-      # data set (sqlite/mysql/pgsql) do DiscussionHeroTest em ambas as versões.
-      - name: Integration — SQLite
-        run: vendor/bin/phpunit --testsuite integration --filter '#sqlite'
-
-      - name: Integration — MySQL
+      # `@engine` filtra pelo nome do data set.
+      - name: Migração do hero
         env:
-          AVOCADO_TEST_MYSQL: host=127.0.0.1;port=3306;username=root;password=root;database=avocado_test
-        run: vendor/bin/phpunit --testsuite integration --filter '#mysql'
-
-      - name: Integration — PgSQL
-        env:
-          AVOCADO_TEST_PGSQL: host=127.0.0.1;port=5432;username=postgres;password=postgres;database=avocado_test
-        run: vendor/bin/phpunit --testsuite integration --filter '#pgsql'
-
-      - name: Lint PHP (php -l)
-        run: |
-          set -euo pipefail
-          mapfile -d '' files < <(find src migrations extend.php -name '*.php' -print0 2>/dev/null)
-          [ "${#files[@]}" -gt 0 ] || { echo "Nenhum arquivo PHP encontrado"; exit 1; }
-          printf '%s\0' "${files[@]}" | xargs -0 -n1 -P4 php -l
-
-      # §35.13 R2 — Packagist security advisories.
-      - name: composer audit
-        run: composer audit --no-dev --format=plain
-
-      # §35.13 R3 — PHPStan nível 5 com baseline versionado (phpstan.neon +
-      # phpstan-baseline.neon). phpstan/phpstan já vem via require-dev, então
-      # `composer analyse` basta. Bloqueante: o baseline mantém verde e novos
-      # achados reprovam o PR (aperte o nível/baseline com o tempo).
-      - name: PHPStan
-        if: matrix.php == '8.3' && matrix.flarum-core == '^2.0.0'
-        run: composer analyse
+          ENGINE_ENV: ${{ matrix.env-name }}
+          ENGINE_DSN: ${{ matrix.dsn }}
+          ENGINE: ${{ matrix.engine }}
+        run: env "$ENGINE_ENV=$ENGINE_DSN" vendor/bin/phpunit -c tests/phpunit.unit.xml --testsuite unit --filter "@$ENGINE"
 
   js:
-    name: JS (typecheck, format, build)
+    name: JS (formatação, tipos, lint, build)
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      # 🟡 §35.13/I3 — egress em `audit` (fase 1: registra os destinos, não
-      # bloqueia). A allowed-endpoints abaixo é a lista candidata para quando
-      # promover a `block` — antes, revise o resumo do harden-runner do run e
-      # ajuste-a aos destinos reais.
       - name: Harden runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25  # v2
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2  # v2
         with:
           egress-policy: audit
-          allowed-endpoints: >
-            api.github.com:443
-            github.com:443
-            codeload.github.com:443
-            objects.githubusercontent.com:443
-            release-assets.githubusercontent.com:443
-            raw.githubusercontent.com:443
-            packagist.org:443
-            repo.packagist.org:443
-            getcomposer.org:443
-            registry.npmjs.org:443
-            nodejs.org:443
-            ppa.launchpadcontent.net:443
-            ppa.launchpadcontent.net:80
-            keyserver.ubuntu.com:443
-            azure.archive.ubuntu.com:80
-            esm.ubuntu.com:443
-            motd.ubuntu.com:443
-            pecl.php.net:443
 
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
-      # Composer + PHP necessários para resolver os typings do core
-      # (js/tsconfig importa flarum/* via ../vendor/flarum/core/js/dist-typings/*).
+      # O tsconfig lê os typings do core em ../vendor/flarum/core/js/dist-typings.
       - name: Setup PHP
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962  # v2
         with:
@@ -261,80 +217,58 @@ jobs:
           key: composer-${{ runner.os }}-${{ hashFiles('composer.json') }}
           restore-keys: composer-${{ runner.os }}-
 
-      - name: Instalar dependências PHP (para os typings do core)
-        # composer update (em vez de install) porque a extensão é uma
-        # lib e mantém composer.lock no .gitignore.
+      - name: Dependências PHP (para os typings do core)
         run: composer update --no-interaction --no-progress --prefer-dist --no-scripts
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020  # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
         with:
           node-version: 20
           cache: 'npm'
           cache-dependency-path: js/package-lock.json
 
-      - name: Instalar dependências JS
+      - name: Dependências JS
         working-directory: js
         run: npm ci
 
-      - name: Verificar formatação (Prettier)
+      - name: Formatação (Prettier)
         working-directory: js
         run: npm run format-check
 
-      - name: Type-check (TypeScript)
+      - name: Tipos (TypeScript)
         working-directory: js
         run: npm run check-typings
 
-      # Step próprio para aparecer como linha distinta na UI: roda a regra
-      # i18n/no-hardcoded-text (strings hardcoded) + mithril-key + jsx-key.
-      - name: ESLint (regra i18n + mithril keys)
+      # Chaves do Mithril (irmãos com e sem key quebram a reconciliação) e
+      # texto fixo na interface (tudo passa pelo tradutor).
+      - name: ESLint (mithril-key + i18n)
         working-directory: js
         run: npm run lint
 
-      # Webpack puro — o lint já rodou no step acima (build npm-script reexecuta
-      # o lint; aqui chamamos o webpack direto para não duplicar).
       - name: Build (webpack production)
         working-directory: js
         run: node_modules/.bin/webpack --mode production
 
-      # §35.13 R2 — npm advisories. --audit-level=high reduz ruído de
-      # transitivas dev; subir para moderate quando o baseline estabilizar.
-      #
-      # O gate bloqueante cobre só as dependências de produção. Toda a árvore de
-      # JS aqui é build-time — o artefato publicado é js/dist/*.js, que o webpack
-      # gera sem carregar nada de node_modules em runtime —, então um advisory na
-      # toolchain do eslint não é superfície de ataque do pacote.
-      #
-      # Caso concreto que motivou a separação: brace-expansion GHSA-mh99-v99m-4gvg
-      # (range <=5.0.7) chega via minimatch@3, que eslint 9 e eslint-plugin-react
-      # carregam. Não há saída por versão — o fix só existe em 5.0.8+, a linha 1.x
-      # nunca foi corrigida, e eslint-plugin-react (7.37.5, a última publicada)
-      # tem peer eslint ^9.7, então não dá para migrar ao eslint 10. Forçar
-      # overrides de brace-expansion para ^5.0.8 zera o audit mas quebra o lint:
-      # o build CJS da versão 5 exporta `expand` nomeado e o minimatch@3 aninhado
-      # no eslint espera a função default.
+      # Todo o node_modules é de build: o pacote publicado é js/dist/*.js.
+      # Bloqueia só o que chegaria à produção; o resto fica visível no log.
       - name: npm audit (produção — bloqueia)
         working-directory: js
         run: npm audit --audit-level=high --omit=dev
 
-      # Informativo: mantém os advisories de dev visíveis no log sem derrubar o
-      # job. Se algum dia um deles alcançar produção, o step acima falha.
       - name: npm audit (dev — informativo)
         working-directory: js
         continue-on-error: true
         run: npm audit --audit-level=high
 
-  # Paridade de tradução (en ↔ pt-BR) roda UMA vez em job próprio — independe de
-  # versão de PHP/core, então não precisa repetir nas 6 células da matriz `php`.
-  # Vira um box distinto na UI do Actions.
+  # Paridade das traduções (en ↔ pt-BR): não depende da versão do PHP/core.
   locale:
-    name: Locale parity (i18n keys)
+    name: Paridade das traduções
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - name: Harden runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25  # v2
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2  # v2
         with:
           egress-policy: audit
 
@@ -352,48 +286,28 @@ jobs:
       - name: Resolver dependências (composer update)
         run: composer update --no-interaction --no-progress --prefer-stable --no-scripts
 
-      - name: Locale parity (chaves i18n en ↔ pt-BR)
-        run: vendor/bin/phpunit --testsuite locale
+      - name: Chaves en ↔ pt-BR
+        run: vendor/bin/phpunit -c tests/phpunit.unit.xml --testsuite locale
 
-  # §35.13 I1 — bloqueia PRs que introduzam dependências com CVEs conhecidos.
+  # Reprova PRs que tragam dependências com vulnerabilidade conhecida. Só em
+  # repositório público: no privado a ação exige o GitHub Advanced Security
+  # (lá o `composer audit` da matriz já cobre as dependências PHP).
   dependency-review:
     name: Dependency Review
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && !github.event.repository.private
     permissions:
       contents: read
       pull-requests: write
     steps:
-      # 🟡 §35.13/I3 — egress em `audit` (fase 1: registra os destinos, não
-      # bloqueia). A allowed-endpoints abaixo é a lista candidata para quando
-      # promover a `block` — antes, revise o resumo do harden-runner do run e
-      # ajuste-a aos destinos reais.
       - name: Harden runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25  # v2
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2  # v2
         with:
           egress-policy: audit
-          allowed-endpoints: >
-            api.github.com:443
-            github.com:443
-            codeload.github.com:443
-            objects.githubusercontent.com:443
-            release-assets.githubusercontent.com:443
-            raw.githubusercontent.com:443
-            packagist.org:443
-            repo.packagist.org:443
-            getcomposer.org:443
-            registry.npmjs.org:443
-            nodejs.org:443
-            ppa.launchpadcontent.net:443
-            ppa.launchpadcontent.net:80
-            keyserver.ubuntu.com:443
-            azure.archive.ubuntu.com:80
-            esm.ubuntu.com:443
-            motd.ubuntu.com:443
-            pecl.php.net:443
 
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
       - name: Dependency Review
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294  # v5.0.0
         with:

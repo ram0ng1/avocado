@@ -32,7 +32,7 @@ jobs:
       # §35.13 I3 — auditar egress. Esse job toca em FLARUM_API_KEY,
       # então harden-runner é especialmente importante aqui.
       - name: Harden Runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25  # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2  # v2.22.2
         with:
           egress-policy: audit
 
@@ -56,6 +56,8 @@ jobs:
           RELEASE_URL: ${{ github.event.release.html_url || inputs.release_url }}
         run: |
           VERSION="${RELEASE_TAG#v}"
+          # Só o pt-BR: as notas em inglês (depois do marcador) são para o discuss.
+          RELEASE_BODY="${RELEASE_BODY%%<!-- en -->*}"
 
           PAYLOAD=$(jq -n \
             --arg tag "$RELEASE_TAG" \

@@ -51,7 +51,7 @@ jobs:
     steps:
       # §35.13 I3 — auditar todo egress (em modo audit; promover a block depois).
       - name: Harden Runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25  # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2  # v2.22.2
         with:
           egress-policy: audit
 
@@ -66,7 +66,7 @@ jobs:
           ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
 
       - name: Configurar Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020  # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
         with:
           node-version: 20
           cache: 'npm'
@@ -138,6 +138,88 @@ jobs:
             echo "bump=${BUMP}"
           } >> "$GITHUB_OUTPUT"
 
+      # Só pede `php flarum migrate` quando a release traz migração nova desde a
+      # última tag. Arquivo novo em migrations/ é o único sinal confiável: uma
+      # migração já publicada e depois editada não roda de novo.
+      - name: Montar instruções de atualização
+        id: upgrade
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          LATEST="$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n1 || true)"
+
+          if [ -n "$LATEST" ]; then
+            NEW_MIGRATIONS="$(git diff --name-only --diff-filter=A "$LATEST" HEAD -- migrations/ || true)"
+          else
+            NEW_MIGRATIONS="$(git ls-files migrations/)"
+          fi
+
+          {
+            echo "## 📦 Como atualizar"
+            echo
+            if [ -n "$NEW_MIGRATIONS" ]; then
+              echo "> [!IMPORTANT]"
+              echo "> Esta versão altera o banco de dados. Rode \`php flarum migrate\` depois de atualizar."
+              echo
+            fi
+            echo '```bash'
+            echo "composer require ramon/avocado:${VERSION}"
+            if [ -n "$NEW_MIGRATIONS" ]; then
+              echo "php flarum migrate"
+            fi
+            echo "php flarum cache:clear"
+            echo "php flarum assets:publish"
+            echo '```'
+          } > "$RUNNER_TEMP/upgrade.md"
+
+          if [ -n "$NEW_MIGRATIONS" ]; then
+            echo "Migrações novas desde ${LATEST:-<sem tag>}:"
+            echo "$NEW_MIGRATIONS"
+            echo "migrate=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Nenhuma migração nova desde ${LATEST:-<sem tag>}."
+            echo "migrate=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "latest=${LATEST}" >> "$GITHUB_OUTPUT"
+
+          cat "$RUNNER_TEMP/upgrade.md"
+
+      # As notas em inglês, com links absolutos para o GitHub, depois do
+      # pt-BR: prontas para colar fora dele (o tópico do tema no
+      # discuss.flarum.org). O título em inglês de cada PR vem da linha
+      # "EN: …" da descrição do PR; sem ela, vai o título do PR. O marcador
+      # `<!-- en -->` separa as duas partes (o post do fórum leva só o pt-BR).
+      - name: Notas em inglês
+        id: notes_en
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          LATEST_TAG: ${{ steps.upgrade.outputs.latest }}
+          MIGRATE: ${{ steps.upgrade.outputs.migrate }}
+          OUTPUT: ${{ runner.temp }}/notes-en.md
+        run: |
+          set -euo pipefail
+
+          node .github/scripts/release-notes-en.mjs
+
+          DELIM="EOF_$(openssl rand -hex 8)"
+          {
+            echo "footer<<${DELIM}"
+            cat "$RUNNER_TEMP/upgrade.md"
+            echo
+            echo "<!-- en -->"
+            echo
+            echo "---"
+            echo
+            cat "$OUTPUT"
+            echo "${DELIM}"
+          } >> "$GITHUB_OUTPUT"
+
+          cat "$OUTPUT"
+
       - name: Publicar Release
         id: create_release
         uses: release-drafter/release-drafter@978bb0b30c5ee8cdd332ced253758157150d43f0  # v7.10.0
@@ -151,6 +233,9 @@ jobs:
           # Aponta a tag/release para o commit de merge real (não para o
           # merge simulado do evento pull_request).
           commitish: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
+          # "Como atualizar" (com `php flarum migrate` só quando há migração
+          # nova) e as notas em inglês, montados nos passos anteriores.
+          footer: ${{ steps.notes_en.outputs.footer }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -173,6 +258,8 @@ jobs:
           RELEASE_URL: ${{ steps.create_release.outputs.html_url }}
         run: |
           VERSION="${RELEASE_TAG#v}"
+          # Só o pt-BR: as notas em inglês (depois do marcador) são para o discuss.
+          RELEASE_BODY="${RELEASE_BODY%%<!-- en -->*}"
 
           PAYLOAD=$(jq -n \
             --arg tag "$RELEASE_TAG" \
@@ -221,4 +308,5 @@ jobs:
           echo "Bump:        ${{ steps.version.outputs.bump }}"
           echo "Nova versão: ${{ steps.version.outputs.version }}"
           echo "Tag:         ${{ steps.version.outputs.tag }}"
+          echo "Migrate:     ${{ steps.upgrade.outputs.migrate }}"
           echo "Release URL: ${{ steps.create_release.outputs.html_url }}"

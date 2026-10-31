@@ -1,0 +1,40 @@
+name: Bug report
+description: Something in the theme does not work as expected.
+labels: ["correcao"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected and what you saw instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+        3. See ...
+    validations:
+      required: true
+  - type: input
+    id: avocado
+    attributes:
+      label: Avocado version
+      placeholder: "v0.1.2"
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Output of `php flarum info`, browser and device.
+      render: text
+  - type: textarea
+    id: logs
+    attributes:
+      label: Errors
+      description: Browser console errors and the relevant lines of `storage/logs/flarum.log` (look for `[ramon/avocado]`).
+      render: text
