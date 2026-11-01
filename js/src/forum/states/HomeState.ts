@@ -135,12 +135,19 @@ export default class HomeState {
     return result;
   }
 
-  /** O que pode entrar na lista: a página da index + o complemento de `fillFeed`, sem o showcase. */
+  /**
+   * O que pode entrar na lista: a página da index + o complemento de `fillFeed`,
+   * sem as discussões que já estão nos cards da vitrine. Só essas saem (no
+   * máximo `showcaseCount`), não toda discussão com tag da vitrine: com todas
+   * as categorias na vitrine a lista ficava vazia. É também o que o
+   * PreloadHomeFeed conta no servidor.
+   */
   private feedCandidates(): any[] {
+    const inShowcase = new Set((this.showcaseItems.length ? this.showcaseItems : this.showcaseFromStore()).map((d) => String(d?.id?.() ?? '')));
     const seen = new Set<string>();
     return [...this.allDiscussions(), ...this.feedExtra].filter((d) => {
       const id = String(d?.id?.() ?? '');
-      if (!id || seen.has(id) || this.isShowcaseDiscussion(d)) return false;
+      if (!id || seen.has(id) || inShowcase.has(id)) return false;
       seen.add(id);
       return true;
     });
@@ -215,6 +222,7 @@ export default class HomeState {
           const fromStore = this.showcaseFromStore();
           if (fromStore.length >= this.showcaseLimit()) {
             this.showcaseItems = fromStore;
+            this.cachedFeed = null;
             this.showcaseLoading = false;
             this.showcaseFetched = true;
           }
@@ -323,6 +331,7 @@ export default class HomeState {
     const preloaded = this.showcaseFromBoot();
     if (preloaded.length) {
       this.showcaseItems = preloaded;
+      this.cachedFeed = null;
       this.showcaseFetched = true;
       return Promise.resolve();
     }
@@ -336,6 +345,7 @@ export default class HomeState {
       // já preencheu. Resolver síncrono — o skeleton do showcase nunca chega a
       // pintar quando o dado está pronto.
       this.showcaseItems = fromStore;
+      this.cachedFeed = null;
       this.showcaseLoading = false;
       this.showcaseFetched = true;
       return Promise.resolve();
@@ -373,6 +383,7 @@ export default class HomeState {
           .sort((a, b) => (new Date(b.createdAt?.()) as any) - (new Date(a.createdAt?.()) as any))
           .slice(0, limit);
         this.showcaseItems = merged;
+        this.cachedFeed = null;
         this.showcaseLoading = false;
         this.showcaseFetched = true;
         m.redraw();
