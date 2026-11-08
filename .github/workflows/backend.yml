@@ -21,7 +21,7 @@ concurrency:
 jobs:
   run:
     # Fixado por SHA, como as outras actions do repositório (2.x).
-    uses: flarum/framework/.github/workflows/REUSABLE_backend.yml@cdc86216fced7409f218f38808b7fd3fc7882b17  # 2.x
+    uses: flarum/framework/.github/workflows/REUSABLE_backend.yml@493d7e276b56ed9147a0f9fda64613dfbcb55454  # 2.x
     with:
       enable_backend_testing: true
       enable_phpstan: true
