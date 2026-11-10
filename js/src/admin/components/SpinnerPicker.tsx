@@ -1,6 +1,7 @@
 import app from 'flarum/admin/app';
 import trustedHtml from '../../common/trustedHtml';
 import { AdminComponent, getStr, saveSetting, trans } from '../util';
+import SaveStatus from './SaveStatus';
 import { SPINNER_OPTIONS } from '../spinners';
 
 export default class SpinnerPicker extends AdminComponent {
@@ -14,7 +15,10 @@ export default class SpinnerPicker extends AdminComponent {
     const current = getStr('avocado.loading_spinner_style', 'avocado');
     return (
       <div className="Form-group">
-        <label className="AvocadoAdmin-label">{trans('ramon-avocado.admin.settings.loading_spinner_style_label', 'Spinner style')}</label>
+        <label className="AvocadoAdmin-label">
+          {trans('ramon-avocado.admin.settings.loading_spinner_style_label', 'Spinner style')}
+          <SaveStatus settingKey="avocado.loading_spinner_style" />
+        </label>
         <div className="AvocadoSpinnerPicker">
           {SPINNER_OPTIONS.map((opt) => (
             <button
@@ -23,7 +27,7 @@ export default class SpinnerPicker extends AdminComponent {
               onclick={() => {
                 app.data.settings['avocado.loading_spinner_style'] = opt.key;
                 m.redraw();
-                saveSetting({ 'avocado.loading_spinner_style': opt.key });
+                saveSetting({ 'avocado.loading_spinner_style': opt.key }).catch(() => {});
               }}
             >
               <div className="AvocadoSpinnerOption-preview" style={opt.color ? 'color: var(--primary-color)' : ''}>
@@ -46,7 +50,7 @@ export default class SpinnerPicker extends AdminComponent {
                   const val = e.target.value;
                   app.data.settings['avocado.loading_spinner_custom'] = val;
                   clearTimeout(this._customTimer);
-                  this._customTimer = setTimeout(() => saveSetting({ 'avocado.loading_spinner_custom': val }), 800);
+                  this._customTimer = setTimeout(() => saveSetting({ 'avocado.loading_spinner_custom': val }).catch(() => {}), 800);
                 }}
               />
               <p className="helpText">

@@ -1,5 +1,6 @@
 import app from 'flarum/admin/app';
 import { AdminComponent, saveSetting, trans } from '../util';
+import SaveStatus from './SaveStatus';
 
 // Seletor múltiplo de tags; grava um array JSON de ids.
 export default class AdminTagPicker extends AdminComponent {
@@ -18,23 +19,8 @@ export default class AdminTagPicker extends AdminComponent {
     this.saving = false;
     this.tagsLoaded = false;
     this.tags = [];
-    this.selected = new Set();
     this._saveTimer = null;
-
-    // Aceita o array JSON e também o formato antigo, uma string simples.
-    try {
-      const raw = app.data.settings[this.attrs.settingKey];
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        (Array.isArray(parsed) ? parsed : [parsed])
-          .map(String)
-          .filter(Boolean)
-          .forEach((id) => this.selected.add(id));
-      }
-    } catch (_) {
-      const raw = String(app.data.settings[this.attrs.settingKey] || '').trim();
-      if (raw) this.selected.add(raw);
-    }
+    this.loadSelected();
 
     this._onDocClick = (e: Event) => {
       if (this.element && !this.element.contains(e.target as Node | null)) {
@@ -79,6 +65,24 @@ export default class AdminTagPicker extends AdminComponent {
     this._saveTimer = setTimeout(() => this.persist(), 350);
   }
 
+  /** Aceita o array JSON e também o formato antigo, uma string simples. */
+  loadSelected() {
+    this.selected = new Set();
+    try {
+      const raw = app.data.settings[this.attrs.settingKey];
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        (Array.isArray(parsed) ? parsed : [parsed])
+          .map(String)
+          .filter(Boolean)
+          .forEach((id) => this.selected.add(id));
+      }
+    } catch (_) {
+      const raw = String(app.data.settings[this.attrs.settingKey] || '').trim();
+      if (raw) this.selected.add(raw);
+    }
+  }
+
   persist() {
     this.saving = true;
     m.redraw();
@@ -90,6 +94,8 @@ export default class AdminTagPicker extends AdminComponent {
         m.redraw();
       })
       .catch(() => {
+        // Volta para o que o servidor tem: a seleção que falhou não ficou gravada.
+        this.loadSelected();
         this.saving = false;
         m.redraw();
       });
@@ -106,6 +112,7 @@ export default class AdminTagPicker extends AdminComponent {
         <label className="AvocadoAdmin-label AvocadoAdmin-label--saving">
           {label}
           {this.saving && <span className="AvocadoAdmin-savingDot" aria-hidden="true" />}
+          <SaveStatus settingKey={this.attrs.settingKey} />
         </label>
 
         <div className="AvocadoAdmin-tagPicker">

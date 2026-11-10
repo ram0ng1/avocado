@@ -3,10 +3,13 @@ import ExtensionPage from 'flarum/admin/components/ExtensionPage';
 import { override } from 'flarum/common/extend';
 import extendEditTagModal from './extendEditTagModal';
 import { installTagIconSvg } from '../common/tagIconSvg';
+import { rememberConfirmedSettings } from './util';
 
 export { default as extend } from './extend';
 
 app.initializers.add('ramon-avocado', () => {
+  rememberConfirmedSettings();
+
   // Todos os controles salvam sozinhos: o botão "Salvar" nativo só confundiria.
   override(ExtensionPage.prototype, 'submitButton', function (original) {
     if (this.extension?.id === 'ramon-avocado') return null;

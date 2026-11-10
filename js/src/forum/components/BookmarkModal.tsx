@@ -3,6 +3,7 @@ import Modal from 'flarum/common/components/Modal';
 import Button from 'flarum/common/components/Button';
 
 import { trans } from '../utils';
+import { requestErrorMessage, showRequestError, validationErrors } from '../../common/requestErrors';
 import { toggleBookmark, updateBookmark, bookmarkNote, bookmarkRemindAt } from '../utils/bookmarks';
 import { is24HourClock } from '../utils/clock';
 
@@ -19,10 +20,14 @@ const DAYS_UNTIL_TOMORROW = 1;
 const DAYS_UNTIL_NEXT_WEEK = 7;
 const MORNING_REMINDER_HOUR = 9;
 
+/** Mesmos limites do UpdateBookmarkController. */
+const NOTE_MAX_LENGTH = 1000;
+const NOTE_COUNTER_FROM = 800;
+
 /** Ordem que um relógio de 12h mostra: meia-noite e meio-dia são "12". */
 const HOURS_IN_12_HOUR_CLOCK = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
-/** Lembrete personalizado que não dá para salvar. `message` já vem traduzida para o alerta. */
+/** Lembrete personalizado que não dá para salvar. `message` já vem traduzida. */
 class InvalidReminderError extends Error {
   constructor(message: string) {
     super(message);
@@ -46,6 +51,10 @@ export default class BookmarkModal extends Modal<any> {
   /** Hora sempre guardada em 0–23; o modo 12h só muda como ela é exibida. */
   private reminderHour = MORNING_REMINDER_HOUR;
   private reminderMinute = 0;
+  /** Erros mostrados embaixo do campo a que se referem. */
+  private noteError: string | null = null;
+  private reminderError: string | null = null;
+  private formError: string | null = null;
 
   oninit(vnode: any) {
     super.oninit(vnode);
@@ -94,11 +103,25 @@ export default class BookmarkModal extends Modal<any> {
               id="avocado-bookmark-note"
               className="FormControl AvocadoBookmarkModal-note"
               rows="3"
-              maxlength="1000"
+              maxlength={NOTE_MAX_LENGTH}
               placeholder={trans('ramon-avocado.forum.bookmarks.note_placeholder', 'Why are you saving this? (optional)') as string}
               value={this.note}
-              oninput={(e: InputEvent) => (this.note = (e.target as HTMLTextAreaElement).value)}
+              aria-invalid={this.noteError ? 'true' : undefined}
+              aria-describedby={this.noteError ? 'avocado-bookmark-note-error' : undefined}
+              oninput={(e: InputEvent) => {
+                this.note = (e.target as HTMLTextAreaElement).value;
+                this.noteError = null;
+              }}
             />
+            {this.note.length >= NOTE_COUNTER_FROM && (
+              <p className="AvocadoBookmarkModal-counter" aria-live="polite">
+                {trans('ramon-avocado.forum.bookmarks.note_counter', '{count} of {max} characters', {
+                  count: this.note.length,
+                  max: NOTE_MAX_LENGTH,
+                })}
+              </p>
+            )}
+            {this.renderError('avocado-bookmark-note-error', this.noteError)}
           </div>
 
           <div className="Form-group">
@@ -109,7 +132,12 @@ export default class BookmarkModal extends Modal<any> {
               id="avocado-bookmark-reminder"
               className="FormControl"
               value={this.reminderChoice}
-              onchange={(e: Event) => (this.reminderChoice = (e.target as HTMLSelectElement).value as ReminderChoice)}
+              aria-invalid={this.reminderError && this.reminderChoice !== 'custom' ? 'true' : undefined}
+              aria-describedby={this.reminderError ? 'avocado-bookmark-reminder-error' : undefined}
+              onchange={(e: Event) => {
+                this.reminderChoice = (e.target as HTMLSelectElement).value as ReminderChoice;
+                this.reminderError = null;
+              }}
             >
               {choices.map((c) => (
                 <option key={c.key} value={c.key}>
@@ -120,6 +148,9 @@ export default class BookmarkModal extends Modal<any> {
           </div>
 
           {this.reminderChoice === 'custom' && this.renderCustomReminderFields()}
+          {this.renderError('avocado-bookmark-reminder-error', this.reminderError)}
+
+          {this.renderError('avocado-bookmark-form-error', this.formError)}
 
           <div className="Form-group AvocadoBookmarkModal-actions">
             <Button className="Button Button--primary AvocadoBookmarkModal-save" type="submit" loading={this.loading}>
@@ -136,10 +167,7 @@ export default class BookmarkModal extends Modal<any> {
               type="button"
               icon="far fa-trash-alt"
               disabled={this.loading}
-              onclick={() => {
-                toggleBookmark(this.attrs.discussion);
-                this.hide();
-              }}
+              onclick={() => this.removeWithUndo()}
             >
               {trans('ramon-avocado.forum.bookmarks.unsave', 'Remove from saved')}
             </Button>
@@ -152,12 +180,14 @@ export default class BookmarkModal extends Modal<any> {
   onsubmit(e: Event) {
     e.preventDefault();
 
+    this.noteError = this.reminderError = this.formError = null;
+
     let remindAt: Date | null;
     try {
       remindAt = this.resolveReminderInstant();
     } catch (error) {
       if (!(error instanceof InvalidReminderError)) throw error;
-      app.alerts.show({ type: 'error' }, error.message);
+      this.reminderError = error.message;
 
       return;
     }
@@ -166,10 +196,82 @@ export default class BookmarkModal extends Modal<any> {
 
     updateBookmark(this.attrs.discussion, { note: this.note.trim() || null, remindAt: remindAt?.toISOString() ?? null })
       .then(() => this.hide())
-      .catch(() => {
+      .catch((error: any) => {
         this.loaded();
-        app.alerts.show({ type: 'error' }, trans('ramon-avocado.forum.bookmarks.update_error', 'Could not update your bookmark. Please try again.'));
+        this.showServerErrors(error);
       });
+  }
+
+  /** Cada erro de validação vai para baixo do seu campo; o resto, para baixo do formulário. */
+  private showServerErrors(error: any): void {
+    const errors = validationErrors(error);
+
+    for (const { field, message } of errors) {
+      if (field === 'note') this.noteError = message;
+      else if (field === 'remindAt') this.reminderError = message;
+      else this.formError = message;
+    }
+
+    if (!errors.length) {
+      this.formError = requestErrorMessage(
+        error,
+        trans('ramon-avocado.forum.bookmarks.update_error', 'Could not save your changes. Check your connection and try again.') as string
+      );
+    }
+
+    m.redraw();
+  }
+
+  /** Remove na hora e oferece desfazer: nota e lembrete voltam junto. */
+  private removeWithUndo(): void {
+    const discussion = this.attrs.discussion;
+    const note = bookmarkNote(discussion) || null;
+    const remindAt = bookmarkRemindAt(discussion);
+
+    toggleBookmark(discussion);
+    this.hide();
+
+    const alert = app.alerts.show(
+      {
+        type: 'success',
+        controls: [
+          // Sem key: o Alert do core junta estes controles ao botão de fechar, que não tem chave.
+          // eslint-disable-next-line react/jsx-key
+          <Button
+            className="Button Button--link"
+            onclick={() => {
+              app.alerts.dismiss(alert);
+              updateBookmark(discussion, {
+                note,
+                remindAt: remindAt && remindAt.getTime() > Date.now() ? remindAt.toISOString() : null,
+              }).catch((error: any) =>
+                showRequestError(
+                  error,
+                  trans(
+                    'ramon-avocado.forum.bookmarks.toggle_error',
+                    'Could not update your saved list. Check your connection and try again.'
+                  ) as string
+                )
+              );
+            }}
+          >
+            {trans('ramon-avocado.forum.bookmarks.undo', 'Undo')}
+          </Button>,
+        ],
+      },
+      trans('ramon-avocado.forum.bookmarks.removed', 'Removed from saved.')
+    );
+  }
+
+  private renderError(id: string, message: string | null) {
+    if (!message) return null;
+
+    return (
+      <p id={id} className="AvocadoBookmarkModal-error" role="alert">
+        <i className="fas fa-exclamation-circle" aria-hidden="true" />
+        {message}
+      </p>
+    );
   }
 
   /**
@@ -190,7 +292,13 @@ export default class BookmarkModal extends Modal<any> {
 
     if (chosen.getTime() <= Date.now()) {
       throw new InvalidReminderError(
-        trans('ramon-avocado.forum.bookmarks.reminder_invalid', 'That date and time have already passed. Choose a moment in the future.') as string
+        trans('ramon-avocado.forum.bookmarks.reminder_invalid', 'That time has already passed. Choose a time from now on.') as string
+      );
+    }
+
+    if (chosen.getTime() > latestReminderDate().getTime()) {
+      throw new InvalidReminderError(
+        trans('ramon-avocado.forum.bookmarks.reminder_too_far', 'Reminders can be set up to 1 year from today. Choose a closer date.') as string
       );
     }
 
@@ -215,8 +323,14 @@ export default class BookmarkModal extends Modal<any> {
           className="FormControl AvocadoBookmarkModal-date"
           aria-label={trans('ramon-avocado.forum.bookmarks.reminder_date_label', 'Date') as string}
           min={formatAsDateInputValue(new Date())}
+          max={formatAsDateInputValue(latestReminderDate())}
           value={this.reminderDate}
-          oninput={(e: InputEvent) => (this.reminderDate = (e.target as HTMLInputElement).value)}
+          aria-invalid={this.reminderError ? 'true' : undefined}
+          aria-describedby={this.reminderError ? 'avocado-bookmark-reminder-error' : undefined}
+          oninput={(e: InputEvent) => {
+            this.reminderDate = (e.target as HTMLInputElement).value;
+            this.reminderError = null;
+          }}
         />
 
         <div className="AvocadoBookmarkModal-time">
@@ -295,6 +409,14 @@ export default class BookmarkModal extends Modal<any> {
       </select>
     );
   }
+}
+
+/** O último instante aceito pelo servidor: daqui a exatamente 1 ano. */
+function latestReminderDate(): Date {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() + 1);
+
+  return date;
 }
 
 function padTwoDigits(value: number): string {

@@ -2,6 +2,9 @@ ramon-avocado:
   admin:
     loading: "Carregando…"
     search_tags: "Buscar tags…"
+    saving: "Salvando…"
+    saved: Salvo
+    save_failed: Não foi possível salvar. Verifique sua conexão e tente de novo.
     settings:
       spinner_option_avocado: Avocado
       spinner_option_orbital: Orbital
@@ -12,11 +15,11 @@ ramon-avocado:
       spinner_option_pl3: Pulso
       spinner_option_custom: Personalizado
       # Sections
-      section_homepage: Página Inicial
-      section_auth: Login e Cadastro
+      section_homepage: Página inicial
+      section_auth: Login e cadastro
       section_search: Busca
       section_bookmarks: Favoritos
-      section_user_card: Cartão de Usuário
+      section_user_card: Cartão de usuário
       section_presence: Presença
       section_cakeday: Aniversário de conta
       section_posts: Posts
@@ -61,8 +64,8 @@ ramon-avocado:
       font_family_custom: "Personalizada…"
       font_custom_family_label: Família de fonte personalizada
       font_custom_family_help: "Uma lista font-family de CSS, por exemplo: Noto Sans, sans-serif. O tema só aplica o nome — carregue o arquivo da fonte por conta própria (Cabeçalho personalizado ou CSS personalizado). Cada nome só pode ter letras, números, espaços, hifens e sublinhados; o resto é ignorado."
-      section_team: Página da Equipe
-      section_hero_image_tags: Imagem do hero nas discussões
+      section_team: Página da equipe
+      section_hero_image_tags: Imagem de capa nas discussões
       section_discussion: Página de discussão
       section_home_categories: Categorias em destaque
       section_showcase: Showcase / Portfólio
@@ -73,7 +76,7 @@ ramon-avocado:
 
       # Casca das configurações: abas + busca
       group_appearance: Aparência
-      group_home: Página Inicial
+      group_home: Página inicial
       group_discussions: Discussões
       group_community: Comunidade
       group_access: Acesso
@@ -123,7 +126,7 @@ ramon-avocado:
       post_badge_position_side_icons: Embaixo do avatar — só ícones, lado a lado
 
       # Featured / categories on homepage
-      featured_tags_label: Categorias em Destaque
+      featured_tags_label: Categorias em destaque
       featured_tags_help: As categorias selecionadas aparecem com um emblema de estrela na página inicial e na página de categorias.
       featured_tags_empty: Nenhuma tag encontrada.
       tag_picker_placeholder: "Selecionar tags…"
@@ -133,14 +136,14 @@ ramon-avocado:
       showcase_enabled_help: Mostra um carrossel de showcase na página inicial com discussões das tags selecionadas.
       showcase_tag_label: Tags do Showcase / Portfólio
       showcase_tag_help: Discussões dessas tags aparecem no carrossel de showcase na página inicial.
-      showcase_heading_label: Título da Seção Showcase
+      showcase_heading_label: Título da seção Showcase
       showcase_heading_help: Título personalizado para a seção de showcase. Deixe vazio para usar o padrão.
-      showcase_count_label: Número de Itens no Showcase
+      showcase_count_label: Número de itens no Showcase
       showcase_count_help: Exibe de 1 a 5 cards de discussão na seção de showcase.
-      showcase_image_style_label: Estilo de Imagem do Card
+      showcase_image_style_label: Estilo de imagem do card
       showcase_image_style_help: Escolha entre exibição compacta ou em altura completa da imagem.
-      showcase_image_style_default: Padrão (Compacto)
-      showcase_image_style_full: Imagem Completa
+      showcase_image_style_default: Padrão (compacto)
+      showcase_image_style_full: Imagem completa
 
       # Lista de discussões da home
       section_home_feed: Lista de discussões
@@ -154,8 +157,8 @@ ramon-avocado:
       # Section title overrides
       section_titles_heading: Títulos de seção
       section_titles_help: Substitui os títulos das seções da página inicial. Deixe qualquer campo vazio para usar o padrão do pacote de idiomas.
-      categories_heading_label: Título da Seção Categorias
-      popular_heading_label: Título de Discussões Populares
+      categories_heading_label: Título da seção Categorias
+      popular_heading_label: Título de discussões populares
       following_heading_label: Título de Seguindo
 
       # Online users
@@ -167,22 +170,22 @@ ramon-avocado:
       # Auth & banner
       custom_auth_modal_label: Usar modal de login / cadastro personalizado
       custom_auth_modal_help: "Exibe o painel lateral personalizado nos modais Entrar, Cadastrar-se e Esqueceu a Senha. Desative para usar o modal padrão do Flarum."
-      auth_image_label: Imagem do Modal de Autenticação
+      auth_image_label: Imagem do modal de autenticação
       auth_image_help: "Imagem de fundo exibida no painel direito dos modais de login, cadastro e recuperação de senha."
-      banner_image_label: Imagem do Banner
-      banner_image_help: Envie a imagem do banner hero exibida no topo do fórum.
+      banner_image_label: Imagem do banner
+      banner_image_help: Envie a imagem do banner exibida no topo do fórum.
       show_auth_buttons_label: Mostrar botões Entrar / Cadastrar-se no cabeçalho para convidados
       show_auth_buttons_help: Exibe os botões Entrar e Cadastrar-se no menu secundário do cabeçalho para convidados.
       show_guest_cta_label: "Mostrar botões Entrar / Cadastrar-se no banner da página inicial"
       show_guest_cta_help: "Exibe os botões de chamada dentro do banner da página inicial, para convidados."
-      hero_image_position_label: Posição da Imagem do Hero
+      hero_image_position_label: Posição da imagem do banner
       hero_image_position_help: "Valor CSS background-position, ex.: 'center top' ou '50% 20%'."
 
       # Custom hero (HTML)
-      custom_hero_enabled_label: Usar conteúdo personalizado no hero (HTML)
-      custom_hero_enabled_help: "Substitui o conteúdo padrão do hero (ícone, título, descrição, botões Entrar/Cadastrar-se) pelo seu HTML. O wrapper do banner, a imagem de fundo e o overlay permanecem. Exibido apenas para convidados — igual ao hero padrão."
-      custom_hero_html_label: HTML do hero personalizado
-      custom_hero_html_help: "HTML injetado dentro do overlay do banner hero (substitui .AvocadoHome-heroBannerContent). Tags style inline são suportadas."
+      custom_hero_enabled_label: Usar conteúdo personalizado no banner (HTML)
+      custom_hero_enabled_help: "Substitui o conteúdo padrão do banner (ícone, título, descrição, botões Entrar/Cadastrar-se) pelo seu HTML. O wrapper do banner, a imagem de fundo e o overlay permanecem. Exibido apenas para convidados — igual ao banner padrão."
+      custom_hero_html_label: HTML do banner personalizado
+      custom_hero_html_help: "HTML injetado dentro do overlay do banner (substitui .AvocadoHome-heroBannerContent). Tags style inline são suportadas."
       custom_hero_html_placeholder: |-
         <div class="AvocadoHome-heroBannerContent">
           <h1 class="AvocadoHome-heroBannerTitle">Bem-vindo!</h1>
@@ -209,7 +212,7 @@ ramon-avocado:
 
       # Presence
       presence_enabled_label: Mostrar quem está lendo a discussão
-      presence_enabled_help: 'Indicador ao vivo "N lendo agora" no hero da discussão, com avatares dos leitores. Requer a extensão Realtime; usuários com "divulgar online" desativado nunca são listados.'
+      presence_enabled_help: 'Indicador ao vivo "N lendo agora" no cabeçalho da discussão, com avatares dos leitores. Requer a extensão Realtime; usuários com "divulgar online" desativado nunca são listados.'
 
       # Cakeday
       cakeday_enabled_label: Mostrar emblema de aniversário de conta
@@ -226,7 +229,7 @@ ramon-avocado:
       threads_style_help: Exibe o post original como um card e indenta as respostas com uma borda à esquerda, no estilo do app Threads.
 
       # Discussion hero decoration icon
-      hero_decoration_icon_label: Mostrar ícone de tag secundária no hero da discussão
+      hero_decoration_icon_label: Mostrar ícone de tag secundária no cabeçalho da discussão
       hero_decoration_icon_help: Exibe o ícone da tag secundária como um elemento decorativo grande no lado direito do cabeçalho da discussão.
       hero_decoration_icon_opacity_label: Opacidade do ícone (0-100)
       hero_decoration_icon_opacity_help: Define a opacidade do ícone decorativo como uma porcentagem. 100 = totalmente opaco, 0 = invisível.
@@ -269,7 +272,7 @@ ramon-avocado:
       logo_colored_help: "O SVG assume a cor primária no lugar das cores do arquivo, e acompanha os destaques coloridos de cada tag. Só a forma do SVG é usada."
       logo_offset_y_label: "Ajuste vertical (px)"
       logo_offset_y_help: "Sobe (negativo) ou desce (positivo) o logo no cabeçalho, de -30 a 30. Para logos cujo desenho não fica centrado no arquivo."
-      logo_enabled_label: Ativar Logotipo Personalizado
+      logo_enabled_label: Ativar logotipo personalizado
       logo_enabled_help: Exibe o logotipo personalizado no cabeçalho.
       link_icon_svg_label: Ícone de link interno (SVG)
       link_icon_svg_help: "Substitui o favicon nos links para outras discussões do fórum (#123). É pintado na cor do link, então acompanha os destaques coloridos — só o formato do SVG é usado."
@@ -284,18 +287,18 @@ ramon-avocado:
       # Links / avatar
       hide_links_for_guests_label: Ocultar links para convidados
       hide_links_for_guests_help: Impede que convidados sigam links nos posts. Clicar em um link mostra um aviso de Entrar / Cadastrar-se.
-      custom_default_avatar_label: Avatar Padrão Personalizado
+      custom_default_avatar_label: Avatar padrão personalizado
       custom_default_avatar_help: Envie uma imagem de avatar padrão personalizada para usuários sem avatar.
 
       # Hero image on discussions (per-tag opt-in)
-      hero_image_tags_label: Tags que pedem imagem de hero
+      hero_image_tags_label: Tags que pedem imagem de capa
       hero_image_tags_help: "Quando o usuário adiciona uma dessas tags a uma nova discussão, o compositor revela um campo opcional para enviar uma imagem. A imagem enviada é mostrada como fundo do cabeçalho da discussão e como a primeira imagem no showcase da página inicial."
 
       # Team page
       team_enabled_label: Ativar página Equipe
       team_enabled_help: Mostra a página /team com os membros dos grupos selecionados.
       team_title_label: Título da página
-      team_title_placeholder: Nossa Equipe
+      team_title_placeholder: Nossa equipe
       team_desc_label: Descrição da página
       team_desc_placeholder: Conheça as pessoas por trás da comunidade.
       team_groups_label: Grupos a exibir
@@ -338,18 +341,18 @@ ramon-avocado:
       svg_invalid: Isso não é um arquivo SVG. Envie um .svg válido.
       svg_too_large: "O SVG é muito grande (máximo de {max} KB)."
     footer_settings:
-      footer_enabled: Ativar Rodapé Personalizado
-      footer_company: Informações da Empresa
-      footer_company_name: Nome da Empresa
-      footer_company_description: Descrição da Empresa
+      footer_enabled: Ativar rodapé personalizado
+      footer_company: Informações da empresa
+      footer_company_name: Nome da empresa
+      footer_company_description: Descrição da empresa
       footer_company_description_placeholder: "Breve descrição sobre sua empresa ou fórum..."
-      footer_company_logo_url: URL do Logotipo da Empresa
-      footer_links_config: Configuração de Links do Rodapé
+      footer_company_logo_url: URL do logotipo da empresa
+      footer_links_config: Configuração de links do rodapé
       footer_links_help_json: "Configure as colunas de links do rodapé em formato JSON. Cada coluna deve ter um título e uma lista de links com rótulo e URL."
-      footer_footer_bottom: Parte Inferior do Rodapé
+      footer_footer_bottom: Parte inferior do rodapé
       footer_copyright_text: Texto de Copyright
-      footer_social: Links Sociais
-      footer_show_social: Mostrar Links de Mídias Sociais
+      footer_social: Links sociais
+      footer_show_social: Mostrar links de mídias sociais
       footer_social_help_json: "Configure links de mídias sociais em formato JSON. Use as chaves: facebook, twitter, linkedin, instagram, youtube."
   lib:
     footer:
@@ -402,7 +405,7 @@ ramon-avocado:
       no_posts_found: "Nenhum post encontrado para \"{q}\"."
       no_posts_match: "Nenhum post corresponde a esses filtros."
       no_users_found: "Nenhum usuário encontrado para \"{q}\"."
-      no_discussions_query: "Nenhuma discussão encontrada para \"{q}\"."
+      no_discussions_query: "Nenhuma discussão com \"{q}\". Tente outras palavras ou busque em Posts."
       no_discussions_filter: "Nenhuma discussão corresponde a esses filtros."
       enter_search_term: "Digite um termo para buscar usuários."
       posts_for: "Posts para"
@@ -430,7 +433,7 @@ ramon-avocado:
       hero_image_add: Adicionar imagem
       hero_image_replace: Trocar imagem
       hero_image_remove: Remover imagem
-      hero_image_remove_confirm: Remover a imagem do hero desta discussão?
+      hero_image_remove_confirm: Remover a imagem de capa desta discussão?
     home:
       nav_label: Navegação
       nav_more: Mais
@@ -451,15 +454,14 @@ ramon-avocado:
       composer_body_placeholder: "Compartilhe suas ideias…"
       composer_close: Fechar
       composer_edit: Editar
-      composer_post: Publicar Discussão
+      composer_post: Publicar discussão
       composer_preview: Prévia
       composer_preview_empty: "Nada para visualizar."
       composer_submitting: "Publicando…"
       composer_title_placeholder: "Título da discussão…"
-      composer_hero_image_label: Imagem do hero (opcional)
+      composer_hero_image_label: Imagem de capa (opcional)
       composer_hero_image_picked: Imagem selecionada
       composer_hero_image_remove: Remover imagem
-      composer_hero_image_upload_failed: "Não foi possível enviar a imagem do hero. Você pode tentar novamente na página da discussão."
       discussion_singular: discussão
       discussions: discussões
       filter_tags: Filtrar tags
@@ -469,7 +471,7 @@ ramon-avocado:
       like_count_singular: "1 curtida"
       log_in: Entrar
       more: mais
-      new_discussion: Nova Discussão
+      new_discussion: Nova discussão
       no_tags_found: Nenhuma tag encontrada
       or: "ou"
       latest_heading: Discussões recentes
@@ -488,7 +490,7 @@ ramon-avocado:
       see_other_reply_singular: Ver outra {count} resposta
       sign_up: Cadastrar-se
       sort_trending: Em alta
-      start_discussion: "Conte a todos no que você está trabalhando..."
+      start_discussion: "Comece uma conversa…"
       today_time: "Hoje, {time}"
       untitled: Sem título
       view: Ver
@@ -498,7 +500,7 @@ ramon-avocado:
       discussion_singular_card: "1 discussão"
       discussion_plural_card: "{count} discussões"
       yesterday_time: "Ontem, {time}"
-      showcase_heading: "Showcase"
+      showcase_heading: "Destaques"
       ws_update_singular: "1 nova discussão"
       ws_update_plural: "{count} novas discussões"
     support:
@@ -515,13 +517,13 @@ ramon-avocado:
       title: Salvos
       save: Salvar
       unsave: Remover dos salvos
-      edit: Editar favorito
-      empty: "Você ainda não salvou nenhuma discussão."
+      edit: Editar salvo
+      empty: "Nada salvo ainda. Toque no ícone de marcador em qualquer discussão para guardá-la aqui."
       empty_posts: "Você ainda não salvou nenhum post."
       guest_prompt: Entre para salvar discussões e encontrá-las aqui depois.
-      toggle_error: Não foi possível atualizar seus salvos. Tente novamente.
-      update_error: Não foi possível atualizar seu favorito. Tente novamente.
-      modal_title: Favorito
+      toggle_error: Não foi possível atualizar seus salvos. Verifique sua conexão e tente de novo.
+      update_error: Não foi possível salvar as alterações. Verifique sua conexão e tente de novo.
+      modal_title: Salvo
       modal_save: Salvar
       modal_cancel: Cancelar
       note_label: Nota
@@ -532,7 +534,7 @@ ramon-avocado:
       reminder_tomorrow: Amanhã de manhã
       reminder_week: Semana que vem
       reminder_custom: "Escolher data e hora"
-      reminder_invalid: Essa data e hora já passaram. Escolha um momento no futuro.
+      reminder_invalid: Esse horário já passou. Escolha um horário a partir de agora.
       reminder_invalid_date: Escolha uma data para o lembrete.
       reminder_date_label: Data
       reminder_hour_label: Hora
@@ -540,10 +542,14 @@ ramon-avocado:
       reminder_meridiem_label: AM ou PM
       reminder_am: AM
       reminder_pm: PM
+      reminder_too_far: Lembretes podem ser marcados para até um ano. Escolha uma data mais próxima.
+      note_counter: "{count}/{max}"
+      removed: Removido dos salvos.
+      undo: Desfazer
     notifications:
       bookmark_reminder_text: Lembrete da sua discussão salva
     settings:
-      notify_bookmark_reminder_label: Lembretes de favoritos
+      notify_bookmark_reminder_label: Lembretes de itens salvos
     presence:
       reading_now: "{count} lendo agora"
     cakeday:
@@ -572,7 +578,7 @@ ramon-avocado:
       home: Início
       discussion_singular: discussão
       discussion_plural: discussões
-      other_tags_label: Outras Tags
+      other_tags_label: Outras tags
       featured: Destaque
       all_discussions: Todas as discussões
       empty: "Nenhuma discussão nesta categoria ainda."
@@ -601,6 +607,23 @@ ramon-avocado:
       guest_pill: Entre para responder
       hide_preview: Ocultar prévia
       resize_handle: Arraste para redimensionar · puxe para baixo para minimizar
+      draft_failed: Não foi possível salvar o rascunho. Tente de novo.
+      publish_failed: Não foi possível publicar a discussão. Verifique sua conexão e tente de novo.
+      missing: "Falta: {items}"
+      missing_title: título
+      missing_body: texto
+      missing_tags: tags
+
+    cover_image:
+      help: "JPG, PNG, GIF ou WebP · até 8 MB"
+      unsupported_type: Este tipo de imagem não é aceito. Use um arquivo JPG, PNG, GIF ou WebP.
+      too_large_bytes: "Esta imagem é grande demais. Escolha uma de até {max}."
+      too_large_pixels: Esta imagem tem pixels demais. Escolha uma menor (até 40 megapixels).
+      unreadable: Não foi possível ler este arquivo como imagem. Tente outro arquivo.
+      upload_failed: Não foi possível enviar a imagem. Verifique sua conexão e tente de novo.
+      remove_failed: Não foi possível remover a imagem. Verifique sua conexão e tente de novo.
+      upload_failed_after_publish: "Sua discussão foi publicada, mas a imagem de capa não foi enviada ({reason}). Adicione-a pelo botão “Adicionar imagem” no topo da discussão."
+      connection_problem: problema de conexão
 
     changelog:
       title: Changelog
@@ -656,19 +679,19 @@ ramon-avocado:
   # Mensagens de erro devolvidas pela API (server-side). Fora de .forum./.admin.
   # de propósito: não são embarcadas no bundle JS.
   api:
-    invalid_discussion_id: "ID de discussão inválido."
-    discussion_not_found: "Discussão não encontrada."
-    invalid_note: "Nota inválida."
-    note_too_long: "A nota é longa demais."
-    invalid_reminder_date: "Data de lembrete inválida."
-    reminder_must_be_future: "O lembrete precisa ser no futuro."
-    reminder_too_far: "O lembrete está longe demais no futuro."
-    file_not_readable: "Não foi possível ler o arquivo enviado."
-    no_file_uploaded: "Nenhum arquivo enviado."
-    file_too_large: "Arquivo grande demais (máx. {max})."
-    image_too_large: "Imagem grande demais (máx. 40 megapixels)."
-    too_many_reminders: "Você pode ter até {max} lembretes pendentes."
-    unsupported_image_type: "Tipo de imagem não suportado."
+    invalid_discussion_id: "Essa discussão não foi encontrada. Recarregue a página e tente de novo."
+    discussion_not_found: "Essa discussão não existe mais ou você não tem acesso a ela."
+    invalid_note: "Não foi possível salvar essa nota. Tente escrever de novo."
+    note_too_long: "A nota pode ter até 1.000 caracteres. Encurte um pouco o texto."
+    invalid_reminder_date: "Não entendemos essa data. Escolha o dia e a hora de novo."
+    reminder_must_be_future: "Escolha um horário a partir de agora."
+    reminder_too_far: "Lembretes podem ser marcados para até 1 ano a partir de hoje. Escolha uma data mais próxima."
+    file_not_readable: "Não conseguimos abrir essa imagem. Ela pode estar corrompida — tente outra."
+    no_file_uploaded: "Escolha uma imagem para enviar."
+    file_too_large: "A imagem tem mais de {max}. Envie uma versão menor ou mais comprimida."
+    image_too_large: "A imagem é grande demais (até 8000 × 5000 pixels). Reduza o tamanho e envie de novo."
+    too_many_reminders: "Você já tem {max} lembretes marcados, o máximo. Quando um deles chegar, você poderá marcar outro — ou remova um que não precise mais."
+    unsupported_image_type: "Esse formato não é aceito. Envie uma imagem JPG, PNG, GIF ou WebP."
     svg_forbidden_declaration: "O SVG contém uma declaração DOCTYPE ou ENTITY proibida."
     svg_parse_failed: "SVG inválido: não foi possível interpretar o XML."
     svg_invalid: "O arquivo enviado precisa ser um SVG válido."

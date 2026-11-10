@@ -39,8 +39,29 @@
   top: 14px;
   right: 16px;
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 6px;
+  max-width: min(360px, calc(100% - 32px));
   z-index: 2;
+}
+
+// Erro do envio/remoção da imagem, logo abaixo dos botões que o causaram.
+.DiscussionHero-imageError {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  flex-basis: 100%;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: left;
+
+  .fas { margin-top: 2px; color: #fca5a5; }
 }
 
 .DiscussionHero-imageBtn {

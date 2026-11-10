@@ -2,7 +2,7 @@ import app from 'flarum/forum/app';
 import Component from 'flarum/common/Component';
 import type { ComponentAttrs } from 'flarum/common/Component';
 import Avatar from 'flarum/common/components/Avatar';
-import { trans, displayName, tagsRequireHeroImage, tagsAreChangelogProducts } from '../../utils';
+import { trans, displayName, tagsRequireHeroImage, tagsAreChangelogProducts, heroImageProblem, HERO_IMAGE_ACCEPT } from '../../utils';
 import InlineComposerState from '../../states/InlineComposerState';
 import TagPicker from './TagPicker';
 import ComposerTextEditor from './ComposerTextEditor';
@@ -32,9 +32,17 @@ export interface IInlineComposerAttrs extends ComponentAttrs {
 export function renderDraftButton(state: InlineComposerState, className = 'Button Button--icon Button--link') {
   if (!state.canSaveDraft()) return null;
 
-  const label = trans('fof-drafts.forum.composer.title', 'Save Draft');
-  const icon = state.draftJustSaved ? 'fas fa-check' : state.savingDraft ? 'fas fa-spinner fa-spin' : 'fas fa-floppy-disk';
-  const cls = `${className} AvocadoHome-composerDraftBtn${state.savingDraft ? ' saving' : ''}${state.draftJustSaved ? ' justSaved' : ''}`;
+  const label = state.draftFailed
+    ? trans('ramon-avocado.forum.composer.draft_failed', 'Could not save the draft. Try again.')
+    : trans('fof-drafts.forum.composer.title', 'Save Draft');
+  const icon = state.draftFailed
+    ? 'fas fa-exclamation-triangle'
+    : state.draftJustSaved
+      ? 'fas fa-check'
+      : state.savingDraft
+        ? 'fas fa-spinner fa-spin'
+        : 'fas fa-floppy-disk';
+  const cls = `${className} AvocadoHome-composerDraftBtn${state.savingDraft ? ' saving' : ''}${state.draftJustSaved ? ' justSaved' : ''}${state.draftFailed ? ' failed' : ''}`;
 
   return (
     <button
@@ -117,13 +125,17 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
                 : trans('ramon-avocado.forum.home.composer_title_placeholder', 'Discussion title…')
             }
             value={state.title}
+            aria-invalid={state.fieldErrors.title ? 'true' : undefined}
+            aria-describedby={state.fieldErrors.title ? 'avocado-composer-title-error' : undefined}
             oninput={(e: Event) => {
               state.title = (e.target as HTMLInputElement).value;
+              delete state.fieldErrors.title;
             }}
           />
         </div>
+        {renderFieldError('avocado-composer-title-error', state.fieldErrors.title)}
 
-        <div className="AvocadoHome-composer-tags">
+        <div className={`AvocadoHome-composer-tags${this.onlyTagsMissing() ? ' is-missing' : ''}`}>
           <TagPicker state={state} />
         </div>
 
@@ -140,6 +152,7 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
             }
             onchange={(value: string) => {
               state.body = value;
+              delete state.fieldErrors.content;
               m.redraw();
             }}
             onsubmit={() => this.submit()}
@@ -148,6 +161,8 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
             closeControl={this.renderCloseButton()}
             submitControl={this.renderSubmitButton()}
           />
+
+          {renderFieldError('avocado-composer-content-error', state.fieldErrors.content)}
 
           <div className="AvocadoHome-composerPreviewArea">
             <article className="CommentPost Post">
@@ -184,10 +199,22 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
     const onPick = (e: Event) => {
       const input = e.target as HTMLInputElement;
       const file = input.files?.[0] || null;
-      if (file && file.type.startsWith('image/')) state.setHeroImageFile(file);
       input.value = '';
-      m.redraw();
+      if (!file) return;
+
+      heroImageProblem(file).then((problem) => {
+        state.heroImageError = problem;
+        if (!problem) state.setHeroImageFile(file);
+        m.redraw();
+      });
     };
+
+    const error = state.heroImageError ? (
+      <p className="AvocadoHome-composerHeroError" role="alert">
+        <i className="fas fa-exclamation-circle" aria-hidden="true" />
+        {state.heroImageError}
+      </p>
+    ) : null;
 
     if (previewUrl) {
       return (
@@ -221,11 +248,13 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
     return (
       <div className="AvocadoHome-composerHeroChipRow">
         <label className="AvocadoHome-composerHeroChip">
-          <input type="file" accept="image/*" onchange={onPick} />
+          <input type="file" accept={HERO_IMAGE_ACCEPT} onchange={onPick} />
           <i className="fas fa-image" aria-hidden="true" />
-          <span>{trans('ramon-avocado.forum.home.composer_hero_image_label', 'Hero image (optional)')}</span>
+          <span>{trans('ramon-avocado.forum.home.composer_hero_image_label', 'Cover image (optional)')}</span>
         </label>
+        <span className="AvocadoHome-composerHeroHint">{trans('ramon-avocado.forum.cover_image.help', 'JPG, PNG, GIF or WebP · up to 8 MB')}</span>
         {changelog}
+        {error}
       </div>
     );
   }
@@ -260,20 +289,61 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
     );
   }
 
+  /** O que ainda falta para publicar, na ordem dos campos. */
+  private missingItems(): string[] {
+    const state = this.state;
+    const missing: string[] = [];
+
+    if (!state.title.trim()) missing.push(trans('ramon-avocado.forum.composer.missing_title', 'title'));
+    if (!state.body.trim()) missing.push(trans('ramon-avocado.forum.composer.missing_body', 'text'));
+    if (!state.tagBypassReqs && !state.tagsMeetMinimums()) missing.push(trans('ramon-avocado.forum.composer.missing_tags', 'tag'));
+
+    return missing;
+  }
+
+  /** Só a tag falta: ela é destacada, porque é a pendência menos visível. */
+  private onlyTagsMissing(): boolean {
+    const missing = this.missingItems();
+
+    return missing.length === 1 && !this.state.tagBypassReqs && !this.state.tagsMeetMinimums();
+  }
+
   private renderSubmitButton() {
-    const isValid = this.state.isValid();
     const isSubmitting = this.state.submitting;
+    const missing = this.missingItems();
+    const missingText = missing.length ? trans('ramon-avocado.forum.composer.missing', 'Still needed: {items}', { items: missing.join(' · ') }) : '';
     const label = isSubmitting
       ? trans('ramon-avocado.forum.home.composer_submitting', 'Posting…')
       : tagsAreChangelogProducts(this.state.tags)
         ? trans('ramon-avocado.forum.changelog.composer_submit', 'Publish release')
-        : trans('ramon-avocado.forum.home.composer_post', 'Post Discussion');
-    const cls = `Button Button--primary AvocadoHome-composer-submit${isSubmitting ? ' is-loading' : ''}${!isValid ? ' is-disabled' : ''}`;
+        : trans('ramon-avocado.forum.home.composer_post', 'Post discussion');
+    const cls = `Button Button--primary AvocadoHome-composer-submit${isSubmitting ? ' is-loading' : ''}${missing.length ? ' is-disabled' : ''}`;
 
+    // Um elemento só: o ItemList da barra dá chave a cada item, e um array solto quebraria isso.
     return (
-      <button type="button" className={cls} disabled={isSubmitting || !isValid} onclick={() => this.submit()}>
-        {label}
-      </button>
+      <div className="AvocadoHome-composerSubmitGroup">
+        {missingText ? (
+          <span id="avocado-composer-missing" className="AvocadoHome-composerMissing" aria-live="polite">
+            {missingText}
+          </span>
+        ) : null}
+        {this.state.fieldErrors.form ? (
+          <span className="AvocadoHome-composerFormError" role="alert">
+            <i className="fas fa-exclamation-circle" aria-hidden="true" />
+            {this.state.fieldErrors.form}
+          </span>
+        ) : null}
+        <button
+          type="button"
+          className={cls}
+          disabled={isSubmitting || missing.length > 0}
+          title={missingText || undefined}
+          aria-describedby={missingText ? 'avocado-composer-missing' : undefined}
+          onclick={() => this.submit()}
+        >
+          {label}
+        </button>
+      </div>
     );
   }
 
@@ -312,4 +382,15 @@ export default class InlineComposer<CustomAttrs extends IInlineComposerAttrs = I
     // A mesma renderização da prévia dentro do compositor do core.
     renderPostPreview(dom, content, () => this.state.preview);
   }
+}
+
+function renderFieldError(id: string, message?: string) {
+  if (!message) return null;
+
+  return (
+    <p id={id} className="AvocadoHome-composerFieldError" role="alert">
+      <i className="fas fa-exclamation-circle" aria-hidden="true" />
+      {message}
+    </p>
+  );
 }
