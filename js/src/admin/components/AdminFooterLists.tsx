@@ -1,7 +1,8 @@
 import app from 'flarum/admin/app';
 import Button from 'flarum/common/components/Button';
 import Dropdown from 'flarum/common/components/Dropdown';
-import { AdminComponent, saveSetting, trans } from '../util';
+import { AdminComponent, markSaving, saveSetting, trans } from '../util';
+import SaveStatus from './SaveStatus';
 import { OTHER_NETWORK, OTHER_NETWORK_ICON, SOCIAL_NETWORKS, detectNetwork, networkOf, parseFooterList } from '../../common/footerContent';
 import type { FooterLinkItem, FooterSocialItem } from '../../common/footerContent';
 
@@ -28,8 +29,9 @@ abstract class FooterList<T> extends AdminComponent {
     const { settingKey } = this.attrs;
     const value = JSON.stringify(items);
     app.data.settings[settingKey] = value;
+    markSaving(settingKey);
     clearTimeout(this.timer);
-    this.timer = setTimeout(() => saveSetting({ [settingKey]: value }), SAVE_DELAY);
+    this.timer = setTimeout(() => saveSetting({ [settingKey]: value }).catch(() => {}), SAVE_DELAY);
   }
 
   protected patch(index: number, change: Partial<T>): void {
@@ -83,7 +85,12 @@ abstract class FooterList<T> extends AdminComponent {
 
     return (
       <div className="Form-group">
-        {label && <label className="AvocadoAdmin-label">{label}</label>}
+        {label && (
+          <label className="AvocadoAdmin-label">
+            {label}
+            <SaveStatus settingKey={this.attrs.settingKey} />
+          </label>
+        )}
         <div className="AvocadoAdmin-list">
           {rows}
           <Button className="Button AvocadoAdmin-listAdd" icon="fas fa-plus" onclick={() => this.add()}>

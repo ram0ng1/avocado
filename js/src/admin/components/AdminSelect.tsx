@@ -1,5 +1,6 @@
 import app from 'flarum/admin/app';
-import { AdminComponent, getStr, saveSetting } from '../util';
+import { AdminComponent, fieldId, getStr, saveSetting } from '../util';
+import SaveStatus from './SaveStatus';
 
 export default class AdminSelect extends AdminComponent {
   view() {
@@ -8,16 +9,20 @@ export default class AdminSelect extends AdminComponent {
     const value = getStr(settingKey, def ?? keys[0]);
     return (
       <div className="Form-group">
-        <label className="AvocadoAdmin-label">{label}</label>
+        <label className="AvocadoAdmin-label" for={fieldId(settingKey)}>
+          {label}
+          <SaveStatus settingKey={settingKey} />
+        </label>
         <div className="AvocadoAdmin-select-wrap">
           <select
+            id={fieldId(settingKey)}
             className="FormControl AvocadoAdmin-select"
             value={value}
             onchange={(e: any) => {
               const val = e.target.value;
               app.data.settings[settingKey] = val;
               m.redraw();
-              saveSetting({ [settingKey]: val });
+              saveSetting({ [settingKey]: val }).catch(() => {});
             }}
           >
             {keys.map((k) => (

@@ -1,4 +1,5 @@
 import app from 'flarum/forum/app';
+import { handleErrorsHere, requestErrorMessage, showRequestError, validationErrors } from '../../common/requestErrors';
 import { trans, uploadDiscussionHeroImage, tagsAreChangelogProducts, changelogAttributes } from '../utils';
 
 /** Contador do menu de rascunhos do fof (`draftCount` do usuário): o delete não devolve o usuário, então desce aqui como no fof. */
@@ -29,6 +30,8 @@ export default class InlineComposerState {
   // o model local é atualizado, para a discussão já abrir com ela.
   heroImageFile: File | null = null;
   heroImagePreview: string | null = null;
+  /** Por que a última imagem escolhida foi recusada (mostrado junto do chip). */
+  heroImageError: string | null = null;
 
   // Campos do changelog (só usados quando uma tag escolhida é um produto): o
   // número da versão e o banner na cor da tag, que vale na ausência de imagem.
@@ -41,6 +44,10 @@ export default class InlineComposerState {
   draft: any = null;
   savingDraft = false;
   draftJustSaved = false;
+  /** O último salvamento do rascunho falhou (o botão mostra um aviso por alguns segundos). */
+  draftFailed = false;
+  /** Erros de validação do servidor, por campo (`title`, `content`) ou `form`. */
+  fieldErrors: Record<string, string> = {};
 
   /** Exigido pelo TextEditor do Flarum: repassa o corpo do compositor. */
   composerProxy = {
@@ -101,11 +108,31 @@ export default class InlineComposerState {
     this.tagPickerOpen = false;
     this.tagFilter = '';
     this.setHeroImageFile(null);
+    this.heroImageError = null;
     this.changelogVersion = '';
     this.changelogCover = 'color';
     this.draft = null;
     this.savingDraft = false;
     this.draftJustSaved = false;
+    this.draftFailed = false;
+    this.fieldErrors = {};
+  }
+
+  /** Erro de título ou texto vai para baixo do campo; o resto, para baixo do botão. */
+  private showSubmitErrors(error: any): void {
+    const errors = validationErrors(error);
+
+    for (const { field, message } of errors) {
+      const key = field === 'title' || field === 'content' ? field : 'form';
+      this.fieldErrors[key] = this.fieldErrors[key] ? `${this.fieldErrors[key]} ${message}` : message;
+    }
+
+    if (!errors.length) {
+      this.fieldErrors.form = requestErrorMessage(
+        error,
+        trans('ramon-avocado.forum.composer.publish_failed', 'Could not publish the discussion. Check your connection and try again.')
+      );
+    }
   }
 
   /** `canSaveDrafts` só existe com o fof/drafts ativo e quem tem a permissão. */
@@ -133,7 +160,7 @@ export default class InlineComposerState {
     };
 
     const isNew = !this.draft;
-    const request = isNew ? app.store.createRecord('drafts').save(payload) : this.draft.save(payload);
+    const request = isNew ? app.store.createRecord('drafts').save(payload, handleErrorsHere) : this.draft.save(payload, handleErrorsHere);
 
     return request
       .then((draft: any) => {
@@ -145,7 +172,14 @@ export default class InlineComposerState {
           m.redraw();
         }, 300);
       })
-      .catch((err: any) => console.error('Draft save failed:', err))
+      .catch((error: any) => {
+        this.draftFailed = true;
+        showRequestError(error, trans('ramon-avocado.forum.composer.draft_failed', 'Could not save the draft. Try again.'));
+        setTimeout(() => {
+          this.draftFailed = false;
+          m.redraw();
+        }, 4000);
+      })
       .finally(() => {
         this.savingDraft = false;
         m.redraw();
@@ -177,6 +211,7 @@ export default class InlineComposerState {
     }
 
     this.submitting = true;
+    this.fieldErrors = {};
     m.redraw();
 
     const data: any = { title: this.title.trim(), content: this.body.trim() };
@@ -187,7 +222,7 @@ export default class InlineComposerState {
 
     return app.store
       .createRecord('discussions')
-      .save(data)
+      .save(data, handleErrorsHere)
       .then(async (discussion: any) => {
         // Falha no upload da imagem não desfaz a discussão: ela fica sem imagem e um
         // alerta deixa o usuário tentar de novo na página da discussão.
@@ -200,18 +235,8 @@ export default class InlineComposerState {
               data.attributes.heroImagePath = result.heroImagePath;
               data.attributes.heroImageUrl = result.heroImageUrl;
             }
-          } catch (err) {
-            try {
-              app.alerts.show(
-                { type: 'error' },
-                trans(
-                  'ramon-avocado.forum.home.composer_hero_image_upload_failed',
-                  'Could not upload the hero image. You can try again on the discussion page.'
-                )
-              );
-            } catch {
-              /* alertas podem não existir */
-            }
+          } catch (error) {
+            app.alerts.show({ type: 'error' }, heroUploadFailedAfterPublish(error));
           }
         }
 
@@ -221,8 +246,21 @@ export default class InlineComposerState {
       })
       .catch((err: any) => {
         this.submitting = false;
+        this.showSubmitErrors(err);
         m.redraw();
         throw err;
       });
   }
+}
+
+/**
+ * A discussão já foi publicada e só a imagem ficou para trás: diz isso, o
+ * motivo, e onde adicionar a imagem depois.
+ */
+export function heroUploadFailedAfterPublish(error: unknown): string {
+  return trans(
+    'ramon-avocado.forum.cover_image.upload_failed_after_publish',
+    'Your discussion was published, but the cover image wasn’t uploaded ({reason}). Add it with the “Add image” button at the top of the discussion.',
+    { reason: requestErrorMessage(error, trans('ramon-avocado.forum.cover_image.connection_problem', 'connection problem')) }
+  );
 }

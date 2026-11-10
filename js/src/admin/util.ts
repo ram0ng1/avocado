@@ -60,8 +60,65 @@ export const getBool = (key: string): boolean => {
 
 export const getStr = (key: string, def = ''): string => String(settings()[key] ?? def);
 
-// Os controles gravam direto na API, sem o botão Salvar.
+type SaveState = { state: 'saving' | 'saved' | 'error'; message?: string };
+
+/** Estado do último salvamento de cada chave, mostrado ao lado do rótulo. */
+const saveStates: Record<string, SaveState> = {};
+const clearTimers: Record<string, ReturnType<typeof setTimeout>> = {};
+
+/** O último valor que o servidor confirmou: é para ele que o campo volta se a gravação falhar. */
+let confirmed: Record<string, any> | null = null;
+
+export const saveStateOf = (key: string): SaveState | undefined => saveStates[key];
+
+/** Guarda as configurações como vieram do servidor (no boot do admin). */
+export const rememberConfirmedSettings = (): void => {
+  confirmed = { ...settings() };
+};
+
+/** Id estável do campo de uma configuração, para ligar `<label for>`. */
+export const fieldId = (key: string): string => `avocado-setting-${key.replace(/[^a-z0-9_-]/gi, '-')}`;
+
+/** Chamado assim que o valor muda, antes da gravação adiada dos campos de texto. */
+export const markSaving = (key: string): void => {
+  clearTimeout(clearTimers[key]);
+  saveStates[key] = { state: 'saving' };
+};
+
+// Os controles gravam direto na API, sem o botão Salvar: cada chave mostra
+// "Salvando…" e "Salvo", e volta ao valor anterior se o servidor recusar.
 export const saveSetting = (payload: Record<string, any>) => {
   const apiUrl = ((app.forum.attribute<string>('apiUrl') as string) || '/api').replace(/\/+$/, '');
-  return app.request({ method: 'POST', url: `${apiUrl}/settings`, body: payload });
+  const keys = Object.keys(payload);
+
+  keys.forEach(markSaving);
+
+  return app
+    .request({ method: 'POST', url: `${apiUrl}/settings`, body: payload, errorHandler: () => {} })
+    .then((response) => {
+      keys.forEach((key) => {
+        (confirmed as Record<string, any>)[key] = payload[key];
+        saveStates[key] = { state: 'saved' };
+        clearTimers[key] = setTimeout(() => {
+          delete saveStates[key];
+          m.redraw();
+        }, 2500);
+      });
+      m.redraw();
+
+      return response;
+    })
+    .catch((error: any) => {
+      const reasons = (error?.status === 422 ? (error.response?.errors ?? []) : []).map((e: any) => e?.detail).filter(Boolean);
+      keys.forEach((key) => {
+        if (confirmed && key in confirmed) settings()[key] = confirmed[key];
+        saveStates[key] = {
+          state: 'error',
+          message: reasons.join(' ') || trans('ramon-avocado.admin.save_failed', 'Couldn’t save. Check your connection and try again.'),
+        };
+      });
+      m.redraw();
+
+      throw error;
+    });
 };

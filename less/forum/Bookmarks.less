@@ -94,6 +94,33 @@
     padding: 8px 20px 18px;
   }
 
+  // Erro colado ao campo a que se refere; a cor é a de validação do Flarum,
+  // que já tem a versão do tema escuro.
+  &-error {
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+    margin: 6px 0 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--validation-error-color);
+
+    .fas {
+      margin-top: 2px;
+    }
+  }
+
+  &-counter {
+    margin: 4px 0 0;
+    font-size: 12px;
+    text-align: right;
+    color: var(--muted-color);
+  }
+
+  .FormControl[aria-invalid='true'] {
+    border-color: var(--validation-error-color);
+  }
+
   &-label {
     display: block;
     font-size: 11px;

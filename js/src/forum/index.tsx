@@ -89,12 +89,16 @@ import {
   tagsAreChangelogProducts,
   changelogAttributes,
   uploadDiscussionHeroImage,
+  heroImageProblem,
+  HERO_IMAGE_ACCEPT,
   deleteDiscussionHeroImage,
   canEditDiscussionHero,
   sanitizeAdminHtml,
   discussionViews,
   formatViews,
 } from './utils';
+import { requestErrorMessage } from '../common/requestErrors';
+import { heroUploadFailedAfterPublish } from './states/InlineComposerState';
 import {
   toggleBookmark,
   isBookmarked,
@@ -801,7 +805,7 @@ app.initializers.add(
         if ((this as any)._heroBusy) return;
         const input = document.createElement('input');
         input.type = 'file';
-        input.accept = 'image/*';
+        input.accept = HERO_IMAGE_ACCEPT;
         input.style.display = 'none';
         document.body.appendChild(input);
         input.addEventListener('change', () => {
@@ -809,8 +813,14 @@ app.initializers.add(
           document.body.removeChild(input);
           if (!file) return;
           (this as any)._heroBusy = true;
+          (this as any)._heroError = null;
           m.redraw();
-          uploadDiscussionHeroImage(discussion.id(), file)
+          heroImageProblem(file)
+            .then((problem) => {
+              if (problem) throw { avocadoMessage: problem };
+
+              return uploadDiscussionHeroImage(discussion.id(), file);
+            })
             .then((result) => {
               const attrs = (discussion as any).data?.attributes;
               if (attrs) {
@@ -818,15 +828,13 @@ app.initializers.add(
                 attrs.heroImageUrl = result.heroImageUrl;
               }
             })
-            .catch(() => {
-              try {
-                app.alerts.show(
-                  { type: 'error' },
-                  trans('ramon-avocado.forum.home.composer_hero_image_upload_failed', 'Could not upload the hero image.')
+            .catch((error: any) => {
+              (this as any)._heroError =
+                error?.avocadoMessage ??
+                requestErrorMessage(
+                  error,
+                  trans('ramon-avocado.forum.cover_image.upload_failed', 'Could not upload the image. Check your connection and try again.')
                 );
-              } catch {
-                /* noop */
-              }
             })
             .finally(() => {
               (this as any)._heroBusy = false;
@@ -841,6 +849,7 @@ app.initializers.add(
         const ok = window.confirm(trans('ramon-avocado.forum.discussion.hero_image_remove_confirm', 'Remove the hero image from this discussion?'));
         if (!ok) return;
         (this as any)._heroBusy = true;
+        (this as any)._heroError = null;
         m.redraw();
         deleteDiscussionHeroImage(discussion.id())
           .then(() => {
@@ -850,8 +859,11 @@ app.initializers.add(
               attrs.heroImageUrl = null;
             }
           })
-          .catch(() => {
-            /* mantém a imagem; o próximo render reflete o estado real */
+          .catch((error: any) => {
+            (this as any)._heroError = requestErrorMessage(
+              error,
+              trans('ramon-avocado.forum.cover_image.remove_failed', 'Could not remove the image. Check your connection and try again.')
+            );
           })
           .finally(() => {
             (this as any)._heroBusy = false;
@@ -1012,6 +1024,12 @@ app.initializers.add(
               <i className={heroBusy ? 'fas fa-spinner fa-spin' : 'fas fa-camera'} aria-hidden="true" />
               <span>{trans('ramon-avocado.forum.discussion.hero_image_add', 'Add image')}</span>
             </button>
+          )}
+          {(this as any)._heroError && (
+            <p className="DiscussionHero-imageError" role="alert">
+              <i className="fas fa-exclamation-circle" aria-hidden="true" />
+              {(this as any)._heroError}
+            </p>
           )}
         </div>
       ) : null;
@@ -1530,15 +1548,20 @@ app.initializers.add(
           <label className="AvocadoHome-composerHeroChip">
             <input
               type="file"
-              accept="image/*"
+              accept={HERO_IMAGE_ACCEPT}
               onchange={(e) => {
                 const f = e.target.files?.[0];
-                if (f && f.type.startsWith('image/')) setFile(f);
                 e.target.value = '';
+                if (!f) return;
+                heroImageProblem(f).then((problem) => {
+                  this._avocadoHeroError = problem;
+                  if (!problem) setFile(f);
+                  m.redraw();
+                });
               }}
             />
             <i className="fas fa-image" aria-hidden="true" />
-            <span>{trans('ramon-avocado.forum.home.composer_hero_image_label', 'Hero image (optional)')}</span>
+            <span>{trans('ramon-avocado.forum.home.composer_hero_image_label', 'Cover image (optional)')}</span>
           </label>
         );
 
@@ -1559,7 +1582,18 @@ app.initializers.add(
           'avocadoHeroImage',
           <div className="AvocadoHome-composerHeroChipRow AvocadoHome-composerHeroChipRow--modal">
             {chip}
+            {!previewUrl && (
+              <span className="AvocadoHome-composerHeroHint">
+                {trans('ramon-avocado.forum.cover_image.help', 'JPG, PNG, GIF or WebP · up to 8 MB')}
+              </span>
+            )}
             {changelog}
+            {this._avocadoHeroError && (
+              <p className="AvocadoHome-composerHeroError" role="alert">
+                <i className="fas fa-exclamation-circle" aria-hidden="true" />
+                {this._avocadoHeroError}
+              </p>
+            )}
           </div>,
           50 // entre 'title' (100) e o editor
         );
@@ -1595,18 +1629,8 @@ app.initializers.add(
                 attrs.heroImagePath = result.heroImagePath;
                 attrs.heroImageUrl = result.heroImageUrl;
               }
-            } catch (_err) {
-              try {
-                app.alerts.show(
-                  { type: 'error' },
-                  trans(
-                    'ramon-avocado.forum.home.composer_hero_image_upload_failed',
-                    'Could not upload the hero image. You can try again on the discussion page.'
-                  )
-                );
-              } catch {
-                /* alertas podem não existir */
-              }
+            } catch (error) {
+              app.alerts.show({ type: 'error' }, heroUploadFailedAfterPublish(error));
             }
             this.composer.hide();
             app.discussions?.refresh?.();

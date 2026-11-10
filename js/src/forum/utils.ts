@@ -3,6 +3,7 @@ import { truncate as coreTruncate } from 'flarum/common/utils/string';
 import coreHighlight from 'flarum/common/helpers/highlight';
 import escapeRegExp from 'flarum/common/utils/escapeRegExp';
 import decodeCssEscapes from '../common/cssEscapes';
+import { handleErrorsHere } from '../common/requestErrors';
 import abbreviateNumber from 'flarum/common/utils/abbreviateNumber';
 import formatNumber from 'flarum/common/utils/formatNumber';
 
@@ -468,6 +469,50 @@ export const tagsRequireHeroImage = (tags: any[] | null | undefined): boolean =>
 
 // Envia uma imagem para /api/avocado/discussion-hero?discussionId=<id> e devolve
 // o JSON do servidor (`{ heroImagePath, heroImageUrl }`) para atualizar o model.
+/** O que o servidor aceita como imagem de capa (UploadDiscussionHeroController). */
+export const HERO_IMAGE_ACCEPT = 'image/jpeg,image/png,image/gif,image/webp';
+const HERO_IMAGE_MAX_BYTES = 8 * 1024 * 1024;
+const HERO_IMAGE_MAX_PIXELS = 40_000_000;
+
+/**
+ * Confere a imagem antes de enviar, com os mesmos limites do servidor: assim o
+ * erro aparece na hora, sem esperar o upload. Devolve a mensagem ou null.
+ */
+export const heroImageProblem = async (file: File): Promise<string | null> => {
+  if (!HERO_IMAGE_ACCEPT.split(',').includes(file.type)) {
+    return trans('ramon-avocado.forum.cover_image.unsupported_type', 'This format isn’t supported. Upload a JPG, PNG, GIF or WebP image.');
+  }
+
+  if (file.size > HERO_IMAGE_MAX_BYTES) {
+    return trans('ramon-avocado.forum.cover_image.too_large_bytes', 'The image is larger than {max}. Upload a smaller or more compressed version.', {
+      max: '8 MB',
+    });
+  }
+
+  const url = URL.createObjectURL(file);
+  try {
+    const { width, height } = await new Promise<{ width: number; height: number }>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      img.onerror = reject;
+      img.src = url;
+    });
+
+    if (width * height > HERO_IMAGE_MAX_PIXELS) {
+      return trans(
+        'ramon-avocado.forum.cover_image.too_large_pixels',
+        'The image is too large (up to 8000 × 5000 pixels). Resize it and upload again.'
+      );
+    }
+  } catch {
+    return trans('ramon-avocado.forum.cover_image.unreadable', 'We couldn’t open this image. It may be damaged — try another one.');
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+
+  return null;
+};
+
 export const uploadDiscussionHeroImage = async (
   discussionId: string | number,
   file: File
@@ -480,6 +525,8 @@ export const uploadDiscussionHeroImage = async (
     url: `${apiUrl}/avocado/discussion-hero?discussionId=${encodeURIComponent(String(discussionId))}`,
     serialize: (raw: any) => raw,
     body,
+    // Quem chama mostra uma mensagem só, no contexto certo.
+    ...handleErrorsHere,
   });
   return {
     heroImagePath: resp?.heroImagePath ?? '',
@@ -492,6 +539,7 @@ export const deleteDiscussionHeroImage = async (discussionId: string | number): 
   await app.request({
     method: 'DELETE',
     url: `${apiUrl}/avocado/discussion-hero?discussionId=${encodeURIComponent(String(discussionId))}`,
+    ...handleErrorsHere,
   });
 };
 
