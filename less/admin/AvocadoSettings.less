@@ -671,3 +671,26 @@
     margin-left: auto;
   }
 }
+
+// Salvando… / Salvo / erro, ao lado do rótulo de cada configuração.
+.AvocadoAdmin-saveStatus {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  vertical-align: middle;
+  color: var(--muted-color);
+
+  &--saved { color: var(--success-color, #16a34a); }
+  &--error { color: var(--validation-error-color); }
+}
+
+// No interruptor o indicador vai na linha de baixo, junto da ajuda.
+.AvocadoAdmin-toggle > .AvocadoAdmin-saveStatus {
+  display: flex;
+  margin: 4px 0 0;
+}

@@ -1,5 +1,6 @@
 import app from 'flarum/admin/app';
 import { AdminComponent, getStr, saveSetting, trans } from '../util';
+import SaveStatus from './SaveStatus';
 
 export default class AdminGroupPicker extends AdminComponent {
   groups: any[] = [];
@@ -36,7 +37,7 @@ export default class AdminGroupPicker extends AdminComponent {
     const val = JSON.stringify(sel);
     app.data.settings[this.attrs.settingKey] = val;
     m.redraw();
-    saveSetting({ [this.attrs.settingKey]: val });
+    saveSetting({ [this.attrs.settingKey]: val }).catch(() => {});
   }
 
   view() {
@@ -47,7 +48,12 @@ export default class AdminGroupPicker extends AdminComponent {
 
     return (
       <div className="Form-group">
-        {label && <label className="AvocadoAdmin-label">{label}</label>}
+        {label && (
+          <label className="AvocadoAdmin-label">
+            {label}
+            <SaveStatus settingKey={this.attrs.settingKey} />
+          </label>
+        )}
         {!this.loaded ? (
           <p className="helpText">{trans('ramon-avocado.admin.loading', 'Loading…')}</p>
         ) : !groups.length ? (
