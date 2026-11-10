@@ -1782,6 +1782,25 @@
   gap: 6px;
 }
 
+// Formatos aceitos ao lado do chip, e o motivo quando a imagem é recusada.
+.AvocadoHome-composerHeroHint {
+  font-size: 12px;
+  color: var(--muted-color);
+}
+
+.AvocadoHome-composerHeroError {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--validation-error-color);
+
+  .fas { margin-top: 2px; }
+}
+
 .AvocadoHome-composerHeroChip {
   position: relative;
   display: inline-flex;
@@ -1890,6 +1909,47 @@
     background-color: var(--bg-control-disabled, #e0e0e0);
     color: var(--text-control-disabled, #999);
   }
+}
+
+// O que falta para publicar, ao lado do botão desativado.
+.AvocadoHome-composerMissing {
+  font-size: 12px;
+  color: var(--muted-color);
+  white-space: nowrap;
+
+  @media @phone { white-space: normal; }
+}
+
+// Erros do servidor: embaixo do título/texto, ou ao lado do botão.
+.AvocadoHome-composerFieldError,
+.AvocadoHome-composerFormError {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--validation-error-color);
+
+  .fas { margin-top: 2px; }
+}
+
+.AvocadoHome-composerFieldError {
+  padding: 4px 16px 8px;
+}
+
+.AvocadoHome-composerTitle[aria-invalid='true'] {
+  color: var(--validation-error-color);
+}
+
+// A tag é a única pendência: o seletor ganha a borda de aviso.
+.AvocadoHome-composer-tags.is-missing .AvocadoHome-tagPickerTrigger {
+  border-color: var(--validation-error-color);
+  border-style: dashed;
+}
+
+.AvocadoHome-composerDraftBtn.failed {
+  color: var(--validation-error-color);
 }
 
 .AvocadoHome-tagPicker {
@@ -2768,4 +2828,17 @@
 
 html.avocado-composer-fullscreen {
   overflow: hidden;
+}
+
+// Aviso do que falta + erro + botão de publicar, lado a lado na barra do editor.
+.AvocadoHome-composerSubmitGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+
+  @media @phone {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
 }

@@ -1,5 +1,6 @@
 import app from 'flarum/forum/app';
 import { trans } from '../utils';
+import { handleErrorsHere, showRequestError } from '../../common/requestErrors';
 
 /**
  * Toggle de bookmark (discussão salva) com UI otimista. O tema fala com um
@@ -127,6 +128,8 @@ export function updateBookmark(discussion: any, payload: { note?: string | null;
       method: 'PATCH',
       url: `${apiUrl()}/avocado/bookmark`,
       body: { discussionId: Number(id), ...payload },
+      // Quem chama mostra o erro junto do campo (BookmarkModal).
+      ...handleErrorsHere,
     })
     .then((response: any) => {
       discussion.pushData({
@@ -170,14 +173,17 @@ function toggleFofBookmark(discussion: any, id: string): void {
   pending.add(id);
 
   discussion
-    .save({ [FOF_BOOKMARKED_ATTRIBUTE]: !isBookmarked(discussion) })
+    .save({ [FOF_BOOKMARKED_ATTRIBUTE]: !isBookmarked(discussion) }, handleErrorsHere)
     .then(() => {
       pending.delete(id);
       m.redraw();
     })
-    .catch(() => {
+    .catch((error: any) => {
       pending.delete(id);
-      app.alerts.show({ type: 'error' }, trans('ramon-avocado.forum.bookmarks.toggle_error', 'Could not update your saved list. Please try again.'));
+      showRequestError(
+        error,
+        trans('ramon-avocado.forum.bookmarks.toggle_error', 'Could not update your saved list. Check your connection and try again.')
+      );
       m.redraw();
     });
 }
@@ -195,15 +201,19 @@ function toggleAvocadoBookmark(discussion: any, id: string): void {
       method: next ? 'POST' : 'DELETE',
       url: `${apiUrl()}/avocado/bookmark`,
       body: { discussionId: Number(id) },
+      ...handleErrorsHere,
     })
     .then(() => {
       pending.delete(id);
       m.redraw();
     })
-    .catch(() => {
+    .catch((error: any) => {
       setAvocadoBookmarked(discussion, current);
       pending.delete(id);
-      app.alerts.show({ type: 'error' }, trans('ramon-avocado.forum.bookmarks.toggle_error', 'Could not update your saved list. Please try again.'));
+      showRequestError(
+        error,
+        trans('ramon-avocado.forum.bookmarks.toggle_error', 'Could not update your saved list. Check your connection and try again.')
+      );
       m.redraw();
     });
 }
