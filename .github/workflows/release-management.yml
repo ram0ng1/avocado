@@ -51,7 +51,7 @@ jobs:
     steps:
       # Audita todo o egress (modo audit, ainda não block).
       - name: Harden Runner
-        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a  # v2.22.4
+        uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c  # v2.23.0
         with:
           egress-policy: audit
 
@@ -222,7 +222,7 @@ jobs:
 
       - name: Publicar Release
         id: create_release
-        uses: release-drafter/release-drafter@978bb0b30c5ee8cdd332ced253758157150d43f0  # v7.10.0
+        uses: release-drafter/release-drafter@d1a19e60e81a7e650d00a7de9277f87e439117ea  # v7.11.0
         with:
           publish: true
           # Versão calculada acima — sobrepõe o version-resolver do
